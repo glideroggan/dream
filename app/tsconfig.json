@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "pretty": false,
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "importHelpers": true,
+    "experimentalDecorators": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "noEmitOnError": true,
+    "strictPropertyInitialization": false,
+    "strict": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "lib": ["dom", "esnext"],
+    "noImplicitAny": true,
+    "emitDeclarationOnly": true,
+    "esModuleInterop": true,
+    "paths": {
+      // "@microsoft/fast-element": ["./src/types/fast-element.d.ts"],
+    }
+  },
+  "include": ["src"],
+}

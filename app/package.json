@@ -1,0 +1,26 @@
+{
+  "name": "dream-app",
+  "version": "1.0.0",
+  "main": "./src/main.ts",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev:cli": "esbuild src/main.ts --bundle --splitting --minify --sourcemap --outdir=dist --loader:.html=text --loader:.svg=text --loader:.eot=text --loader:.ttf=text --loader:.woff=text --loader:.woff2=text --external:@microsoft/fast-element --serve --watch --servedir=./dist --format=esm",
+    "dev": "yarn clean && yarn tsc && node ./develop.mjs",
+    "docker": "yarn docker:build",
+    "clean": "yarn rmdir dist",
+    "docker:build": "yarn clean && node ./build.mjs",
+    "rmdir": "node -e \"var fs = require('fs');process.argv.slice(1).map((fpath)=>{ try {fs.rmdirSync(fpath,{recursive: true})} catch(e){console.warn('Error folder:', fpath, e)}});process.exit(0);\""
+  },
+  "devDependencies": {
+    "esbuild": "^0.19.7",
+    "esbuild-plugin-copy": "^2.1.1",
+    "esbuild-plugin-tsc": "^0.4.0",
+    "esbuild-serve": "^1.0.1",
+    "typescript": "^5.3.2"
+  },
+  "dependencies": {
+    "tslib": "^2.6.2"
+  },
+  "peerDependencies": {}
+}

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Dream</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- The importmap is no longer needed for widgets as they will be dynamically imported -->
+    <script type="importmap">
+      {
+        "imports": {
+          "@microsoft/fast-element": "https://cdn.jsdelivr.net/npm/@microsoft/fast-element@1.6.2/dist/fast-element.min.js"
+        }
+      }
+    </script>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+    </style>
+    
+    <!-- <link rel="preload" href="http://localhost:8000/common.js" crossorigin="anonymous" as="script" /> -->
+    <!-- <link rel="prefetch" href="https://fonts.googleapis.com" /> -->
+    <!-- <link async rel="stylesheet" href="assets/css/main.css" />
+    <link async rel="stylesheet" href="assets/css/base.css" />
+    <link async rel="stylesheet" href="assets/css/font-awesome.module.css" /> -->
+  </head>
+
+  <body>
+    <dream-app></dream-app>
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/@microsoft/fast-element@1.6.2/dist/fast-element.min.js" as="script" />
+    <script src="/widget-map.js"></script>
+    <script async defer type="module" src="/main.js"></script>
+  </body>
+</html>
