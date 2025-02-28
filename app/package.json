@@ -13,7 +13,7 @@
     "rmdir": "node -e \"var fs = require('fs');process.argv.slice(1).map((fpath)=>{ try {fs.rmdirSync(fpath,{recursive: true})} catch(e){console.warn('Error folder:', fpath, e)}});process.exit(0);\""
   },
   "devDependencies": {
-    "esbuild": "^0.19.7",
+    "esbuild": "^0.25.0",
     "esbuild-plugin-copy": "^2.1.1",
     "esbuild-plugin-tsc": "^0.4.0",
     "esbuild-serve": "^1.0.1",
