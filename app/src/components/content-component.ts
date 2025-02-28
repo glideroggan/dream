@@ -8,38 +8,21 @@ import {
   repeat,
   when,
   Observable,
-  volatile,
+  DOM,
+  ViewTemplate,
 } from '@microsoft/fast-element'
 import { WidgetDefinition, widgetService, WidgetService } from '../services/widget-service'
 import { getSingletonManager } from '../services/singleton-manager'
 
-// Add a debug handler to see when the condition is evaluated
-const debugTemplate = html<ContentComponent>/*html*/ `
+const template = html<ContentComponent>/*html*/ `
   <div class="content-container">
     <div class="content-header">
       <h1>${(x) => x.pageTitle}</h1>
-      <div>Debug: Active widgets count: ${(x) => x.activeWidgets.length}</div>
-      <div>Debug: have widgets: ${(x) => x.haveWidgets}</div>
     </div>
 
     <div class="widgets-container">
-      ${when(
-        (x) => x.haveWidgets,
-        html`
-          ${repeat(
-            (x) => x.activeWidgets,
-            html<WidgetDefinition>/*html*/ `
-              <div class="widget">
-                <${(x) => x.elementName} 
-                  :config="${(x, c) => x.defaultConfig || {}}"
-                ></${(x) => x.elementName}>
-              </div>
-            `
-          )}
-        `,
-        html`
-          <div class="empty-message">No widgets configured for this page.</div>
-        `
+      ${when<ContentComponent>(x => !x.ready, html<ContentComponent>/*html*/ `
+        <div class="empty-message">Loading...</div>`
       )}
     </div>
   </div>
@@ -89,40 +72,32 @@ const styles = css`
 
 @customElement({
   name: 'dream-content',
-  template: debugTemplate, // Use the debug template for now
+  template: template,
   styles,
 })
 export class ContentComponent extends FASTElement {
   @observable pageTitle = 'Dashboard'
   @observable activeWidgets: WidgetDefinition[] = []
-
-  @volatile
-  get haveWidgets(): boolean {
-    return this.activeWidgets.length > 0
-  }
+  @observable ready: boolean = false
 
   private _initialWidgetsLoaded = false
 
-  // Use lowercase for attribute to match HTML conventions
   @attr({ attribute: 'initialwidgets' })
   initialWidgets: string = ''
 
-  // Define observed attributes - this is necessary for attributeChangedCallback to work
   static get observedAttributes(): string[] {
     return ['initialwidgets']
   }
 
   connectedCallback(): void {
     super.connectedCallback()
-    // Subscribe to widget registration event
     widgetService.onWidgetsRegistered(() => {
       this.loadWidgets()
     })
 
-    // If widgets are already registered, load them immediately
     if (widgetService.areAllWidgetsRegistered()) {
       this.loadWidgets()
-    } 
+    }
     console.log(
       `ContentComponent connected, initialWidgets: "${this.initialWidgets}"`
     )
@@ -143,7 +118,6 @@ export class ContentComponent extends FASTElement {
     if (name === 'initialwidgets' && newValue !== oldValue) {
       console.log(`initialWidgets attribute changed to: "${newValue}"`)
       this.initialWidgets = newValue
-      // this.loadWidgetsFromAttribute();
     }
   }
 
@@ -162,7 +136,7 @@ export class ContentComponent extends FASTElement {
       if (widgetIds.length > 0) {
         console.log(`Loading widgets: ${widgetIds.join(', ')}`)
         this._initialWidgetsLoaded = true
-        this.loadInitialWidgets(widgetIds)
+        await this.loadInitialWidgets(widgetIds)
       }
     }
   }
@@ -176,17 +150,27 @@ export class ContentComponent extends FASTElement {
       const widgets = await widgetService.loadWidgets(widgetIds)
       console.log(`Loaded ${widgets.length} widgets:`, widgets)
 
-      // Try a different approach to ensure reactivity
-      // First create a new array and assign it
-      const newWidgets = [...widgets]
-      this.activeWidgets = newWidgets
+      this.activeWidgets.push(...widgets)
 
-      // Force notification
-      console.log('Active widgets updated:', this.activeWidgets.length)
-      Observable.notify(this, 'activeWidgets')
-      Observable.notify(this, 'haveWidgets')
+      console.log('Active widgets updated:', this.activeWidgets.length);
+      // Observable.notify(this, 'activeWidgets')
+      this.addWidgetsToDOM()
+      this.ready = true
+      console.log('Content ready:', this.ready)
+
     } catch (error) {
       console.error('Error loading widgets:', error)
     }
+  }
+  addWidgetsToDOM() {
+    console.log('Adding widgets to DOM...')
+    const widgetContainer = this.shadowRoot?.querySelector('.widgets-container') as HTMLElement
+    this.activeWidgets.forEach((widget) => {
+      const widgetElement = document.createElement(widget.elementName) as any
+      if (widget.defaultConfig) {
+        widgetElement.config = widget.defaultConfig;
+      }
+      widgetContainer.appendChild(widgetElement);
+    })
   }
 }

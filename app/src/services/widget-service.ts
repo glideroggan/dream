@@ -36,7 +36,7 @@ export class WidgetService {
   async registerWidget(widget: WidgetDefinition): Promise<void> {
     console.log(`Registering widget: ${widget.id} (${widget.name})`);
     this.registeredWidgets.set(widget.id, widget);
-    this.emitWidgetsRegistered();
+    // this.emitWidgetsRegistered();
   }
 
   getAvailableWidgets(): WidgetDefinition[] {
@@ -66,6 +66,7 @@ export class WidgetService {
       if (!this.moduleLoadPromises.has(id)) {
         console.log(`Importing module for widget ${id}: ${widget.module}`);
         
+        // TODO: we should probably lift this logic out, as we will do a lot of dynamic imports
         // Create a promise to track this module load
         const loadPromise = (async () => {
           try {

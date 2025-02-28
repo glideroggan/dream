@@ -1,8 +1,10 @@
+import { WorkflowService } from './services/workflow-service';
 // Extend window interface to include our global properties
 declare global {
   interface Window {
     widgetRegistry?: WidgetDefinition[]
     widgetService?: any
+    workflowService?: WorkflowService | any
     registerWidget?: (widget: WidgetDefinition) => void
   }
 }
@@ -23,6 +25,11 @@ window.widgetService = widgetService
 // Register widgets BEFORE importing any components
 registerWidgets()
 
+const workflowService = getSingletonManager().get('WorkflowService')
+window.workflowService = workflowService
+registerAllWorkflows()
+
+
 // AFTER widgets are registered, import components
 import './components/app-component'
 import './components/header-component'
@@ -30,6 +37,8 @@ import './components/sidebar-component'
 import './components/content-component'
 import './components/footer-component'
 import './components/search-component'
+import { registerAllWorkflows } from './workflows/workflow-registry';
+
 
 // Signal that widgets are now registered
 console.log('Application initialized')

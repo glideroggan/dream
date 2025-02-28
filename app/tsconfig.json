@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "pretty": false,
-    "target": "ESNext",
+    "target": "ES2021",
     "module": "ESNext",
     "moduleResolution": "Node",
     "importHelpers": true,
@@ -23,6 +23,7 @@
     "paths": {
       "@widgets/account": ["./dist/widgets/account-widget/account-widget.d.ts"],
       "@widgets/welcome": ["./dist/widgets/welcome/welcome-widget.d.ts"],
+      "@workflows/transfer": ["./dist/workflows/transfer/transfer-workflow.d.ts"]
     }
   },
   "include": ["src"],
