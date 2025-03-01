@@ -1,19 +1,25 @@
-import { FASTElement, customElement, html, css } from '@microsoft/fast-element'
+import { FASTElement, customElement, html, css } from '@microsoft/fast-element';
+import { routerService } from '../services/router-service';
+import { registerAppRoutes } from '../routes/routes-registry';
+
+// Import components
+import './sidebar-component';
+import './header-component';
+import './footer-component';
+import './router-component';
 
 const template = html<AppComponent>/*html*/ `
   <div class="app-container">
     <dream-header></dream-header>
     <div class="app-main">
-      <dream-sidebar></dream-sidebar>
+      <dream-sidebar @navigation="${(x, c) => x.handleNavigation(c.event)}"></dream-sidebar>
       <main class="main-content">
-        <slot> </slot>
+        <dream-router></dream-router>
       </main>
     </div>
     <dream-footer></dream-footer>
   </div>
 `
-
-// <dream-content initialwidgets="welcome,account"></dream-content>
 
 const styles = css`
   :host {
@@ -54,4 +60,28 @@ const styles = css`
   template,
   styles,
 })
-export class AppComponent extends FASTElement {}
+export class AppComponent extends FASTElement {
+  connectedCallback(): void {
+    super.connectedCallback();
+    
+    // Register all routes
+    registerAppRoutes();
+    
+    // Initialize the router (will navigate to default route if needed)
+    routerService.initialize();
+  }
+  
+  /**
+   * Handle navigation events from the sidebar
+   */
+  handleNavigation(event: Event): void {
+    const navigationEvent = event as CustomEvent;
+    const item = navigationEvent.detail;
+    
+    if (item && item.route) {
+      // Extract the path from the route (remove the # if present)
+      const path = item.route.replace(/^#/, '');
+      routerService.navigateTo(path);
+    }
+  }
+}

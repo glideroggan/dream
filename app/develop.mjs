@@ -19,6 +19,10 @@ const context = await build.context({
         'src/workflows/transfer/transfer-workflow.ts',
         'src/workflows/create-account/create-account-workflow.ts',
         'src/workflows/swish-workflow.ts',
+        // pages
+        'src/pages/dashboard-page.ts',
+        'src/pages/investments-page.ts',
+        'src/pages/savings-page.ts',
     ],
     entryNames: '[dir]/[name]-[hash]',
     assetNames: 'assets/[name]-[hash]',
@@ -35,7 +39,8 @@ const context = await build.context({
         "@workflows/transfer",
         "@workflows/create-account",
         "@workflows/swish-workflow",
-        "@widgets/swish"
+        "@widgets/swish",
+        "@pages/dashboard", "@pages/investments", "@pages/savings",
     ],
     loader: {
         '.html': 'text',

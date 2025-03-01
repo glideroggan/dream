@@ -15,6 +15,7 @@ export type WidgetSize = 'sm' | 'md' | 'lg' | 'xl';
 // Enhanced widget definition with size preference and search metadata
 interface EnhancedWidgetDefinition extends WidgetDefinition {
   preferredSize?: WidgetSize;
+  minWidth?: number; // Minimum width in pixels
   searchable?: boolean;
   keywords?: string[];
   description?: string;
@@ -32,6 +33,7 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     module: '@widgets/account',
     defaultConfig: {},
     preferredSize: 'lg', // Account widget works best with more space
+    minWidth: 380, // Account widget needs more space for balance details
     searchable: true,
     keywords: ['accounts', 'checking account', 'savings account', 'bank accounts', 'money', 'balance'],
     icon: '🏦'
@@ -44,6 +46,7 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     module: '@widgets/welcome',
     defaultConfig: { username: 'Guest' },
     preferredSize: 'md', // Welcome widget is medium sized
+    minWidth: 300, // Welcome widget can be smaller
     searchable: true,
     keywords: ['welcome', 'introduction', 'guide', 'getting started', 'help'],
     icon: '👋'
@@ -57,6 +60,7 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     module: '@widgets/swish',
     defaultConfig: {},
     preferredSize: 'md',
+    minWidth: 340, // Swish widget needs space for buttons and info
     searchable: true,
     keywords: ['payment', 'transfer', 'swish', 'money', 'send money'],
     icon: '💸',
@@ -154,4 +158,12 @@ function registerWidgetWithSearch(widget: {
  */
 export function getWidgetById(widgetId: string): EnhancedWidgetDefinition | undefined {
   return widgetDefinitions.find(w => w.id === widgetId);
+}
+
+/**
+ * Gets the minimum width for a widget
+ */
+export function getWidgetMinWidth(widgetId: string): number {
+  const widget = widgetDefinitions.find(w => w.id === widgetId);
+  return widget?.minWidth || 300; // Default to 300px if not specified
 }
