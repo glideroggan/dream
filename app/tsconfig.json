@@ -23,7 +23,8 @@
     "paths": {
       "@widgets/account": ["./dist/widgets/account-widget/account-widget.d.ts"],
       "@widgets/welcome": ["./dist/widgets/welcome/welcome-widget.d.ts"],
-      "@workflows/transfer": ["./dist/workflows/transfer/transfer-workflow.d.ts"]
+      "@workflows/transfer": ["./dist/workflows/transfer/transfer-workflow.d.ts"],
+      "@workflows/swish-workflow": ["./dist/workflows/swish-workflow.d.ts"],
     }
   },
   "include": ["src"],

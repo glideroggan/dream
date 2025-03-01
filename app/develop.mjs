@@ -17,6 +17,7 @@ const context = await build.context({
         // workflows
         'src/workflows/transfer/transfer-workflow.ts',
         'src/workflows/create-account/create-account-workflow.ts',
+        'src/workflows/swish-workflow.ts',
     ],
     entryNames: '[dir]/[name]-[hash]',
     assetNames: 'assets/[name]-[hash]',
@@ -31,7 +32,8 @@ const context = await build.context({
     external: [
         "@widgets/welcome", "@widgets/account", 
         "@workflows/transfer",
-        "@workflows/create-account"
+        "@workflows/create-account",
+        "@workflows/swish-workflow",
     ],
     loader: {
         '.html': 'text',

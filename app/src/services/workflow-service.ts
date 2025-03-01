@@ -87,6 +87,7 @@ export class WorkflowService {
     // Register standard workflows
     this.registerWorkflow('transfer', { tagName: 'transfer-workflow' });
     this.registerWorkflow('kyc', { tagName: 'kyc-workflow' });
+    this.registerWorkflow('swish', { tagName: 'swish-workflow' });
   }
 }
 

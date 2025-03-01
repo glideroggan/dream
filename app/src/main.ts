@@ -2,6 +2,9 @@ import { WorkflowService } from './services/workflow-service';
 import { RepositoryService, getRepositoryService } from './services/repository-service';
 import { storageService } from './services/storage-service';
 import { userService } from './services/user-service';
+// Import workflow components
+import './services/product-service';
+import './workflows/swish-workflow';
 
 // Extend window interface to include our global properties
 declare global {

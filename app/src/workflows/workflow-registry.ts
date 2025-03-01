@@ -17,6 +17,7 @@ export const WorkflowIds = {
   TRANSFER: "transfer",
   KYC: "kyc",
   CREATE_ACCOUNT: "create-account",
+  SWISH: "swish",
 };
 
 // Define all available workflows
@@ -50,6 +51,16 @@ const workflowDefinitions: WorkflowDefinition[] = [
     icon: "➕",
     searchable: true,
     keywords: ['account', 'create account', 'open account', 'new account', 'add account'],
+  },
+  {
+    id: WorkflowIds.SWISH,
+    name: "Add Swish",
+    description: "Add Swish payment solution to your account",
+    elementName: "swish-workflow",
+    module: "@workflows/swish-workflow",
+    icon: "💳",
+    searchable: true,
+    keywords: ['swish', 'payment', 'add swish', 'payment solution', 'instant transfer'],
   }
 ];
 
