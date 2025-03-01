@@ -53,9 +53,6 @@ const template = html<TransferWorkflow>/*html*/`
                  @input="${(x, c) => x.handleAmountChange(c.event)}" />
           <span class="currency">${x => x.currency}</span>
         </div>
-        ${when(x => x.errorMessage, html`
-          <div class="error-message">${x => x.errorMessage}</div>
-        `)}
       </div>
       
       <div class="form-group">
@@ -297,6 +294,7 @@ export class TransferWorkflow extends WorkflowBase {
     this.resetInvalidStates();
     
     // If we got here, form is valid
+    console.log("Form is valid");
     this.notifyValidation(true);
     return true;
   }

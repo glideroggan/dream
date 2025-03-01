@@ -81,9 +81,12 @@ export abstract class WorkflowBase extends FASTElement {
    * The modal will listen for this event
    */
   protected notifyValidation(isValid: boolean, message?: string): void {
-    this.$emit('workflowValidation', { 
-      detail: { isValid, message } as WorkflowValidationEvent 
-    });
+    this.dispatchEvent(new CustomEvent('workflowValidation', {
+      detail: { isValid, message } as WorkflowValidationEvent
+    }));
+    // this.$emit('workflowValidation', { 
+    //   detail: { isValid, message } as WorkflowValidationEvent 
+    // });
   }
   
   /**

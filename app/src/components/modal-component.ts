@@ -175,14 +175,16 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
   @observable isPrimaryActionEnabled: boolean = true;
   @observable private validationMessage: string = "";
   
-  private boundWorkflowValidationHandler: EventListener; 
+  // private boundWorkflowValidationHandler: EventListener; 
   
   constructor() {
     super();
+    
     // Create a bound handler that we can both add and remove
-    this.boundWorkflowValidationHandler = ((event: Event) => {
-      this.handleWorkflowValidation(event as CustomEvent);
-    }) as EventListener;
+    // this.boundWorkflowValidationHandler = ((event: Event) => {
+    //   console.log("Workflow validation event received", (event as any).detail);
+    //   this.handleWorkflowValidation(event as CustomEvent);
+    // }) as EventListener;
   }
   
   /**
@@ -262,8 +264,9 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
   /**
    * Handle workflow validation events
    */
-  private handleWorkflowValidation(event: CustomEvent): void {
-    const validationData = event.detail as WorkflowValidationEvent;
+  private handleWorkflowValidation(event: Event): void {
+    const customEvent = event as CustomEvent;
+    const validationData = customEvent.detail as WorkflowValidationEvent;
     this.isPrimaryActionEnabled = validationData.isValid;
     this.validationMessage = validationData.message || "";
     
@@ -299,7 +302,8 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
       this.activeWorkflow = workflowElement as WorkflowBase;
       
       // Set up event listener for validation events - use our bound handler
-      workflowElement.addEventListener('workflowValidation', this.boundWorkflowValidationHandler);
+      // workflowElement.addEventListener('workflowValidation', this.boundWorkflowValidationHandler);
+      workflowElement.addEventListener('workflowValidation', this.handleWorkflowValidation.bind(this));
       
       // Connect the workflow to this host
       this.activeWorkflow.setHost(this);
@@ -323,7 +327,8 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
   private clearWorkflow(): void {
     if (this.activeWorkflow) {
       // Remove event listeners - use our bound handler to ensure proper removal
-      this.activeWorkflow.removeEventListener('workflowValidation', this.boundWorkflowValidationHandler);
+      // this.activeWorkflow.removeEventListener('workflowValidation', this.boundWorkflowValidationHandler);
+      this.activeWorkflow.removeEventListener('workflowValidation', this.handleWorkflowValidation.bind(this));
       
       // Reference the modal body
       const modalBody = this.shadowRoot?.querySelector('.modal-body');
