@@ -4,6 +4,7 @@ import { searchService, SearchResultItem } from '../services/search-service';
 const template = html<SearchComponent>/*html*/`
   <div class="search-container">
     <input 
+      ${ref('inputElement')}
       :inputValue="${x => x.searchText}"
       type="text" 
       placeholder="Search for anything..." 
@@ -11,7 +12,6 @@ const template = html<SearchComponent>/*html*/`
       @focus="${x => x.handleFocus()}"
       @blur="${x => x.handleBlur()}"
       @input="${(x, c) => x.handleInput(c.event)}"
-
     />
     <div class="search-suggestions ${x => x.showSuggestions ? 'visible' : ''}">
       ${when(x => x.searchResults.length === 0 && x.showSuggestions && !x.searchText, html<SearchComponent>/*html*/`
@@ -224,6 +224,9 @@ export class SearchComponent extends FASTElement {
   // Reference to the input element
   inputElement!: HTMLInputElement;
   
+  // Flag to track if a result was just selected
+  private resultJustSelected = false;
+  
   connectedCallback(): void {
     super.connectedCallback();
     this.popularItems = searchService.getPopularItems();
@@ -248,33 +251,58 @@ export class SearchComponent extends FASTElement {
   }
 
   handleInput(event: Event) {
+    console.log("Input event:", event);
     this.searchText = (event.target as HTMLInputElement).value;
+    
+    // Always show suggestions when typing, even after selecting a result
+    if (!this.showSuggestions) {
+      this.showSuggestions = true;
+    }
+    
     this.updateResults();
+    
+    // Reset the flag since user is typing again
+    this.resultJustSelected = false;
   }
   
   handleFocus() {
-    this.showSuggestions = true;
-    if (this.searchText) {
-      this.updateResults();
+    // Only show suggestions if we didn't just select a result
+    // This prevents the dropdown from immediately reopening after selection
+    if (!this.resultJustSelected) {
+      this.showSuggestions = true;
+      if (this.searchText) {
+        this.updateResults();
+      }
     }
   }
   
   handleBlur() {
     // Increased delay to ensure click events have time to process
     setTimeout(() => {
-      this.showSuggestions = false;
+      // Only hide suggestions if we're not in the middle of selecting a result
+      if (!this.resultJustSelected) {
+        this.showSuggestions = false;
+      }
+      // Reset the flag after a short delay
+      setTimeout(() => {
+        this.resultJustSelected = false;
+      }, 100);
     }, 300);
   }
   
-  handleKeydown(event: KeyboardEvent) {
-    if (event.key === 'Enter') {
+  handleKeydown(event: Event) {
+    console.log("Keydown event:", event);
+    const keyboardEvent = event as KeyboardEvent;
+    if (keyboardEvent.key === 'Enter') {
       if (this.searchResults.length > 0) {
         this.selectResult(this.searchResults[0]);
       } else {
         this.performSearch();
       }
-    } else if (event.key === 'Escape') {
+    } else if (keyboardEvent.key === 'Escape') {
       this.showSuggestions = false;
+      // Remove focus from the input field
+      this.inputElement.blur();
     }
   }
   
@@ -283,17 +311,13 @@ export class SearchComponent extends FASTElement {
   }
   
   handleItemClick(result: SearchResultItem, event: Event) {
-    // console.debug(`${eventType} event triggered on:`, result);
+    // Prevent default to avoid issues with focus/blur sequence
+    event.preventDefault();
     
-    // Prevent blur from hiding suggestions before click completes
-    // if (eventType === 'mousedown') {
-    //   // This prevents the blur event from firing before the click
-    //   event?.preventDefault();
-    // }
+    // Set flag to indicate we're selecting a result
+    this.resultJustSelected = true;
+    
     this.selectResult(result);
-    // if (eventType === 'click') {
-      
-    // }
   }
   
   selectResult(result: SearchResultItem) {
@@ -304,6 +328,10 @@ export class SearchComponent extends FASTElement {
     // Update input field value to match the selected result
     if (this.inputElement) {
       this.inputElement.value = result.title;
+      
+      // Remove focus from the input after selection
+      // This helps prevent the confusing UI state
+      this.inputElement.blur();
     }
     
     // Handle the result based on its type
@@ -321,6 +349,11 @@ export class SearchComponent extends FASTElement {
       detail: { result }
     });
     this.dispatchEvent(event);
+    
+    // Keep the resultJustSelected flag true for a short time
+    setTimeout(() => {
+      this.resultJustSelected = false;
+    }, 500);
   }
   
   performSearch() {
