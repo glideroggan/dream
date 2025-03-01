@@ -69,17 +69,21 @@ function registerWorkflowWithSearch(workflow: WorkflowDefinition): void {
     description: workflow.description,
     icon: workflow.icon,
     action: () => {
-      console.log(`Starting workflow: ${workflow.id}`);
-      // Use global workflowService if available, otherwise dispatch an event
-      if (window.workflowService) {
-        window.workflowService.startWorkflow(workflow.id);
-      } else {
-        const event = new CustomEvent('start-workflow', {
-          bubbles: true, composed: true,
-          detail: { workflow: workflow.id }
-        });
-        document.dispatchEvent(event);
-      }
+      console.log(`Starting workflow from search: ${workflow.id}`);
+      
+      // Dispatch an event that will cross shadow DOM boundaries
+      const event = new CustomEvent('start-workflow', {
+        bubbles: true, 
+        composed: true, // This allows the event to cross shadow DOM boundaries
+        detail: { workflowId: workflow.id }
+      });
+      
+      document.dispatchEvent(event);
+      
+      // For compatibility with existing code, also use the global service if available
+      // if (window.workflowService) {
+      //   window.workflowService.startWorkflow(workflow.id);
+      // }
     }
   };
   

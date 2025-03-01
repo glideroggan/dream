@@ -13,9 +13,9 @@ export interface AccountType {
 const template = html<CreateAccountWorkflow>/*html*/`
   <div class="create-account-workflow">
     <div class="account-types">
-      ${repeat(x => x.accountTypes, html<AccountType, CreateAccountWorkflow>`
-        <div class="account-type-card ${(_, c) => c.index === c.parent.selectedTypeIndex ? 'selected' : ''}" 
-             @click="${(_, c) => c.parent.selectAccountType(c.index)}">
+      ${repeat(x => x.accountTypes, html<AccountType, CreateAccountWorkflow>/*html*/`
+        <div class="account-type-card ${(x, c) => c.parent.selectedTypeId == x.id ? 'selected' : ''}" 
+             @click="${(x, c) => c.parent.selectAccountType(x.id)}">
           <div class="account-type-icon">${x => x.iconEmoji}</div>
           <div class="account-type-details">
             <h3>${x => x.name}</h3>
@@ -26,7 +26,7 @@ const template = html<CreateAccountWorkflow>/*html*/`
       `)}
     </div>
     
-    <div class="account-form ${x => x.selectedTypeIndex === -1 ? 'hidden' : ''}">
+    <div class="account-form ${x => x.selectedTypeId == '' ? 'hidden' : ''}">
       <div class="form-group">
         <label for="accountName">Account Name</label>
         <input type="text" id="accountName" 
@@ -208,7 +208,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
     }
   ];
   
-  @observable selectedTypeIndex: number = -1;
+  @observable selectedTypeId: string = "";
   @observable accountName: string = "";
   @observable currency: string = "SEK";
   @observable errorMessage: string = "";
@@ -223,9 +223,9 @@ export class CreateAccountWorkflow extends WorkflowBase {
     
     // Pre-select account type if specified in params
     if (params?.accountType && typeof params.accountType === 'string') {
-      const typeIndex = this.accountTypes.findIndex(t => t.id === params.accountType);
-      if (typeIndex >= 0) {
-        this.selectedTypeIndex = typeIndex;
+      const accountType = this.accountTypes.find(t => t.id == params.accountType);
+      if (accountType) {
+        this.selectedTypeId = accountType.id;
         this.validateForm();
       }
     }
@@ -246,12 +246,12 @@ export class CreateAccountWorkflow extends WorkflowBase {
     }, 0);
   }
   
-  selectAccountType(index: number) {
-    this.selectedTypeIndex = index;
+  selectAccountType(id: string) {
+    this.selectedTypeId = id;
     
     // Generate a default name based on the account type
     if (!this.accountName) {
-      const type = this.accountTypes[index];
+      const type = this.accountTypes.find(t => t.id === id)!;
       this.accountName = `My ${type.name.replace(' Account', '')}`;
     }
     
@@ -273,7 +273,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
     this.errorMessage = "";
     
     // Check if an account type is selected
-    if (this.selectedTypeIndex === -1) {
+    if (this.selectedTypeId == '') {
       this.errorMessage = "Please select an account type";
       this.notifyValidation(false, this.errorMessage);
       return false;
@@ -319,7 +319,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
       const repositoryService = getRepositoryService();
       const accountRepo = repositoryService.getAccountRepository();
       
-      const selectedType = this.accountTypes[this.selectedTypeIndex];
+      const selectedType = this.accountTypes.find(t => t.id === this.selectedTypeId)!;
       
       // Create the account (with zero balance by default)
       const newAccount = await accountRepo.create({

@@ -32,7 +32,9 @@ const template = html<SearchComponent>/*html*/`
       ${when(x => x.searchResults.length > 0, html<SearchComponent>/*html*/`
         <div class="suggestions-header">Results</div>
         ${repeat(x => x.searchResults, html<SearchResultItem, SearchComponent>/*html*/`
-          <div class="suggestion-item" @click="${(item, c) => c.parent.selectResult(item)}">
+          <div class="suggestion-item" 
+               @click="${(item, c) => c.parent.handleItemClick(item, c.event)}"
+               @mousedown="${(item, c) => c.parent.handleItemClick(item, c.event)}">
             <div class="suggestion-icon">${item => item.icon || getTypeIcon(item.type)}</div>
             <div class="suggestion-content">
               <div class="suggestion-title">${item => item.title}</div>
@@ -133,6 +135,7 @@ const styles = css`
     align-items: center;
     transition: background-color 0.2s ease;
     position: relative;
+    z-index: 10; /* Ensure this is higher than any potential overlapping elements */
   }
   
   .suggestion-item:hover {
@@ -232,10 +235,10 @@ export class SearchComponent extends FASTElement {
   }
   
   handleBlur() {
-    // Small delay to allow click on suggestions
+    // Increased delay to ensure click events have time to process
     setTimeout(() => {
       this.showSuggestions = false;
-    }, 200);
+    }, 300);
   }
   
   handleKeydown(event: KeyboardEvent) {
@@ -254,8 +257,22 @@ export class SearchComponent extends FASTElement {
     this.searchResults = searchService.search(this.searchText);
   }
   
+  handleItemClick(result: SearchResultItem, event: Event) {
+    // console.log(`${eventType} event triggered on:`, result);
+    
+    // Prevent blur from hiding suggestions before click completes
+    // if (eventType === 'mousedown') {
+    //   // This prevents the blur event from firing before the click
+    //   event?.preventDefault();
+    // }
+    this.selectResult(result);
+    // if (eventType === 'click') {
+      
+    // }
+  }
+  
   selectResult(result: SearchResultItem) {
-    console.log("Selected result:", result);
+    console.log("selectResult called with:", result);
     this.showSuggestions = false;
     this.searchText = result.title;
     
@@ -265,10 +282,11 @@ export class SearchComponent extends FASTElement {
     }
     
     // Handle the result based on its type
-    console.log("Selected result:", result);
     if (result.action) {
+      console.log("Executing action for:", result.title);
       result.action();
     } else if (result.route) {
+      console.log("Navigating to:", result.route);
       window.location.href = result.route;
     }
     

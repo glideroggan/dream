@@ -15,6 +15,11 @@ import { WidgetDefinition, widgetService, WidgetService } from '../services/widg
 import { getSingletonManager } from '../services/singleton-manager'
 import { getRepositoryService } from '../services/repository-service'
 import { getWidgetPreferredSize } from '../widgets/widget-registry'
+import { workflowService } from '../services/workflow-service'
+
+// Add import for the modal component
+import '../components/modal-component'
+import { ModalComponent } from '../components/modal-component'
 
 const template = html<ContentComponent>/*html*/ `
   <div class="content-container">
@@ -27,6 +32,14 @@ const template = html<ContentComponent>/*html*/ `
         <div class="empty-message">Loading...</div>`
       )}
     </div>
+    
+    <!-- Add modal for workflows -->
+    <dream-modal 
+      id="workflowModal"
+      title="${x => x.workflowTitle}" 
+      @close="${x => x.handleModalClose()}"
+      @workflowComplete="${(x,e) => x.handleWorkflowComplete(e.event)}">
+    </dream-modal>
   </div>
 `
 
@@ -100,6 +113,19 @@ const styles = css`
     padding: 2rem;
     color: #666;
   }
+
+  /* Highlight effect for widgets */
+  .widget-highlight {
+    animation: highlight-pulse 2s ease-in-out;
+    box-shadow: 0 0 0 2px var(--accent-color, #0078d4);
+    z-index: 1;
+  }
+  
+  @keyframes highlight-pulse {
+    0% { box-shadow: 0 0 0 2px var(--accent-color, #0078d4); }
+    50% { box-shadow: 0 0 0 6px var(--accent-color, #0078d4); }
+    100% { box-shadow: 0 0 0 2px var(--accent-color, #0078d4); }
+  }
 `
 
 @customElement({
@@ -111,6 +137,7 @@ export class ContentComponent extends FASTElement {
   @observable pageTitle = 'Dashboard'
   @observable activeWidgets: WidgetDefinition[] = []
   @observable ready: boolean = false
+  @observable workflowTitle: string = "Workflow"
 
   private _initialWidgetsLoaded = false
 
@@ -119,6 +146,11 @@ export class ContentComponent extends FASTElement {
     'account': 'lg',    // Account widget is naturally larger
     'welcome': 'md',    // Welcome widget is medium sized
   };
+  
+  // Get a reference to the modal component in the shadow DOM
+  private get modal(): ModalComponent | null {
+    return this.shadowRoot?.getElementById('workflowModal') as ModalComponent | null;
+  }
 
   @attr({ attribute: 'initialwidgets' })
   initialWidgets: string = ''
@@ -145,13 +177,181 @@ export class ContentComponent extends FASTElement {
 
     // Listen for resize events to adjust widget layout
     window.addEventListener('resize', this.handleResize.bind(this));
+    
+    // Listen for start-workflow events
+    document.addEventListener('start-workflow', this.handleWorkflowStart.bind(this));
+    
+    // Listen for focus-widget events
+    document.addEventListener('focus-widget', this.handleWidgetFocus.bind(this));
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
     window.removeEventListener('resize', this.handleResize.bind(this));
+    document.removeEventListener('start-workflow', this.handleWorkflowStart.bind(this));
+    document.removeEventListener('focus-widget', this.handleWidgetFocus.bind(this));
   }
   
+  /**
+   * Handles workflow start events
+   */
+  handleWorkflowStart(event: Event): void {
+    const customEvent = event as CustomEvent;
+    // Get workflowId from event detail - check both 'workflow' and 'workflowId' for compatibility
+    const workflowId = customEvent.detail.workflowId || customEvent.detail.workflow;
+    if (!workflowId) {
+      console.error('No workflow ID provided in start-workflow event');
+      return;
+    }
+    
+    console.log(`Content component starting workflow: ${workflowId}`);
+    
+    // Update workflow title based on workflow ID
+    this.workflowTitle = this.getWorkflowTitle(workflowId);
+    
+    // Open the workflow in the modal
+    this.openWorkflow(workflowId, customEvent.detail.params || {});
+  }
+  
+  /**
+   * Gets a user-friendly title for a workflow based on its ID
+   */
+  private getWorkflowTitle(workflowId: string): string {
+    // Map workflow IDs to friendly titles
+    const titles: Record<string, string> = {
+      'transfer': 'Transfer Money',
+      'kyc': 'Identity Verification',
+      'create-account': 'Create New Account'
+    };
+    
+    return titles[workflowId] || `Start ${workflowId}`;
+  }
+
+  /**
+   * Opens a workflow in the modal
+   */
+  async openWorkflow(workflowId: string, params?: Record<string, any>): Promise<void> {
+    if (!this.modal) {
+      console.error('Modal component not found');
+      return;
+    }
+    
+    // First open the modal
+    this.modal.open();
+    
+    // Then load the workflow
+    const success = await this.modal.loadWorkflow(workflowId, params);
+    if (!success) {
+      console.error(`Failed to load workflow: ${workflowId}`);
+      this.modal.close(); // Close modal on failure
+    }
+  }
+  
+  /**
+   * Handle modal close event
+   */
+  handleModalClose(): void {
+    console.log('Workflow modal closed');
+    
+    // Reset page title
+    this.pageTitle = 'Dashboard';
+  }
+  
+  /**
+   * Handle workflow completion
+   */
+  handleWorkflowComplete(event: Event): void {
+    const result = (event as CustomEvent).detail;
+    console.log('Workflow completed:', result);
+    
+    // Handle specific workflow result actions if needed
+    if (result?.success) {
+      // Show success message or perform additional actions
+      console.log(`Workflow completed successfully: ${JSON.stringify(result.data || {})}`);
+    }
+  }
+  
+  /**
+   * Handles widget focus events
+   */
+  handleWidgetFocus(event: Event): void {
+    const { widgetId } = (event as CustomEvent).detail;
+    if (!widgetId) {
+      console.error('No widget ID provided in focus-widget event');
+      return;
+    }
+    
+    console.log(`Content component focusing widget: ${widgetId}`);
+    
+    // Find the widget element
+    if (this.shadowRoot) {
+      const widgetElement = this.shadowRoot.querySelector(`[data-widget-id="${widgetId}"]`);
+      if (widgetElement) {
+        // Scroll to the widget
+        widgetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Add temporary highlight effect to the widget
+        widgetElement.classList.add('widget-highlight');
+        setTimeout(() => {
+          widgetElement.classList.remove('widget-highlight');
+        }, 2000);
+      } else {
+        // Widget not found - might need to load it
+        console.log(`Widget ${widgetId} not found on page, attempting to load it`);
+        this.loadWidgetById(widgetId);
+      }
+    }
+  }
+
+  /**
+   * Loads a specific widget by its ID
+   */
+  async loadWidgetById(widgetId: string): Promise<void> {
+    try {
+      const widgetService = getSingletonManager().get('WidgetService') as WidgetService;
+      const widgets = await widgetService.loadWidgets([widgetId]);
+      
+      if (widgets.length > 0) {
+        const widget = widgets[0];
+        this.activeWidgets.push(widget);
+        
+        // Add new widget to DOM
+        const widgetContainer = this.shadowRoot?.querySelector('.widgets-container') as HTMLElement;
+        const widgetElement = document.createElement(widget.elementName) as HTMLElement;
+        
+        if (widget.defaultConfig) {
+          (widgetElement as any).config = widget.defaultConfig;
+        }
+        
+        const preferredSize = getWidgetPreferredSize(widget.id);
+        const size = preferredSize || this.widgetSizeMap[widget.id] || 'md';
+        widgetElement.classList.add(`widget-${size}`);
+        widgetElement.setAttribute('data-widget-id', widget.id);
+        
+        // Add highlight effect
+        widgetElement.classList.add('widget-highlight');
+        
+        widgetContainer.appendChild(widgetElement);
+        
+        // Scroll to the newly added widget
+        widgetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Remove highlight after a delay
+        setTimeout(() => {
+          widgetElement.classList.remove('widget-highlight');
+        }, 2000);
+        
+        // Re-optimize layout and save widget configuration
+        this.optimizeLayout();
+        this.saveWidgetConfiguration();
+      } else {
+        console.error(`Widget with ID ${widgetId} could not be loaded`);
+      }
+    } catch (error) {
+      console.error(`Error loading widget ${widgetId}:`, error);
+    }
+  }
+
   /**
    * Load user widget preferences from settings repository
    */
@@ -241,7 +441,6 @@ export class ContentComponent extends FASTElement {
       console.debug(`Loaded ${widgets.length} widgets:`, widgets)
 
       this.activeWidgets.push(...widgets)
-
       console.debug('Active widgets updated:', this.activeWidgets.length);
       this.addWidgetsToDOM()
       this.ready = true
@@ -263,7 +462,6 @@ export class ContentComponent extends FASTElement {
   addWidgetsToDOM() {
     console.debug('Adding widgets to DOM...')
     const widgetContainer = this.shadowRoot?.querySelector('.widgets-container') as HTMLElement
-    
     // If we only have one widget, make it full width
     const useFullWidth = this.activeWidgets.length === 1;
     
@@ -311,7 +509,7 @@ export class ContentComponent extends FASTElement {
       this.setWidgetSize(widget, 'xl');
       return;
     }
-    
+
     // For multiple widgets, use a more complex layout optimization
     const containerWidth = container.offsetWidth;
     
