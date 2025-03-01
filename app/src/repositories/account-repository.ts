@@ -2,10 +2,22 @@ import { Account } from '../services/repository-service';
 import { StorageService } from '../services/storage-service';
 import { UserService } from '../services/user-service';
 import { LocalStorageRepository } from './base-repository';
+import { TransactionRepository } from './transaction-repository';
+
+// Interface for transfer results
+export interface TransferResult {
+  success: boolean;
+  message: string;
+  transactionId?: string;
+}
 
 // Account repository implementation
 export class AccountRepository extends LocalStorageRepository<Account> {
-  constructor(storage: StorageService, userService: UserService) {
+  constructor(
+    storage: StorageService, 
+    userService: UserService,
+    private transactionRepo: TransactionRepository
+  ) {
     super('accounts', storage, userService);
   }
   
@@ -45,23 +57,109 @@ export class AccountRepository extends LocalStorageRepository<Account> {
   
   /**
    * Make a transfer between accounts
+   * @returns TransferResult with success status, message, and transaction ID
    */
-  async transfer(fromId: string, toId: string, amount: number): Promise<boolean> {
-    const fromAccount = await this.getById(fromId);
-    const toAccount = await this.getById(toId);
-    
-    if (!fromAccount || !toAccount) {
-      return false;
+  async transfer(
+    fromId: string, 
+    toId: string, 
+    amount: number, 
+    description?: string
+  ): Promise<TransferResult> {
+    try {
+      const fromAccount = await this.getById(fromId);
+      const toAccount = await this.getById(toId);
+      
+      if (!fromAccount || !toAccount) {
+        return {
+          success: false,
+          message: 'One or more accounts not found'
+        };
+      }
+      
+      if (fromAccount.balance < amount) {
+        return {
+          success: false,
+          message: 'Insufficient funds in source account'
+        };
+      }
+      
+      // Update balances
+      await this.update(fromId, { balance: fromAccount.balance - amount });
+      await this.update(toId, { balance: toAccount.balance + amount });
+      
+      // Create transaction record
+      const transaction = await this.transactionRepo.createTransferTransaction(
+        fromId,
+        toId,
+        amount,
+        fromAccount.currency,
+        description
+      );
+      
+      return {
+        success: true,
+        message: 'Transfer completed successfully',
+        transactionId: transaction.id
+      };
+    } catch (error) {
+      console.error('Transfer failed:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Transfer failed due to an unexpected error'
+      };
     }
-    
-    if (fromAccount.balance < amount) {
-      return false;
+  }
+  
+  /**
+   * Schedule a transfer for future execution
+   */
+  async scheduleTransfer(
+    fromId: string, 
+    toId: string, 
+    amount: number, 
+    scheduledDate: Date, 
+    description?: string
+  ): Promise<TransferResult> {
+    try {
+      const fromAccount = await this.getById(fromId);
+      const toAccount = await this.getById(toId);
+      
+      if (!fromAccount || !toAccount) {
+        return {
+          success: false,
+          message: 'One or more accounts not found'
+        };
+      }
+      
+      // For scheduled transfers, we don't check balance now
+      // We'll check when executing the transfer
+      
+      // Create upcoming transaction record
+      const transaction = await this.transactionRepo.createTransferTransaction(
+        fromId,
+        toId,
+        amount,
+        fromAccount.currency,
+        description,
+        false // not completed yet
+      );
+      
+      // Update the scheduled date
+      await this.transactionRepo.update(transaction.id, {
+        scheduledDate: scheduledDate.toISOString()
+      });
+      
+      return {
+        success: true,
+        message: 'Transfer scheduled successfully',
+        transactionId: transaction.id
+      };
+    } catch (error) {
+      console.error('Scheduling transfer failed:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Scheduling transfer failed due to an unexpected error'
+      };
     }
-    
-    // Update balances
-    await this.update(fromId, { balance: fromAccount.balance - amount });
-    await this.update(toId, { balance: toAccount.balance + amount });
-    
-    return true;
   }
 }

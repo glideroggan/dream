@@ -2,7 +2,7 @@
 - modal primary buttons keeps their last workflow text, we need to reset it when closing
 
 # TODO
-- turn the theme pages into pages
+- ✔️turn the theme pages into pages
 content-component is more of the home-page-component now, and later we should create more theme pages so we need to think about
 some router logic for this, where we change "page" and instead have the router component in the bottom
 

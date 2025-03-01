@@ -1,4 +1,4 @@
-import { WidgetDefinition } from '../services/widget-service';
+import { WidgetDefinition, WidgetService } from '../services/widget-service';
 import { searchService, SearchResultItem } from '../services/search-service';
 
 // Define all available widget IDs
@@ -94,7 +94,7 @@ export function getWidgetsForProduct(productId: string): EnhancedWidgetDefinitio
 /**
  * Registers all widget definitions with the widget service
  */
-export function registerAllWidgets(widgetService: any): void {
+export function registerAllWidgets(widgetService: WidgetService): void {
   console.debug('Registering all widgets...');
   
   for (const widget of widgetDefinitions) {

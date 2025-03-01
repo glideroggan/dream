@@ -2,6 +2,7 @@ import { StorageService, storageService } from './storage-service';
 import { UserService, userService } from './user-service';
 import { SettingsRepository } from '../repositories/settings-repository';
 import { AccountRepository } from '../repositories/account-repository';
+import { TransactionRepository } from '../repositories/transaction-repository';
 
 // Type definitions
 export interface Entity {
@@ -13,6 +14,34 @@ export interface Account extends Entity {
   balance: number;
   currency: string;
   type: string;
+}
+
+export enum TransactionStatus {
+  UPCOMING = 'upcoming',
+  COMPLETED = 'completed',
+  FAILED = 'failed',
+  CANCELLED = 'cancelled'
+}
+
+export enum TransactionType {
+  TRANSFER = 'transfer',
+  DEPOSIT = 'deposit',
+  WITHDRAWAL = 'withdrawal',
+  PAYMENT = 'payment',
+  FEE = 'fee'
+}
+
+export interface Transaction extends Entity {
+  fromAccountId: string;
+  toAccountId?: string;  // Optional for withdrawals, fees
+  amount: number;
+  currency: string;
+  description?: string;
+  status: TransactionStatus;
+  type: TransactionType;
+  createdAt: string; // ISO date string
+  scheduledDate?: string; // ISO date string for upcoming transactions
+  completedDate?: string; // ISO date string for completed transactions
 }
 
 // Repository interface
@@ -37,12 +66,14 @@ export class RepositoryService {
   private static instance: RepositoryService;
   private accountRepo: AccountRepository;
   private settingsRepo: SettingsRepository;
+  private transactionRepo: TransactionRepository;
   
   private constructor(
     private storage: StorageService,
     private userService: UserService
   ) {
-    this.accountRepo = new AccountRepository(storage, userService);
+    this.transactionRepo = new TransactionRepository(storage, userService);
+    this.accountRepo = new AccountRepository(storage, userService, this.transactionRepo);
     this.settingsRepo = new SettingsRepository(storage, userService);
   }
   
@@ -71,6 +102,13 @@ export class RepositoryService {
    */
   getSettingsRepository(): SettingsRepository {
     return this.settingsRepo;
+  }
+  
+  /**
+   * Get the transaction repository
+   */
+  getTransactionRepository(): TransactionRepository {
+    return this.transactionRepo;
   }
   
   /**
