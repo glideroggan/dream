@@ -15,7 +15,8 @@ const context = await build.context({
         'src/widgets/chart/chart-widget.ts',
         'src/widgets/account-widget/account-widget.ts',
         // workflows
-        'src/workflows/transfer/transfer-workflow.ts'
+        'src/workflows/transfer/transfer-workflow.ts',
+        'src/workflows/create-account/create-account-workflow.ts',
     ],
     entryNames: '[dir]/[name]-[hash]',
     assetNames: 'assets/[name]-[hash]',
@@ -28,7 +29,9 @@ const context = await build.context({
     metafile: true,
     minify: true,
     external: [
-        "@widgets/welcome", "@widgets/account", "@workflows/transfer"
+        "@widgets/welcome", "@widgets/account", 
+        "@workflows/transfer",
+        "@workflows/create-account"
     ],
     loader: {
         '.html': 'text',

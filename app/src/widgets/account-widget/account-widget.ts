@@ -1,7 +1,10 @@
-import { FASTElement, customElement, html, css, observable, repeat } from "@microsoft/fast-element";
+import { FASTElement, customElement, html, css, observable, repeat, when } from "@microsoft/fast-element";
 import "../../components/modal-component";
 import { workflowService } from "../../services/workflow-service";
-import { Account } from "../../workflows/transfer/transfer-workflow";
+import { Account, getRepositoryService } from "../../services/repository-service";
+import { StorageService, storageService } from "../../services/storage-service";
+import { WorkflowIds } from "../../workflows/workflow-registry";
+import { ModalComponent } from "../../components/modal-component";
 
 const template = html<AccountWidget>/*html*/ `
   <div class="account-widget">
@@ -12,27 +15,50 @@ const template = html<AccountWidget>/*html*/ `
       </button>
     </div>
     
-    <div class="accounts-list">
-      ${repeat(x => x.accounts, html<Account, AccountWidget>/*html*/`
-        <div class="account-item">
-          <div class="account-info">
-            <div class="account-name">${x => x.name}</div>
-            <div class="account-id">ID: ${x => x.id}</div>
-          </div>
-          <div class="account-balance">
-            <span class="balance-amount">${x => x.balance.toFixed(2)}</span>
-            <span class="balance-currency">${x => x.currency}</span>
-            <button class="workflow-button" @click="${(x, c) => c.parent.openAccountActions(x)}" title="Account Actions">
-              <span>•••</span>
-            </button>
-          </div>
-        </div>
-      `)}
-    </div>
+    ${when(x => x.loading, html<AccountWidget>/*html*/`
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading accounts...</p>
+      </div>
+    `)}
     
-    <div class="widget-footer">
-      <button class="primary-button" @click="${x => x.addAccount()}">Add Account</button>
-    </div>
+    ${when(x => x.error, html<AccountWidget>/*html*/`
+      <div class="error-state">
+        <p class="error-message">${x => x.errorMessage}</p>
+        <button class="retry-button" @click="${x => x.fetchAccounts()}">Retry</button>
+      </div>
+    `)}
+    
+    ${when(x => !x.loading && !x.error, html<AccountWidget>/*html*/`
+      <div class="accounts-list">
+        ${repeat(x => x.accounts, html<Account, AccountWidget>/*html*/`
+          <div class="account-item">
+            <div class="account-info">
+              <div class="account-name">${x => x.name}</div>
+              <div class="account-type">${x => x.type}</div>
+              <div class="account-id">ID: ${x => x.id}</div>
+            </div>
+            <div class="account-balance">
+              <span class="balance-amount">${x => x.balance.toFixed(2)}</span>
+              <span class="balance-currency">${x => x.currency}</span>
+              <button class="workflow-button" @click="${(x, c) => c.parent.openAccountActions(x)}" title="Account Actions">
+                <span>•••</span>
+              </button>
+            </div>
+          </div>
+        `)}
+        
+        ${when(x => x.accounts.length === 0, html<AccountWidget>/*html*/`
+          <div class="no-accounts">
+            <p>You don't have any accounts yet.</p>
+          </div>
+        `)}
+      </div>
+      
+      <div class="widget-footer">
+        <button class="primary-button" @click="${x => x.addAccount()}">Add Account</button>
+      </div>
+    `)}
     
     <!-- Use the reusable modal component -->
     <dream-modal 
@@ -121,6 +147,12 @@ const styles = css`
     margin-bottom: 4px;
   }
   
+  .account-type {
+    font-size: 13px;
+    color: var(--secondary-text, #666);
+    margin-bottom: 2px;
+  }
+  
   .account-id {
     font-size: 12px;
     color: var(--secondary-text, #666);
@@ -178,10 +210,67 @@ const styles = css`
     background-color: var(--primary-color-hover, #2980b9);
   }
   
-  .workflow-placeholder {
-    padding: 20px;
+  .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    flex: 1;
+  }
+  
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: var(--primary-color, #3498db);
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 16px;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
+  .error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    flex: 1;
+  }
+  
+  .error-message {
+    color: var(--error-color, #e74c3c);
     text-align: center;
-    color: #666;
+    margin-bottom: 16px;
+  }
+  
+  .retry-button {
+    background-color: var(--error-color, #e74c3c);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+  }
+  
+  .retry-button:hover {
+    background-color: #c0392b;
+  }
+  
+  .no-accounts {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    color: var(--secondary-text, #666);
+    font-style: italic;
   }
   
   /* Additional styles for transfer workflow */
@@ -217,25 +306,76 @@ const styles = css`
   styles
 })
 export class AccountWidget extends FASTElement {
-  @observable accounts: Account[] = [
-    { id: "acc1", name: "Checking Account", balance: 2543.67, currency: "USD" },
-    { id: "acc2", name: "Savings Account", balance: 12750.42, currency: "USD" },
-    { id: "acc3", name: "Investment Account", balance: 35621.19, currency: "USD" }
-  ];
+  @observable accounts: Account[] = [];
+  @observable loading: boolean = true;
+  @observable error: boolean = false;
+  @observable errorMessage: string = '';
   
   @observable workflowTitle: string = "Account Actions";
   @observable selectedAccount: Account | null = null;
   
-  private get modal(): any {
-    return this.shadowRoot?.getElementById('accountModal');
+  private get modal(): ModalComponent | null {
+    return this.shadowRoot?.getElementById('accountModal') as ModalComponent | null;
   }
 
   connectedCallback() {
     super.connectedCallback();
-    // this.registerWorkflows();
+    this.fetchAccounts();
+    
+    // Listen for storage events from other tabs
+    window.addEventListener('storage', this.handleStorageChange.bind(this));
+  }
+  
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    window.removeEventListener('storage', this.handleStorageChange.bind(this));
+  }
+  
+  /**
+   * Handle storage changes from other tabs
+   */
+  handleStorageChange(event: StorageEvent) {
+    // If accounts data changed, refresh
+    if (event.key?.includes('accounts')) {
+      this.fetchAccounts();
+    }
+  }
+  
+  /**
+   * Fetch accounts from the repository service
+   */
+  async fetchAccounts() {
+    this.loading = true;
+    this.error = false;
+    this.errorMessage = '';
+    
+    try {
+      // Get the repository service
+      const repositoryService = getRepositoryService();
+      const accountRepo = repositoryService.getAccountRepository();
+      
+      // Fetch accounts with a slight delay to show loading state
+      const accounts = await accountRepo.getAll();
+      
+      // Update the accounts property
+      this.accounts = accounts;
+      this.loading = false;
+    } catch (err) {
+      console.error('Failed to fetch accounts:', err);
+      this.error = true;
+      this.errorMessage = err instanceof Error 
+        ? err.message 
+        : 'Failed to load accounts. Please try again.';
+      this.loading = false;
+    }
   }
   
   openTransferWorkflow() {
+    if (this.accounts.length === 0) {
+      alert('You need at least one account to make transfers.');
+      return;
+    }
+    
     this.workflowTitle = "Transfer Money";
     this.selectedAccount = null;
     this.openWorkflow("transfer", { accounts: this.accounts });
@@ -269,12 +409,16 @@ export class AccountWidget extends FASTElement {
   
   handleModalClose() {
     console.log("Modal closed");
+    // If the modal was closed after a potential data change, refresh accounts
+    this.fetchAccounts();
   }
   
-  addAccount() {
-    this.workflowTitle = "Add New Account";
+  async addAccount() {
+    this.workflowTitle = "Create New Account";
     this.selectedAccount = null;
-    this.openModal();
+    
+    // Use the create account workflow instead of directly creating an account
+    this.openWorkflow(WorkflowIds.CREATE_ACCOUNT);
   }
   
   /**
@@ -286,32 +430,44 @@ export class AccountWidget extends FASTElement {
     
     // Handle transfer workflow result
     if (result.success && result.data?.transfer) {
-      const transfer = result.data.transfer;
-      console.log(`Transfer completed: ${transfer.amount} ${transfer.currency} from ${transfer.fromAccountId} to ${transfer.toAccountId}`);
-      
-      // Update account balances
-      this.updateAccountBalances(
-        transfer.fromAccountId,
-        transfer.toAccountId,
-        transfer.amount
-      );
+      // Refresh accounts after transfer
+      this.fetchAccounts();
     }
   }
   
   /**
-   * Update account balances after a transfer
+   * Update an account
    */
-  private updateAccountBalances(fromId: string, toId: string, amount: number): void {
-    // Create a new array to trigger change detection
-    const updatedAccounts = this.accounts.map(account => {
-      if (account.id === fromId) {
-        return { ...account, balance: account.balance - amount };
-      } else if (account.id === toId) {
-        return { ...account, balance: account.balance + amount };
+  async updateAccount(account: Account, updates: Partial<Account>): Promise<void> {
+    try {
+      const repositoryService = getRepositoryService();
+      const accountRepo = repositoryService.getAccountRepository();
+      
+      await accountRepo.update(account.id, updates);
+      this.fetchAccounts(); // Refresh accounts after update
+    } catch (err) {
+      console.error('Failed to update account:', err);
+      alert('Failed to update account. Please try again.');
+    }
+  }
+  
+  /**
+   * Delete an account
+   */
+  async deleteAccount(accountId: string): Promise<void> {
+    try {
+      const repositoryService = getRepositoryService();
+      const accountRepo = repositoryService.getAccountRepository();
+      
+      const success = await accountRepo.delete(accountId);
+      if (success) {
+        this.fetchAccounts(); // Refresh accounts after deletion
+      } else {
+        alert('Could not delete account.');
       }
-      return account;
-    });
-    
-    this.accounts = updatedAccounts;
+    } catch (err) {
+      console.error('Failed to delete account:', err);
+      alert('Failed to delete account. Please try again.');
+    }
   }
 }

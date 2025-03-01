@@ -1,8 +1,17 @@
+import { RepositoryService } from './repository-service';
+
 interface SingletonManagerInterface {
   instances: Map<string, unknown>;
   register<T>(key: string, instance: T): T;
   get<T>(key: string): T | undefined;
   getOrCreate<T>(key: string, factory: () => T): T;
+}
+
+// Define interface for singleton types
+export interface SingletonTypes {
+  'WidgetService': any; // Replace with actual widget service type when available
+  'WorkflowService': any; // Replace with actual workflow service type when available
+  'RepositoryService': RepositoryService; 
 }
 
 // Extend the Window interface to include our singleton manager

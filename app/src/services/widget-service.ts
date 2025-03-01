@@ -1,5 +1,8 @@
 import { getSingletonManager } from './singleton-manager';
 
+// Widget size options
+export type WidgetSize = 'sm' | 'md' | 'lg' | 'xl';
+
 export interface WidgetDefinition {
   id: string;
   name: string;
@@ -7,6 +10,7 @@ export interface WidgetDefinition {
   elementName: string;
   defaultConfig?: Record<string, unknown>;
   module: string; // Path to the module containing the widget
+  preferredSize?: WidgetSize; // Added size preference
 }
 
 type WidgetsRegisteredCallback = () => void;

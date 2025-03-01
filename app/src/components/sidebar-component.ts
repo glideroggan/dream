@@ -1,4 +1,6 @@
 import { FASTElement, customElement, html, css, Observable, observable, repeat, when } from '@microsoft/fast-element';
+import { userService } from '../services/user-service';
+import { searchService, SearchResultItem } from '../services/search-service';
 
 interface MenuItem {
   id: string;
@@ -6,6 +8,8 @@ interface MenuItem {
   icon: string;
   route: string;
   active?: boolean;
+  keywords?: string[];
+  description?: string;
 }
 
 const template = html<SidebarComponent>`
@@ -28,10 +32,10 @@ const template = html<SidebarComponent>`
     
     <div class="sidebar-footer">
       <div class="user-info">
-        <div class="avatar">JD</div>
+        <div class="avatar">${x => x.userInitials}</div>
         <div class="user-details">
-          <div class="user-name">John Doe</div>
-          <div class="user-role">Administrator</div>
+          <div class="user-name">${x => x.userName}</div>
+          <div class="user-role">${x => x.userRole}</div>
         </div>
       </div>
     </div>
@@ -184,13 +188,83 @@ const styles = css`
 })
 export class SidebarComponent extends FASTElement {
   @observable menuItems: MenuItem[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: '📊', route: '#dashboard', active: true },
-    { id: 'accounts', label: 'Accounts', icon: '💰', route: '#accounts' },
-    { id: 'transactions', label: 'Transactions', icon: '📝', route: '#transactions' },
-    { id: 'investments', label: 'Investments', icon: '📈', route: '#investments' },
-    { id: 'reports', label: 'Reports', icon: '📊', route: '#reports' },
-    { id: 'settings', label: 'Settings', icon: '⚙️', route: '#settings' }
+    { 
+      id: 'dashboard', 
+      label: 'Home', 
+      icon: '📊', 
+      route: '#home', 
+      active: true,
+      keywords: ['dashboard', 'start', 'overview', 'main'],
+      description: 'Main dashboard with your personal overview'
+    },
+    { 
+      id: 'savings', 
+      label: 'Savings', 
+      icon: '💰', 
+      route: '#savings',
+      keywords: ['savings', 'save money', 'funds', 'save'],
+      description: 'Manage your savings accounts and goals'
+    },
+    { 
+      id: 'investments', 
+      label: 'Investments', 
+      icon: '📈', 
+      route: '#investments',
+      keywords: ['investments', 'stocks', 'funds', 'portfolio', 'invest'],
+      description: 'Track and manage your investment portfolio' 
+    },
   ];
+
+  @observable userName: string = 'Guest';
+  @observable userRole: string = 'Visitor';
+  @observable userInitials: string = 'G';
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    this.loadUserData();
+    
+    // Register theme pages with search service
+    this.registerThemePagesForSearch();
+    
+    // Add a listener for user changes
+    window.addEventListener('user-updated', this.loadUserData.bind(this));
+  }
+  
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    window.removeEventListener('user-updated', this.loadUserData.bind(this));
+    
+    // Clean up search registrations
+    this.menuItems.forEach(item => {
+      searchService.unregisterItem(item.id);
+    });
+  }
+  
+  registerThemePagesForSearch(): void {
+    this.menuItems.forEach(item => {
+      const searchItem: SearchResultItem = {
+        id: item.id,
+        title: item.label,
+        type: 'theme',
+        keywords: item.keywords || [],
+        description: item.description || `Navigate to ${item.label}`,
+        icon: item.icon,
+        route: item.route,
+        action: () => this.handleNavigation(item)
+      };
+      
+      searchService.registerItem(searchItem);
+    });
+  }
+  
+  loadUserData(): void {
+    const user = userService.getCurrentUser();
+    if (user) {
+      this.userName = `${user.firstName} ${user.lastName}`;
+      this.userRole = user.isLoggedIn ? 'Member' : 'Guest'; 
+      this.userInitials = user.firstName.charAt(0) + user.lastName.charAt(0);
+    }
+  }
 
   handleNavigation(item: MenuItem): void {
     // Update active state
