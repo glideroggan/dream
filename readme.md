@@ -1,8 +1,20 @@
 # BUGS
 - modal primary buttons keeps their last workflow text, we need to reset it when closing
 
+# menu
+## theme pages
+## pages
+### accounts
+- show a more dedicated page with more information about the account
+- show a list of transactions
+- show a list of upcoming payments
+
 # widgets
 ## accounts✔️
+- show a total of the upcoming payments on each account
+- clicking an account should fold down and show a few more transactions and a button to go to the account page
+### smartness
+- check if there is any upcoming payment that will make the account go negative
 ## expenses
 - Should show some insights about the expenses
 - Should show a list of expenses

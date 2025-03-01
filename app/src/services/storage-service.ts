@@ -8,7 +8,7 @@ export class StorageService {
   
   private constructor() {
     this.storageAvailable = this.isStorageAvailable();
-    console.log(`Storage service initialized: Storage available = ${this.storageAvailable}`);
+    console.debug(`Storage service initialized: Storage available = ${this.storageAvailable}`);
   }
   
   /**

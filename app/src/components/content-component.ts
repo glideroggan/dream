@@ -141,7 +141,7 @@ export class ContentComponent extends FASTElement {
       this.loadWidgets()
     }
     
-    console.log(`ContentComponent connected, initialWidgets: "${this.initialWidgets}"`)
+    console.debug(`ContentComponent connected, initialWidgets: "${this.initialWidgets}"`)
 
     // Listen for resize events to adjust widget layout
     window.addEventListener('resize', this.handleResize.bind(this));
@@ -163,7 +163,7 @@ export class ContentComponent extends FASTElement {
       
       // If user has preferred widgets, use them if no initialWidgets specified
       if (!this.initialWidgets && userSettings.preferredWidgets.length > 0) {
-        console.log('Using preferred widgets from user settings:', userSettings.preferredWidgets);
+        console.debug('Using preferred widgets from user settings:', userSettings.preferredWidgets);
         this.initialWidgets = userSettings.preferredWidgets.join(',');
       }
     } catch (error) {
@@ -186,7 +186,7 @@ export class ContentComponent extends FASTElement {
           preferredWidgets: widgetIds
         });
         
-        console.log('Saved widget configuration:', widgetIds);
+        console.debug('Saved widget configuration:', widgetIds);
       }
     } catch (error) {
       console.error('Error saving widget configuration:', error);
@@ -194,7 +194,7 @@ export class ContentComponent extends FASTElement {
   }
 
   async loadWidgets(): Promise<void> {
-    console.log('Loading widgets...')
+    console.debug('Loading widgets...')
     await this.loadWidgetsFromAttribute()
   }
 
@@ -206,25 +206,25 @@ export class ContentComponent extends FASTElement {
     super.attributeChangedCallback(name, oldValue, newValue)
 
     if (name === 'initialwidgets' && newValue !== oldValue) {
-      console.log(`initialWidgets attribute changed to: "${newValue}"`)
+      console.debug(`initialWidgets attribute changed to: "${newValue}"`)
       this.initialWidgets = newValue
     }
   }
 
   async activateWidgets(): Promise<void> {
-    console.log('Activating widgets...')
+    console.debug('Activating widgets...')
     await this.loadWidgetsFromAttribute()
   }
 
   async loadWidgetsFromAttribute(): Promise<void> {
-    console.log('Loading widgets:', this.initialWidgets)
+    console.debug('Loading widgets:', this.initialWidgets)
     if (this.initialWidgets && !this._initialWidgetsLoaded) {
       const widgetIds = this.initialWidgets
         .split(',')
         .map((id) => id.trim())
         .filter((id) => id)
       if (widgetIds.length > 0) {
-        console.log(`Loading widgets: ${widgetIds.join(', ')}`)
+        console.debug(`Loading widgets: ${widgetIds.join(', ')}`)
         this._initialWidgetsLoaded = true
         await this.loadInitialWidgets(widgetIds)
       }
@@ -232,20 +232,20 @@ export class ContentComponent extends FASTElement {
   }
 
   async loadInitialWidgets(widgetIds: string[]): Promise<void> {
-    console.log('Loading initial widgets:', widgetIds)
+    console.debug('Loading initial widgets:', widgetIds)
     try {
       const widgetService = getSingletonManager().get(
         'WidgetService'
       ) as WidgetService
       const widgets = await widgetService.loadWidgets(widgetIds)
-      console.log(`Loaded ${widgets.length} widgets:`, widgets)
+      console.debug(`Loaded ${widgets.length} widgets:`, widgets)
 
       this.activeWidgets.push(...widgets)
 
-      console.log('Active widgets updated:', this.activeWidgets.length);
+      console.debug('Active widgets updated:', this.activeWidgets.length);
       this.addWidgetsToDOM()
       this.ready = true
-      console.log('Content ready:', this.ready)
+      console.debug('Content ready:', this.ready)
 
       // After widgets are added, evaluate layout optimization
       this.optimizeLayout();
@@ -261,7 +261,7 @@ export class ContentComponent extends FASTElement {
    * Adds widgets to the DOM with appropriate size classes
    */
   addWidgetsToDOM() {
-    console.log('Adding widgets to DOM...')
+    console.debug('Adding widgets to DOM...')
     const widgetContainer = this.shadowRoot?.querySelector('.widgets-container') as HTMLElement
     
     // If we only have one widget, make it full width

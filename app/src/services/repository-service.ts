@@ -83,7 +83,7 @@ export class RepositoryService {
       this.storage.removeItem(key);
     }
     
-    console.log('All repository data cleared');
+    console.debug('All repository data cleared');
   }
 }
 

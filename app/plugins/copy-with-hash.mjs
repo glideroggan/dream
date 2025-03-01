@@ -14,14 +14,14 @@ export function htmlUpdaterPlugin(options) {
           if (v.endsWith('.d.ts') || v.endsWith('.map')) {
             return;
           }
-          // console.log(v);
+          // console.debug(v);
           let scriptHash = path.basename(v);
-          // console.log('basename: ', scriptHash);
+          // console.debug('basename: ', scriptHash);
           
           // replace the hash at the end with nothing to get the base name
           const baseScriptName = '/' + scriptHash.replace(/-[a-zA-Z0-9]{8}\.js/, '.js');
           scriptHash = '/' + scriptHash;
-          // console.log('baseScriptName: ', baseScriptName);
+          // console.debug('baseScriptName: ', baseScriptName);
           
           // // extract the base name of the script (without hash)
           // const baseScriptName = scriptHash.split('-').slice(0, -1).join('-') + '.js';
@@ -31,7 +31,7 @@ export function htmlUpdaterPlugin(options) {
             return;
           }
           // replace the base script name with the hashed script name
-          // console.log(`replacing ${baseScriptName} with /${scriptHash}`);
+          // console.debug(`replacing ${baseScriptName} with /${scriptHash}`);
           html = html.replace(regex, scriptHash);
         });
 

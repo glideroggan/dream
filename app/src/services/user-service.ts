@@ -19,7 +19,7 @@ export class UserService {
   
   private constructor(private storage: StorageService) {
     this.loadUser();
-    console.log('User service initialized');
+    console.debug('User service initialized');
   }
   
   /**
@@ -65,7 +65,7 @@ export class UserService {
       this.saveUser();
     }
     
-    console.log('Loaded user:', this.currentUser?.username);
+    console.debug('Loaded user:', this.currentUser?.username);
   }
   
   /**

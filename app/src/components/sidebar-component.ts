@@ -12,7 +12,7 @@ interface MenuItem {
   description?: string;
 }
 
-const template = html<SidebarComponent>`
+const template = html<SidebarComponent>/*html*/`
   <div class="sidebar">
     <nav class="menu">
       <ul>

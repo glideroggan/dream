@@ -84,9 +84,6 @@ export abstract class WorkflowBase extends FASTElement {
     this.dispatchEvent(new CustomEvent('workflowValidation', {
       detail: { isValid, message } as WorkflowValidationEvent
     }));
-    // this.$emit('workflowValidation', { 
-    //   detail: { isValid, message } as WorkflowValidationEvent 
-    // });
   }
   
   /**

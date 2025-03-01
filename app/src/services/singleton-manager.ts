@@ -44,7 +44,7 @@ export function initSingletonManager(): void {
       }
     };
     
-    console.log("SingletonManager initialized on window object");
+    console.debug("SingletonManager initialized on window object");
   }
 }
 

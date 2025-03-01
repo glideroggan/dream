@@ -14,10 +14,11 @@ const template = html<SearchComponent>/*html*/`
 
     />
     <div class="search-suggestions ${x => x.showSuggestions ? 'visible' : ''}">
-      ${when(x => x.searchResults.length === 0 && x.showSuggestions && !x.searchText, html<SearchComponent>`
+      ${when(x => x.searchResults.length === 0 && x.showSuggestions && !x.searchText, html<SearchComponent>/*html*/`
         <div class="suggestions-header">Popular</div>
-        ${repeat(x => x.popularItems, html<SearchResultItem, SearchComponent>`
-          <div class="suggestion-item" @click="${(item, c) => c.parent.selectResult(item)}">
+        ${repeat(x => x.popularItems, html<SearchResultItem, SearchComponent>/*html*/`
+          <div class="suggestion-item" 
+              @click="${(item, c) => c.parent.selectResult(item)}">
             <div class="suggestion-icon">${item => item.icon || getTypeIcon(item.type)}</div>
             <div class="suggestion-content">
               <div class="suggestion-title">${item => item.title}</div>
@@ -28,9 +29,9 @@ const template = html<SearchComponent>/*html*/`
         `)}
       `)}
       
-      ${when(x => x.searchResults.length > 0, html<SearchComponent>`
+      ${when(x => x.searchResults.length > 0, html<SearchComponent>/*html*/`
         <div class="suggestions-header">Results</div>
-        ${repeat(x => x.searchResults, html<SearchResultItem, SearchComponent>`
+        ${repeat(x => x.searchResults, html<SearchResultItem, SearchComponent>/*html*/`
           <div class="suggestion-item" @click="${(item, c) => c.parent.selectResult(item)}">
             <div class="suggestion-icon">${item => item.icon || getTypeIcon(item.type)}</div>
             <div class="suggestion-content">
@@ -254,6 +255,7 @@ export class SearchComponent extends FASTElement {
   }
   
   selectResult(result: SearchResultItem) {
+    console.log("Selected result:", result);
     this.showSuggestions = false;
     this.searchText = result.title;
     
@@ -263,6 +265,7 @@ export class SearchComponent extends FASTElement {
     }
     
     // Handle the result based on its type
+    console.log("Selected result:", result);
     if (result.action) {
       result.action();
     } else if (result.route) {
@@ -278,7 +281,7 @@ export class SearchComponent extends FASTElement {
   }
   
   performSearch() {
-    console.log("Performing search for:", this.searchText);
+    console.debug("Performing search for:", this.searchText);
     
     // Emit an event for the search action
     const event = new CustomEvent('search', {

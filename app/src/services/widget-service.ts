@@ -24,7 +24,7 @@ export class WidgetService {
 
   // Private constructor for singleton pattern
   private constructor() {
-    console.log("WidgetService instance created");
+    console.debug("WidgetService instance created");
   }
 
   // Singleton accessor
@@ -38,14 +38,14 @@ export class WidgetService {
   }
 
   async registerWidget(widget: WidgetDefinition): Promise<void> {
-    console.log(`Registering widget: ${widget.id} (${widget.name})`);
+    console.debug(`Registering widget: ${widget.id} (${widget.name})`);
     this.registeredWidgets.set(widget.id, widget);
     // this.emitWidgetsRegistered();
   }
 
   getAvailableWidgets(): WidgetDefinition[] {
     const widgets = Array.from(this.registeredWidgets.values());
-    console.log(`Available widgets: ${widgets.length}`);
+    console.debug(`Available widgets: ${widgets.length}`);
     return widgets;
   }
 
@@ -58,7 +58,7 @@ export class WidgetService {
   }
 
   async loadWidget(id: string): Promise<WidgetDefinition | undefined> {
-    console.log(`Attempting to load widget: ${id}`);
+    console.debug(`Attempting to load widget: ${id}`);
     const widget = this.getWidget(id);
     
     if (!widget) {
@@ -68,7 +68,7 @@ export class WidgetService {
 
     if (!this.loadedWidgets.has(id)) {
       if (!this.moduleLoadPromises.has(id)) {
-        console.log(`Importing module for widget ${id}: ${widget.module}`);
+        console.debug(`Importing module for widget ${id}: ${widget.module}`);
         
         // TODO: we should probably lift this logic out, as we will do a lot of dynamic imports
         // Create a promise to track this module load
@@ -77,7 +77,7 @@ export class WidgetService {
             // Small delay to avoid blocking the main thread
             await new Promise(resolve => setTimeout(resolve, 10)); 
             await import(/* @vite-ignore */ widget.module);
-            console.log(`Successfully loaded widget module: ${id}`);
+            console.debug(`Successfully loaded widget module: ${id}`);
             this.loadedWidgets.add(id);
           } catch (error) {
             console.error(`Failed to load widget ${id}:`, error);
@@ -97,18 +97,18 @@ export class WidgetService {
         return undefined;
       }
     } else {
-      console.log(`Widget ${id} already loaded, skipping import`);
+      console.debug(`Widget ${id} already loaded, skipping import`);
     }
 
     return widget;
   }
 
   async loadWidgets(ids: string[]): Promise<WidgetDefinition[]> {
-    console.log(`Loading multiple widgets: ${ids.join(', ')}`);
+    console.debug(`Loading multiple widgets: ${ids.join(', ')}`);
     const promises = ids.map(id => this.loadWidget(id));
     const widgets = await Promise.all(promises);
     const filteredWidgets = widgets.filter((widget): widget is WidgetDefinition => widget !== undefined);
-    console.log(`Successfully loaded ${filteredWidgets.length} out of ${ids.length} widgets`);
+    console.debug(`Successfully loaded ${filteredWidgets.length} out of ${ids.length} widgets`);
     return filteredWidgets;
   }
 
@@ -129,7 +129,7 @@ export class WidgetService {
 
   emitWidgetsRegistered(): void {
     this.areWidgetsRegistered = true;
-    console.log(`Notifying ${this.observers.length} observers that widgets are registered`);
+    console.debug(`Notifying ${this.observers.length} observers that widgets are registered`);
     this.observers.forEach(callback => callback());
     this.observers = []; // Clear the observers list after notifying them
   }
@@ -140,5 +140,5 @@ export class WidgetService {
 }
 
 export const widgetService = WidgetService.getInstance();
-console.log("WidgetService loaded, ", widgetService);
+console.debug("WidgetService loaded, ", widgetService);
 

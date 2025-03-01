@@ -68,7 +68,7 @@ export function getWidgetPreferredSize(widgetId: string): WidgetSize {
  * Registers all widget definitions with the widget service
  */
 export function registerAllWidgets(widgetService: any): void {
-  console.log('Registering all widgets...');
+  console.debug('Registering all widgets...');
   
   for (const widget of widgetDefinitions) {
     // Register with widget service - preserve all original properties
@@ -83,7 +83,7 @@ export function registerAllWidgets(widgetService: any): void {
     };
     
     widgetService.registerWidget(standardWidgetDef);
-    console.log(`Registered widget: ${widget.id}`);
+    console.debug(`Registered widget: ${widget.id}`);
     
     // Register with search if searchable
     if (widget.searchable && widget.keywords) {
@@ -91,7 +91,7 @@ export function registerAllWidgets(widgetService: any): void {
     }
   }
   
-  console.log('All widgets registered');
+  console.debug('All widgets registered');
 }
 
 /**
@@ -112,10 +112,10 @@ function registerWidgetWithSearch(widget: {
     description: widget.description || `View ${widget.name} widget`,
     icon: widget.icon,
     action: () => {
-      console.log(`Navigate or focus on widget: ${widget.id}`);
+      console.debug(`Navigate or focus on widget: ${widget.id}`);
       // You would typically focus on the widget or navigate to its page
       const event = new CustomEvent('focus-widget', {
-        bubbles: true,
+        bubbles: true, composed: true,
         detail: { widgetId: widget.id }
       });
       document.dispatchEvent(event);
@@ -123,5 +123,5 @@ function registerWidgetWithSearch(widget: {
   };
   
   searchService.registerItem(searchItem);
-  console.log(`Registered widget with search: ${widget.id}`);
+  console.debug(`Registered widget with search: ${widget.id}`);
 }

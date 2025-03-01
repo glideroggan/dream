@@ -65,7 +65,7 @@ const serveResults = await context.serve({
     port: 8001,
     servedir: 'dist',
     onRequest: args => {
-        console.log(`${args.method} [${args.path}] ${args.status} (${args.timeInMS}ms)`)
+        console.debug(`${args.method} [${args.path}] ${args.status} (${args.timeInMS}ms)`)
     }
 })
 
@@ -74,7 +74,7 @@ const wait = async () => {
     return new Promise(resolve => {
         // This handler will be triggered when the process is interrupted (e.g., Ctrl+C)
         process.on('SIGINT', () => {
-            console.log('Interrupted by user');
+            console.debug('Interrupted by user');
             resolve();
         });
     });

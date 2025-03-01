@@ -60,12 +60,12 @@ export class WelcomeWidget extends FASTElement {
   @attr username: string = "User";
   
   getStarted() {
-    console.log("Get started clicked");
+    console.debug("Get started clicked");
     // Add implementation
   }
   
   viewTutorial() {
-    console.log("View tutorial clicked");
+    console.debug("View tutorial clicked");
     // Add implementation
   }
 }

@@ -22,7 +22,7 @@ export class WorkflowService {
 
   // Private constructor for singleton pattern
   private constructor() {
-    console.log("WorkflowService instance created");
+    console.debug("WorkflowService instance created");
     this.registerBuiltInWorkflows();
   }
 
@@ -40,7 +40,7 @@ export class WorkflowService {
     config: { tagName: string, importFunc?: () => Promise<any> }
   ): void {
     this.workflows[id] = config;
-    console.log(`Registered workflow: ${id} with tag ${config.tagName}`);
+    console.debug(`Registered workflow: ${id} with tag ${config.tagName}`);
   }
   
   /**
@@ -91,4 +91,4 @@ export class WorkflowService {
 }
 
 export const workflowService = WorkflowService.getInstance();
-console.log("WorkflowService loaded");
+console.debug("WorkflowService loaded");

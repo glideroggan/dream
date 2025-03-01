@@ -1,20 +1,20 @@
 // // Widget Map - Defines all available widgets in the application
 // (function() {
-//   console.log("Widget map initializing");
+//   console.debug("Widget map initializing");
   
 //   if (typeof window.widgetService === 'undefined') {
-//     console.log("Widget service not yet available, creating registry");
+//     console.debug("Widget service not yet available, creating registry");
 //     // Create placeholder if service not available yet
 //     window.widgetRegistry = [];
 //     window.registerWidget = function(widget) {
-//       console.log(`Pre-registering widget: ${widget.id}`);
+//       console.debug(`Pre-registering widget: ${widget.id}`);
 //       window.widgetRegistry.push(widget);
 //     };
 //   }
 
 //   // Register widgets with their metadata
 //   const registerWidget = window.widgetService?.registerWidget || window.registerWidget;
-//   console.log("Registering available widgets");
+//   console.debug("Registering available widgets");
   
 //   // Account Widget
 //   registerWidget({
@@ -36,5 +36,5 @@
 //     defaultConfig: { username: 'Guest' }
 //   });
   
-//   console.log("Widget registration complete");
+//   console.debug("Widget registration complete");
 // })();

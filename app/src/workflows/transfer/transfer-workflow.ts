@@ -294,7 +294,7 @@ export class TransferWorkflow extends WorkflowBase {
     this.resetInvalidStates();
     
     // If we got here, form is valid
-    console.log("Form is valid");
+    console.debug("Form is valid");
     this.notifyValidation(true);
     return true;
   }

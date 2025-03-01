@@ -75,7 +75,7 @@ function registerWorkflowWithSearch(workflow: WorkflowDefinition): void {
         window.workflowService.startWorkflow(workflow.id);
       } else {
         const event = new CustomEvent('start-workflow', {
-          bubbles: true,
+          bubbles: true, composed: true,
           detail: { workflow: workflow.id }
         });
         document.dispatchEvent(event);

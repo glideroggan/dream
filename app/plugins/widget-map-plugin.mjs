@@ -7,7 +7,7 @@ export function widgetMapPlugin() {
     name: 'widget-map-plugin',
     setup(build) {
       build.onStart(async () => {
-        console.log("Building widget map...");
+        console.debug("Building widget map...");
         
         // Find all widget directories
         const widgetDirs = glob.sync('src/widgets/*/');
@@ -66,7 +66,7 @@ export function widgetMapPlugin() {
           fs.mkdirSync('dist', { recursive: true });
         }
         fs.writeFileSync('dist/widget-map.js', widgetMapContent);
-        console.log(`Generated widget map with ${widgets.length} widgets`);
+        console.debug(`Generated widget map with ${widgets.length} widgets`);
       });
     }
   };

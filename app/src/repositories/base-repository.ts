@@ -36,9 +36,9 @@ export abstract class LocalStorageRepository<T extends Entity> implements Reposi
     
     if (data) {
       this.entities = new Map(data.map(entity => [entity.id, entity]));
-      console.log(`Loaded ${this.entities.size} items from ${key}`);
+      console.debug(`Loaded ${this.entities.size} items from ${key}`);
     } else {
-      console.log(`No data found for ${key}, will initialize with mock data`);
+      console.debug(`No data found for ${key}, will initialize with mock data`);
     }
   }
   
@@ -49,7 +49,7 @@ export abstract class LocalStorageRepository<T extends Entity> implements Reposi
     const data = Array.from(this.entities.values());
     const key = this.getUserStorageKey();
     this.storage.setItem(key, data);
-    console.log(`Saved ${data.length} items to ${key}`);
+    console.debug(`Saved ${data.length} items to ${key}`);
   }
   
   /**

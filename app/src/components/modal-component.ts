@@ -182,7 +182,7 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
     
     // Create a bound handler that we can both add and remove
     // this.boundWorkflowValidationHandler = ((event: Event) => {
-    //   console.log("Workflow validation event received", (event as any).detail);
+    //   console.debug("Workflow validation event received", (event as any).detail);
     //   this.handleWorkflowValidation(event as CustomEvent);
     // }) as EventListener;
   }
@@ -270,7 +270,7 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
     this.isPrimaryActionEnabled = validationData.isValid;
     this.validationMessage = validationData.message || "";
     
-    console.log(`Workflow validation: ${validationData.isValid ? 'valid' : 'invalid'} - ${this.validationMessage}`);
+    console.debug(`Workflow validation: ${validationData.isValid ? 'valid' : 'invalid'} - ${this.validationMessage}`);
   }
   
   /**

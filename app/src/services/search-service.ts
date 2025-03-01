@@ -13,12 +13,12 @@ class SearchService {
   private searchableItems: SearchResultItem[] = [];
   
   constructor() {
-    console.log('Search service initialized');
+    console.debug('Search service initialized');
   }
   
   registerItems(items: SearchResultItem[]): void {
     this.searchableItems = [...this.searchableItems, ...items];
-    console.log(`Registered ${items.length} items with search service`);
+    console.debug(`Registered ${items.length} items with search service`);
   }
   
   registerItem(item: SearchResultItem): void {
@@ -41,7 +41,7 @@ class SearchService {
     this.searchableItems = this.searchableItems.filter(item => item.id !== id);
     
     if (initialCount !== this.searchableItems.length) {
-      console.log(`Unregistered search item with id: ${id}`);
+      console.debug(`Unregistered search item with id: ${id}`);
     }
   }
   
@@ -50,7 +50,7 @@ class SearchService {
       return [];
     }
     
-    console.log(`Searching for: "${query}" among ${this.searchableItems.length} items`);
+    console.debug(`Searching for: "${query}" among ${this.searchableItems.length} items`);
     
     const normalizedQuery = query.toLowerCase().trim();
     
@@ -101,9 +101,9 @@ class SearchService {
   }
   
   logSearchableItems(): void {
-    console.log('All searchable items:');
+    console.debug('All searchable items:');
     this.searchableItems.forEach(item => {
-      console.log(`- ${item.title} (${item.type}): keywords=${item.keywords.join(', ')}`);
+      console.debug(`- ${item.title} (${item.type}): keywords=${item.keywords.join(', ')}`);
     });
   }
 }

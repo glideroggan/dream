@@ -408,7 +408,7 @@ export class AccountWidget extends FASTElement {
   }
   
   handleModalClose() {
-    console.log("Modal closed");
+    console.debug("Modal closed");
     // If the modal was closed after a potential data change, refresh accounts
     this.fetchAccounts();
   }
@@ -426,7 +426,7 @@ export class AccountWidget extends FASTElement {
    */
   handleWorkflowComplete(event: CustomEvent) {
     const result = event.detail;
-    console.log("Workflow completed:", result);
+    console.debug("Workflow completed:", result);
     
     // Handle transfer workflow result
     if (result.success && result.data?.transfer) {
