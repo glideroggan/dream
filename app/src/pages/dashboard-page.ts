@@ -228,31 +228,36 @@ export class DashboardPage extends FASTElement {
    * Handle product changes from ProductService
    */
   private handleProductChange(event: ProductChangeEvent): void {
-    console.debug(`Product ${event.type} event received:`, event.product.id);
+    console.debug(`Product ${event.type} event received:`, event.product?.id);
+    const productId = event.productId;
     
     if (event.type === 'add') {
       // When a product is added, add its associated widgets
-      this.addWidgetsForProduct(event.product.id);
+      this.addWidgetsForProduct(productId);
     } else if (event.type === 'remove') {
       // When a product is removed, remove its associated widgets
-      this.removeWidgetsForProduct(event.product.id);
+      this.removeWidgetsForProduct(productId);
     }
   }
   
   /**
    * Check for existing products that should have widgets
    */
-  private checkForProductWidgets(): void {
+  private async checkForProductWidgets(): Promise<void> {
     if (!this.productService) return;
     
-    const products = this.productService.getUserProducts();
-    if (products.length > 0) {
-      console.debug('Checking for product-dependent widgets for existing products:', 
-        products.map(p => p.id).join(', '));
-      
-      products.forEach(product => {
-        this.addWidgetsForProduct(product.id);
-      });
+    try {
+      const products = await this.productService.getProducts();
+      if (products.length > 0) {
+        console.log('Checking for product-dependent widgets for existing products:', 
+          products.map(p => p.id).join(', '));
+        
+        products.forEach(product => {
+          this.addWidgetsForProduct(product.id);
+        });
+      }
+    } catch (error) {
+      console.error('Error checking for product widgets:', error);
     }
   }
   

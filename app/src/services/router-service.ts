@@ -40,7 +40,7 @@ export class RouterService {
    */
   registerRoute(route: Route): void {
     this.routes.set(route.path, route);
-    console.debug(`Registered route: ${route.path} -> ${route.elementName}`);
+    console.log(`Registered route: ${route.path} -> ${route.elementName}`);
   }
   
   /**
@@ -54,6 +54,7 @@ export class RouterService {
    * Navigate to a specific route
    */
   async navigateTo(path: string, options: NavigationOptions = {}): Promise<boolean> {
+    console.log(`check if route exists: ${path}`);
     const route = this.routes.get(path);
     
     if (!route) {
@@ -100,7 +101,7 @@ export class RouterService {
   async initialize(): Promise<void> {
     // Check if we have a hash route already
     if (window.location.hash) {
-      const path = window.location.hash.substring(1); // Remove the # character
+      const path = window.location.hash
       await this.handleRouteChange(path);
     } else {
       // Default to home route if no hash is present
@@ -133,6 +134,7 @@ export class RouterService {
   private setupHashChangeListener(): void {
     window.addEventListener('hashchange', () => {
       const path = window.location.hash.substring(1);
+      console.log(`[hashchange] Hash changed to: ${path}`);
       this.handleRouteChange(path);
     });
   }
@@ -141,6 +143,7 @@ export class RouterService {
    * Handle route change from hash change event
    */
   private async handleRouteChange(path: string): Promise<void> {
+    console.log(`Hash changed to: ${path}`);
     // Extract any query parameters
     let cleanPath = path;
     let params: Record<string, unknown> = {};

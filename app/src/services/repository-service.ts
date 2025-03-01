@@ -3,6 +3,7 @@ import { UserService, userService } from './user-service';
 import { SettingsRepository } from '../repositories/settings-repository';
 import { AccountRepository } from '../repositories/account-repository';
 import { TransactionRepository } from '../repositories/transaction-repository';
+import { ProductRepository } from '../repositories/product-repository';
 
 // Type definitions
 export interface Entity {
@@ -67,6 +68,7 @@ export class RepositoryService {
   private accountRepo: AccountRepository;
   private settingsRepo: SettingsRepository;
   private transactionRepo: TransactionRepository;
+  private productRepo: ProductRepository;
   
   private constructor(
     private storage: StorageService,
@@ -75,6 +77,7 @@ export class RepositoryService {
     this.transactionRepo = new TransactionRepository(storage, userService);
     this.accountRepo = new AccountRepository(storage, userService, this.transactionRepo);
     this.settingsRepo = new SettingsRepository(storage, userService);
+    this.productRepo = new ProductRepository(storage, userService);
   }
   
   /**
@@ -109,6 +112,13 @@ export class RepositoryService {
    */
   getTransactionRepository(): TransactionRepository {
     return this.transactionRepo;
+  }
+  
+  /**
+   * Get the product repository
+   */
+  getProductRepository(): ProductRepository {
+    return this.productRepo;
   }
   
   /**

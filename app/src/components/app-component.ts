@@ -12,7 +12,7 @@ const template = html<AppComponent>/*html*/ `
   <div class="app-container">
     <dream-header></dream-header>
     <div class="app-main">
-      <dream-sidebar @navigation="${(x, c) => x.handleNavigation(c.event)}"></dream-sidebar>
+      <dream-sidebar></dream-sidebar>
       <main class="main-content">
         <dream-router></dream-router>
       </main>
@@ -69,19 +69,34 @@ export class AppComponent extends FASTElement {
     
     // Initialize the router (will navigate to default route if needed)
     routerService.initialize();
+
+    // get the sidebar element, and listen for events
+    const sidebar = this.shadowRoot?.querySelector('dream-sidebar');
+    sidebar?.addEventListener('navigation', this.handleNavigation.bind(this));
   }
   
   /**
    * Handle navigation events from the sidebar
    */
   handleNavigation(event: Event): void {
+    console.log('Received navigation event', event);
     const navigationEvent = event as CustomEvent;
     const item = navigationEvent.detail;
     
     if (item && item.route) {
       // Extract the path from the route (remove the # if present)
-      const path = item.route.replace(/^#/, '');
+      const path = item.route
+      
+      // Use the router service to navigate
       routerService.navigateTo(path);
+      
+      // Log navigation
+      console.log(`Navigating to: ${path}`);
+      
+      // Prevent default browser navigation
+      event.preventDefault();
+    } else {
+      console.warn('Navigation event received but no valid route found', navigationEvent);
     }
   }
 }

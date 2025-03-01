@@ -217,7 +217,8 @@ export class SwishWidget extends FASTElement {
 
   private async loadProductData(): Promise<void> {
     const productService = getProductService();
-    const swishProduct = productService.getProduct('swish-standard');
+    // Use the typed getProduct<T> method to get the SwishProduct
+    const swishProduct = await productService.getProduct<SwishProduct>("swish-standard");
     
     if (swishProduct) {
       this.swishProduct = swishProduct;

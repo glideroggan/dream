@@ -1,5 +1,7 @@
 import { FASTElement, customElement, html, css, observable, repeat, when, ref } from '@microsoft/fast-element';
 import { searchService, SearchResultItem } from '../services/search-service';
+import { getProductService, ProductChangeEvent } from '../services/product-service';
+import { updateWorkflowSearchability } from '../workflows/workflow-registry';
 
 const template = html<SearchComponent>/*html*/`
   <div class="search-container">
@@ -227,6 +229,9 @@ export class SearchComponent extends FASTElement {
   // Flag to track if a result was just selected
   private resultJustSelected = false;
   
+  // Store unsubscribe function for cleanup
+  private unsubscribe?: () => void;
+  
   connectedCallback(): void {
     super.connectedCallback();
     
@@ -237,34 +242,52 @@ export class SearchComponent extends FASTElement {
       this.refreshPopularItems();
     }, 300);
     
-    // Listen for product changes to refresh search items
-    document.addEventListener('user-products-changed', this.handleProductsChanged.bind(this));
+    // Subscribe to product changes using the subscription API
+    const productService = getProductService();
+    this.unsubscribe = productService.subscribe(this.handleProductChange.bind(this));
+    console.log('Search component subscribed to product changes');
   }
   
   // Add method to refresh popular items
   refreshPopularItems(): void {
     console.debug('Refreshing popular items in search component...');
     
-    // Log workflow items and their popular status
-    const allItems = searchService.getSearchableItems();
-    const workflowItems = allItems.filter(item => item.type === 'workflow');
-    console.debug('All workflow items:', 
-      workflowItems.map(item => `${item.title}: popular=${item.popular === true}`).join(', '));
-    
     // Get and log popular items
     this.popularItems = searchService.getPopularItems();
-    console.debug('Popular items loaded:', 
+
+    console.log('Popular items loaded:', 
       this.popularItems.map(i => `${i.title} (${i.type}): popular=${i.popular === true}`).join(', '));
   }
   
   disconnectedCallback(): void {
     super.disconnectedCallback();
-    document.removeEventListener('user-products-changed', this.handleProductsChanged.bind(this));
+    
+    // Clean up subscription when component is disconnected
+    if (this.unsubscribe) {
+      this.unsubscribe();
+      console.debug('Search component unsubscribed from product changes');
+    }
   }
   
-  handleProductsChanged() {
-    // Refresh popular items when products change
-    this.popularItems = searchService.getPopularItems();
+  // Handle product changes via subscription
+  handleProductChange(event: ProductChangeEvent): void {
+    console.log(`Product ${event.type} event received for ${event.productId}, updating search results`);
+
+    // might be better to clear out the lists
+    this.searchResults = [];
+    this.popularItems = [];
+    
+    updateWorkflowSearchability()
+
+    // Refresh popular items
+    this.refreshPopularItems();
+    this.popularItems.forEach(item => {
+      if (!this.searchResults.includes(item)) {
+        searchService.unregisterItem(item.id);
+      }
+    });
+
+    
     
     // If we're currently showing search results, update them as well
     if (this.searchText) {
@@ -329,7 +352,9 @@ export class SearchComponent extends FASTElement {
   }
   
   updateResults() {
+    // Get fresh search results that reflect current state
     this.searchResults = searchService.search(this.searchText);
+    console.debug(`Updated search results for "${this.searchText}":`, this.searchResults.length);
   }
   
   handleItemClick(result: SearchResultItem, event: Event) {

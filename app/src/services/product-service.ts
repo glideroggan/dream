@@ -1,157 +1,294 @@
-import { SwishProduct } from "../workflows/swish-workflow";
+import { getSingletonManager } from './singleton-manager';
+import { getRepositoryService } from './repository-service';
+import { ProductRepository } from '../repositories/product-repository';
 
-// Define event types for product changes
-export type ProductChangeEventType = 'add' | 'remove';
+// Base product interface that all product types extend
+export interface BaseProduct {
+  id: string;
+  name: string;
+  type: string;
+  active: boolean;
+}
+
+// Generic product type with optional properties
+export interface Product extends BaseProduct {
+  properties?: Record<string, any>;
+  [key: string]: any; // Allow any additional properties
+}
+
+export type ProductChangeEventType = 'add' | 'remove' | 'update';
 
 export interface ProductChangeEvent {
   type: ProductChangeEventType;
-  product: SwishProduct;
+  productId: string;
+  product?: Product;
 }
 
-// Define callback type for product change listeners
 export type ProductChangeListener = (event: ProductChangeEvent) => void;
 
-/**
- * Service to manage user products
- */
 export class ProductService {
-  private static instance: ProductService;
-  private userProducts: SwishProduct[] = [];
-  private productIds: Set<string> = new Set();
-  private changeListeners: ProductChangeListener[] = [];
+  private products: Product[] = [];
+  private initialized = false;
+  private changeListeners: Set<ProductChangeListener> = new Set();
+  private productRepository: ProductRepository | null = null;
   
   private constructor() {
-    // Load any saved products from localStorage
-    this.loadProducts();
+    console.debug("ProductService instance created");
+  }
+  
+  // Singleton accessor
+  public static getInstance(): ProductService {
+    const singletonManager = getSingletonManager();
+    return singletonManager.getOrCreate<ProductService>('ProductService', () => new ProductService());
   }
   
   /**
-   * Get the singleton instance of ProductService
+   * Ensure the repository is initialized
    */
-  public static getInstance(): ProductService {
-    if (!ProductService.instance) {
-      ProductService.instance = new ProductService();
+  private async ensureRepositoryInitialized(): Promise<void> {
+    if (!this.productRepository) {
+      const repositoryService = getRepositoryService();
+      this.productRepository = repositoryService.getProductRepository();
+      await this.loadProductsFromRepository();
     }
-    return ProductService.instance;
+  }
+  
+  /**
+   * Load products from the repository
+   */
+  private async loadProductsFromRepository(): Promise<void> {
+    if (!this.productRepository) return;
+    
+    try {
+      const storedProducts = await this.productRepository.getActiveProducts();
+      
+      if (storedProducts.length > 0) {
+        this.products = storedProducts;
+        console.debug("Loaded products from repository:", this.products);
+      } else {
+        this.initializeProducts();
+      }
+      this.initialized = true;
+    } catch (error) {
+      console.error("Error loading products from repository:", error);
+      this.initializeProducts();
+    }
+  }
+  
+  private initializeProducts(): void {
+    // Some initial mock products
+    this.products = [
+      { id: 'checking-account', name: 'Checking Account', type: 'account', active: true },
+      { id: 'savings-account', name: 'Savings Account', type: 'account', active: true },
+      // Don't add Swish initially
+    ];
+    
+    // Save initial products to repository
+    this.products.forEach(product => {
+      this.saveProductToRepository(product);
+    });
+    
+    this.initialized = true;
+    console.debug("Initialized products:", this.products);
+  }
+  
+  /**
+   * Save a product to the repository
+   */
+  private async saveProductToRepository(product: Product): Promise<void> {
+    if (!this.productRepository) await this.ensureRepositoryInitialized();
+    if (!this.productRepository) {
+      console.error("Failed to initialize product repository");
+      return;
+    }
+    
+    try {
+      await this.productRepository.addOrUpdateProduct(product);
+      console.debug(`Saved product to repository: ${product.id}`);
+    } catch (error) {
+      console.error(`Error saving product ${product.id} to repository:`, error);
+    }
+  }
+  
+  /**
+   * Subscribe to product changes
+   * @param listener The callback function to be called when products change
+   * @returns A function that can be called to unsubscribe
+   */
+  public subscribe(listener: ProductChangeListener): () => void {
+    this.changeListeners.add(listener);
+    console.debug(`Subscribed to product changes, total listeners: ${this.changeListeners.size}`);
+    return () => this.unsubscribe(listener);
+  }
+  
+  /**
+   * Unsubscribe from product changes
+   * @param listener The callback function to remove
+   */
+  public unsubscribe(listener: ProductChangeListener): void {
+    this.changeListeners.delete(listener);
+    console.debug(`Unsubscribed from product changes, remaining listeners: ${this.changeListeners.size}`);
+  }
+  
+  /**
+   * Check if the user has a specific product
+   */
+  public async hasProduct(productId: string): Promise<boolean> {
+    await this.ensureRepositoryInitialized();
+    
+    if (this.productRepository) {
+      // Use the repository to check
+      return await this.productRepository.hasActiveProduct(productId);
+    }
+    
+    // Fallback to in-memory check
+    return this.products.some(p => p.id === productId && p.active);
+  }
+  
+  /**
+   * Get all products
+   */
+  public async getProducts(): Promise<Product[]> {
+    await this.ensureRepositoryInitialized();
+    return [...this.products]; // Return a copy to prevent direct modification
+  }
+  
+  /**
+   * Get a specific product by ID with optional type casting
+   */
+  public async getProduct<T extends Product = Product>(productId: string): Promise<T | undefined> {
+    await this.ensureRepositoryInitialized();
+    const product = this.products.find(p => p.id === productId && p.active);
+    return product as T | undefined;
+  }
+  
+  /**
+   * Get products of a specific type
+   */
+  public async getProductsByType<T extends Product = Product>(type: string): Promise<T[]> {
+    await this.ensureRepositoryInitialized();
+    return this.products.filter(p => p.type === type && p.active) as T[];
   }
   
   /**
    * Add a product to the user's account
+   * This method accepts any product type that extends BaseProduct
    */
-  public async addProduct(product: SwishProduct): Promise<void> {
-    if (!this.productIds.has(product.id)) {
-      this.userProducts.push(product);
-      this.productIds.add(product.id);
-      this.saveProducts();
+  public async addProduct<T extends BaseProduct>(product: T): Promise<void> {
+    await this.ensureRepositoryInitialized();
+    
+    // Create a normalized product object that includes all properties
+    const normalizedProduct: Product = {
+      ...product, // Copy all properties from the specialized product
+      type: product.type || 'service',
+      active: true
+    };
+    
+    // Check if product already exists
+    const existingIndex = this.products.findIndex(p => p.id === normalizedProduct.id);
+    
+    if (existingIndex >= 0) {
+      // Update existing product
+      this.products[existingIndex] = { 
+        ...this.products[existingIndex],
+        ...normalizedProduct 
+      };
+      console.debug(`Updated existing product: ${normalizedProduct.id}`);
+      
+      // Save to repository
+      await this.saveProductToRepository(this.products[existingIndex]);
       
       // Notify listeners
-      this.notifyListeners({
-        type: 'add',
-        product
-      });
+      this.notifyProductChange('update', normalizedProduct.id, this.products[existingIndex]);
+    } else {
+      // Add new product
+      this.products.push(normalizedProduct);
+      console.debug(`Added new product: ${normalizedProduct.id}`);
+      
+      // Save to repository
+      await this.saveProductToRepository(normalizedProduct);
+      
+      // Notify listeners
+      this.notifyProductChange('add', normalizedProduct.id, normalizedProduct);
     }
+    
+    // Also dispatch DOM event for backward compatibility
+    this.dispatchProductChangeEvent();
+    
+    return Promise.resolve();
   }
   
   /**
    * Remove a product from the user's account
    */
   public async removeProduct(productId: string): Promise<void> {
-    const product = this.getProduct(productId);
-    if (product) {
-      this.userProducts = this.userProducts.filter(p => p.id !== productId);
-      this.productIds.delete(productId);
-      this.saveProducts();
+    await this.ensureRepositoryInitialized();
+    
+    // Find product index
+    const existingIndex = this.products.findIndex(p => p.id === productId);
+    
+    if (existingIndex >= 0) {
+      // Store product before removing for notification
+      const removedProduct = this.products[existingIndex];
+      
+      // Mark as inactive
+      this.products[existingIndex].active = false;
+      
+      // Update repository
+      if (this.productRepository) {
+        await this.productRepository.deactivateProduct(productId);
+      }
+      
+      console.debug(`Removed product: ${productId}`);
       
       // Notify listeners
-      this.notifyListeners({
-        type: 'remove',
-        product
-      });
+      this.notifyProductChange('remove', productId, removedProduct);
+      
+      // Also dispatch DOM event for backward compatibility
+      this.dispatchProductChangeEvent();
     }
+    
+    return Promise.resolve();
   }
   
   /**
-   * Check if the user has a specific product
+   * Notify subscribers about product changes
    */
-  public hasProduct(productId: string): boolean {
-    return this.productIds.has(productId);
-  }
-  
-  /**
-   * Get all user products
-   */
-  public getUserProducts(): SwishProduct[] {
-    return [...this.userProducts];
-  }
-  
-  /**
-   * Get product by ID
-   */
-  public getProduct(productId: string): SwishProduct | undefined {
-    return this.userProducts.find(p => p.id === productId);
-  }
-  
-  /**
-   * Subscribe to product changes
-   */
-  public subscribe(listener: ProductChangeListener): () => void {
-    this.changeListeners.push(listener);
-    return () => this.unsubscribe(listener);
-  }
-  
-  /**
-   * Unsubscribe from product changes
-   */
-  public unsubscribe(listener: ProductChangeListener): void {
-    const index = this.changeListeners.indexOf(listener);
-    if (index > -1) {
-      this.changeListeners.splice(index, 1);
-    }
-  }
-  
-  /**
-   * Notify all listeners of product changes
-   */
-  private notifyListeners(event: ProductChangeEvent): void {
+  private notifyProductChange(type: ProductChangeEventType, productId: string, product?: Product): void {
+    const event: ProductChangeEvent = { type, productId, product };
+    
     this.changeListeners.forEach(listener => {
       try {
         listener(event);
       } catch (error) {
-        console.error('Error in product change listener:', error);
+        console.error(`Error in product change listener for ${type} event:`, error);
       }
     });
+    
+    console.debug(`Notified ${this.changeListeners.size} listeners about ${type} event for product ${productId}`);
   }
   
   /**
-   * Save products to localStorage
+   * Dispatch DOM event for backward compatibility
+   * This will be removed in a future version
    */
-  private saveProducts(): void {
-    try {
-      localStorage.setItem('userProducts', JSON.stringify(this.userProducts));
-    } catch (error) {
-      console.error('Failed to save products to localStorage:', error);
-    }
-  }
-  
-  /**
-   * Load products from localStorage
-   */
-  private loadProducts(): void {
-    try {
-      const savedProducts = localStorage.getItem('userProducts');
-      if (savedProducts) {
-        this.userProducts = JSON.parse(savedProducts);
-        this.productIds = new Set(this.userProducts.map(p => p.id));
-      }
-    } catch (error) {
-      console.error('Failed to load products from localStorage:', error);
-    }
+  private dispatchProductChangeEvent(): void {
+    // Dispatch a custom event that can be listened to by other components
+    const event = new CustomEvent('user-products-changed', {
+      bubbles: true,
+      composed: true, // Cross shadow DOM boundaries
+      detail: { products: this.getProducts() }
+    });
+    
+    document.dispatchEvent(event);
+    console.debug('Product change DOM event dispatched for backward compatibility');
   }
 }
 
-/**
- * Convenience function to get the product service
- */
+// Export a singleton instance
+export const productService = ProductService.getInstance();
+
+// Export a function to get the product service
 export function getProductService(): ProductService {
-  return ProductService.getInstance();
+  return productService;
 }

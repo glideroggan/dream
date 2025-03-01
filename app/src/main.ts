@@ -22,8 +22,7 @@ declare global {
 console.debug('Main.ts started executing - before imports');
 import { getSingletonManager, initSingletonManager } from './services/singleton-manager'
 initSingletonManager()
-import { WidgetDefinition, WidgetService } from './services/widget-service'
-// import { registerAllWorkflows } from './workflows/workflow-registry';
+import { WidgetDefinition, widgetService } from './services/widget-service'
 import { registerAllWidgets } from './widgets/widget-registry';
 
 // Import this early to ensure search service is available
@@ -40,8 +39,7 @@ window.userService = userService;
 console.debug('Storage and user services initialized');
 
 // Initialize the singleton manager
-const widgetService = getSingletonManager().get('WidgetService') as WidgetService
-
+console.log('Widget service initialized', widgetService)
 // Make services globally available
 window.widgetService = widgetService
 
@@ -51,7 +49,7 @@ window.repositoryService = repositoryService;
 console.debug('Repository service initialized');
 
 // Register widgets with widget service and search
-registerAllWidgets(widgetService);
+await registerAllWidgets(widgetService);
 console.debug('Widgets registered');
 
 const workflowService = getSingletonManager().get('WorkflowService')

@@ -1,6 +1,8 @@
 import { FASTElement, customElement, html, css, Observable, observable, repeat, when } from '@microsoft/fast-element';
 import { userService } from '../services/user-service';
 import { searchService, SearchResultItem } from '../services/search-service';
+import { routerService } from '../services/router-service';
+import { appRoutes, routeIcons, routeMetadata } from '../routes/routes-registry';
 
 interface MenuItem {
   id: string;
@@ -21,7 +23,7 @@ const template = html<SidebarComponent>/*html*/`
             <a href="${item => item.route}" @click="${(item, c) => c.parent.handleNavigation(item)}">
               <div class="menu-item-icon">${item => item.icon}</div>
               <span class="menu-item-label">${item => item.label}</span>
-              ${when(item => item.id === 'dashboard', html`
+              ${when(item => item.id === 'home', html`
                 <span class="badge primary">New</span>
               `)}
             </a>
@@ -117,6 +119,8 @@ const styles = css`
   .menu-item.active a {
     background-color: var(--primary-color, #3498db);
     font-weight: 500;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    transform: translateX(3px);
   }
   
   .menu-item-icon {
@@ -187,40 +191,17 @@ const styles = css`
   styles
 })
 export class SidebarComponent extends FASTElement {
-  @observable menuItems: MenuItem[] = [
-    { 
-      id: 'dashboard', 
-      label: 'Home', 
-      icon: '📊', 
-      route: '#home', 
-      active: true,
-      keywords: ['dashboard', 'start', 'overview', 'main'],
-      description: 'Main dashboard with your personal overview'
-    },
-    { 
-      id: 'savings', 
-      label: 'Savings', 
-      icon: '💰', 
-      route: '#savings',
-      keywords: ['savings', 'save money', 'funds', 'save'],
-      description: 'Manage your savings accounts and goals'
-    },
-    { 
-      id: 'investments', 
-      label: 'Investments', 
-      icon: '📈', 
-      route: '#investments',
-      keywords: ['investments', 'stocks', 'funds', 'portfolio', 'invest'],
-      description: 'Track and manage your investment portfolio' 
-    },
-  ];
-
+  @observable menuItems: MenuItem[] = [];
   @observable userName: string = 'Guest';
   @observable userRole: string = 'Visitor';
   @observable userInitials: string = 'G';
 
   connectedCallback(): void {
     super.connectedCallback();
+    
+    // Initialize menu items from routes
+    this.initializeMenuItems();
+    
     this.loadUserData();
     
     // Register theme pages with search service
@@ -228,6 +209,42 @@ export class SidebarComponent extends FASTElement {
     
     // Add a listener for user changes
     window.addEventListener('user-updated', this.loadUserData.bind(this));
+    
+    // Subscribe to route changes to update active state
+    Observable.getNotifier(routerService).subscribe({
+      handleChange: (source: any, propertyName: string) => {
+        if (propertyName === 'currentRoute') {
+          console.log('Route changed, updating sidebar active item');
+          this.updateActiveMenuItem();
+        }
+      }
+    });
+    
+    // Set initial active state based on current route
+    // Using a small timeout to ensure the routes are registered first
+    setTimeout(() => this.updateActiveMenuItem(), 10);
+  }
+  
+  /**
+   * Initialize menu items from the application routes
+   */
+  private initializeMenuItems(): void {
+    this.menuItems = appRoutes.map(route => {
+      const path = route.path;
+      const metadata = routeMetadata[path] || { keywords: [], description: `Navigate to ${path}` };
+      
+      return {
+        id: path,
+        label: route.title.split(' - ')[0], // Extract the first part of the title
+        icon: routeIcons[path] || '📄', // Default icon if not found
+        route: path,
+        active: false, // Will be set by updateActiveMenuItem
+        keywords: metadata.keywords,
+        description: metadata.description
+      };
+    });
+
+    console.log('Menu items initialized:', this.menuItems);
   }
   
   disconnectedCallback(): void {
@@ -240,6 +257,75 @@ export class SidebarComponent extends FASTElement {
     });
   }
   
+  /**
+   * Update the active menu item based on the current route
+   */
+  private updateActiveMenuItem(): void {
+    const { route } = routerService.getCurrentRoute();
+    
+    if (route) {
+      // Get clean path
+      const currentPath = route.path;
+      
+      console.log(`Updating active menu item for current path: ${currentPath}`);
+      
+      // Update active state for all menu items
+      let foundActive = false;
+      
+      // Create a new array of menu items with updated active state
+      this.menuItems = this.menuItems.map(menuItem => {
+        // Check if this menu item matches the current route
+        const isActive = menuItem.route === currentPath;
+        
+        // If active, log it
+        if (isActive) {
+          foundActive = true;
+          console.log(`Found active menu item: ${menuItem.label} (${menuItem.route})`);
+        }
+        
+        // Return a new object with updated active state
+        return {
+          ...menuItem,
+          active: isActive
+        };
+      });
+      
+      if (!foundActive) {
+        console.warn(`No matching menu item found for route: ${currentPath}`);
+      }
+      
+      // Notify observers of change
+      Observable.notify(this, 'menuItems');
+    }
+  }
+
+  loadUserData(): void {
+    const user = userService.getCurrentUser();
+    if (user) {
+      this.userName = `${user.firstName} ${user.lastName}`;
+      this.userRole = user.isLoggedIn ? 'Member' : 'Guest'; 
+      this.userInitials = user.firstName.charAt(0) + user.lastName.charAt(0);
+    }
+  }
+
+  handleNavigation(item: MenuItem): void {
+    console.log('Navigation triggered for:', item);
+    
+    // Prevent default browser navigation
+    if (event) {
+      event.preventDefault();
+    }
+    
+    // We'll explicitly set active state here to make UI more responsive
+    this.menuItems = this.menuItems.map(menuItem => ({
+      ...menuItem,
+      active: menuItem.id === item.id
+    }));
+    
+    // Emit a navigation event for the parent to handle
+    this.$emit('navigation', item);
+  }
+
   registerThemePagesForSearch(): void {
     this.menuItems.forEach(item => {
       const searchItem: SearchResultItem = {
@@ -255,27 +341,5 @@ export class SidebarComponent extends FASTElement {
       
       searchService.registerItem(searchItem);
     });
-  }
-  
-  loadUserData(): void {
-    const user = userService.getCurrentUser();
-    if (user) {
-      this.userName = `${user.firstName} ${user.lastName}`;
-      this.userRole = user.isLoggedIn ? 'Member' : 'Guest'; 
-      this.userInitials = user.firstName.charAt(0) + user.lastName.charAt(0);
-    }
-  }
-
-  handleNavigation(item: MenuItem): void {
-    // Update active state
-    this.menuItems.forEach(menuItem => {
-      menuItem.active = menuItem.id === item.id;
-    });
-    
-    // Notify observers of change
-    Observable.notify(this, 'menuItems');
-    
-    // You could also emit a custom event here for navigation
-    this.$emit('navigation', { detail: item });
   }
 }

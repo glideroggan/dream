@@ -1,10 +1,8 @@
 import { customElement, html, css, observable, repeat, when } from "@microsoft/fast-element";
 import { WorkflowBase } from "./workflow-base";
-import { getProductService } from "../services/product-service";
+import { getProductService, BaseProduct } from "../services/product-service";
 
-export interface SwishProduct {
-  id: string;
-  name: string;
+export interface SwishProduct extends BaseProduct {
   description: string;
   features: string[];
   price: number;
@@ -236,8 +234,10 @@ const styles = css`
 })
 export class SwishWorkflow extends WorkflowBase {
   @observable product: SwishProduct = {
-    id: "swish-standard",
+    id: "swish-standard",  // This ID must match what's checked in searchDisabledCondition
     name: "Swish Premium",
+    type: "payment-service",
+    active: true,
     description: "Swish is a modern payment solution that enables instant transfers between accounts with enhanced security features.",
     features: [
       "Instant transfers 24/7",
@@ -255,7 +255,7 @@ export class SwishWorkflow extends WorkflowBase {
   @observable agreementChecked: boolean = false;
   @observable showValidationErrors: boolean = false;
   
-  initialize(params?: Record<string, any>): void {
+  async initialize(params?: Record<string, any>): Promise<void> {
     // Override product details if provided in params
     if (params?.product) {
       this.product = { ...this.product, ...params.product };
@@ -273,7 +273,8 @@ export class SwishWorkflow extends WorkflowBase {
     
     // Check if user already has this product
     const productService = getProductService();
-    if (productService.hasProduct(this.product.id)) {
+    const hasProduct = await productService.hasProduct(this.product.id);
+    if (hasProduct) {
       this.isProductAdded = true;
       // No need for agreement if product is already added
       this.agreementChecked = true;
@@ -321,7 +322,8 @@ export class SwishWorkflow extends WorkflowBase {
       const productService = getProductService();
       
       // Check if already added to avoid duplicates
-      if (productService.hasProduct(this.product.id)) {
+      const alreadyAdded = await productService.hasProduct(this.product.id);
+      if (alreadyAdded) {
         this.complete(true, { 
           productId: this.product.id,
           alreadyAdded: true

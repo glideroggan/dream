@@ -94,7 +94,7 @@ export function getWidgetsForProduct(productId: string): EnhancedWidgetDefinitio
 /**
  * Registers all widget definitions with the widget service
  */
-export function registerAllWidgets(widgetService: WidgetService): void {
+export async function registerAllWidgets(widgetService: WidgetService): Promise<void> {
   console.debug('Registering all widgets...');
   
   for (const widget of widgetDefinitions) {
@@ -109,7 +109,7 @@ export function registerAllWidgets(widgetService: WidgetService): void {
       // Do not include search metadata or preferredSize as they aren't part of the standard widget definition
     };
     
-    widgetService.registerWidget(standardWidgetDef);
+    await widgetService.registerWidget(standardWidgetDef);
     console.debug(`Registered widget: ${widget.id}`);
     
     // Register with search if searchable

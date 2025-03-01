@@ -91,7 +91,7 @@ class SearchService {
     // First check if we have any items explicitly marked as popular with exactly true
     const popularItems = this.searchableItems.filter(item => item.popular === true);
     
-    console.debug(`Found ${popularItems.length} items explicitly marked as popular:`, 
+    console.log(`Found ${popularItems.length} items explicitly marked as popular:`, 
       popularItems.map(item => `${item.title} (${item.type})`).join(', '));
     
     // If we have any popular items at all, return just those (sorted by title)
@@ -100,15 +100,16 @@ class SearchService {
         .sort((a, b) => a.title.localeCompare(b.title))
         .slice(0, limit);
     }
+    return []
     
     // Only if we have no explicitly marked popular items, fall back to defaults
-    const regularItems = this.searchableItems
-      .sort((a, b) => a.title.localeCompare(b.title))
-      .slice(0, limit);
+    // const regularItems = this.searchableItems
+    //   .sort((a, b) => a.title.localeCompare(b.title))
+    //   .slice(0, limit);
     
-    console.debug('No items explicitly marked as popular, using defaults:', 
-      regularItems.map(i => `${i.title} (${i.type})`).join(', '));
-    return regularItems;
+    // console.debug('No items explicitly marked as popular, using defaults:', 
+    //   regularItems.map(i => `${i.title} (${i.type})`).join(', '));
+    // return regularItems;
   }
   
   // Helper methods for debugging
