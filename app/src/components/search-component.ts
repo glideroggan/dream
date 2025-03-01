@@ -70,27 +70,26 @@ const styles = css`
   .search-container {
     display: flex;
     flex-direction: column;
-    padding: 0.5rem 0;
-    background-color: #2c3e50;
     position: relative;
+    width: 100%;
   }
   
   .search-input {
-    width: 300px;
-    padding: 0.5rem 0.75rem;
+    width: 100%;
+    padding: 0.6rem 0.75rem;
     border: none;
-    border-radius: 4px;
-    font-size: 1rem;
-    margin-left: auto;
-    margin-right: auto;
+    border-radius: 6px;
+    font-size: 0.9rem;
     background-color: rgba(255, 255, 255, 0.15);
     color: white;
-    transition: background-color 0.2s ease;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 0 transparent;
   }
   
   .search-input:focus {
     outline: none;
     background-color: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
   }
   
   .search-input::placeholder {
@@ -99,20 +98,25 @@ const styles = css`
   
   .search-suggestions {
     position: absolute;
-    top: 100%;
+    top: calc(100% + 10px);
     left: 50%;
     transform: translateX(-50%);
     width: 350px;
     background: white;
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
     display: none;
     z-index: 100;
-    max-height: 400px;
+    max-height: 450px;
     overflow-y: auto;
-    margin-top: 8px;
     padding: 8px 0;
     color: #333;
+    animation: slideDown 0.2s ease-out;
+  }
+  
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
   }
   
   .search-suggestions.visible {
@@ -135,23 +139,26 @@ const styles = css`
     align-items: center;
     transition: background-color 0.2s ease;
     position: relative;
-    z-index: 10; /* Ensure this is higher than any potential overlapping elements */
+    z-index: 10;
+    border-radius: 4px;
+    margin: 0 4px;
   }
   
   .suggestion-item:hover {
-    background-color: #f5f8fa;
+    background-color: #f0f4f8;
   }
   
   .suggestion-icon {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
     background-color: #f0f0f0;
-    border-radius: 6px;
+    border-radius: 8px;
     margin-right: 12px;
-    font-size: 16px;
+    font-size: 18px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
   }
   
   .suggestion-content {
