@@ -1,5 +1,6 @@
 import { customElement, html, css, observable, attr, repeat, when } from "@microsoft/fast-element";
 import { WorkflowBase } from "../workflow-base";
+import { getRepositoryService } from "../../services/repository-service";
 
 export interface Account {
   id: string;
@@ -323,7 +324,7 @@ export class TransferWorkflow extends WorkflowBase {
     });
   }
   
-  executeTransfer() {
+  async executeTransfer() {
     if (!this.validateForm()) return;
     
     const transferDetails: TransferDetails = {
@@ -333,9 +334,31 @@ export class TransferWorkflow extends WorkflowBase {
       currency: this.currency,
       description: this.description
     };
+
+    // TODO: do the transfer here
+    // we need some business logic
+    // other than that, we just use the repositories to do the transfer
+    // later this will be done atmoically in a transaction in the BE
+    const accountRepo = getRepositoryService().getAccountRepository();
+    
+    const fromAccount = await accountRepo.getById(transferDetails.fromAccountId)!;
+    const toAccount = await accountRepo.getById(transferDetails.toAccountId)!;
+    // TODO: handle errors if accounts are not found
+    if (!fromAccount || !toAccount) {
+      this.errorMessage = "One or more accounts not found";
+      this.notifyValidation(false, this.errorMessage);
+      return;
+    }
+
+    toAccount.balance += transferDetails.amount;
+    fromAccount.balance -= transferDetails.amount;
+
+    await accountRepo.update(fromAccount.id, fromAccount);
+    await accountRepo.update(toAccount.id, toAccount);
     
     // Use the workflow base methods to complete
     this.complete(true, { transfer: transferDetails }, "Transfer completed successfully");
+    // TODO: we should probably emit some event, in case other components need to know about the transfer
   }
   
   cancelA() {
@@ -344,6 +367,7 @@ export class TransferWorkflow extends WorkflowBase {
   
   // Handle primary action from modal footer
   public handlePrimaryAction(): void {
+    console.log("primary action, transfer");
     this.executeTransfer();
   }
 }
