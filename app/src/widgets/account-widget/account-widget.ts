@@ -13,8 +13,8 @@ const template = html<AccountWidget>/*html*/ `
   <div class="account-widget">
     <div class="widget-header">
       <h3>Account Balances</h3>
-      <button class="action-button" @click="${x => x.openTransferWorkflow()}" title="Transfer Money">
-        <span class="action-icon">↔️</span>
+      <button class="transfer-button" @click="${x => x.openTransferWorkflow()}" title="Transfer Money">
+        Transfer
       </button>
     </div>
     
@@ -83,6 +83,22 @@ const styles = css`
   h3 {
     margin: 0;
     font-size: 18px;
+  }
+  
+  .transfer-button {
+    background-color: var(--primary-color, #3498db);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+  }
+  
+  .transfer-button:hover {
+    background-color: var(--primary-color-hover, #2980b9);
   }
   
   .action-button {
@@ -207,14 +223,28 @@ export class AccountWidget extends FASTElement {
 
   async connectedCallback() {
     super.connectedCallback();
-    this.fetchAccounts();
     
-    if (this.accountId) {
-      await this.loadTransactions();
-    }
+    try {
+      // First load data
+      await this.fetchAccounts();
+      
+      if (this.accountId) {
+        await this.loadTransactions();
+      }
 
-    // Listen for storage events from other tabs
-    window.addEventListener('storage', this.handleStorageChange.bind(this));
+      // Listen for storage events from other tabs
+      window.addEventListener('storage', this.handleStorageChange.bind(this));
+      
+      // Signal that the widget is initialized
+      this.dispatchEvent(new CustomEvent('initialized', {
+        bubbles: true,
+        composed: true
+      }));
+    } catch (error) {
+      console.error('Error initializing account widget:', error);
+      // Re-throw to let error handling work
+      throw error;
+    }
   }
   
   disconnectedCallback() {
@@ -311,23 +341,21 @@ export class AccountWidget extends FASTElement {
       const repositoryService = getRepositoryService();
       const transactionRepo = repositoryService.getTransactionRepository();
       
-      // Small delay to show the loading state
-      setTimeout(async () => {
-        const transactions = await transactionRepo.getByAccountId(accountId);
-        
-        // Sort transactions by date (newest first)
-        transactions.sort((a, b) => {
-          const dateA = new Date(a.createdAt).getTime();
-          const dateB = new Date(b.createdAt).getTime();
-          return dateB - dateA;
-        });
-        
-        // Use the transaction list component's processTransactionsForDisplay method
-        const transactionList = new TransactionListComponent();
-        this.accountTransactions = transactionList.processTransactionsForDisplay(transactions, accountId);
-        
-        this.isLoadingTransactions = false;
-      }, 500);
+      // Remove the artificial delay
+      const transactions = await transactionRepo.getByAccountId(accountId);
+      
+      // Sort transactions by date (newest first)
+      transactions.sort((a, b) => {
+        const dateA = new Date(a.createdAt).getTime();
+        const dateB = new Date(b.createdAt).getTime();
+        return dateB - dateA;
+      });
+      
+      // Use the transaction list component's processTransactionsForDisplay method
+      const transactionList = new TransactionListComponent();
+      this.accountTransactions = transactionList.processTransactionsForDisplay(transactions, accountId);
+      
+      this.isLoadingTransactions = false;
     } catch (err) {
       console.error('Failed to fetch transactions:', err);
       this.isLoadingTransactions = false;

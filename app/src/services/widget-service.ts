@@ -22,6 +22,11 @@ export class WidgetService {
   private observers: WidgetsRegisteredCallback[] = [];
   private areWidgetsRegistered = false;
 
+  // Add error tracking
+  private widgetLoadErrors: Map<string, string> = new Map();
+  private loadTimeouts: Map<string, number> = new Map();
+  private readonly loadTimeout = 15000; // 15 seconds timeout for widget load
+
   // Private constructor for singleton pattern
   private constructor() {
     console.debug("WidgetService instance created");
@@ -34,7 +39,7 @@ export class WidgetService {
   }
 
   public async signal(): Promise<void> {
-
+    // Implementation omitted
   }
 
   async registerWidget(widget: WidgetDefinition): Promise<void> {
@@ -70,17 +75,42 @@ export class WidgetService {
       if (!this.moduleLoadPromises.has(id)) {
         console.debug(`Importing module for widget ${id}: ${widget.module}`);
         
-        // TODO: we should probably lift this logic out, as we will do a lot of dynamic imports
-        // Create a promise to track this module load
+        // Clear any previous error for this widget
+        this.widgetLoadErrors.delete(id);
+        
+        // Create a promise to track this module load with timeout
         const loadPromise = (async () => {
-          try {
-            // Small delay to avoid blocking the main thread
-            await new Promise(resolve => setTimeout(resolve, 10)); 
-            await import(/* @vite-ignore */ widget.module);
-            console.debug(`Successfully loaded widget module: ${id}`);
-            this.loadedWidgets.add(id);
-          } catch (error) {
+            // Set up timeout for widget load
+            const timeoutId = window.setTimeout(() => {
+              this.widgetLoadErrors.set(id, `Widget ${id} load timed out after ${this.loadTimeout/1000} seconds`);
+              console.error(`Widget load timeout: ${id}`);
+              // Reject the promise if it's still pending
+              if (this.moduleLoadPromises.has(id)) {
+                this.moduleLoadPromises.delete(id);
+              }
+            }, this.loadTimeout);
+            
+            this.loadTimeouts.set(id, timeoutId);
+            
+            // Handle module path
+            const modulePath = widget.module;
+            console.debug(`Loading widget module from: ${modulePath}`);
+            
+            try {
+              await import(/* @vite-ignore */ modulePath);
+              console.debug(`Module ${modulePath} loaded successfully`);
+            }  catch (error) {
             console.error(`Failed to load widget ${id}:`, error);
+            
+            // Clear timeout if we got an error
+            if (this.loadTimeouts.has(id)) {
+              window.clearTimeout(this.loadTimeouts.get(id));
+              this.loadTimeouts.delete(id);
+            }
+            
+            // Store the error message
+            this.widgetLoadErrors.set(id, error instanceof Error ? error.message : `Failed to load widget ${id}`);
+            
             // Remove the promise to allow retries
             this.moduleLoadPromises.delete(id);
             throw error;
@@ -101,6 +131,33 @@ export class WidgetService {
     }
 
     return widget;
+  }
+
+  /**
+   * Check if a widget had a loading error
+   */
+  hasLoadError(id: string): boolean {
+    return this.widgetLoadErrors.has(id);
+  }
+
+  /**
+   * Get error message for a widget
+   */
+  getLoadErrorMessage(id: string): string | undefined {
+    return this.widgetLoadErrors.get(id);
+  }
+
+  /**
+   * Clear load error for retry
+   */
+  clearLoadError(id: string): void {
+    this.widgetLoadErrors.delete(id);
+    
+    // Also clear any timeout
+    if (this.loadTimeouts.has(id)) {
+      window.clearTimeout(this.loadTimeouts.get(id));
+      this.loadTimeouts.delete(id);
+    }
   }
 
   async loadWidgets(ids: string[]): Promise<WidgetDefinition[]> {

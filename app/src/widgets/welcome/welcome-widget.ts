@@ -32,6 +32,18 @@ export class WelcomeWidget extends FASTElement {
   @observable message = 'This is a dynamically loaded widget.';
   @observable config: Record<string, unknown> = {};
 
+  connectedCallback(): void {
+    super.connectedCallback();
+    
+    // Signal that the widget is initialized once connected
+    setTimeout(() => {
+      this.dispatchEvent(new CustomEvent('initialized', {
+        bubbles: true,
+        composed: true
+      }));
+    }, 0);
+  }
+
   configChanged() {
     // Apply any configuration from the parent
     if (this.config.title) {

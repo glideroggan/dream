@@ -19,6 +19,9 @@ import { getProductService, ProductService, ProductChangeEvent } from '../servic
 import '../components/modal-component'
 import { ModalComponent } from '../components/modal-component'
 
+// Import the widget wrapper component
+import '../components/widget-wrapper';
+
 const template = html<DashboardPage>/*html*/ `
   <div class="content-container">
     <div class="content-header">
@@ -169,7 +172,11 @@ export class DashboardPage extends FASTElement {
   }
 
   @attr({ attribute: 'initialwidgets' })
-  initialWidgets: string = 'welcome,account'
+  initialWidgets: string = 'welcome,account,fast-widget,slow-widget,error-widget';
+
+  // Track widget load attempts to prevent infinite retry loops
+  private widgetLoadAttempts: Map<string, number> = new Map();
+  private maxLoadAttempts = 2;
 
   async connectedCallback(): Promise<void> {
     super.connectedCallback()
@@ -198,6 +205,11 @@ export class DashboardPage extends FASTElement {
     
     // Subscribe to product changes
     this.subscribeToProductChanges();
+
+    // Listen for widget-related events
+    document.addEventListener('retry-widget', this.handleRetryWidget.bind(this));
+    document.addEventListener('dismiss-widget', this.handleDismissWidget.bind(this));
+    document.addEventListener('cancel-widget-load', this.handleCancelWidget.bind(this));
   }
 
   disconnectedCallback(): void {
@@ -211,6 +223,10 @@ export class DashboardPage extends FASTElement {
       this.productChangeUnsubscribe();
       this.productChangeUnsubscribe = null;
     }
+
+    document.removeEventListener('retry-widget', this.handleRetryWidget.bind(this));
+    document.removeEventListener('dismiss-widget', this.handleDismissWidget.bind(this));
+    document.removeEventListener('cancel-widget-load', this.handleCancelWidget.bind(this));
   }
   
   /**
@@ -433,30 +449,36 @@ export class DashboardPage extends FASTElement {
         const widget = widgets[0];
         this.activeWidgets.push(widget);
         
-        // Add new widget to DOM
+        // Add new widget with wrapper to DOM
         const widgetContainer = this.shadowRoot?.querySelector('.widgets-container') as HTMLElement;
-        const widgetElement = document.createElement(widget.elementName) as HTMLElement;
         
-        if (widget.defaultConfig) {
-          (widgetElement as any).config = widget.defaultConfig;
-        }
+        // Create wrapper first
+        const wrapperElement = document.createElement('widget-wrapper') as HTMLElement;
+        wrapperElement.setAttribute('widget-id', widget.id);
+        wrapperElement.setAttribute('widget-name', widget.name || widget.id);
+        wrapperElement.setAttribute('state', 'loading');
         
+        // Size classes and data attributes
         const preferredSize = getWidgetPreferredSize(widget.id);
         const size = preferredSize || this.widgetSizeMap[widget.id] || 'md';
-        widgetElement.classList.add(`widget-${size}`);
-        widgetElement.setAttribute('data-widget-id', widget.id);
+        wrapperElement.classList.add(`widget-${size}`);
+        wrapperElement.setAttribute('data-widget-id', widget.id);
         
-        // Add highlight effect
-        widgetElement.classList.add('widget-highlight');
+        // Add the wrapper to the container
+        widgetContainer.appendChild(wrapperElement);
         
-        widgetContainer.appendChild(widgetElement);
+        // Create the actual widget element within the wrapper
+        this.createWidgetElement(widget, wrapperElement);
         
         // Scroll to the newly added widget
-        widgetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        wrapperElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Add highlight effect
+        wrapperElement.classList.add('widget-highlight');
         
         // Remove highlight after a delay
         setTimeout(() => {
-          widgetElement.classList.remove('widget-highlight');
+          wrapperElement.classList.remove('widget-highlight');
         }, 2000);
         
         // Re-optimize layout
@@ -528,41 +550,196 @@ export class DashboardPage extends FASTElement {
   }
 
   /**
-   * Adds widgets to the DOM with appropriate size classes
+   * Adds widgets to the DOM with appropriate size classes and wrapped in widget-wrapper
    */
   addWidgetsToDOM() {
     console.debug('Adding widgets to DOM...')
     const widgetContainer = this.shadowRoot?.querySelector('.widgets-container') as HTMLElement
     
     this.activeWidgets.forEach((widget) => {
-      const widgetElement = document.createElement(widget.elementName) as HTMLElement;
-      
-      if (widget.defaultConfig) {
-        (widgetElement as any).config = widget.defaultConfig;
-      }
+      // Create the wrapper element first
+      const wrapperElement = document.createElement('widget-wrapper') as HTMLElement;
+      wrapperElement.setAttribute('widget-id', widget.id);
+      wrapperElement.setAttribute('widget-name', widget.name || widget.id);
+      wrapperElement.setAttribute('state', 'loading');
       
       // Use registry to get preferred size or fall back to local sizing
       const preferredSize = getWidgetPreferredSize(widget.id);
       const size = preferredSize || this.widgetSizeMap[widget.id] || 'md';
-      widgetElement.classList.add(`widget-${size}`);
+      wrapperElement.classList.add(`widget-${size}`);
       
       // Add a data attribute to help with layout optimization
-      widgetElement.setAttribute('data-widget-id', widget.id);
+      wrapperElement.setAttribute('data-widget-id', widget.id);
       
       // Add min-width information as a data attribute for easier access
       const minWidth = getWidgetMinWidth(widget.id);
-      widgetElement.setAttribute('data-min-width', minWidth.toString());
+      wrapperElement.setAttribute('data-min-width', minWidth.toString());
       
-      widgetContainer.appendChild(widgetElement);
+      // Add the wrapper to the container first
+      widgetContainer.appendChild(wrapperElement);
+      
+      // Now create the actual widget element
+      this.createWidgetElement(widget, wrapperElement);
     });
     
     // Apply initial layout optimization with a slight delay to ensure DOM is ready
     setTimeout(() => this.optimizeLayout(), 50);
   }
+  
+  /**
+   * Creates a widget element and adds it to the wrapper
+   */
+  private async createWidgetElement(widget: WidgetDefinition, wrapperElement: HTMLElement) {
+    try {
+      // Track attempt count
+      this.widgetLoadAttempts.set(widget.id, (this.widgetLoadAttempts.get(widget.id) || 0) + 1);
+      
+      console.debug(`Creating widget element: ${widget.id} (${widget.elementName})`);
+      
+      // Create the actual widget element
+      const widgetElement = document.createElement(widget.elementName) as HTMLElement;
+      console.debug(`Widget element created for ${widget.id}`);
+      
+      if (widget.defaultConfig) {
+        console.debug(`Applying config to ${widget.id}:`, widget.defaultConfig);
+        (widgetElement as any).config = widget.defaultConfig;
+      }
+      
+      // Add an error handler for the widget - this forwards errors to the wrapper
+      widgetElement.addEventListener('error', (event) => {
+        console.error(`Error in widget ${widget.id}:`, event);
+        
+        // Set the wrapper state to error
+        wrapperElement.setAttribute('state', 'error');
+        wrapperElement.setAttribute('error-message', 
+          event instanceof ErrorEvent && event.message 
+            ? event.message 
+            : 'Widget encountered an error during initialization'
+        );
+      });
+      
+      // Add debug logging for initialization events
+      widgetElement.addEventListener('*', (event) => {
+        console.debug(`Widget ${widget.id} event: ${event.type}`);
+      }, true);
+      
+      // Listen for initialization complete
+      const onLoaded = () => {
+        console.debug(`Widget ${widget.id} initialized`);
+        // Update wrapper state to loaded - the wrapper will handle the visual change
+        wrapperElement.setAttribute('state', 'loaded');
+        
+        // Remove the event listener
+        widgetElement.removeEventListener('initialized', onLoaded);
+      };
+      
+      widgetElement.addEventListener('initialized', onLoaded);
+      
+      console.debug(`Adding widget ${widget.id} to wrapper`);
+      // Add the widget to the wrapper
+      wrapperElement.appendChild(widgetElement);
+      
+      // The widget itself will fire the 'initialized' event when ready
+      console.debug(`Waiting for widget ${widget.id} to initialize`);
+      
+    } catch (error) {
+      console.error(`Error creating widget ${widget.id}:`, error);
+      
+      // Set the wrapper state to error
+      wrapperElement.setAttribute('state', 'error');
+      wrapperElement.setAttribute('error-message', 
+        error instanceof Error ? error.message : 'Failed to initialize widget'
+      );
+    }
+  }
 
   /**
-   * Handles browser resize events
+   * Handle retry widget event
    */
+  private handleRetryWidget(event: Event) {
+    const { widgetId } = (event as CustomEvent).detail;
+    if (!widgetId) return;
+    
+    console.debug(`Retrying widget load for ${widgetId}`);
+    
+    // Get the widget definition
+    const widget = this.activeWidgets.find(w => w.id === widgetId);
+    if (!widget) return;
+    
+    // Check if we've exceeded max retry attempts
+    const attempts = this.widgetLoadAttempts.get(widgetId) || 0;
+    if (attempts >= this.maxLoadAttempts) {
+      console.error(`Exceeded max retry attempts (${this.maxLoadAttempts}) for widget ${widgetId}`);
+      
+      // Tell the wrapper to show an error
+      const wrapper = this.shadowRoot?.querySelector(`widget-wrapper[widget-id="${widgetId}"]`);
+      if (wrapper) {
+        wrapper.setAttribute('state', 'error');
+        wrapper.setAttribute('error-message', `Failed to load after ${this.maxLoadAttempts} attempts`);
+      }
+      return;
+    }
+    
+    // Get the wrapper element
+    const wrapper = this.shadowRoot?.querySelector(`widget-wrapper[widget-id="${widgetId}"]`);
+    if (!wrapper) return;
+    
+    // Clear any existing widget content
+    while (wrapper.firstChild) {
+      wrapper.removeChild(wrapper.firstChild);
+    }
+    
+    // Reset the wrapper state - the wrapper will show loading again
+    wrapper.setAttribute('state', 'loading');
+    
+    // Reload the widget
+    this.createWidgetElement(widget, wrapper as HTMLElement);
+  }
+  
+  /**
+   * Handle dismiss widget event
+   */
+  private handleDismissWidget(event: Event) {
+    const { widgetId } = (event as CustomEvent).detail;
+    if (!widgetId) return;
+    
+    console.debug(`Dismissing widget ${widgetId}`);
+    
+    // Remove from active widgets array
+    this.activeWidgets = this.activeWidgets.filter(w => w.id !== widgetId);
+    
+    // Remove from DOM
+    if (this.shadowRoot) {
+      const wrapper = this.shadowRoot.querySelector(`widget-wrapper[data-widget-id="${widgetId}"]`);
+      if (wrapper) {
+        wrapper.remove();
+      }
+    }
+    
+    // Clean up tracking state
+    this.widgetLoadAttempts.delete(widgetId);
+    
+    // Re-optimize layout
+    this.optimizeLayout();
+  }
+  
+  /**
+   * Handle cancel widget load event
+   */
+  private handleCancelWidget(event: Event) {
+    const { widgetId } = (event as CustomEvent).detail;
+    if (!widgetId) return;
+    
+    console.debug(`Cancelling widget load for ${widgetId}`);
+    
+    // Get the wrapper element and set it to error state
+    const wrapper = this.shadowRoot?.querySelector(`widget-wrapper[widget-id="${widgetId}"]`);
+    if (wrapper) {
+      wrapper.setAttribute('state', 'error');
+      wrapper.setAttribute('error-message', 'Widget load cancelled due to timeout');
+    }
+  }
+
   handleResize() {
     this.optimizeLayout();
   }
@@ -572,13 +749,12 @@ export class DashboardPage extends FASTElement {
    */
   optimizeLayout() {
     if (!this.shadowRoot) return;
-    
     const container = this.shadowRoot.querySelector('.widgets-container') as HTMLElement;
     if (!container) return;
     
     const widgets = Array.from(container.children);
     if (widgets.length === 0) return;
-
+    
     const containerWidth = container.offsetWidth;
     
     // Update grid template columns based on widget minimum widths
@@ -587,7 +763,7 @@ export class DashboardPage extends FASTElement {
     // Adjust widget size classes based on available space
     this.distributeWidgetSizes(widgets as HTMLElement[], containerWidth);
   }
-  
+
   /**
    * Updates grid layout based on container width and widget minimum requirements
    */
@@ -602,17 +778,16 @@ export class DashboardPage extends FASTElement {
       maxMinWidth = Math.max(maxMinWidth, minWidth);
     });
     
-    // Calculate how many columns we can fit
+    // Determine ideal column width (at least maxMinWidth, but can be larger)
     const possibleColumns = Math.floor(containerWidth / maxMinWidth);
     const columnsToUse = Math.max(1, possibleColumns);
     
-    // Determine ideal column width (at least maxMinWidth, but can be larger)
-    const columnWidth = Math.max(maxMinWidth, Math.floor(containerWidth / columnsToUse) - 24);
-    
+    let columnWidth = maxMinWidth;
     // Apply the new grid template
     if (columnsToUse === 1) {
       container.style.gridTemplateColumns = '1fr';
     } else {
+      columnWidth = Math.max(maxMinWidth, Math.floor(containerWidth / columnsToUse) - 24);
       container.style.gridTemplateColumns = `repeat(${columnsToUse}, minmax(${columnWidth}px, 1fr))`;
     }
     
@@ -633,7 +808,7 @@ export class DashboardPage extends FASTElement {
     // Log for debugging
     console.debug(`Grid layout: ${columnsToUse} columns of ${columnWidth}px (container: ${containerWidth}px)`);
   }
-  
+
   /**
    * Distributes widget sizes based on available width and column count
    */
@@ -654,7 +829,6 @@ export class DashboardPage extends FASTElement {
       const widgetId = widget.getAttribute('data-widget-id') || '';
       const preferredSize = getWidgetPreferredSize(widgetId);
       const minWidth = getWidgetMinWidth(widgetId);
-      
       let size = preferredSize || this.widgetSizeMap[widgetId] || 'md';
       
       // Adjust size for very wide widgets or narrow containers
@@ -694,12 +868,11 @@ export class DashboardPage extends FASTElement {
   /**
    * Save base widget preferences
    * This only saves the user's explicitly chosen widgets, not product-dependent ones
-   */
+   */ 
   private async saveBaseWidgetPreferences(widgetIds: string[]): Promise<void> {
     try {
       const repoService = getRepositoryService();
       const settingsRepo = repoService.getSettingsRepository();
-      
       await settingsRepo.updateSettings({
         preferredWidgets: widgetIds
       });

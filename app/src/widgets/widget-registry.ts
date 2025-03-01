@@ -6,7 +6,10 @@ import { getProductService } from '../services/product-service';
 export const WidgetIds = {
   ACCOUNT: "account",
   WELCOME: "welcome",
-  SWISH: "swish-widget", // Add Swish widget ID
+  SWISH: "swish-widget",
+  FAST: "fast-widget",
+  SLOW: "slow-widget",
+  ERROR: "error-widget",
   // Add more widget IDs here as needed
 };
 
@@ -75,6 +78,31 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
       // Return true to disable if user does NOT have the product
       return !hasSwish;
     }
+  },
+  // Example widgets for demonstrating different loading states
+  {
+    id: WidgetIds.SLOW,
+    name: 'Slow Loading Widget',
+    description: 'A widget that takes 6 seconds to load',
+    elementName: 'slow-widget',
+    module: '@widgets/slow',
+    preferredSize: 'sm',
+    minWidth: 300,
+    searchable: true,
+    keywords: ['slow', 'demo', 'example', 'loading'],
+    icon: '🐢'
+  },
+  {
+    id: WidgetIds.ERROR,
+    name: 'Error Widget',
+    description: 'A widget that fails to initialize',
+    elementName: 'error-widget',
+    module: '@widgets/error',
+    preferredSize: 'sm',
+    minWidth: 300,
+    searchable: true,
+    keywords: ['error', 'demo', 'example', 'failure'],
+    icon: '❌'
   }
   // Add more widget definitions here
 ];

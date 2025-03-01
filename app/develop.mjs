@@ -23,6 +23,9 @@ const context = await build.context({
         'src/pages/dashboard-page.ts',
         'src/pages/investments-page.ts',
         'src/pages/savings-page.ts',
+        // example widgets
+        'src/widgets/error-widget/error-widget.ts',
+        'src/widgets/slow-widget/slow-widget.ts',
     ],
     entryNames: '[dir]/[name]-[hash]',
     assetNames: 'assets/[name]-[hash]',
@@ -41,6 +44,7 @@ const context = await build.context({
         "@workflows/swish-workflow",
         "@widgets/swish",
         "@pages/dashboard", "@pages/investments", "@pages/savings",
+        "@widgets/error", "@widgets/fast", "@widgets/slow",
     ],
     loader: {
         '.html': 'text',
