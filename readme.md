@@ -29,17 +29,23 @@ some router logic for this, where we change "page" and instead have the router c
 - finishing the workflow should add the product/widget to the page
 
 
-### swish
+### swish✔️
 
 # workflows
 ## open account✔️
 ## kyc
 ## transfer✔️
-## get swish🔧
+- should create transactions
+  - we need a transaction repository
+    - a transaction can be upcoming or completed
+    - a transaction can be recurring
+## get swish✔️
+- when completed, it should add the product to the user✔️
+- having the product means that the page should show the widget✔️
 
 # search
 - clicking the input field should show a potential list in this order:✔️
-    - popular services that you don't have
+    - popular services that you don't have✔️
     - missing popular widgets on this page
 - Should search in theme pages✔️
 - all widgets✔️

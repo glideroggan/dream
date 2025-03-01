@@ -14,12 +14,19 @@ import {
 import { WidgetDefinition, widgetService, WidgetService } from '../services/widget-service'
 import { getSingletonManager } from '../services/singleton-manager'
 import { getRepositoryService } from '../services/repository-service'
-import { getWidgetPreferredSize } from '../widgets/widget-registry'
+import { getWidgetPreferredSize, getWidgetsForProduct } from '../widgets/widget-registry'
 import { workflowService } from '../services/workflow-service'
+import { getProductService, ProductService, ProductChangeEvent } from '../services/product-service'
 
 // Add import for the modal component
 import '../components/modal-component'
 import { ModalComponent } from '../components/modal-component'
+
+// Define product-widget mappings
+interface ProductWidgetMapping {
+  productId: string;
+  widgetId: string;
+}
 
 const template = html<ContentComponent>/*html*/ `
   <div class="content-container">
@@ -140,11 +147,14 @@ export class ContentComponent extends FASTElement {
   @observable workflowTitle: string = "Workflow"
 
   private _initialWidgetsLoaded = false
+  private productService: ProductService | null = null;
+  private productChangeUnsubscribe: (() => void) | null = null;
 
   // Define preferred widget sizes - can be expanded with widget metadata
   private widgetSizeMap: Record<string, 'sm' | 'md' | 'lg' | 'xl'> = {
     'account': 'lg',    // Account widget is naturally larger
     'welcome': 'md',    // Welcome widget is medium sized
+    'swish-widget': 'md' // Our new Swish widget
   };
   
   // Get a reference to the modal component in the shadow DOM
@@ -183,6 +193,9 @@ export class ContentComponent extends FASTElement {
     
     // Listen for focus-widget events
     document.addEventListener('focus-widget', this.handleWidgetFocus.bind(this));
+    
+    // Subscribe to product changes
+    this.subscribeToProductChanges();
   }
 
   disconnectedCallback(): void {
@@ -190,6 +203,106 @@ export class ContentComponent extends FASTElement {
     window.removeEventListener('resize', this.handleResize.bind(this));
     document.removeEventListener('start-workflow', this.handleWorkflowStart.bind(this));
     document.removeEventListener('focus-widget', this.handleWidgetFocus.bind(this));
+    
+    // Unsubscribe from product changes
+    if (this.productChangeUnsubscribe) {
+      this.productChangeUnsubscribe();
+      this.productChangeUnsubscribe = null;
+    }
+  }
+  
+  /**
+   * Subscribe to product changes from ProductService
+   */
+  private subscribeToProductChanges(): void {
+    this.productService = getProductService();
+    this.productChangeUnsubscribe = this.productService.subscribe(this.handleProductChange.bind(this));
+    
+    // Check for product-dependent widgets after initial widgets are loaded
+    setTimeout(() => this.checkForProductWidgets(), 500);
+  }
+  
+  /**
+   * Handle product changes from ProductService
+   */
+  private handleProductChange(event: ProductChangeEvent): void {
+    console.debug(`Product ${event.type} event received:`, event.product.id);
+    
+    if (event.type === 'add') {
+      // When a product is added, add its associated widgets
+      this.addWidgetsForProduct(event.product.id);
+    } else if (event.type === 'remove') {
+      // When a product is removed, remove its associated widgets
+      this.removeWidgetsForProduct(event.product.id);
+    }
+  }
+  
+  /**
+   * Check for existing products that should have widgets
+   */
+  private checkForProductWidgets(): void {
+    if (!this.productService) return;
+    
+    const products = this.productService.getUserProducts();
+    if (products.length > 0) {
+      console.debug('Checking for product-dependent widgets for existing products:', 
+        products.map(p => p.id).join(', '));
+      
+      products.forEach(product => {
+        this.addWidgetsForProduct(product.id);
+      });
+    }
+  }
+  
+  /**
+   * Add widgets associated with a product
+   */
+  private addWidgetsForProduct(productId: string): void {
+    // Use the widget registry to find widgets that require this product
+    const productWidgets = getWidgetsForProduct(productId);
+    
+    if (productWidgets.length > 0) {
+      console.debug(`Adding widgets for product ${productId}:`, productWidgets.map(w => w.id));
+      
+      productWidgets.forEach(widget => {
+        // Check if widget is already active
+        const isActive = this.activeWidgets.some(w => w.id === widget.id);
+        
+        if (!isActive) {
+          this.loadWidgetById(widget.id);
+        }
+      });
+    }
+  }
+  
+  /**
+   * Remove widgets associated with a product
+   */
+  private removeWidgetsForProduct(productId: string): void {
+    // Use the widget registry to find widgets that require this product
+    const productWidgets = getWidgetsForProduct(productId);
+    
+    if (productWidgets.length > 0) {
+      console.debug(`Removing widgets for product ${productId}:`, productWidgets.map(w => w.id));
+      
+      productWidgets.forEach(widget => {
+        const widgetId = widget.id;
+        
+        // Remove from active widgets array
+        this.activeWidgets = this.activeWidgets.filter(w => w.id !== widgetId);
+        
+        // Remove from DOM
+        if (this.shadowRoot) {
+          const widgetElement = this.shadowRoot.querySelector(`[data-widget-id="${widgetId}"]`);
+          if (widgetElement) {
+            widgetElement.remove();
+          }
+        }
+      });
+      
+      // No need to save widget configuration here since product-dependent widgets
+      // will be added/removed automatically when products change
+    }
   }
   
   /**
@@ -266,8 +379,10 @@ export class ContentComponent extends FASTElement {
     
     // Handle specific workflow result actions if needed
     if (result?.success) {
-      // Show success message or perform additional actions
       console.debug(`Workflow completed successfully: ${JSON.stringify(result.data || {})}`);
+      
+      // Product changes will be handled by the ProductService event system
+      // No need to add special handling here as we're subscribed to those events
     }
   }
   
@@ -308,6 +423,12 @@ export class ContentComponent extends FASTElement {
    */
   async loadWidgetById(widgetId: string): Promise<void> {
     try {
+      // Check if this widget is already active
+      if (this.activeWidgets.some(widget => widget.id === widgetId)) {
+        console.debug(`Widget ${widgetId} is already active, not loading again`);
+        return;
+      }
+      
       const widgetService = getSingletonManager().get('WidgetService') as WidgetService;
       const widgets = await widgetService.loadWidgets([widgetId]);
       
@@ -341,55 +462,16 @@ export class ContentComponent extends FASTElement {
           widgetElement.classList.remove('widget-highlight');
         }, 2000);
         
-        // Re-optimize layout and save widget configuration
+        // Re-optimize layout
         this.optimizeLayout();
-        this.saveWidgetConfiguration();
+        
+        // We don't need to save widget configuration for product-based widgets
+        // as they will be added dynamically when products are detected
       } else {
         console.error(`Widget with ID ${widgetId} could not be loaded`);
       }
     } catch (error) {
       console.error(`Error loading widget ${widgetId}:`, error);
-    }
-  }
-
-  /**
-   * Load user widget preferences from settings repository
-   */
-  async loadUserWidgetPreferences(): Promise<void> {
-    try {
-      const repoService = getRepositoryService();
-      const settingsRepo = repoService.getSettingsRepository();
-      const userSettings = await settingsRepo.getCurrentSettings();
-      
-      // If user has preferred widgets, use them if no initialWidgets specified
-      if (!this.initialWidgets && userSettings.preferredWidgets.length > 0) {
-        console.debug('Using preferred widgets from user settings:', userSettings.preferredWidgets);
-        this.initialWidgets = userSettings.preferredWidgets.join(',');
-      }
-    } catch (error) {
-      console.error('Error loading user widget preferences:', error);
-    }
-  }
-  
-  /**
-   * Save the current widget configuration to user settings
-   */
-  async saveWidgetConfiguration(): Promise<void> {
-    try {
-      const widgetIds = this.activeWidgets.map(widget => widget.id);
-      
-      if (widgetIds.length > 0) {
-        const repoService = getRepositoryService();
-        const settingsRepo = repoService.getSettingsRepository();
-        
-        await settingsRepo.updateSettings({
-          preferredWidgets: widgetIds
-        });
-        
-        console.debug('Saved widget configuration:', widgetIds);
-      }
-    } catch (error) {
-      console.error('Error saving widget configuration:', error);
     }
   }
 
@@ -449,8 +531,8 @@ export class ContentComponent extends FASTElement {
       // After widgets are added, evaluate layout optimization
       this.optimizeLayout();
       
-      // Save the widget configuration to user settings
-      this.saveWidgetConfiguration();
+      // Save the user's preferred base widgets configuration
+      this.saveBaseWidgetPreferences(widgetIds);
     } catch (error) {
       console.error('Error loading widgets:', error)
     }
@@ -560,5 +642,43 @@ export class ContentComponent extends FASTElement {
     
     // Add the new size class
     widget.classList.add(`widget-${size}`);
+  }
+
+  /**
+   * Save base widget preferences
+   * This only saves the user's explicitly chosen widgets, not product-dependent ones
+   */
+  private async saveBaseWidgetPreferences(widgetIds: string[]): Promise<void> {
+    try {
+      const repoService = getRepositoryService();
+      const settingsRepo = repoService.getSettingsRepository();
+      
+      await settingsRepo.updateSettings({
+        preferredWidgets: widgetIds
+      });
+      
+      console.debug('Saved base widget preferences:', widgetIds);
+    } catch (error) {
+      console.error('Error saving widget preferences:', error);
+    }
+  }
+
+  /**
+   * Load user widget preferences from settings repository
+   */
+  async loadUserWidgetPreferences(): Promise<void> {
+    try {
+      const repoService = getRepositoryService();
+      const settingsRepo = repoService.getSettingsRepository();
+      const userSettings = await settingsRepo.getCurrentSettings();
+      
+      // If user has preferred widgets, use them if no initialWidgets specified
+      if (!this.initialWidgets && userSettings.preferredWidgets && userSettings.preferredWidgets.length > 0) {
+        console.debug('Using preferred widgets from user settings:', userSettings.preferredWidgets);
+        this.initialWidgets = userSettings.preferredWidgets.join(',');
+      }
+    } catch (error) {
+      console.error('Error loading user widget preferences:', error);
+    }
   }
 }

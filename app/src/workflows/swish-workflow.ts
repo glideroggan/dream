@@ -1,4 +1,4 @@
-import { customElement, html, css, observable, repeat } from "@microsoft/fast-element";
+import { customElement, html, css, observable, repeat, when } from "@microsoft/fast-element";
 import { WorkflowBase } from "./workflow-base";
 import { getProductService } from "../services/product-service";
 
@@ -38,9 +38,20 @@ const template = html<SwishWorkflow>/*html*/`
       }
     </div>
     
-    <div class="product-note">
-      <p>By adding this product to your account, you agree to the terms and conditions. 
-         You can remove it anytime from your account settings.</p>
+    <div class="agreement-container">
+      <div class="agreement-checkbox-wrapper ${x => x.agreementChecked ? 'checked' : ''}" @click="${x => x.toggleAgreement()}">
+        <div class="custom-checkbox">
+          ${when(x => x.agreementChecked, html`
+            <svg class="checkmark" viewBox="0 0 24 24">
+              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"></path>
+            </svg>
+          `)}
+        </div>
+        <span class="checkbox-label">I agree to the terms and conditions. This product can be removed anytime from your account settings.</span>
+      </div>
+      ${when(x => !x.agreementChecked && x.showValidationErrors, html`
+        <div class="error-message">You must agree to the terms before proceeding</div>
+      `)}
     </div>
   </div>
 `;
@@ -142,6 +153,80 @@ const styles = css`
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
   }
+  
+  .agreement-container {
+    margin-top: 12px;
+    padding: 8px 0;
+  }
+  
+  .agreement-checkbox-wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+    user-select: none;
+    padding: 8px;
+    background-color: rgba(0, 0, 0, 0.02);
+    border-radius: 4px;
+    transition: background-color 0.2s;
+  }
+  
+  .agreement-checkbox-wrapper:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+  
+  .agreement-checkbox-wrapper.checked {
+    background-color: rgba(52, 152, 219, 0.05);
+  }
+  
+  /* Custom checkbox design */
+  .custom-checkbox {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-color, #ccc);
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    transition: all 0.2s;
+  }
+  
+  .agreement-checkbox-wrapper:hover .custom-checkbox {
+    border-color: var(--accent-color, #3498db);
+  }
+  
+  .agreement-checkbox-wrapper.checked .custom-checkbox {
+    background-color: var(--accent-color, #3498db);
+    border-color: var(--accent-color, #3498db);
+  }
+  
+  .checkmark {
+    width: 16px;
+    height: 16px;
+    fill: white;
+    animation: scale 0.2s ease-in-out;
+  }
+  
+  @keyframes scale {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
+  
+  .checkbox-label {
+    font-size: 14px;
+    color: var(--text-secondary, #666);
+    line-height: 1.4;
+    flex: 1;
+  }
+  
+  .error-message {
+    color: var(--error-color, #e74c3c);
+    font-size: 14px;
+    margin-top: 6px;
+    animation: fadeIn 0.3s ease-in-out;
+  }
 `;
 
 @customElement({
@@ -167,6 +252,8 @@ export class SwishWorkflow extends WorkflowBase {
   
   @observable productImage?: string;
   @observable isProductAdded: boolean = false;
+  @observable agreementChecked: boolean = false;
+  @observable showValidationErrors: boolean = false;
   
   initialize(params?: Record<string, any>): void {
     // Override product details if provided in params
@@ -181,11 +268,39 @@ export class SwishWorkflow extends WorkflowBase {
     this.updateTitle(`Add ${this.product.name} to Your Account`);
     this.updateFooter(true, "Add to My Account");
     
+    // Initially the form is invalid until agreement is checked
+    this.notifyValidation(false);
+    
     // Check if user already has this product
     const productService = getProductService();
     if (productService.hasProduct(this.product.id)) {
       this.isProductAdded = true;
+      // No need for agreement if product is already added
+      this.agreementChecked = true;
+      this.notifyValidation(true);
     }
+  }
+  
+  connectedCallback(): void {
+    super.connectedCallback?.();
+    console.log("SwishWorkflow connected to DOM");
+  }
+  
+  /**
+   * Simpler approach: just toggle the agreement state when the whole container is clicked
+   * This is more reliable than trying to handle checkbox events directly in FAST Element
+   */
+  toggleAgreement(): void {
+    console.log("Toggle agreement called, current state:", this.agreementChecked);
+    this.agreementChecked = !this.agreementChecked;
+    this.validateForm();
+  }
+  
+  validateForm(): boolean {
+    const isValid = this.agreementChecked;
+    console.log("Form validation result:", isValid, "Agreement checked:", this.agreementChecked);
+    this.notifyValidation(isValid, isValid ? undefined : "Please agree to terms and conditions");
+    return isValid;
   }
   
   formatPrice(price: number): string {
@@ -193,7 +308,12 @@ export class SwishWorkflow extends WorkflowBase {
   }
   
   public handlePrimaryAction(): void {
-    this.addProductToAccount();
+    console.log("Primary action triggered, agreement state:", this.agreementChecked);
+    this.showValidationErrors = true;
+    
+    if (this.validateForm()) {
+      this.addProductToAccount();
+    }
   }
   
   private async addProductToAccount(): Promise<void> {

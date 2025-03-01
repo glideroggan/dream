@@ -5,6 +5,7 @@ import { searchService, SearchResultItem } from '../services/search-service';
 export const WidgetIds = {
   ACCOUNT: "account",
   WELCOME: "welcome",
+  SWISH: "swish-widget", // Add Swish widget ID
   // Add more widget IDs here as needed
 };
 
@@ -18,6 +19,7 @@ interface EnhancedWidgetDefinition extends WidgetDefinition {
   keywords?: string[];
   description?: string;
   icon?: string;
+  requiresProduct?: string; // Add product requirement property
 }
 
 // Define all available widgets
@@ -45,6 +47,20 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     searchable: true,
     keywords: ['welcome', 'introduction', 'guide', 'getting started', 'help'],
     icon: '👋'
+  },
+  // Add Swish widget definition
+  {
+    id: WidgetIds.SWISH,
+    name: 'Swish Payment',
+    description: 'Quick access to Swish transfers and payment history',
+    elementName: 'swish-widget',
+    module: '@widgets/swish',
+    defaultConfig: {},
+    preferredSize: 'md',
+    searchable: true,
+    keywords: ['payment', 'transfer', 'swish', 'money', 'send money'],
+    icon: '💸',
+    requiresProduct: 'swish-standard' // This widget requires the swish-standard product
   }
   // Add more widget definitions here
 ];
@@ -62,6 +78,13 @@ export function getWidgetDefinitions(): EnhancedWidgetDefinition[] {
 export function getWidgetPreferredSize(widgetId: string): WidgetSize {
   const widget = widgetDefinitions.find(w => w.id === widgetId);
   return widget?.preferredSize || 'md'; // Default to medium if not specified
+}
+
+/**
+ * Get widgets that require a specific product
+ */
+export function getWidgetsForProduct(productId: string): EnhancedWidgetDefinition[] {
+  return widgetDefinitions.filter(widget => widget.requiresProduct === productId);
 }
 
 /**
@@ -124,4 +147,11 @@ function registerWidgetWithSearch(widget: {
   
   searchService.registerItem(searchItem);
   console.debug(`Registered widget with search: ${widget.id}`);
+}
+
+/**
+ * Find a widget by ID
+ */
+export function getWidgetById(widgetId: string): EnhancedWidgetDefinition | undefined {
+  return widgetDefinitions.find(w => w.id === widgetId);
 }

@@ -1,5 +1,16 @@
 import { SwishProduct } from "../workflows/swish-workflow";
 
+// Define event types for product changes
+export type ProductChangeEventType = 'add' | 'remove';
+
+export interface ProductChangeEvent {
+  type: ProductChangeEventType;
+  product: SwishProduct;
+}
+
+// Define callback type for product change listeners
+export type ProductChangeListener = (event: ProductChangeEvent) => void;
+
 /**
  * Service to manage user products
  */
@@ -7,6 +18,7 @@ export class ProductService {
   private static instance: ProductService;
   private userProducts: SwishProduct[] = [];
   private productIds: Set<string> = new Set();
+  private changeListeners: ProductChangeListener[] = [];
   
   private constructor() {
     // Load any saved products from localStorage
@@ -31,6 +43,12 @@ export class ProductService {
       this.userProducts.push(product);
       this.productIds.add(product.id);
       this.saveProducts();
+      
+      // Notify listeners
+      this.notifyListeners({
+        type: 'add',
+        product
+      });
     }
   }
   
@@ -38,9 +56,18 @@ export class ProductService {
    * Remove a product from the user's account
    */
   public async removeProduct(productId: string): Promise<void> {
-    this.userProducts = this.userProducts.filter(p => p.id !== productId);
-    this.productIds.delete(productId);
-    this.saveProducts();
+    const product = this.getProduct(productId);
+    if (product) {
+      this.userProducts = this.userProducts.filter(p => p.id !== productId);
+      this.productIds.delete(productId);
+      this.saveProducts();
+      
+      // Notify listeners
+      this.notifyListeners({
+        type: 'remove',
+        product
+      });
+    }
   }
   
   /**
@@ -62,6 +89,37 @@ export class ProductService {
    */
   public getProduct(productId: string): SwishProduct | undefined {
     return this.userProducts.find(p => p.id === productId);
+  }
+  
+  /**
+   * Subscribe to product changes
+   */
+  public subscribe(listener: ProductChangeListener): () => void {
+    this.changeListeners.push(listener);
+    return () => this.unsubscribe(listener);
+  }
+  
+  /**
+   * Unsubscribe from product changes
+   */
+  public unsubscribe(listener: ProductChangeListener): void {
+    const index = this.changeListeners.indexOf(listener);
+    if (index > -1) {
+      this.changeListeners.splice(index, 1);
+    }
+  }
+  
+  /**
+   * Notify all listeners of product changes
+   */
+  private notifyListeners(event: ProductChangeEvent): void {
+    this.changeListeners.forEach(listener => {
+      try {
+        listener(event);
+      } catch (error) {
+        console.error('Error in product change listener:', error);
+      }
+    });
   }
   
   /**

@@ -1,5 +1,6 @@
 import { workflowService } from '../services/workflow-service';
 import { searchService, SearchResultItem } from '../services/search-service';
+import { getProductService } from '../services/product-service';
 
 export interface WorkflowDefinition {
   id: string;
@@ -10,6 +11,8 @@ export interface WorkflowDefinition {
   icon?: string;
   searchable?: boolean;
   keywords?: string[];
+  // Function that returns true if this workflow should NOT appear in search results
+  searchDisabledCondition?: () => boolean;
 }
 
 // Define all available workflows
@@ -61,6 +64,12 @@ const workflowDefinitions: WorkflowDefinition[] = [
     icon: "💳",
     searchable: true,
     keywords: ['swish', 'payment', 'add swish', 'payment solution', 'instant transfer'],
+    // Don't show "Add Swish" in search results if user already has Swish
+    searchDisabledCondition: () => {
+      const productService = getProductService();
+      const hasSwish = productService.hasProduct("swish-standard");
+      return hasSwish;
+    }
   }
 ];
 
@@ -68,7 +77,14 @@ const workflowDefinitions: WorkflowDefinition[] = [
  * Register a workflow with the search service if it's searchable
  */
 function registerWorkflowWithSearch(workflow: WorkflowDefinition): void {
+  // Check if the workflow should be searchable
   if (!workflow.searchable || !workflow.keywords || workflow.keywords.length === 0) {
+    return;
+  }
+  
+  // Check any condition that might disable search for this workflow
+  if (workflow.searchDisabledCondition && workflow.searchDisabledCondition()) {
+    console.debug(`Workflow ${workflow.id} has searchDisabledCondition that returned true, not registering with search`);
     return;
   }
   

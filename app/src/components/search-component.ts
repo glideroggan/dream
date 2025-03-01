@@ -220,8 +220,26 @@ export class SearchComponent extends FASTElement {
   connectedCallback(): void {
     super.connectedCallback();
     this.popularItems = searchService.getPopularItems();
+    
+    // Listen for product changes to refresh search items
+    document.addEventListener('user-products-changed', this.handleProductsChanged.bind(this));
   }
   
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    document.removeEventListener('user-products-changed', this.handleProductsChanged.bind(this));
+  }
+  
+  handleProductsChanged() {
+    // Refresh popular items when products change
+    this.popularItems = searchService.getPopularItems();
+    
+    // If we're currently showing search results, update them as well
+    if (this.searchText) {
+      this.updateResults();
+    }
+  }
+
   handleInput(event: Event) {
     this.searchText = (event.target as HTMLInputElement).value;
     this.updateResults();

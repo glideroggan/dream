@@ -14,6 +14,7 @@ const context = await build.context({
         'src/widgets/dashboard/dashboard-widget.ts',
         'src/widgets/chart/chart-widget.ts',
         'src/widgets/account-widget/account-widget.ts',
+        'src/widgets/swish-widget.ts',
         // workflows
         'src/workflows/transfer/transfer-workflow.ts',
         'src/workflows/create-account/create-account-workflow.ts',
@@ -34,6 +35,7 @@ const context = await build.context({
         "@workflows/transfer",
         "@workflows/create-account",
         "@workflows/swish-workflow",
+        "@widgets/swish"
     ],
     loader: {
         '.html': 'text',
