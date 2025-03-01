@@ -1,12 +1,12 @@
 # BUGS
 - ✔️We should not show widgets, which require the product, in the search results
-  - We only show the workflow to get the widget, and once you have the product, we show the widget instead of the workflow
-- I can still see the workflow for swish, even though you have it
+  - ✔️We only show the workflow to get the widget, and once you have the product, we show the widget instead of the workflow
+- ✔️I can still see the workflow for swish, even though you have it
 - modal primary buttons keeps their last workflow text, we need to reset it when closing
 
 # TODO
 - dismiss the search result with esc
-- clear the input field when leaving the search
+- ✔️clear the input field when leaving the search
 
 # menu
 ## theme pages
@@ -62,7 +62,7 @@
 ## transfer✔️
 - ✔️should create transactions
   - ✔️we need a transaction repository
-    - a transaction can be upcoming or completed
+    - ✔️a transaction can be upcoming or completed
     - a transaction can be recurring
       - We want this to be a checkbox on the transfer workflow
       - this will require some mocked logic in FE for actually processing the transaction at that date
@@ -71,7 +71,7 @@
 # search
 - clicking the input field should show a potential list in this order:✔️
     - popular services that you don't have✔️
-    - missing popular widgets on this page
-- clicking a theme item, should switch to that page
+    - ✔️missing popular widgets on this page
+- ✔️clicking a theme item, should switch to that page
 ## smartness
 - ✔️popular services that you don't have

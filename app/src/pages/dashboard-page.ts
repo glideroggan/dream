@@ -249,7 +249,7 @@ export class DashboardPage extends FASTElement {
     try {
       const products = await this.productService.getProducts();
       if (products.length > 0) {
-        console.log('Checking for product-dependent widgets for existing products:', 
+        console.debug('Checking for product-dependent widgets for existing products:', 
           products.map(p => p.id).join(', '));
         
         products.forEach(product => {

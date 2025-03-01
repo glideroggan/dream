@@ -247,7 +247,7 @@ export class SearchComponent extends FASTElement {
     // Subscribe to product changes using the subscription API
     const productService = getProductService();
     this.unsubscribe = productService.subscribe(this.handleProductChange.bind(this));
-    console.log('Search component subscribed to product changes');
+    console.debug('Search component subscribed to product changes');
   }
   
   // Update method to refresh popular items
@@ -257,7 +257,7 @@ export class SearchComponent extends FASTElement {
     // Get and log popular items
     this.popularItems = await searchService.getPopularItems();
 
-    console.log('Popular items loaded:', 
+    console.debug('Popular items loaded:', 
       this.popularItems.map(i => `${i.title} (${i.type}): popular=${i.popular === true}`).join(', '));
   }
   
@@ -273,7 +273,7 @@ export class SearchComponent extends FASTElement {
   
   // Handle product changes via subscription
   handleProductChange(event: ProductChangeEvent): void {
-    console.log(`Product ${event.type} event received for ${event.productId}, updating search results`);
+    console.debug(`Product ${event.type} event received for ${event.productId}, updating search results`);
 
     // Clear out the lists
     this.searchResults = [];
@@ -324,6 +324,12 @@ export class SearchComponent extends FASTElement {
       // Only hide suggestions if we're not in the middle of selecting a result
       if (!this.resultJustSelected) {
         this.showSuggestions = false;
+        
+        // Clear the search text after user leaves the field
+        // Use a longer timeout to ensure any selection actions complete first
+        setTimeout(() => {
+          this.clearSearch();
+        }, 300);
       }
       // Reset the flag after a short delay
       setTimeout(() => {
@@ -375,14 +381,16 @@ export class SearchComponent extends FASTElement {
   selectResult(result: SearchResultItem) {
     console.debug("selectResult called with:", result);
     this.showSuggestions = false;
-    this.searchText = result.title;
     
-    // Update input field value to match the selected result
+    // Don't set searchText to result title anymore
+    // Instead we'll clear it after the action is performed
+    
+    // Update input field value to match the selected result temporarily
+    // This provides visual feedback that the selection was recognized
     if (this.inputElement) {
       this.inputElement.value = result.title;
       
       // Remove focus from the input after selection
-      // This helps prevent the confusing UI state
       this.inputElement.blur();
     }
     
@@ -402,10 +410,24 @@ export class SearchComponent extends FASTElement {
     });
     this.dispatchEvent(event);
     
+    // Clear the search after a short delay to allow the action to complete
+    setTimeout(() => {
+      this.clearSearch();
+    }, 200);
+    
     // Keep the resultJustSelected flag true for a short time
     setTimeout(() => {
       this.resultJustSelected = false;
     }, 500);
+  }
+  
+  // New method to clear the search field
+  clearSearch() {
+    this.searchText = '';
+    if (this.inputElement) {
+      this.inputElement.value = '';
+    }
+    this.searchResults = [];
   }
   
   performSearch() {

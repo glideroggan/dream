@@ -79,7 +79,7 @@ export class AppComponent extends FASTElement {
    * Handle navigation events from the sidebar
    */
   handleNavigation(event: Event): void {
-    console.log('Received navigation event', event);
+    console.debug('Received navigation event', event);
     const navigationEvent = event as CustomEvent;
     const item = navigationEvent.detail;
     
@@ -91,7 +91,7 @@ export class AppComponent extends FASTElement {
       routerService.navigateTo(path);
       
       // Log navigation
-      console.log(`Navigating to: ${path}`);
+      console.debug(`Navigating to: ${path}`);
       
       // Prevent default browser navigation
       event.preventDefault();

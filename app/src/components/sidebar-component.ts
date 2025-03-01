@@ -214,7 +214,7 @@ export class SidebarComponent extends FASTElement {
     Observable.getNotifier(routerService).subscribe({
       handleChange: (source: any, propertyName: string) => {
         if (propertyName === 'currentRoute') {
-          console.log('Route changed, updating sidebar active item');
+          console.debug('Route changed, updating sidebar active item');
           this.updateActiveMenuItem();
         }
       }
@@ -244,7 +244,7 @@ export class SidebarComponent extends FASTElement {
       };
     });
 
-    console.log('Menu items initialized:', this.menuItems);
+    console.debug('Menu items initialized:', this.menuItems);
   }
   
   disconnectedCallback(): void {
@@ -267,7 +267,7 @@ export class SidebarComponent extends FASTElement {
       // Get clean path
       const currentPath = route.path;
       
-      console.log(`Updating active menu item for current path: ${currentPath}`);
+      console.debug(`Updating active menu item for current path: ${currentPath}`);
       
       // Update active state for all menu items
       let foundActive = false;
@@ -280,7 +280,7 @@ export class SidebarComponent extends FASTElement {
         // If active, log it
         if (isActive) {
           foundActive = true;
-          console.log(`Found active menu item: ${menuItem.label} (${menuItem.route})`);
+          console.debug(`Found active menu item: ${menuItem.label} (${menuItem.route})`);
         }
         
         // Return a new object with updated active state
@@ -309,7 +309,7 @@ export class SidebarComponent extends FASTElement {
   }
 
   handleNavigation(item: MenuItem): void {
-    console.log('Navigation triggered for:', item);
+    console.debug('Navigation triggered for:', item);
     
     // Prevent default browser navigation
     if (event) {

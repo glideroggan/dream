@@ -39,7 +39,7 @@ window.userService = userService;
 console.debug('Storage and user services initialized');
 
 // Initialize the singleton manager
-console.log('Widget service initialized', widgetService)
+console.debug('Widget service initialized', widgetService)
 // Make services globally available
 window.widgetService = widgetService
 

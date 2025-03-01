@@ -139,7 +139,7 @@ class SearchService {
       .filter(result => result.include)
       .map(result => result.item);
       
-    console.log(`Found ${filteredPopularItems.length} items marked as popular after filtering:`, 
+    console.debug(`Found ${filteredPopularItems.length} items marked as popular after filtering:`, 
       filteredPopularItems.map(item => `${item.title} (${item.type})`).join(', '));
     
     // If we have any popular items at all, return just those (sorted by title)
