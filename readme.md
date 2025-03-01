@@ -1,5 +1,5 @@
 # BUGS
-- We should not show widgets, which require the product, in the search results
+- ✔️We should not show widgets, which require the product, in the search results
   - We only show the workflow to get the widget, and once you have the product, we show the widget instead of the workflow
 - I can still see the workflow for swish, even though you have it
 - modal primary buttons keeps their last workflow text, we need to reset it when closing
@@ -9,6 +9,8 @@
 # menu
 ## theme pages
 ## pages
+### home
+- What more do we want to show on the home page?
 ### accounts
 - show a more dedicated page with more information about the account
 - show a list of transactions
@@ -30,9 +32,9 @@
 
 
 ### swish✔️
+- We need to think about how the swish widget should look like, because it is a phone app
 
 # workflows
-## open account✔️
 ## kyc
 ## transfer✔️
 - ✔️should create transactions
@@ -52,24 +54,4 @@
 - all workflows✔️
 - clicking a theme item, should switch to that page
 ## smartness
-- popular services that you don't have
-
-## Implementation details
-The search functionality now:
-1. Registers search items from:
-   - Theme pages in the sidebar component
-   - Widgets
-   - Workflows
-
-2. Search results show different types (theme, widget, workflow) with visual distinction
-
-3. When clicking a result:
-   - Theme: navigates to that page
-   - Widget: focuses on the widget or navigates to its page
-   - Workflow: starts the workflow
-
-4. Next steps:
-   - Add ranking algorithm to prioritize most relevant results
-   - Implement search history
-   - Add keyboard navigation for search results
-   - Create additional widget examples
+- ✔️popular services that you don't have

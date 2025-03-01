@@ -19,7 +19,7 @@ class SearchService {
   
   registerItems(items: SearchResultItem[]): void {
     this.searchableItems = [...this.searchableItems, ...items];
-    console.log(`Registered ${items.length} items with search service`);
+    console.debug(`Registered ${items.length} items with search service`);
   }
   
   registerItem(item: SearchResultItem): void {
@@ -29,11 +29,11 @@ class SearchService {
     if (existingIndex >= 0) {
       // Replace existing item
       this.searchableItems[existingIndex] = item;
-      console.log(`Updated existing search item: ${item.title} (${item.type})`);
+      console.debug(`Updated existing search item: ${item.title} (${item.type})`);
     } else {
       // Add new item
       this.searchableItems.push(item);
-      console.log(`Registered new search item: ${item.title} (${item.type})`);
+      console.debug(`Registered new search item: ${item.title} (${item.type})`);
     }
   }
   
@@ -91,7 +91,7 @@ class SearchService {
     // First check if we have any items explicitly marked as popular with exactly true
     const popularItems = this.searchableItems.filter(item => item.popular === true);
     
-    console.log(`Found ${popularItems.length} items explicitly marked as popular:`, 
+    console.debug(`Found ${popularItems.length} items explicitly marked as popular:`, 
       popularItems.map(item => `${item.title} (${item.type})`).join(', '));
     
     // If we have any popular items at all, return just those (sorted by title)
@@ -106,7 +106,7 @@ class SearchService {
       .sort((a, b) => a.title.localeCompare(b.title))
       .slice(0, limit);
     
-    console.log('No items explicitly marked as popular, using defaults:', 
+    console.debug('No items explicitly marked as popular, using defaults:', 
       regularItems.map(i => `${i.title} (${i.type})`).join(', '));
     return regularItems;
   }
@@ -121,9 +121,9 @@ class SearchService {
   }
   
   logSearchableItems(): void {
-    console.log('All searchable items:');
+    console.debug('All searchable items:');
     this.searchableItems.forEach(item => {
-      console.log(`- ${item.title} (${item.type}): keywords=${item.keywords.join(', ')}`);
+      console.debug(`- ${item.title} (${item.type}): keywords=${item.keywords.join(', ')}`);
     });
   }
 }

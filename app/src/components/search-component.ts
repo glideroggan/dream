@@ -273,7 +273,7 @@ export class SearchComponent extends FASTElement {
   }
 
   handleInput(event: Event) {
-    console.log("Input event:", event);
+    console.debug("Input event:", event);
     this.searchText = (event.target as HTMLInputElement).value;
     
     // Always show suggestions when typing, even after selecting a result
@@ -313,7 +313,7 @@ export class SearchComponent extends FASTElement {
   }
   
   handleKeydown(event: Event) {
-    console.log("Keydown event:", event);
+    console.debug("Keydown event:", event);
     const keyboardEvent = event as KeyboardEvent;
     if (keyboardEvent.key === 'Enter') {
       if (this.searchResults.length > 0) {

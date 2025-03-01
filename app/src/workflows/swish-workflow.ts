@@ -283,7 +283,7 @@ export class SwishWorkflow extends WorkflowBase {
   
   connectedCallback(): void {
     super.connectedCallback?.();
-    console.log("SwishWorkflow connected to DOM");
+    console.debug("SwishWorkflow connected to DOM");
   }
   
   /**
@@ -291,14 +291,14 @@ export class SwishWorkflow extends WorkflowBase {
    * This is more reliable than trying to handle checkbox events directly in FAST Element
    */
   toggleAgreement(): void {
-    console.log("Toggle agreement called, current state:", this.agreementChecked);
+    console.debug("Toggle agreement called, current state:", this.agreementChecked);
     this.agreementChecked = !this.agreementChecked;
     this.validateForm();
   }
   
   validateForm(): boolean {
     const isValid = this.agreementChecked;
-    console.log("Form validation result:", isValid, "Agreement checked:", this.agreementChecked);
+    console.debug("Form validation result:", isValid, "Agreement checked:", this.agreementChecked);
     this.notifyValidation(isValid, isValid ? undefined : "Please agree to terms and conditions");
     return isValid;
   }
@@ -308,7 +308,7 @@ export class SwishWorkflow extends WorkflowBase {
   }
   
   public handlePrimaryAction(): void {
-    console.log("Primary action triggered, agreement state:", this.agreementChecked);
+    console.debug("Primary action triggered, agreement state:", this.agreementChecked);
     this.showValidationErrors = true;
     
     if (this.validateForm()) {

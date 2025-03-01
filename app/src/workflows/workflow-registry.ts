@@ -86,7 +86,7 @@ function registerWorkflowWithSearch(workflow: WorkflowDefinition): void {
   
   // Check any condition that might disable search for this workflow
   if (workflow.searchDisabledCondition && workflow.searchDisabledCondition()) {
-    console.log(`Workflow ${workflow.id} has searchDisabledCondition that returned true, not registering with search`);
+    console.debug(`Workflow ${workflow.id} has searchDisabledCondition that returned true, not registering with search`);
     return;
   }
   
@@ -118,7 +118,7 @@ function registerWorkflowWithSearch(workflow: WorkflowDefinition): void {
   };
   
   searchService.registerItem(searchItem);
-  console.log(`Registered workflow with search: ${workflow.id}`);
+  console.debug(`Registered workflow with search: ${workflow.id}`);
 }
 
 /**
@@ -126,7 +126,7 @@ function registerWorkflowWithSearch(workflow: WorkflowDefinition): void {
  * and search service
  */
 export async function registerAllWorkflows(): Promise<void> {
-  console.log("Registering all workflows...");
+  console.debug("Registering all workflows...");
   
   for (const workflow of workflowDefinitions) {
     // Register with workflow service
@@ -134,7 +134,7 @@ export async function registerAllWorkflows(): Promise<void> {
       tagName: workflow.elementName,
       importFunc: () => import(/* @vite-ignore */ workflow.module)
     });
-    console.log(`Registered workflow: ${workflow.id}`);
+    console.debug(`Registered workflow: ${workflow.id}`);
     
     // Register with search service if searchable
     registerWorkflowWithSearch(workflow);
