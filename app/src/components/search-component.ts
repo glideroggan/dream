@@ -229,10 +229,32 @@ export class SearchComponent extends FASTElement {
   
   connectedCallback(): void {
     super.connectedCallback();
-    this.popularItems = searchService.getPopularItems();
+    
+    console.debug('Search component connected, loading popular items...');
+    
+    // Add a slight delay to ensure all items are registered first
+    setTimeout(() => {
+      this.refreshPopularItems();
+    }, 300);
     
     // Listen for product changes to refresh search items
     document.addEventListener('user-products-changed', this.handleProductsChanged.bind(this));
+  }
+  
+  // Add method to refresh popular items
+  refreshPopularItems(): void {
+    console.debug('Refreshing popular items in search component...');
+    
+    // Log workflow items and their popular status
+    const allItems = searchService.getSearchableItems();
+    const workflowItems = allItems.filter(item => item.type === 'workflow');
+    console.debug('All workflow items:', 
+      workflowItems.map(item => `${item.title}: popular=${item.popular === true}`).join(', '));
+    
+    // Get and log popular items
+    this.popularItems = searchService.getPopularItems();
+    console.debug('Popular items loaded:', 
+      this.popularItems.map(i => `${i.title} (${i.type}): popular=${i.popular === true}`).join(', '));
   }
   
   disconnectedCallback(): void {

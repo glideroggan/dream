@@ -7,6 +7,7 @@ export interface SearchResultItem {
   icon?: string;
   route?: string;
   action?: () => void;
+  popular?: boolean; // Added popular flag
 }
 
 class SearchService {
@@ -18,7 +19,7 @@ class SearchService {
   
   registerItems(items: SearchResultItem[]): void {
     this.searchableItems = [...this.searchableItems, ...items];
-    console.debug(`Registered ${items.length} items with search service`);
+    console.log(`Registered ${items.length} items with search service`);
   }
   
   registerItem(item: SearchResultItem): void {
@@ -28,11 +29,11 @@ class SearchService {
     if (existingIndex >= 0) {
       // Replace existing item
       this.searchableItems[existingIndex] = item;
-      console.debug(`Updated existing search item: ${item.title} (${item.type})`);
+      console.log(`Updated existing search item: ${item.title} (${item.type})`);
     } else {
       // Add new item
       this.searchableItems.push(item);
-      console.debug(`Registered new search item: ${item.title} (${item.type})`);
+      console.log(`Registered new search item: ${item.title} (${item.type})`);
     }
   }
   
@@ -87,8 +88,27 @@ class SearchService {
   }
   
   getPopularItems(limit = 5): SearchResultItem[] {
-    // In a real app, this would return items based on usage analytics
-    return this.searchableItems.slice(0, limit);
+    // First check if we have any items explicitly marked as popular with exactly true
+    const popularItems = this.searchableItems.filter(item => item.popular === true);
+    
+    console.log(`Found ${popularItems.length} items explicitly marked as popular:`, 
+      popularItems.map(item => `${item.title} (${item.type})`).join(', '));
+    
+    // If we have any popular items at all, return just those (sorted by title)
+    if (popularItems.length > 0) {
+      return popularItems
+        .sort((a, b) => a.title.localeCompare(b.title))
+        .slice(0, limit);
+    }
+    
+    // Only if we have no explicitly marked popular items, fall back to defaults
+    const regularItems = this.searchableItems
+      .sort((a, b) => a.title.localeCompare(b.title))
+      .slice(0, limit);
+    
+    console.log('No items explicitly marked as popular, using defaults:', 
+      regularItems.map(i => `${i.title} (${i.type})`).join(', '));
+    return regularItems;
   }
   
   // Helper methods for debugging
@@ -101,9 +121,9 @@ class SearchService {
   }
   
   logSearchableItems(): void {
-    console.debug('All searchable items:');
+    console.log('All searchable items:');
     this.searchableItems.forEach(item => {
-      console.debug(`- ${item.title} (${item.type}): keywords=${item.keywords.join(', ')}`);
+      console.log(`- ${item.title} (${item.type}): keywords=${item.keywords.join(', ')}`);
     });
   }
 }

@@ -60,7 +60,7 @@ window.workflowService = workflowService
 // Register workflows - only call once
 registerAllWorkflows().then(() => {
   console.debug("Workflows registered successfully");
-}).catch(error => {
+  }).catch(error => {
   console.error("Failed to register workflows:", error);
 });
 

@@ -11,6 +11,7 @@ export interface WorkflowDefinition {
   icon?: string;
   searchable?: boolean;
   keywords?: string[];
+  popular?: boolean; // Added popular flag
   // Function that returns true if this workflow should NOT appear in search results
   searchDisabledCondition?: () => boolean;
 }
@@ -63,6 +64,7 @@ const workflowDefinitions: WorkflowDefinition[] = [
     module: "@workflows/swish-workflow",
     icon: "💳",
     searchable: true,
+    popular: true, // Mark Swish as popular
     keywords: ['swish', 'payment', 'add swish', 'payment solution', 'instant transfer'],
     // Don't show "Add Swish" in search results if user already has Swish
     searchDisabledCondition: () => {
@@ -84,7 +86,7 @@ function registerWorkflowWithSearch(workflow: WorkflowDefinition): void {
   
   // Check any condition that might disable search for this workflow
   if (workflow.searchDisabledCondition && workflow.searchDisabledCondition()) {
-    console.debug(`Workflow ${workflow.id} has searchDisabledCondition that returned true, not registering with search`);
+    console.log(`Workflow ${workflow.id} has searchDisabledCondition that returned true, not registering with search`);
     return;
   }
   
@@ -95,6 +97,7 @@ function registerWorkflowWithSearch(workflow: WorkflowDefinition): void {
     keywords: workflow.keywords,
     description: workflow.description,
     icon: workflow.icon,
+    popular: workflow.popular, // Include popular flag in search item
     action: () => {
       console.debug(`Starting workflow from search: ${workflow.id}`);
       
@@ -115,7 +118,7 @@ function registerWorkflowWithSearch(workflow: WorkflowDefinition): void {
   };
   
   searchService.registerItem(searchItem);
-  console.debug(`Registered workflow with search: ${workflow.id}`);
+  console.log(`Registered workflow with search: ${workflow.id}`);
 }
 
 /**
@@ -123,7 +126,7 @@ function registerWorkflowWithSearch(workflow: WorkflowDefinition): void {
  * and search service
  */
 export async function registerAllWorkflows(): Promise<void> {
-  console.debug("Registering all workflows...");
+  console.log("Registering all workflows...");
   
   for (const workflow of workflowDefinitions) {
     // Register with workflow service
@@ -131,7 +134,7 @@ export async function registerAllWorkflows(): Promise<void> {
       tagName: workflow.elementName,
       importFunc: () => import(/* @vite-ignore */ workflow.module)
     });
-    console.debug(`Registered workflow: ${workflow.id}`);
+    console.log(`Registered workflow: ${workflow.id}`);
     
     // Register with search service if searchable
     registerWorkflowWithSearch(workflow);
