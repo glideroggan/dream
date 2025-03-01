@@ -204,7 +204,7 @@ export class ContentComponent extends FASTElement {
       return;
     }
     
-    console.log(`Content component starting workflow: ${workflowId}`);
+    console.debug(`Content component starting workflow: ${workflowId}`);
     
     // Update workflow title based on workflow ID
     this.workflowTitle = this.getWorkflowTitle(workflowId);
@@ -251,7 +251,7 @@ export class ContentComponent extends FASTElement {
    * Handle modal close event
    */
   handleModalClose(): void {
-    console.log('Workflow modal closed');
+    console.debug('Workflow modal closed');
     
     // Reset page title
     this.pageTitle = 'Dashboard';
@@ -262,12 +262,12 @@ export class ContentComponent extends FASTElement {
    */
   handleWorkflowComplete(event: Event): void {
     const result = (event as CustomEvent).detail;
-    console.log('Workflow completed:', result);
+    console.debug('Workflow completed:', result);
     
     // Handle specific workflow result actions if needed
     if (result?.success) {
       // Show success message or perform additional actions
-      console.log(`Workflow completed successfully: ${JSON.stringify(result.data || {})}`);
+      console.debug(`Workflow completed successfully: ${JSON.stringify(result.data || {})}`);
     }
   }
   
@@ -281,7 +281,7 @@ export class ContentComponent extends FASTElement {
       return;
     }
     
-    console.log(`Content component focusing widget: ${widgetId}`);
+    console.debug(`Content component focusing widget: ${widgetId}`);
     
     // Find the widget element
     if (this.shadowRoot) {
@@ -297,7 +297,7 @@ export class ContentComponent extends FASTElement {
         }, 2000);
       } else {
         // Widget not found - might need to load it
-        console.log(`Widget ${widgetId} not found on page, attempting to load it`);
+        console.debug(`Widget ${widgetId} not found on page, attempting to load it`);
         this.loadWidgetById(widgetId);
       }
     }

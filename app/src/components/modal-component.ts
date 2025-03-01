@@ -237,7 +237,7 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
    */
   public handlePrimaryAction(): void {
     if (this.activeWorkflow) {
-      console.log("Handling primary action in workflow");
+      console.debug("Handling primary action in workflow");
       this.activeWorkflow.handlePrimaryAction();
     } else {
       this.$emit("action");

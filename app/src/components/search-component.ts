@@ -258,7 +258,7 @@ export class SearchComponent extends FASTElement {
   }
   
   handleItemClick(result: SearchResultItem, event: Event) {
-    // console.log(`${eventType} event triggered on:`, result);
+    // console.debug(`${eventType} event triggered on:`, result);
     
     // Prevent blur from hiding suggestions before click completes
     // if (eventType === 'mousedown') {
@@ -272,7 +272,7 @@ export class SearchComponent extends FASTElement {
   }
   
   selectResult(result: SearchResultItem) {
-    console.log("selectResult called with:", result);
+    console.debug("selectResult called with:", result);
     this.showSuggestions = false;
     this.searchText = result.title;
     
@@ -283,10 +283,10 @@ export class SearchComponent extends FASTElement {
     
     // Handle the result based on its type
     if (result.action) {
-      console.log("Executing action for:", result.title);
+      console.debug("Executing action for:", result.title);
       result.action();
     } else if (result.route) {
-      console.log("Navigating to:", result.route);
+      console.debug("Navigating to:", result.route);
       window.location.href = result.route;
     }
     

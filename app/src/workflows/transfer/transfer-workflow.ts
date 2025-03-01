@@ -367,7 +367,7 @@ export class TransferWorkflow extends WorkflowBase {
   
   // Handle primary action from modal footer
   public handlePrimaryAction(): void {
-    console.log("primary action, transfer");
+    console.debug("primary action, transfer");
     this.executeTransfer();
   }
 }

@@ -28,11 +28,11 @@ class SearchService {
     if (existingIndex >= 0) {
       // Replace existing item
       this.searchableItems[existingIndex] = item;
-      console.log(`Updated existing search item: ${item.title} (${item.type})`);
+      console.debug(`Updated existing search item: ${item.title} (${item.type})`);
     } else {
       // Add new item
       this.searchableItems.push(item);
-      console.log(`Registered new search item: ${item.title} (${item.type})`);
+      console.debug(`Registered new search item: ${item.title} (${item.type})`);
     }
   }
   
