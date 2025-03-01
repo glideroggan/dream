@@ -8,6 +8,7 @@ export interface SearchResultItem {
   route?: string;
   action?: () => void;
   popular?: boolean; // Added popular flag
+  searchDisabledCondition?: () => Promise<boolean>; // Add support for async condition
 }
 
 class SearchService {
@@ -46,7 +47,7 @@ class SearchService {
     }
   }
   
-  search(query: string): SearchResultItem[] {
+  async search(query: string): Promise<SearchResultItem[]> {
     if (!query || query.length < 2) {
       return [];
     }
@@ -55,7 +56,8 @@ class SearchService {
     
     const normalizedQuery = query.toLowerCase().trim();
     
-    return this.searchableItems
+    // First filter based on text matching
+    const matchedItems = this.searchableItems
       .filter(item => {
         // Check if query matches title
         if (item.title.toLowerCase().includes(normalizedQuery)) {
@@ -66,7 +68,31 @@ class SearchService {
         return item.keywords.some(keyword => 
           keyword.toLowerCase().includes(normalizedQuery)
         );
+      });
+    
+    // Now check all conditional filters (which may be async)
+    const filteredResults = await Promise.all(
+      matchedItems.map(async item => {
+        // If there's a condition to check, evaluate it
+        if (item.searchDisabledCondition) {
+          try {
+            const isDisabled = await item.searchDisabledCondition();
+            // Only include items where the condition is false (i.e., not disabled)
+            return { item, include: !isDisabled };
+          } catch (error) {
+            console.error(`Error evaluating search condition for ${item.id}:`, error);
+            return { item, include: false }; // Exclude on error
+          }
+        }
+        // No condition means always include
+        return { item, include: true };
       })
+    );
+    
+    // Extract only the items we want to include
+    const results = filteredResults
+      .filter(result => result.include)
+      .map(result => result.item)
       .sort((a, b) => {
         // Prioritize title matches
         const aInTitle = a.title.toLowerCase().includes(normalizedQuery);
@@ -85,31 +111,45 @@ class SearchService {
         // Default sort by title
         return a.title.localeCompare(b.title);
       });
+      
+    return results;
   }
   
-  getPopularItems(limit = 5): SearchResultItem[] {
+  async getPopularItems(limit = 5): Promise<SearchResultItem[]> {
     // First check if we have any items explicitly marked as popular with exactly true
-    const popularItems = this.searchableItems.filter(item => item.popular === true);
+    const allPopularItems = this.searchableItems.filter(item => item.popular === true);
     
-    console.log(`Found ${popularItems.length} items explicitly marked as popular:`, 
-      popularItems.map(item => `${item.title} (${item.type})`).join(', '));
+    // Filter out items with searchDisabledCondition that returns true
+    const popularItems = await Promise.all(
+      allPopularItems.map(async item => {
+        if (item.searchDisabledCondition) {
+          try {
+            const isDisabled = await item.searchDisabledCondition();
+            return { item, include: !isDisabled };
+          } catch (error) {
+            console.error(`Error checking popular item condition for ${item.id}:`, error);
+            return { item, include: false }; // Exclude on error
+          }
+        }
+        return { item, include: true }; // No condition means include
+      })
+    );
+    
+    const filteredPopularItems = popularItems
+      .filter(result => result.include)
+      .map(result => result.item);
+      
+    console.log(`Found ${filteredPopularItems.length} items marked as popular after filtering:`, 
+      filteredPopularItems.map(item => `${item.title} (${item.type})`).join(', '));
     
     // If we have any popular items at all, return just those (sorted by title)
-    if (popularItems.length > 0) {
-      return popularItems
+    if (filteredPopularItems.length > 0) {
+      return filteredPopularItems
         .sort((a, b) => a.title.localeCompare(b.title))
         .slice(0, limit);
     }
-    return []
     
-    // Only if we have no explicitly marked popular items, fall back to defaults
-    // const regularItems = this.searchableItems
-    //   .sort((a, b) => a.title.localeCompare(b.title))
-    //   .slice(0, limit);
-    
-    // console.debug('No items explicitly marked as popular, using defaults:', 
-    //   regularItems.map(i => `${i.title} (${i.type})`).join(', '));
-    // return regularItems;
+    return [];
   }
   
   // Helper methods for debugging
@@ -121,12 +161,12 @@ class SearchService {
     return [...this.searchableItems];
   }
   
-  logSearchableItems(): void {
-    console.debug('All searchable items:');
-    this.searchableItems.forEach(item => {
-      console.debug(`- ${item.title} (${item.type}): keywords=${item.keywords.join(', ')}`);
-    });
-  }
+  // logSearchableItems(): void {
+  //   console.debug('All searchable items:');
+  //   this.searchableItems.forEach(item => {
+  //     console.debug(`- ${item.title} (${item.type}): keywords=${item.keywords.join(', ')}`);
+  //   });
+  // }
 }
 
 export const searchService = new SearchService();

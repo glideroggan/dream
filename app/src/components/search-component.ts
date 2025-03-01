@@ -2,6 +2,7 @@ import { FASTElement, customElement, html, css, observable, repeat, when, ref } 
 import { searchService, SearchResultItem } from '../services/search-service';
 import { getProductService, ProductChangeEvent } from '../services/product-service';
 import { updateWorkflowSearchability } from '../workflows/workflow-registry';
+import { updateWidgetSearchability } from '../widgets/widget-registry';
 
 const template = html<SearchComponent>/*html*/`
   <div class="search-container">
@@ -222,6 +223,7 @@ export class SearchComponent extends FASTElement {
   @observable showSuggestions = false;
   @observable searchResults: SearchResultItem[] = [];
   @observable popularItems: SearchResultItem[] = [];
+  @observable isLoading = false;
   
   // Reference to the input element
   inputElement!: HTMLInputElement;
@@ -248,12 +250,12 @@ export class SearchComponent extends FASTElement {
     console.log('Search component subscribed to product changes');
   }
   
-  // Add method to refresh popular items
-  refreshPopularItems(): void {
+  // Update method to refresh popular items
+  async refreshPopularItems(): Promise<void> {
     console.debug('Refreshing popular items in search component...');
     
     // Get and log popular items
-    this.popularItems = searchService.getPopularItems();
+    this.popularItems = await searchService.getPopularItems();
 
     console.log('Popular items loaded:', 
       this.popularItems.map(i => `${i.title} (${i.type}): popular=${i.popular === true}`).join(', '));
@@ -273,21 +275,16 @@ export class SearchComponent extends FASTElement {
   handleProductChange(event: ProductChangeEvent): void {
     console.log(`Product ${event.type} event received for ${event.productId}, updating search results`);
 
-    // might be better to clear out the lists
+    // Clear out the lists
     this.searchResults = [];
     this.popularItems = [];
     
-    updateWorkflowSearchability()
+    // Update both workflows and widgets searchability
+    updateWorkflowSearchability();
+    updateWidgetSearchability();
 
     // Refresh popular items
     this.refreshPopularItems();
-    this.popularItems.forEach(item => {
-      if (!this.searchResults.includes(item)) {
-        searchService.unregisterItem(item.id);
-      }
-    });
-
-    
     
     // If we're currently showing search results, update them as well
     if (this.searchText) {
@@ -351,10 +348,18 @@ export class SearchComponent extends FASTElement {
     }
   }
   
-  updateResults() {
-    // Get fresh search results that reflect current state
-    this.searchResults = searchService.search(this.searchText);
-    console.debug(`Updated search results for "${this.searchText}":`, this.searchResults.length);
+  async updateResults() {
+    this.isLoading = true;
+    try {
+      // Get fresh search results that reflect current state
+      this.searchResults = await searchService.search(this.searchText);
+      console.debug(`Updated search results for "${this.searchText}":`, this.searchResults.length);
+    } catch (error) {
+      console.error("Error during search:", error);
+      this.searchResults = [];
+    } finally {
+      this.isLoading = false;
+    }
   }
   
   handleItemClick(result: SearchResultItem, event: Event) {

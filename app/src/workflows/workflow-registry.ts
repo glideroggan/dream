@@ -88,10 +88,15 @@ async function registerWorkflowWithSearch(workflow: WorkflowDefinition): Promise
   
   // Check any condition that might disable search for this workflow
   if (workflow.searchDisabledCondition) {
-    const disabled = await workflow.searchDisabledCondition();
-    if (disabled) {
-      console.debug(`Workflow ${workflow.id} has searchDisabledCondition that returned true, not registering with search`);
-      return;
+    try {
+      const disabled = await workflow.searchDisabledCondition();
+      if (disabled) {
+        console.debug(`Workflow ${workflow.id} has searchDisabledCondition that returned true, not registering with search`);
+        return;
+      }
+    } catch (error) {
+      console.error(`Error evaluating search condition for workflow ${workflow.id}:`, error);
+      return; // Skip registration on error
     }
   }
   
@@ -103,6 +108,7 @@ async function registerWorkflowWithSearch(workflow: WorkflowDefinition): Promise
     description: workflow.description,
     icon: workflow.icon,
     popular: workflow.popular, // Include popular flag in search item
+    searchDisabledCondition: workflow.searchDisabledCondition, // Pass through the condition
     action: () => {
       console.debug(`Starting workflow from search: ${workflow.id}`);
       

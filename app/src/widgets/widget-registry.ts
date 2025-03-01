@@ -1,5 +1,6 @@
 import { WidgetDefinition, WidgetService } from '../services/widget-service';
 import { searchService, SearchResultItem } from '../services/search-service';
+import { getProductService } from '../services/product-service';
 
 // Define all available widget IDs
 export const WidgetIds = {
@@ -21,6 +22,7 @@ interface EnhancedWidgetDefinition extends WidgetDefinition {
   description?: string;
   icon?: string;
   requiresProduct?: string; // Add product requirement property
+  searchDisabledCondition?: () => Promise<boolean>; // Add search disabled condition
 }
 
 // Define all available widgets
@@ -64,7 +66,15 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     searchable: true,
     keywords: ['payment', 'transfer', 'swish', 'money', 'send money'],
     icon: '💸',
-    requiresProduct: 'swish-standard' // This widget requires the swish-standard product
+    requiresProduct: 'swish-standard', // This widget requires the swish-standard product
+    // Hide Swish widget in search if user doesn't have the Swish product
+    searchDisabledCondition: async () => {
+      const productService = getProductService();
+      // Check if user has the required product
+      const hasSwish = await productService.hasProduct("swish-standard");
+      // Return true to disable if user does NOT have the product
+      return !hasSwish;
+    }
   }
   // Add more widget definitions here
 ];
@@ -124,13 +134,11 @@ export async function registerAllWidgets(widgetService: WidgetService): Promise<
 /**
  * Register a widget with the search service
  */
-function registerWidgetWithSearch(widget: {
-  id: string;
-  name: string;
-  description?: string;
-  icon?: string;
-  keywords?: string[];
-}): void {
+function registerWidgetWithSearch(widget: EnhancedWidgetDefinition): void {
+  if (!widget.searchable || !widget.keywords) {
+    return;
+  }
+  
   const searchItem: SearchResultItem = {
     id: `widget-${widget.id}`,
     title: widget.name,
@@ -138,6 +146,8 @@ function registerWidgetWithSearch(widget: {
     keywords: widget.keywords || [],
     description: widget.description || `View ${widget.name} widget`,
     icon: widget.icon,
+    // Pass through the searchDisabledCondition if it exists
+    searchDisabledCondition: widget.searchDisabledCondition,
     action: () => {
       console.debug(`Navigate or focus on widget: ${widget.id}`);
       // You would typically focus on the widget or navigate to its page
@@ -151,6 +161,20 @@ function registerWidgetWithSearch(widget: {
   
   searchService.registerItem(searchItem);
   console.debug(`Registered widget with search: ${widget.id}`);
+}
+
+// Add a new function to update widget searchability
+export function updateWidgetSearchability(): void {
+  console.debug("Updating widget searchability...");
+  
+  for (const widget of widgetDefinitions) {
+    if (!widget.searchable || !widget.keywords) {
+      continue;
+    }
+    
+    // Re-register with search to ensure it's present and updated
+    registerWidgetWithSearch(widget);
+  }
 }
 
 /**

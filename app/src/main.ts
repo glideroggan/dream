@@ -71,10 +71,10 @@ import './components/footer-component'
 import './components/search-component'
 
 // Log search service status at the end
-setTimeout(() => {
-  console.debug(`Search service has ${searchService.getSearchableItemsCount()} items registered`);
-  searchService.logSearchableItems();
-}, 1000);
+// setTimeout(() => {
+//   console.debug(`Search service has ${searchService.getSearchableItemsCount()} items registered`);
+//   searchService.logSearchableItems();
+// }, 1000);
 
 // Signal that widgets are now registered
 console.debug('Application initialized')
