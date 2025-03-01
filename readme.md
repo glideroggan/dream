@@ -1,12 +1,8 @@
 # BUGS
-- ✔️We should not show widgets, which require the product, in the search results
-  - ✔️We only show the workflow to get the widget, and once you have the product, we show the widget instead of the workflow
-- ✔️I can still see the workflow for swish, even though you have it
 - modal primary buttons keeps their last workflow text, we need to reset it when closing
 
 # TODO
 - dismiss the search result with esc
-- ✔️clear the input field when leaving the search
 
 # menu
 ## theme pages
@@ -47,7 +43,6 @@
 ## new products
 - a widget that shows new products
 - clicking a product shows more information about the product (workflow)
-- ✔️finishing the workflow should add the product/widget to the page
 
 
 ### swish✔️
@@ -60,6 +55,8 @@
   - we could set a flag on the account, that we have a pending kyc
     This could then we check at intervals and show the modal
 ## transfer✔️
+- we should translate between different currencies
+- we should be able to transfer to other banks
 - ✔️should create transactions
   - ✔️we need a transaction repository
     - ✔️a transaction can be upcoming or completed
@@ -69,9 +66,4 @@
         - for BE, this wouldn't be a problem, but in FE we can just fake it, by checking if the date is today or later, and then just marking it as completed, but at the date it should been processed
 
 # search
-- clicking the input field should show a potential list in this order:✔️
-    - popular services that you don't have✔️
-    - ✔️missing popular widgets on this page
-- ✔️clicking a theme item, should switch to that page
 ## smartness
-- ✔️popular services that you don't have

@@ -3,11 +3,12 @@ import { StorageService } from '../services/storage-service';
 import { UserService } from '../services/user-service';
 import { LocalStorageRepository } from './base-repository';
 import { TransactionRepository } from './transaction-repository';
+import { getRepositoryService } from '../services/repository-service';
 
 // Interface for transfer results
 export interface TransferResult {
   success: boolean;
-  message: string;
+  message?: string;
   transactionId?: string;
 }
 
@@ -69,43 +70,48 @@ export class AccountRepository extends LocalStorageRepository<Account> {
       const fromAccount = await this.getById(fromId);
       const toAccount = await this.getById(toId);
       
-      if (!fromAccount || !toAccount) {
-        return {
-          success: false,
-          message: 'One or more accounts not found'
-        };
+      if (!fromAccount) {
+        return { success: false, message: "Source account not found" };
       }
-      
+
+      if (!toAccount) {
+        return { success: false, message: "Destination account not found" };
+      }
+
       if (fromAccount.balance < amount) {
-        return {
-          success: false,
-          message: 'Insufficient funds in source account'
-        };
+        return { success: false, message: "Insufficient funds" };
       }
-      
+
       // Update balances
-      await this.update(fromId, { balance: fromAccount.balance - amount });
-      await this.update(toId, { balance: toAccount.balance + amount });
-      
-      // Create transaction record
-      const transaction = await this.transactionRepo.createTransferTransaction(
+      fromAccount.balance -= amount;
+      toAccount.balance += amount;
+
+      // Save updated accounts
+      await this.update(fromAccount.id, fromAccount);
+      await this.update(toAccount.id, toAccount);
+
+      // Create transaction record with updated balances
+      const transactionRepository = getRepositoryService().getTransactionRepository();
+      const transaction = await transactionRepository.createTransferTransaction(
         fromId,
         toId,
         amount,
         fromAccount.currency,
-        description
+        fromAccount.balance, // Include updated balance of source account
+        toAccount.balance,   // Include updated balance of destination account
+        description,
+        true
       );
-      
-      return {
-        success: true,
-        message: 'Transfer completed successfully',
+
+      return { 
+        success: true, 
         transactionId: transaction.id
       };
     } catch (error) {
-      console.error('Transfer failed:', error);
+      console.error("Transfer failed:", error);
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Transfer failed due to an unexpected error'
+        message: "An error occurred during the transfer"
       };
     }
   }
@@ -140,6 +146,8 @@ export class AccountRepository extends LocalStorageRepository<Account> {
         toId,
         amount,
         fromAccount.currency,
+        fromAccount.balance,
+        toAccount.balance,
         description,
         false // not completed yet
       );

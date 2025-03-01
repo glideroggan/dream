@@ -1,16 +1,13 @@
-import { FASTElement, customElement, html, css, observable, repeat, when } from "@microsoft/fast-element";
+import { FASTElement, customElement, html, css, observable, when, attr } from "@microsoft/fast-element";
 import "../../components/modal-component";
 import { workflowService } from "../../services/workflow-service";
 import { Account, Transaction, TransactionType, getRepositoryService } from "../../services/repository-service";
 import { StorageService, storageService } from "../../services/storage-service";
 import { WorkflowIds } from "../../workflows/workflow-registry";
 import { ModalComponent } from "../../components/modal-component";
-
-// First, let's create an enhanced transaction interface to hold our display properties
-interface TransactionViewModel extends Transaction {
-  amountClass: string;
-  formattedAmount: string;
-}
+import "./account-list-component";
+import "./transaction-list-component";
+import { TransactionListComponent, TransactionViewModel } from "./transaction-list-component";
 
 const template = html<AccountWidget>/*html*/ `
   <div class="account-widget">
@@ -36,75 +33,16 @@ const template = html<AccountWidget>/*html*/ `
     `)}
     
     ${when(x => !x.loading && !x.error, html<AccountWidget>/*html*/`
-      <div class="accounts-list">
-        ${repeat(x => x.accounts, html<Account, AccountWidget>/*html*/`
-          <div class="account-container">
-            <div class="account-item ${(x, c) => c.parent.expandedAccountId === x.id ? 'expanded' : ''}" @click="${(x, c) => c.parent.toggleAccountExpansion(x)}">
-              <div class="account-info">
-                <div class="account-name">${x => x.name}</div>
-                <div class="account-type">${x => x.type}</div>
-                <div class="account-id">ID: ${x => x.id}</div>
-              </div>
-              <div class="account-balance">
-                <span class="balance-amount">${x => x.balance.toFixed(2)}</span>
-                <span class="balance-currency">${x => x.currency}</span>
-                <button class="workflow-button" @click="${(x, c) => c.parent.openAccountActions(x)}" title="Account Actions">
-                  <span>•••</span>
-                </button>
-              </div>
-            </div>
-            
-            ${when((x, c) => c.parent.expandedAccountId === x.id, html<Account, AccountWidget>/*html*/`
-              <div class="transactions-container">
-                <div class="transactions-header">
-                  <h4>Recent Transactions</h4>
-                </div>
-
-                ${when((x, c) => c.parent.isLoadingTransactions, html<Account, AccountWidget>/*html*/`
-                  <div class="transactions-loading">
-                    <div class="mini-spinner"></div>
-                    <span>Loading transactions...</span>
-                  </div>
-                `)}
-
-                ${when((x, c) => !c.parent.isLoadingTransactions && c.parent.accountTransactions.length === 0, html<Account, AccountWidget>/*html*/`
-                  <div class="no-transactions">
-                    <p>No transactions found for this account.</p>
-                  </div>
-                `)}
-
-                ${when((x, c) => !c.parent.isLoadingTransactions && c.parent.accountTransactions.length > 0, html<Account, AccountWidget>/*html*/`
-                  <div class="transactions-list">
-                    ${repeat((x, c) => c.parent.accountTransactions.slice(0, c.parent.maxTransactionsToShow), html<TransactionViewModel, AccountWidget>/*html*/`
-                      <div class="transaction-item">
-                        <div class="transaction-info">
-                          <div class="transaction-description">${x => x.description || 'Transaction'}</div>
-                          <div class="transaction-date">${x => new Date(x.createdAt).toLocaleDateString()}</div>
-                        </div>
-                        <div class="transaction-amount ${x => x.amountClass}">
-                          ${x => x.formattedAmount}
-                        </div>
-                      </div>
-                    `)}
-                    
-                    ${when((x, c) => c.parent.accountTransactions.length > c.parent.maxTransactionsToShow, html<Account, AccountWidget>/*html*/`
-                      <div class="show-more">
-                        <button class="show-more-button" @click="${(x, c) => c.parent.showAllTransactions()}">Show more</button>
-                      </div>
-                    `)}
-                  </div>
-                `)}
-              </div>
-            `)}
-          </div>
-        `)}
-        
-        ${when(x => x.accounts.length === 0, html<AccountWidget>/*html*/`
-          <div class="no-accounts">
-            <p>You don't have any accounts yet.</p>
-          </div>
-        `)}
-      </div>
+      <account-list
+        :accounts="${x => x.accounts}"
+        :expandedAccountId="${x => x.expandedAccountId}"
+        :isLoadingTransactions="${x => x.isLoadingTransactions}"
+        :accountTransactions="${x => x.accountTransactions}"
+        :maxTransactionsToShow="${x => x.maxTransactionsToShow}"
+        @account-toggle="${(x, c) => x.handleAccountToggle(c.event)}"
+        @account-actions="${(x, c) => x.handleAccountActions(c.event)}"
+        @show-more-transactions="${x => x.showAllTransactions()}">
+      </account-list>
       
       <div class="widget-footer">
         <button class="primary-button" @click="${x => x.addAccount()}">Add Account</button>
@@ -161,93 +99,6 @@ const styles = css`
   }
   
   .action-button:hover {
-    background-color: var(--hover-bg, rgba(0, 0, 0, 0.05));
-  }
-  
-  .accounts-list {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    padding: 8px 0;
-    overflow-y: auto;
-  }
-  
-  .account-container {
-    display: flex;
-    flex-direction: column;
-    border-bottom: 1px solid var(--divider-color, #eaeaea);
-  }
-  
-  .account-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 12px 16px;
-    transition: background-color 0.2s;
-    cursor: pointer;
-  }
-  
-  .account-item:hover {
-    background-color: var(--hover-bg, rgba(0, 0, 0, 0.02));
-  }
-  
-  .account-item.expanded {
-    background-color: var(--selected-bg, rgba(52, 152, 219, 0.05));
-    border-bottom: 1px solid var(--divider-color, #eaeaea);
-  }
-  
-  .account-container:last-child {
-    border-bottom: none;
-  }
-  
-  .account-info {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .account-name {
-    font-weight: 500;
-    margin-bottom: 4px;
-  }
-  
-  .account-type {
-    font-size: 13px;
-    color: var(--secondary-text, #666);
-    margin-bottom: 2px;
-  }
-  
-  .account-id {
-    font-size: 12px;
-    color: var(--secondary-text, #666);
-  }
-  
-  .account-balance {
-    display: flex;
-    align-items: center;
-  }
-  
-  .balance-amount {
-    font-weight: 700;
-    margin-right: 4px;
-  }
-  
-  .balance-currency {
-    color: var(--secondary-text, #666);
-  }
-  
-  .workflow-button {
-    background: transparent;
-    border: none;
-    width: 24px;
-    height: 24px;
-    cursor: pointer;
-    margin-left: 8px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .workflow-button:hover {
     background-color: var(--hover-bg, rgba(0, 0, 0, 0.05));
   }
   
@@ -324,150 +175,6 @@ const styles = css`
   .retry-button:hover {
     background-color: #c0392b;
   }
-  
-  .no-accounts {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 32px;
-    color: var(--secondary-text, #666);
-    font-style: italic;
-  }
-  
-  /* Additional styles for transfer workflow */
-  .temp-transfer-form {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    margin-top: 16px;
-  }
-  
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  
-  .form-group label {
-    font-weight: 500;
-    font-size: 14px;
-  }
-  
-  .form-group select,
-  .form-group input {
-    padding: 8px;
-    border: 1px solid var(--border-color, #e0e0e0);
-    border-radius: 4px;
-  }
-  
-  /* Transaction styles */
-  .transactions-container {
-    overflow: hidden;
-    max-height: 0;
-    transition: max-height 0.3s ease-out;
-    background-color: var(--background-light, #f9f9f9);
-    animation: slideDown 0.3s forwards;
-  }
-  
-  @keyframes slideDown {
-    from { max-height: 0; opacity: 0; }
-    to { max-height: 500px; opacity: 1; }
-  }
-  
-  .transactions-header {
-    padding: 8px 16px;
-    background-color: var(--background-secondary, #f5f5f5);
-    border-bottom: 1px solid var(--divider-color, #eaeaea);
-  }
-  
-  .transactions-header h4 {
-    margin: 0;
-    font-size: 14px;
-    color: var(--secondary-text, #666);
-  }
-  
-  .transactions-list {
-    padding: 0 8px;
-  }
-  
-  .transaction-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px 8px;
-    border-bottom: 1px solid var(--divider-light, #f0f0f0);
-  }
-  
-  .transaction-item:last-child {
-    border-bottom: none;
-  }
-  
-  .transaction-info {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .transaction-description {
-    font-size: 13px;
-    margin-bottom: 2px;
-  }
-  
-  .transaction-date {
-    font-size: 12px;
-    color: var(--tertiary-text, #999);
-  }
-  
-  .transaction-amount {
-    font-weight: 500;
-  }
-  
-  .transaction-amount.incoming {
-    color: var(--success-color, #2ecc71);
-  }
-  
-  .transaction-amount.outgoing {
-    color: var(--warning-color, #e67e22);
-  }
-  
-  .transactions-loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-  }
-  
-  .mini-spinner {
-    width: 20px;
-    height: 20px;
-    border: 2px solid rgba(0, 0, 0, 0.1);
-    border-radius: 50%;
-    border-top-color: var(--primary-color, #3498db);
-    animation: spin 1s ease-in-out infinite;
-    margin-right: 8px;
-  }
-  
-  .no-transactions {
-    padding: 16px;
-    text-align: center;
-    color: var(--tertiary-text, #999);
-    font-style: italic;
-    font-size: 13px;
-  }
-  
-  .show-more {
-    display: flex;
-    justify-content: center;
-    padding: 8px 0;
-  }
-  
-  .show-more-button {
-    background: transparent;
-    border: none;
-    color: var(--primary-color, #3498db);
-    cursor: pointer;
-    font-size: 13px;
-    text-decoration: underline;
-  }
 `;
 
 @customElement({
@@ -489,15 +196,23 @@ export class AccountWidget extends FASTElement {
   @observable accountTransactions: TransactionViewModel[] = [];
   @observable isLoadingTransactions: boolean = false;
   @observable maxTransactionsToShow: number = 3;
+
+  @attr accountId: string;
+  @observable transactions: TransactionViewModel[] = [];
+  @observable isLoading: boolean = false;
   
   private get modal(): ModalComponent | null {
     return this.shadowRoot?.getElementById('accountModal') as ModalComponent | null;
   }
 
-  connectedCallback() {
+  async connectedCallback() {
     super.connectedCallback();
     this.fetchAccounts();
     
+    if (this.accountId) {
+      await this.loadTransactions();
+    }
+
     // Listen for storage events from other tabs
     window.addEventListener('storage', this.handleStorageChange.bind(this));
   }
@@ -558,19 +273,31 @@ export class AccountWidget extends FASTElement {
   }
   
   /**
-   * Toggle the expanded state of an account to show/hide transactions
+   * Handle account toggle event from child component
    */
-  async toggleAccountExpansion(account: Account) {
+  async handleAccountToggle(event: Event) {
+    const customEvent = event as CustomEvent;
+    const accountId = customEvent.detail.accountId;
+    
     // If clicking the same account that's already expanded, collapse it
-    if (this.expandedAccountId === account.id) {
+    if (this.expandedAccountId === accountId) {
       this.expandedAccountId = null;
       this.accountTransactions = [];
       return;
     }
     
     // Otherwise expand the clicked account
-    this.expandedAccountId = account.id;
-    this.fetchAccountTransactions(account.id);
+    this.expandedAccountId = accountId;
+    this.fetchAccountTransactions(accountId);
+  }
+  
+  /**
+   * Handle account actions button click
+   */
+  handleAccountActions(event: Event) {
+    const customEvent = event as CustomEvent;
+    const account = customEvent.detail.account;
+    this.openAccountActions(account);
   }
   
   /**
@@ -595,22 +322,15 @@ export class AccountWidget extends FASTElement {
           return dateB - dateA;
         });
         
-        // Convert transactions to view models with pre-calculated display properties
-        this.accountTransactions = transactions.map(txn => {
-          const isOutgoing = this.isOutgoingTransaction(txn, accountId);
-          return {
-            ...txn,
-            amountClass: isOutgoing ? 'outgoing' : 'incoming',
-            formattedAmount: `${isOutgoing ? '-' : '+'} ${txn.amount.toFixed(2)} ${txn.currency}`
-          };
-        });
+        // Use the transaction list component's processTransactionsForDisplay method
+        const transactionList = new TransactionListComponent();
+        this.accountTransactions = transactionList.processTransactionsForDisplay(transactions, accountId);
         
         this.isLoadingTransactions = false;
       }, 500);
     } catch (err) {
       console.error('Failed to fetch transactions:', err);
       this.isLoadingTransactions = false;
-      // You could show an error state here
     }
   }
   
@@ -618,20 +338,10 @@ export class AccountWidget extends FASTElement {
    * Handle "Show more" button click
    */
   showAllTransactions() {
-    // This would navigate to a transactions page or expand the list
-    // For now, just show all transactions in the current view
     this.maxTransactionsToShow = this.accountTransactions.length;
-    
-    // In the future, this could navigate to a dedicated transactions page:
-    // workflowService.navigate('/transactions', { accountId: this.expandedAccountId });
   }
   
-  openAccountActions(account: Account, event?: Event) {
-    // Stop propagation to prevent the account expansion toggle
-    if (event) {
-      event.stopPropagation();
-    }
-    
+  openAccountActions(account: Account) {
     this.workflowTitle = `${account.name} Actions`;
     this.selectedAccount = account;
     this.openModal();
@@ -721,11 +431,27 @@ export class AccountWidget extends FASTElement {
     }
   }
 
-  // Keep this helper method private for internal use
-  private isOutgoingTransaction(transaction: Transaction, accountId: string | null): boolean {
-    return (
-      transaction.type === TransactionType.PAYMENT || 
-      transaction.fromAccountId === accountId
-    );
+  async loadTransactions() {
+    if (!this.accountId) return;
+    
+    this.isLoading = true;
+    
+    try {
+      const transactionRepo = getRepositoryService().getTransactionRepository();
+      const rawTransactions = await transactionRepo.getByAccountId(this.accountId);
+      
+      // Sort transactions by date (newest first)
+      rawTransactions.sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      
+      // Process transactions for display with balance information
+      const transactionList = new TransactionListComponent();
+      this.transactions = transactionList.processTransactionsForDisplay(rawTransactions, this.accountId);
+    } catch (error) {
+      console.error("Error loading transactions:", error);
+    } finally {
+      this.isLoading = false;
+    }
   }
 }

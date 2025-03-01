@@ -173,7 +173,7 @@ export class TransferWorkflow extends WorkflowBase {
   @observable amount: number = 0;
   @observable currency: string = "USD";
   @observable description: string = "";
-  @observable errorMessage: string = "";
+  @observable errorMessage: string | undefined = "";
   
   initialize(params?: Record<string, any>): void {
     // Set any passed in accounts
@@ -307,7 +307,7 @@ export class TransferWorkflow extends WorkflowBase {
     const element = this.shadowRoot?.getElementById(elementId) as HTMLInputElement | HTMLSelectElement;
     if (element) {
       // This will trigger the :user-invalid CSS selector
-      element.setCustomValidity(this.errorMessage);
+      element.setCustomValidity(this.errorMessage!);
       element.reportValidity();
     }
   }

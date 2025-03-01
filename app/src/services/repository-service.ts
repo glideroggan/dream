@@ -43,6 +43,9 @@ export interface Transaction extends Entity {
   createdAt: string; // ISO date string
   scheduledDate?: string; // ISO date string for upcoming transactions
   completedDate?: string; // ISO date string for completed transactions
+  // New properties for balance tracking
+  fromAccountBalance?: number; // Balance of fromAccount after transaction
+  toAccountBalance?: number;   // Balance of toAccount after transaction
 }
 
 // Repository interface

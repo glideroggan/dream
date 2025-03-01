@@ -34,7 +34,9 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
         status: TransactionStatus.COMPLETED,
         type: TransactionType.TRANSFER,
         createdAt: yesterday.toISOString(),
-        completedDate: yesterday.toISOString()
+        completedDate: yesterday.toISOString(),
+        fromAccountBalance: 1500,
+        toAccountBalance: 2500
       },
       {
         id: 'txn-2',
@@ -57,7 +59,8 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
         status: TransactionStatus.COMPLETED,
         type: TransactionType.PAYMENT,
         createdAt: yesterday.toISOString(),
-        completedDate: yesterday.toISOString()
+        completedDate: yesterday.toISOString(),
+        fromAccountBalance: 1950.01
       },
       {
         id: 'txn-4',
@@ -122,6 +125,8 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
     toAccountId: string, 
     amount: number, 
     currency: string, 
+    fromAccountBalance: number,
+    toAccountBalance?: number,
     description?: string, 
     isCompleted: boolean = true
   ): Promise<Transaction> {
@@ -136,6 +141,8 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
       status: isCompleted ? TransactionStatus.COMPLETED : TransactionStatus.UPCOMING,
       type: TransactionType.TRANSFER,
       createdAt: now.toISOString(),
+      fromAccountBalance: fromAccountBalance,
+      toAccountBalance: toAccountBalance
     };
     
     // Add the appropriate date based on status
