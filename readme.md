@@ -1,9 +1,12 @@
 # BUGS
 - modal primary buttons keeps their last workflow text, we need to reset it when closing
+- CONTINUE HERE:
+Regarding the timeout bug, it must be the setTimeout command, I don't think it gets all the details, so it can't set the state back
+We should try correct the swish widget, get it working, then just remove the emit of the event. and try from there.
+
 
 # TODO
 - we need to cover the case of getting the wrong script path to a widget. Changing the path to something else isn't covered in the widget wrapper
- 
 - We need to start refactor individual files, as they start to grow, and could be split into smaller files
 - dismiss the search result with esc
 
@@ -12,9 +15,13 @@
 ## pages
 ### home
 - What more do we want to show on the home page?
+  - a loan widget (if you have the product)
+  - a product widget, where you can easily get certain products
+  - a savings insight widget (if you have saving accounts)
+  - a pension widget (if you have a pension account)
 ### accounts
 - show a more dedicated page with more information about the account
-- show a list of transactions
+- ✔️show a list of transactions
 - show a list of upcoming payments
 
 # widgets

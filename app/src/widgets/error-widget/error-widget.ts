@@ -13,6 +13,7 @@ const styles = css`
   :host {
     display: block;
     height: 100%;
+    width: 100%;
   }
   
   .error-widget {
@@ -20,6 +21,7 @@ const styles = css`
     display: flex;
     flex-direction: column;
     padding: 1rem;
+    box-sizing: border-box;
   }
   
   h2 {
@@ -27,6 +29,9 @@ const styles = css`
     margin-top: 0;
     border-bottom: 1px solid #fadbd8;
     padding-bottom: 0.5rem;
+    font-size: 1.2rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   
   .content {
@@ -35,6 +40,15 @@ const styles = css`
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    overflow: auto;
+  }
+  
+  .content p {
+    text-align: center;
+    margin: 0.5rem;
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
   }
 `;
 

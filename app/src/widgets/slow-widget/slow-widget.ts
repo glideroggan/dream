@@ -83,7 +83,7 @@ export class SlowWidget extends FASTElement {
 
   connectedCallback(): void {
     super.connectedCallback();
-    
+
     // Start the loading progress simulation
     this.loadInterval = window.setInterval(() => {
       if (this.loadingProgress < 100) {

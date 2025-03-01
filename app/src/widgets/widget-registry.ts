@@ -7,7 +7,6 @@ export const WidgetIds = {
   ACCOUNT: "account",
   WELCOME: "welcome",
   SWISH: "swish-widget",
-  FAST: "fast-widget",
   SLOW: "slow-widget",
   ERROR: "error-widget",
   // Add more widget IDs here as needed
@@ -50,7 +49,7 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     elementName: 'welcome-widget',
     module: '@widgets/welcome',
     defaultConfig: { username: 'Guest' },
-    preferredSize: 'md', // Welcome widget is medium sized
+    preferredSize: 'sm', 
     minWidth: 300, // Welcome widget can be smaller
     searchable: true,
     keywords: ['welcome', 'introduction', 'guide', 'getting started', 'help'],

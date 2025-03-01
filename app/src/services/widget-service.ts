@@ -1,4 +1,5 @@
 import { getSingletonManager } from './singleton-manager';
+import { getWidgetById } from '../widgets/widget-registry';
 
 // Widget size options
 export type WidgetSize = 'sm' | 'md' | 'lg' | 'xl';
@@ -16,6 +17,7 @@ export interface WidgetDefinition {
 type WidgetsRegisteredCallback = () => void;
 
 export class WidgetService {
+  private static instance: WidgetService;
   private registeredWidgets: Map<string, WidgetDefinition> = new Map();
   private loadedWidgets: Set<string> = new Set();
   private moduleLoadPromises: Map<string, Promise<unknown>> = new Map();
@@ -34,8 +36,10 @@ export class WidgetService {
 
   // Singleton accessor
   public static getInstance(): WidgetService {
-    const singletonManager = getSingletonManager();
-    return singletonManager.getOrCreate<WidgetService>('WidgetService', () => new WidgetService());
+    if (!WidgetService.instance) {
+      WidgetService.instance = new WidgetService();
+    }
+    return WidgetService.instance;
   }
 
   public async signal(): Promise<void> {
@@ -43,9 +47,11 @@ export class WidgetService {
   }
 
   async registerWidget(widget: WidgetDefinition): Promise<void> {
-    console.debug(`Registering widget: ${widget.id} (${widget.name})`);
+    if (this.registeredWidgets.has(widget.id)) {
+      console.warn(`Widget with ID ${widget.id} is already registered. Overwriting.`);
+    }
     this.registeredWidgets.set(widget.id, widget);
-    // this.emitWidgetsRegistered();
+    console.debug(`Registered widget: ${widget.id}`);
   }
 
   getAvailableWidgets(): WidgetDefinition[] {
@@ -62,13 +68,13 @@ export class WidgetService {
     return widget;
   }
 
-  async loadWidget(id: string): Promise<WidgetDefinition | undefined> {
+  async loadWidget(id: string, config?: Record<string, unknown>): Promise<HTMLElement | null> {
     console.debug(`Attempting to load widget: ${id}`);
     const widget = this.getWidget(id);
     
     if (!widget) {
       console.warn(`Widget with id "${id}" not found`);
-      return undefined;
+      return null;
     }
 
     if (!this.loadedWidgets.has(id)) {
@@ -124,13 +130,36 @@ export class WidgetService {
       try {
         await this.moduleLoadPromises.get(id);
       } catch (error) {
-        return undefined;
+        return null;
       }
     } else {
       console.debug(`Widget ${id} already loaded, skipping import`);
     }
 
-    return widget;
+    // Create element
+    const element = document.createElement(widget.elementName);
+    
+    // Add ID attribute that matches the widget ID
+    element.setAttribute('id', id);
+    
+    // Set widget configuration (combine default with provided config)
+    const mergedConfig = {
+      ...widget.defaultConfig,
+      ...config,
+      widgetId: id, // Always include widget ID
+      widgetName: widget.name // Always include widget name
+    };
+    
+    // Set the config property if it exists
+    if ('config' in element) {
+      (element as any).config = mergedConfig;
+    }
+    
+    // Add data attributes
+    element.dataset.widgetId = id;
+    element.dataset.widgetName = widget.name;
+    
+    return element;
   }
 
   /**
@@ -162,11 +191,34 @@ export class WidgetService {
 
   async loadWidgets(ids: string[]): Promise<WidgetDefinition[]> {
     console.debug(`Loading multiple widgets: ${ids.join(', ')}`);
-    const promises = ids.map(id => this.loadWidget(id));
-    const widgets = await Promise.all(promises);
-    const filteredWidgets = widgets.filter((widget): widget is WidgetDefinition => widget !== undefined);
-    console.debug(`Successfully loaded ${filteredWidgets.length} out of ${ids.length} widgets`);
-    return filteredWidgets;
+    
+    // This was the problematic code - loadWidget returns HTMLElement | null, not WidgetDefinition
+    // const promises = ids.map(id => this.loadWidget(id));
+    // const widgets = await Promise.all(promises);
+    // const filteredWidgets = widgets.filter((widget): widget is WidgetDefinition => widget !== undefined);
+
+    // Fixed implementation:
+    const results: WidgetDefinition[] = [];
+    
+    for (const id of ids) {
+      const widgetDef = this.getWidget(id);
+      if (widgetDef) {
+        try {
+          // Attempt to load the widget's module
+          const element = await this.loadWidget(id);
+          if (element) {
+            // If successful, add the definition to results
+            results.push(widgetDef);
+          }
+        } catch (error) {
+          console.error(`Failed to load widget ${id}:`, error);
+          // Failed widgets are not added to results
+        }
+      }
+    }
+
+    console.debug(`Successfully loaded ${results.length} out of ${ids.length} widgets`);
+    return results;
   }
 
   getRegisteredWidgets(): string[] {
