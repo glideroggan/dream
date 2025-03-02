@@ -22,6 +22,18 @@
 - writing something in search, and then trying to tab over to result box, doesn't work
 - We need to start refactor individual files, as they start to grow, and could be split into smaller files
 - dismiss the search result with esc
+## workflows
+- edit payment contacts
+  Doesn't need to be a "page", can just be a workflow, showing different buttons for doing things
+    - edit
+    - add
+    - remove
+  Once done, it goes away
+  - maybe pinnable?
+## mfes/widgets
+  
+
+
 
 # menu
 ## theme pages
