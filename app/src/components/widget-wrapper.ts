@@ -1,5 +1,6 @@
 import { FASTElement, customElement, html, css, observable, attr } from "@microsoft/fast-element";
 import { getWidgetById } from "../widgets/widget-registry";
+import { widgetService } from "../services/widget-service";
 
 const template = html<WidgetWrapper>/*html*/ `
   <div class="widget-wrapper ${x => x.state}" data-widget-id="${x => x.widgetId}">
@@ -17,6 +18,20 @@ const template = html<WidgetWrapper>/*html*/ `
       <div class="widget-error">
         <h3>Widget failed to load</h3>
         <p>${x => x.errorMessage || 'There was an error loading this widget.'}</p>
+        <span class="widget-identifier">${x => x.displayName}</span>
+        <div class="action-buttons">
+          <button class="retry-button" @click="${x => x.retry()}">Try Again</button>
+          <button class="dismiss-button" @click="${x => x.dismiss()}">Dismiss</button>
+        </div>
+      </div>
+    ` : ''}
+    
+    <!-- Import error state -->
+    ${(x) => x.state === 'import-error' ? html<WidgetWrapper>/*html*/`
+      <div class="widget-error widget-import-error">
+        <h3>Widget Import Error</h3>
+        <p>${x => x.errorMessage || 'There was an error loading this widget module.'}</p>
+        <code class="module-path">${x => x.moduleImportPath}</code>
         <span class="widget-identifier">${x => x.displayName}</span>
         <div class="action-buttons">
           <button class="retry-button" @click="${x => x.retry()}">Try Again</button>
@@ -80,11 +95,35 @@ const styles = css`
     border: 1px solid var(--error-color-light, #fadbd8);
   }
   
+  .widget-import-error {
+    border: 1px solid var(--warning-color-light, #fdebd0);
+    background-color: var(--warning-color-bg, #fef9e7);
+  }
+  
+  .module-path {
+    display: block;
+    font-family: monospace;
+    background-color: rgba(0, 0, 0, 0.05);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    margin: 0.5rem 0;
+    font-size: 0.8rem;
+    max-width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    text-align: left;
+    max-width: 90%;
+  }
+  
   .widget-error h3 {
     color: var(--error-color, #e74c3c);
     margin-top: 0;
     margin-bottom: 0.75rem;
     font-size: 1rem;
+  }
+  
+  .widget-import-error h3 {
+    color: var(--warning-color, #f39c12);
   }
   
   .widget-error p {
@@ -149,7 +188,7 @@ const styles = css`
   
   .dismiss-button {
     background-color: transparent;
-    color: var(--text-color, #333);
+    color: var (--text-color, #333);
     border: 1px solid var(--border-color, #ddd);
     margin-left: 0.5rem;
   }
@@ -197,294 +236,560 @@ const styles = css`
 })
 export class WidgetWrapper extends FASTElement {
   @attr widgetId: string = "";
-  @attr state: 'loading' | 'loaded' | 'error' | 'timeout-warning' = 'loading';
+  @attr state: 'loading' | 'loaded' | 'error' | 'import-error' | 'timeout-warning' = 'loading';
   @attr errorMessage: string = '';
-  
+  @attr moduleImportPath: string = '';
+
+  // Optional attribute for widget name (to be consistent)
+  @attr widgetName: string = '';
+
   // Computed property for display name
   @observable private _widgetDefinition: any = null;
-  
+
   get displayName(): string {
-    if (this._widgetDefinition) {
+    // First use explicit widget name if provided
+    if (this.widgetName) {
+      return this.widgetName;
+    }
+    // Then try to get name from widget definition
+    if (this._widgetDefinition && this._widgetDefinition.name) {
       return this._widgetDefinition.name;
     }
+    // Fall back to widget ID
     return this.widgetId || 'Unknown widget';
   }
-  
+
   // Config options with defaults
   @attr({ mode: "fromView" }) warningTimeout: number = 5000; // 5 seconds for warning
   @attr({ mode: "fromView" }) failureTimeout: number = 10000; // 10 seconds for auto-failure
 
   // Timeout handlers
-  private warningTimeoutHandler: number | null = null;
-  private failureTimeoutHandler: number | null = null;
-  
+  private timeoutInterval: number | null = null;
+  private startTime: number = 0;
+
   // Event for retry requests
   private retryEvent = new CustomEvent('retry-widget', {
     bubbles: true,
     composed: true,
     detail: { widgetId: this.widgetId }
   });
-  
+
   // Event for dismiss requests
   private dismissEvent = new CustomEvent('dismiss-widget', {
     bubbles: true,
     composed: true,
     detail: { widgetId: this.widgetId }
   });
-  
+
   // Event for cancel requests
   private cancelEvent = new CustomEvent('cancel-widget-load', {
     bubbles: true,
     composed: true,
     detail: { widgetId: this.widgetId }
   });
-  
+
+  // Create a new event for notifying when the wrapper is connected
+  private connectedToDomEvent = new CustomEvent('connected-to-dom', {
+    bubbles: true,
+    composed: false,
+    detail: { widgetId: this.widgetId }
+  });
+
   // Bound event handlers to ensure proper 'this' context
   private boundHandleChildError = this.handleChildError.bind(this);
   private boundHandleInitialized = this.handleInitialized.bind(this);
-  
+  private boundHandleModuleError = this.handleModuleError.bind(this);
+
   // Track if widget initialization already happened
   private initialized: boolean = false;
+  
+  // Track if we've dispatched the connected-to-dom event
+  private connectedEventDispatched: boolean = false;
 
   connectedCallback() {
     super.connectedCallback();
-    
+
     // Get widget info from registry
     this.updateWidgetDefinition();
-    
+
     // Start timeout tracking if in loading state
     if (this.state === 'loading') {
       this.startTimeoutTracking();
     }
-    
+
     // Update event detail with current widget ID
     this.retryEvent.detail.widgetId = this.widgetId;
     this.dismissEvent.detail.widgetId = this.widgetId;
     this.cancelEvent.detail.widgetId = this.widgetId;
-    
+    this.connectedToDomEvent.detail.widgetId = this.widgetId;
+
     // Use bound event handlers to ensure proper 'this' context
     this.addEventListener('error', this.boundHandleChildError);
     this.addEventListener('initialized', this.boundHandleInitialized);
     this.addEventListener('load-complete', this.boundHandleInitialized);
     
+    // Also listen for module errors that bubble up from widget-service
+    document.addEventListener('widget-module-error', this.boundHandleModuleError);
+
     // Handle DOM mutation to detect when widget content appears
-    this.observeChildElements();
+    // this.observeChildElements();
+
+    // Check for existing error in widget service
+    this.checkForExistingErrors();
+
+    // NEW: Check if we need to load the module for this widget
+    this.initializeWidgetModule();
+
+    console.debug(`Widget wrapper connected: ${this.widgetId || this.displayName || 'Unknown'}, timeouts: warning=${this.warningTimeout}ms, failure=${this.failureTimeout}ms`);
     
-    console.log(`Widget wrapper connected: ${this.widgetId || this.displayName || 'Unknown'}, timeouts: warning=${this.warningTimeout}ms, failure=${this.failureTimeout}ms`);
+    // Important: Dispatch connected-to-dom event to notify child elements
+    // We do this on next tick to ensure all initialization is complete
+    setTimeout(() => {
+      if (!this.connectedEventDispatched) {
+        Array.from(this.children).forEach(child => {
+          child.dispatchEvent(this.connectedToDomEvent);
+        });
+        this.connectedEventDispatched = true;
+      }
+    }, 0);
   }
-  
+
   disconnectedCallback() {
     super.disconnectedCallback();
     this.clearTimeoutTracking();
-    
+
     // Remove bound event listeners
     this.removeEventListener('error', this.boundHandleChildError);
     this.removeEventListener('initialized', this.boundHandleInitialized);
     this.removeEventListener('load-complete', this.boundHandleInitialized);
-    
+    document.removeEventListener('widget-module-error', this.boundHandleModuleError);
+
     // Disconnect mutation observer if exists
-    if (this.mutationObserver) {
-      this.mutationObserver.disconnect();
-      this.mutationObserver = null;
-    }
+    // if (this.mutationObserver) {
+    //   this.mutationObserver.disconnect();
+    //   this.mutationObserver = null;
+    // }
   }
   
   /**
-   * Set up a mutation observer to detect when content appears
-   * This is a fallback for widgets that don't emit initialization events
+   * Check if the widget service already has errors for this widget
+   * This handles the case where module loading failed before we added the event listener
    */
-  private mutationObserver: MutationObserver | null = null;
-  
-  private observeChildElements() {
-    // Look for slot element
-    const slot = this.shadowRoot?.querySelector('slot');
-    if (!slot) return;
+  private checkForExistingErrors(): void {
+    if (!this.widgetId) return;
     
-    this.mutationObserver = new MutationObserver((mutations) => {
-      // Check if we have any assigned nodes in the slot
-      const slotNodes = slot.assignedNodes();
-      if (slotNodes.length > 0) {
-        // Check if there's actual widget content (not just text nodes)
-        const hasElements = Array.from(slotNodes).some(node => node.nodeType === Node.ELEMENT_NODE);
-        
-        if (hasElements && !this.initialized && this.state === 'loading') {
-          // Content has been added, treat this as initialization
-          console.log(`Widget ${this.widgetId || this.displayName || 'Unknown'} content detected, treating as initialized`);
-          this.handleInitialized(new Event('content-detected'));
-        }
+    if (widgetService.hasLoadError(this.widgetId)) {
+      const errorMessage = widgetService.getLoadErrorMessage(this.widgetId);
+      
+      // Check if it's an import error or other error
+      if (errorMessage && (
+          errorMessage.includes('import') || 
+          errorMessage.includes('module') ||
+          errorMessage.includes('not found'))) {
+        // It's an import error
+        this.handleImportError(errorMessage);
+      } else {
+        // Standard error
+        this.state = 'error';
+        this.errorMessage = errorMessage || 'Unknown widget error';
       }
-    });
+    }
+  }
+
+  /**
+   * Handle widget module error events
+   */
+  private handleModuleError(event: Event): void {
+    const customEvent = event as CustomEvent;
+    const { widgetId, error, modulePath } = customEvent.detail;
     
-    // Observe both the slot element and the light DOM
-    this.mutationObserver.observe(slot, { childList: true, subtree: true });
-    this.mutationObserver.observe(this, { childList: true });
+    // Only process if it's for our widget
+    if (widgetId !== this.widgetId) return;
+    
+    console.debug(`Widget ${this.widgetId} received module error:`, error);
+    
+    // Handle as an import error
+    this.handleImportError(error?.message || 'Failed to load widget module', modulePath);
   }
   
+  /**
+   * Handle import errors specifically
+   */
+  private handleImportError(errorMessage: string, modulePath?: string): void {
+    this.state = 'import-error';
+    this.errorMessage = errorMessage;
+    
+    // If we have the module definition, show the path
+    if (modulePath) {
+      this.moduleImportPath = modulePath;
+    } else if (this._widgetDefinition?.module) {
+      this.moduleImportPath = this._widgetDefinition.module;
+    }
+    
+    this.clearTimeoutTracking();
+  }
+
+  // /**
+  //  * Set up a mutation observer to detect when content appears
+  //  * This is a fallback for widgets that don't emit initialization events
+  //  */
+  // private mutationObserver: MutationObserver | null = null;
+
+  // private observeChildElements() {
+  //   // Look for slot element
+  //   const slot = this.shadowRoot?.querySelector('slot');
+  //   if (!slot) return;
+
+  //   this.mutationObserver = new MutationObserver((mutations) => {
+  //     // Check if we have any assigned nodes in the slot
+  //     const slotNodes = slot.assignedNodes();
+  //     if (slotNodes.length > 0) {
+  //       // Check if there's actual widget content (not just text nodes)
+  //       const hasElements = Array.from(slotNodes).some(node => node.nodeType === Node.ELEMENT_NODE);
+
+  //       if (hasElements && !this.initialized && this.state === 'loading') {
+  //         // Content has been added, treat this as initialization
+  //         console.debug(`Widget ${this.widgetId || this.displayName || 'Unknown'} content detected, treating as initialized`);
+  //         this.handleInitialized(new Event('content-detected'));
+          
+  //         // If we haven't dispatched the connected event, do so now
+  //         if (!this.connectedEventDispatched) {
+  //           Array.from(this.children).forEach(child => {
+  //             child.dispatchEvent(this.connectedToDomEvent);
+  //           });
+  //           this.connectedEventDispatched = true;
+  //         }
+  //       }
+  //     }
+  //   });
+
+  //   // Observe both the slot element and the light DOM
+  //   this.mutationObserver.observe(slot, { childList: true, subtree: true });
+  //   this.mutationObserver.observe(this, { childList: true });
+  // }
+
   /**
    * Handle initialization event from child widget
    */
   private handleInitialized(event: Event) {
     if (this.initialized) return;
-    
-    console.log(`Widget ${this.widgetId || this.displayName || 'Unknown'} initialized (from ${event.type})`);
+
+    console.debug(`Widget ${this.widgetId || this.displayName || 'Unknown'} initialized (from ${event.type}) after ${Date.now() - this.startTime}ms`);
     this.initialized = true;
     this.state = 'loaded';
+    
+    // Clear timeout tracking since we're initialized
+    this.clearTimeoutTracking();
   }
-  
+
   /**
    * Handle errors from child widgets
    */
   private handleChildError(event: Event) {
-    console.log(`Widget ${this.widgetId || this.displayName || 'Unknown'} error:`, event);
+    // Record elapsed time for better debugging
+    const elapsedTime = this.startTime ? `${Date.now() - this.startTime}ms` : 'unknown';
     
+    console.debug(`Widget ${this.widgetId || this.displayName || 'Unknown'} error after ${elapsedTime}:`, event);
+  
     // Update state to error
     this.state = 'error';
-    
+  
     // Update error message if available
     if (event instanceof ErrorEvent && event.message) {
       this.errorMessage = event.message;
     } else {
       this.errorMessage = 'Widget encountered an error during initialization';
     }
-    
-    // Prevent further propagation
+  
+    // Clear timeout tracking
+    this.clearTimeoutTracking();
+  
+    // Prevent further propagation since we've handled it
     event.stopPropagation();
   }
-  
+
   /**
-   * Start tracking for slow loading widgets
+   * Start tracking for slow loading widgets using interval
    */
   private startTimeoutTracking() {
-    // Clear any existing timeouts
+    // Clear any existing interval
     this.clearTimeoutTracking();
-    
-    // Create a strong reference to this for timeout callbacks
-    const self = this;
-    
-    // Set a timeout to show a warning if widget takes too long to load
-    this.warningTimeoutHandler = window.setTimeout(function() {
-      if (self.state === 'loading') {
-        console.log(`Widget ${self.displayName} warning timeout reached`);
-        self.state = 'timeout-warning';
-      }
-    }, this.warningTimeout);
-    
-    // Set a timeout to automatically fail if widget never loads
-    this.failureTimeoutHandler = window.setTimeout(function() {
-      if (self.state === 'loading' || self.state === 'timeout-warning') {
-        console.log(`Widget ${self.displayName} failure timeout reached`);
-        self.state = 'error';
-        self.errorMessage = `Widget failed to initialize within ${self.failureTimeout/1000} seconds`;
-        
-        // Dispatch an error event to notify parent components
-        const errorEvent = new ErrorEvent('error', {
-          message: `Widget ${self.displayName} failed to initialize within the time limit`,
-          error: new Error('Widget initialization timeout'),
-          bubbles: true,
-          composed: true
-        });
-        self.dispatchEvent(errorEvent);
-      }
-    }, this.failureTimeout);
-    
-    console.log(`Started timeout tracking for ${this.displayName} widget`);
+
+    // Record the start time
+    this.startTime = Date.now();
+
+    console.debug(`Started timeout tracking for ${this.displayName} widget: warning=${this.warningTimeout}ms, failure=${this.failureTimeout}ms`);
+
+    // Start an interval that checks elapsed time
+    this.timeoutInterval = window.setInterval(() => {
+      this.checkTimeouts();
+    }, 500); // Check every 500ms
   }
-  
+
+  /**
+   * Check if timeouts have been reached
+   */
+  private checkTimeouts() {
+    const elapsedTime = Date.now() - this.startTime;
+
+    // Only check timeouts if we're still in a loading-related state
+    // (but don't check if we're already in error or loaded state)
+    if (this.state !== 'loading' && this.state !== 'timeout-warning') {
+      this.clearTimeoutTracking();
+      return;
+    }
+
+    // Check for failure timeout first (more severe)
+    if (elapsedTime >= this.failureTimeout) {
+      console.debug(`Widget ${this.displayName} failure timeout reached after ${elapsedTime}ms`);
+      
+      // Clear the interval since we're done monitoring
+      this.clearTimeoutTracking();
+      
+      // Set error state
+      this.state = 'error';
+      this.errorMessage = `Widget failed to initialize within ${this.failureTimeout / 1000} seconds`;
+      
+      return;
+    }
+    
+    // Check for warning timeout
+    if (elapsedTime >= this.warningTimeout && this.state === 'loading') {
+      console.debug(`Widget ${this.displayName} warning timeout reached after ${elapsedTime}ms`);
+      this.state = 'timeout-warning';
+      
+      // Important: We don't clear timeouts here, just change the visual state
+    }
+  }
+
   /**
    * Clear timeout tracking
    */
   private clearTimeoutTracking() {
-    if (this.warningTimeoutHandler !== null) {
-      window.clearTimeout(this.warningTimeoutHandler);
-      this.warningTimeoutHandler = null;
-    }
-    
-    if (this.failureTimeoutHandler !== null) {
-      window.clearTimeout(this.failureTimeoutHandler);
-      this.failureTimeoutHandler = null;
+    if (this.timeoutInterval !== null) {
+      window.clearInterval(this.timeoutInterval);
+      this.timeoutInterval = null;
     }
   }
-  
+
   /**
    * Handle attribute changes
    */
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     super.attributeChangedCallback(name, oldValue, newValue);
-    
+
     // Handle state changes
     if (name === 'state' && oldValue !== newValue) {
-      console.log(`Widget ${this.widgetId || this.displayName || 'Unknown'} state changed: ${oldValue} -> ${newValue}`);
-      
-      // If changing to loading state, start timeout tracking
-      if (newValue === 'loading') {
-        this.startTimeoutTracking();
-      } else {
-        // Otherwise clear timeout tracking
-        this.clearTimeoutTracking();
+      console.debug(`Widget ${this.widgetId || this.displayName || 'Unknown'} state changed: ${oldValue} -> ${newValue}`);
+
+      // State transition logic
+      switch (newValue) {
+        case 'loading':
+          // Start timeout tracking when entering loading state
+          this.startTimeoutTracking();
+          break;
+        
+        case 'loaded':
+        case 'error':
+          // Stop timeout tracking when the widget is fully loaded or has errored
+          this.clearTimeoutTracking();
+          break;
+          
+        case 'timeout-warning':
+          // Continue timeout tracking when showing warning
+          // Don't reset or clear timeouts here
+          break;
       }
     }
-    
+
     // Handle widget ID changes
-    if (name === 'widgetId' && oldValue !== newValue) {
+    if ((name === 'widgetId' || name === 'widget-id') && oldValue !== newValue) {
+      // For consistency, always use widgetId internally
+      if (name === 'widget-id') {
+        this.widgetId = newValue;
+      }
+
       // Update widget definition
       this.updateWidgetDefinition();
-      
+
       // Update event details with current widget ID
-      this.retryEvent.detail.widgetId = newValue;
-      this.dismissEvent.detail.widgetId = newValue;
-      this.cancelEvent.detail.widgetId = newValue;
+      this.retryEvent.detail.widgetId = this.widgetId;
+      this.dismissEvent.detail.widgetId = this.widgetId;
+      this.cancelEvent.detail.widgetId = this.widgetId;
     }
-    
+
     // Handle timeout configuration changes
-    if ((name === 'warningTimeout' || name === 'failureTimeout') && oldValue !== newValue) {
+    if ((name === 'warningTimeout' || name === 'warning-timeout') && oldValue !== newValue) {
       // Convert string to number
-      const numericValue = parseInt(newValue, 10) || (name === 'warningTimeout' ? 5000 : 10000);
-      
-      // Update the property with the numeric value
-      if (name === 'warningTimeout') {
-        this.warningTimeout = numericValue;
-      } else {
-        this.failureTimeout = numericValue;
-      }
-      
+      const numericValue = parseInt(newValue, 10) || 5000;
+
+      // Update the property
+      this.warningTimeout = numericValue;
+
       // Restart timeout tracking if we're in a loading state
       if (this.state === 'loading') {
         this.startTimeoutTracking();
       }
     }
+
+    if ((name === 'failureTimeout' || name === 'failure-timeout') && oldValue !== newValue) {
+      // Convert string to number
+      const numericValue = parseInt(newValue, 10) || 10000;
+
+      // Update the property
+      this.failureTimeout = numericValue;
+
+      // Restart timeout tracking if we're in a loading state
+      if (this.state === 'loading') {
+        this.startTimeoutTracking();
+      }
+    }
+
+    // Handle error message
+    if ((name === 'errorMessage' || name === 'error-message') && oldValue !== newValue) {
+      this.errorMessage = newValue;
+    }
+
+    // Handle widget name
+    if ((name === 'widgetName' || name === 'widget-name') && oldValue !== newValue) {
+      this.widgetName = newValue;
+    }
   }
-  
+
   private updateWidgetDefinition(): void {
     if (this.widgetId) {
       this._widgetDefinition = getWidgetById(this.widgetId);
-      console.log(`Widget definition for ${this.widgetId}:`, this._widgetDefinition);
+      console.debug(`Widget definition for ${this.widgetId}:`, this._widgetDefinition);
     }
   }
-  
+
+  /**
+   * Initialize the widget module loading process
+   * This method directly interacts with the widget service to handle module loading
+   */
+  private async initializeWidgetModule(): Promise<void> {
+    if (!this.widgetId) {
+      console.error("Cannot initialize widget module - widget ID is missing");
+      this.setErrorState("Missing widget ID");
+      return;
+    }
+    
+    try {
+      // Check if widget definition exists
+      this._widgetDefinition = getWidgetById(this.widgetId);
+      if (!this._widgetDefinition) {
+        throw new Error(`Widget with ID "${this.widgetId}" not found in registry`);
+      }
+
+      // Check if the widget module is already loaded
+      if (widgetService.isWidgetLoaded(this.widgetId)) {
+        console.debug(`Widget ${this.widgetId} module already loaded, no need to load again`);
+        // No need to do anything, child elements will trigger their own initialization events
+        return;
+      }
+
+      // Check if there are existing errors for this widget
+      if (widgetService.hasLoadError(this.widgetId)) {
+        const errorMessage = widgetService.getLoadErrorMessage(this.widgetId) || 
+                            "Unknown widget loading error";
+        
+        this.handleWidgetLoadError(errorMessage);
+        return;
+      }
+
+      // Register a load handler with the widget service
+      console.debug(`Requesting widget service to load module for ${this.widgetId}`);
+      
+      try {
+        // Use widget service to load the module
+        await widgetService.loadWidgetModule(this._widgetDefinition);
+        console.debug(`Widget ${this.widgetId} module loaded successfully`);
+        
+        // Note: We don't set state=loaded here because we wait for the 
+        // actual widget element to initialize itself
+      } catch (error) {
+        // Handle the error from widget service
+        this.handleWidgetLoadError(
+          error instanceof Error ? error.message : `Unknown error loading widget ${this.widgetId}`
+        );
+      }
+    } catch (error) {
+      console.error(`Error initializing widget ${this.widgetId}:`, error);
+      this.setErrorState(
+        error instanceof Error ? error.message : `Unknown error initializing widget ${this.widgetId}`
+      );
+    }
+  }
+
+  /**
+   * Handle widget load errors, distinguishing between import errors and other errors
+   */
+  private handleWidgetLoadError(message: string): void {
+    console.error(`Widget ${this.widgetId} load error:`, message);
+    
+    // Determine if this is an import error or a general error
+    if (message.includes('import') || 
+        message.includes('module') ||
+        message.includes('not found')) {
+      
+      this.state = 'import-error';
+      this.errorMessage = message;
+      
+      // Add module path info if available
+      if (this._widgetDefinition?.module) {
+        this.moduleImportPath = this._widgetDefinition.module;
+      }
+    } else {
+      this.setErrorState(message);
+    }
+  }
+
+  /**
+   * Set the widget to error state
+   */
+  private setErrorState(message: string): void {
+    this.state = 'error';
+    this.errorMessage = message;
+    this.clearTimeoutTracking();
+  }
+
   /**
    * Request retry of widget load
    */
   retry() {
-    console.log(`Retrying widget: ${this.widgetId || this.displayName || 'Unknown'}`);
+    console.debug(`Retrying widget: ${this.widgetId || this.displayName || 'Unknown'}`);
+    
+    // Clear any errors in the widget service for this widget
+    widgetService.clearLoadError(this.widgetId);
+    
     this.initialized = false;
     this.state = 'loading';
+    this.errorMessage = '';
+    this.moduleImportPath = '';
+    
+    // Start timeout tracking again
     this.startTimeoutTracking();
+    
+    // Re-initialize the widget module
+    this.initializeWidgetModule();
+    
+    // Also dispatch the retry event for parent containers
     this.dispatchEvent(this.retryEvent);
   }
-  
+
   /**
    * Dismiss the failed widget
    */
   dismiss() {
-    console.log(`Dismissing widget: ${this.widgetId || this.displayName || 'Unknown'}`);
+    console.debug(`Dismissing widget: ${this.widgetId || this.displayName || 'Unknown'}`);
     this.dispatchEvent(this.dismissEvent);
   }
-  
+
   /**
    * Cancel a slow-loading widget
    */
   cancel() {
-    console.log(`Cancelling widget: ${this.widgetId || this.displayName || 'Unknown'}`);
+    console.debug(`Cancelling widget: ${this.widgetId || this.displayName || 'Unknown'}`);
     this.state = 'error';
     this.errorMessage = 'Widget loading cancelled by user';
     this.dispatchEvent(this.cancelEvent);

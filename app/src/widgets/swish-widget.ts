@@ -205,21 +205,31 @@ export class SwishWidget extends FASTElement {
   connectedCallback(): void {
     super.connectedCallback();
     this.loadProductData();
-    
+
+    this.lastTransferAmount = "$25.00";
+    this.lastTransferDate = "Yesterday";
+
     // Simulate loading with a small delay
-    setTimeout(() => {
-      this.isLoading = false;
-      // Set some demo data
-      this.lastTransferAmount = "$25.00";
-      this.lastTransferDate = "Yesterday";
-    }, 800);
+    // setTimeout(() => {
+    //   this.isLoading = false;
+    //   // Set some demo data
+    //   this.lastTransferAmount = "$25.00";
+    //   this.lastTransferDate = "Yesterday";
+    // }, 800);
+    // Signal that the widget is initialized
+    this.isLoading = false;
+    this.dispatchEvent(new CustomEvent('initialized', {
+      bubbles: true,
+      composed: true
+    }));
+
   }
 
   private async loadProductData(): Promise<void> {
     const productService = getProductService();
     // Use the typed getProduct<T> method to get the SwishProduct
     const swishProduct = await productService.getProduct<SwishProduct>("swish-standard");
-    
+
     if (swishProduct) {
       this.swishProduct = swishProduct;
     } else {
@@ -229,7 +239,7 @@ export class SwishWidget extends FASTElement {
 
   startSwishTransfer(): void {
     console.debug("Starting Swish transfer workflow");
-    
+
     // Dispatch event to start the workflow
     const event = new CustomEvent("start-workflow", {
       bubbles: true,
@@ -242,7 +252,7 @@ export class SwishWidget extends FASTElement {
         }
       }
     });
-    
+
     this.dispatchEvent(event);
   }
 
@@ -254,7 +264,7 @@ export class SwishWidget extends FASTElement {
 
   manageSubscription(): void {
     console.debug("Managing Swish subscription");
-    
+
     // This would open a workflow to manage the subscription
     const event = new CustomEvent("start-workflow", {
       bubbles: true,
@@ -267,7 +277,7 @@ export class SwishWidget extends FASTElement {
         }
       }
     });
-    
+
     this.dispatchEvent(event);
   }
 }

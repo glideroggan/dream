@@ -1,12 +1,10 @@
 # BUGS
 - modal primary buttons keeps their last workflow text, we need to reset it when closing
-- CONTINUE HERE:
-Regarding the timeout bug, it must be the setTimeout command, I don't think it gets all the details, so it can't set the state back
-We should try correct the swish widget, get it working, then just remove the emit of the event. and try from there.
 
 
 # TODO
-- we need to cover the case of getting the wrong script path to a widget. Changing the path to something else isn't covered in the widget wrapper
+- writing something in search, and then trying to tab over to result box, doesn't work
+- ✔️we need to cover the case of getting the wrong script path to a widget. Changing the path to something else isn't covered in the widget wrapper
 - We need to start refactor individual files, as they start to grow, and could be split into smaller files
 - dismiss the search result with esc
 

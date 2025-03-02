@@ -12,6 +12,7 @@ const template = html<RouterComponent>/*html*/`
   <div class="router-container">
     <div id="page-container" class="page-container">
       <!-- Pages will be dynamically inserted here -->
+      <slot></slot>
     </div>
   </div>
 `;
@@ -97,7 +98,8 @@ export class RouterComponent extends FASTElement {
     this.updateElementParams(newElement, params);
     
     // Get container
-    const container = this.shadowRoot?.getElementById('page-container');
+    const container = this
+    // const container = this.shadowRoot?.getElementById('page-container');
     if (!container) {
       console.error('Page container not found');
       return;

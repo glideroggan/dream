@@ -26,9 +26,7 @@ export class WidgetService {
 
   // Add error tracking
   private widgetLoadErrors: Map<string, string> = new Map();
-  private loadTimeouts: Map<string, number> = new Map();
-  private readonly loadTimeout = 15000; // 15 seconds timeout for widget load
-
+  
   // Private constructor for singleton pattern
   private constructor() {
     console.debug("WidgetService instance created");
@@ -68,80 +66,25 @@ export class WidgetService {
     return widget;
   }
 
-  async loadWidget(id: string, config?: Record<string, unknown>): Promise<HTMLElement | null> {
-    console.debug(`Attempting to load widget: ${id}`);
+  /**
+   * Creates a widget element with proper configuration
+   * Note: This does NOT load the module - that's handled separately
+   */
+  async createWidgetElement(id: string, config?: Record<string, unknown>): Promise<HTMLElement | null> {
+    console.debug(`Creating widget element: ${id}`);
     const widget = this.getWidget(id);
-    
+
     if (!widget) {
       console.warn(`Widget with id "${id}" not found`);
       return null;
     }
 
-    if (!this.loadedWidgets.has(id)) {
-      if (!this.moduleLoadPromises.has(id)) {
-        console.debug(`Importing module for widget ${id}: ${widget.module}`);
-        
-        // Clear any previous error for this widget
-        this.widgetLoadErrors.delete(id);
-        
-        // Create a promise to track this module load with timeout
-        const loadPromise = (async () => {
-            // Set up timeout for widget load
-            const timeoutId = window.setTimeout(() => {
-              this.widgetLoadErrors.set(id, `Widget ${id} load timed out after ${this.loadTimeout/1000} seconds`);
-              console.error(`Widget load timeout: ${id}`);
-              // Reject the promise if it's still pending
-              if (this.moduleLoadPromises.has(id)) {
-                this.moduleLoadPromises.delete(id);
-              }
-            }, this.loadTimeout);
-            
-            this.loadTimeouts.set(id, timeoutId);
-            
-            // Handle module path
-            const modulePath = widget.module;
-            console.debug(`Loading widget module from: ${modulePath}`);
-            
-            try {
-              await import(/* @vite-ignore */ modulePath);
-              console.debug(`Module ${modulePath} loaded successfully`);
-            }  catch (error) {
-            console.error(`Failed to load widget ${id}:`, error);
-            
-            // Clear timeout if we got an error
-            if (this.loadTimeouts.has(id)) {
-              window.clearTimeout(this.loadTimeouts.get(id));
-              this.loadTimeouts.delete(id);
-            }
-            
-            // Store the error message
-            this.widgetLoadErrors.set(id, error instanceof Error ? error.message : `Failed to load widget ${id}`);
-            
-            // Remove the promise to allow retries
-            this.moduleLoadPromises.delete(id);
-            throw error;
-          }
-        })();
-        
-        this.moduleLoadPromises.set(id, loadPromise);
-      }
-      
-      // Wait for the module to load
-      try {
-        await this.moduleLoadPromises.get(id);
-      } catch (error) {
-        return null;
-      }
-    } else {
-      console.debug(`Widget ${id} already loaded, skipping import`);
-    }
-
     // Create element
     const element = document.createElement(widget.elementName);
-    
+
     // Add ID attribute that matches the widget ID
     element.setAttribute('id', id);
-    
+
     // Set widget configuration (combine default with provided config)
     const mergedConfig = {
       ...widget.defaultConfig,
@@ -149,17 +92,133 @@ export class WidgetService {
       widgetId: id, // Always include widget ID
       widgetName: widget.name // Always include widget name
     };
-    
+
     // Set the config property if it exists
     if ('config' in element) {
       (element as any).config = mergedConfig;
     }
-    
+
     // Add data attributes
     element.dataset.widgetId = id;
     element.dataset.widgetName = widget.name;
-    
+
     return element;
+  }
+
+  /**
+   * Load a widget module
+   * This allows the widget wrapper to request loading when needed
+   */
+  async loadWidgetModule(widget: WidgetDefinition): Promise<void> {
+    const { id, module: modulePath } = widget;
+    
+    // Skip if already loaded
+    if (this.loadedWidgets.has(id)) {
+      return;
+    }
+    
+    // If already loading, return the existing promise
+    if (this.moduleLoadPromises.has(id)) {
+      return this.moduleLoadPromises.get(id) as Promise<void>;
+    }
+    
+    console.debug(`Loading widget module: ${id} from ${modulePath}`);
+    
+    // Create a promise to track this module load
+    const loadPromise = (async () => {
+      try {
+        // Check if module path exists in importmap
+        if (!this.isModuleInImportMap(modulePath)) {
+          throw new Error(`Module "${modulePath}" not found in import map. Check your import map configuration.`);
+        }
+
+        // Import the module
+        await import(/* @vite-ignore */ modulePath);
+        console.debug(`Module ${modulePath} loaded successfully`);
+        this.loadedWidgets.add(id);
+        
+        // Clear any existing error
+        this.widgetLoadErrors.delete(id);
+      } catch (error) {
+        console.error(`Failed to load widget ${id} from ${modulePath}:`, error);
+        
+        // Store the error message
+        let errorMessage = 'Unknown error loading widget';
+        if (error instanceof Error) {
+          errorMessage = error.message;
+
+          // Add specific messaging for common import errors
+          if (error.message.includes('Failed to fetch') || 
+              error.message.includes('Cannot find module') ||
+              error.message.includes('not found in import map')) {
+            errorMessage = `Widget module could not be loaded from "${modulePath}". ` +
+                          `Check that the module path is correct in your import map.`;
+          }
+        }
+        
+        this.widgetLoadErrors.set(id, errorMessage);
+        
+        // Remove the promise to allow retries
+        this.moduleLoadPromises.delete(id);
+        
+        // Re-throw the error
+        throw error;
+      }
+    })();
+    
+    this.moduleLoadPromises.set(id, loadPromise);
+    
+    try {
+      await loadPromise;
+    } catch (error) {
+      // Error is logged and stored above, we need to re-throw here
+      // so the widget wrapper can handle it
+      throw error;
+    }
+  }
+
+  /**
+   * Check if a module path exists in the import map
+   */
+  private isModuleInImportMap(modulePath: string): boolean {
+    // Check if there's a document we can access (for SSR safety)
+    if (typeof document === 'undefined') return true;
+
+    // Get all script tags that might contain import maps
+    const scriptTags = document.querySelectorAll('script[type="importmap"]');
+    
+    // If no import maps are found, assume the module is available
+    if (scriptTags.length === 0) return true;
+    
+    // Process each import map
+    for (let i = 0; i < scriptTags.length; i++) {
+      try {
+        const importMapText = scriptTags[i].textContent;
+        if (!importMapText) continue;
+        
+        const importMap = JSON.parse(importMapText);
+        if (!importMap.imports) continue;
+        
+        // Check if the module path is in the import map
+        if (modulePath.startsWith('@')) {
+          // For bare specifiers like "@widgets/account"
+          if (modulePath in importMap.imports) {
+            return true;
+          }
+        } else {
+          // For relative or absolute paths, check if they exist as values
+          const importValues = Object.values(importMap.imports) as string[];
+          if (importValues.includes(modulePath)) {
+            return true;
+          }
+        }
+      } catch (e) {
+        console.warn('Error parsing import map:', e);
+      }
+    }
+    
+    // Module path not found in any import map
+    return false;
   }
 
   /**
@@ -182,42 +241,51 @@ export class WidgetService {
   clearLoadError(id: string): void {
     this.widgetLoadErrors.delete(id);
     
-    // Also clear any timeout
-    if (this.loadTimeouts.has(id)) {
-      window.clearTimeout(this.loadTimeouts.get(id));
-      this.loadTimeouts.delete(id);
+    // Also clear loaded status to force a reload
+    this.loadedWidgets.delete(id);
+
+    // Clear any existing module load promise
+    this.moduleLoadPromises.delete(id);
+  }
+
+  /**
+   * Check if a widget is loaded
+   */
+  isWidgetLoaded(id: string): boolean {
+    return this.loadedWidgets.has(id);
+  }
+
+  /**
+   * Preload a widget module
+   */
+  async preloadWidget(id: string): Promise<boolean> {
+    const widget = this.getWidget(id);
+    if (!widget) {
+      return false;
+    }
+
+    try {
+      await this.loadWidgetModule(widget);
+      return true;
+    } catch (error) {
+      return false;
     }
   }
 
   async loadWidgets(ids: string[]): Promise<WidgetDefinition[]> {
-    console.debug(`Loading multiple widgets: ${ids.join(', ')}`);
-    
-    // This was the problematic code - loadWidget returns HTMLElement | null, not WidgetDefinition
-    // const promises = ids.map(id => this.loadWidget(id));
-    // const widgets = await Promise.all(promises);
-    // const filteredWidgets = widgets.filter((widget): widget is WidgetDefinition => widget !== undefined);
+    console.debug(`Getting widget definitions for: ${ids.join(', ')}`);
 
-    // Fixed implementation:
+    // Only get the widget definitions, don't actually load the modules yet
     const results: WidgetDefinition[] = [];
-    
+
     for (const id of ids) {
       const widgetDef = this.getWidget(id);
       if (widgetDef) {
-        try {
-          // Attempt to load the widget's module
-          const element = await this.loadWidget(id);
-          if (element) {
-            // If successful, add the definition to results
-            results.push(widgetDef);
-          }
-        } catch (error) {
-          console.error(`Failed to load widget ${id}:`, error);
-          // Failed widgets are not added to results
-        }
+        results.push(widgetDef);
       }
     }
 
-    console.debug(`Successfully loaded ${results.length} out of ${ids.length} widgets`);
+    console.debug(`Found ${results.length} widget definitions out of ${ids.length} requested`);
     return results;
   }
 

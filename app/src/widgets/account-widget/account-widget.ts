@@ -1,8 +1,6 @@
 import { FASTElement, customElement, html, css, observable, when, attr } from "@microsoft/fast-element";
 import "../../components/modal-component";
-import { workflowService } from "../../services/workflow-service";
-import { Account, Transaction, TransactionType, getRepositoryService } from "../../services/repository-service";
-import { StorageService, storageService } from "../../services/storage-service";
+import { Account, getRepositoryService } from "../../services/repository-service";
 import { WorkflowIds } from "../../workflows/workflow-registry";
 import { ModalComponent } from "../../components/modal-component";
 import "./account-list-component";
