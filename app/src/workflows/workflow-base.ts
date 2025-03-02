@@ -1,4 +1,5 @@
 import { FASTElement } from "@microsoft/fast-element";
+import { workflowManager } from "../services/workflow-manager-service";
 
 export interface WorkflowResult {
   success: boolean;
@@ -20,6 +21,7 @@ export interface WorkflowHost {
 
 export abstract class WorkflowBase extends FASTElement {
   private _host: WorkflowHost | null = null;
+  private _currentNestedWorkflowPromise: Promise<WorkflowResult> | null = null;
   
   /**
    * Get workflow host interface
@@ -43,12 +45,27 @@ export abstract class WorkflowBase extends FASTElement {
   }
   
   /**
+   * Called when the workflow is resumed after a nested workflow completes
+   * @param result The result from the nested workflow that just completed
+   */
+  public resume(result?: WorkflowResult): void {
+    // Override in subclasses if needed
+  }
+  
+  /**
    * Close the workflow with a result
    */
   protected complete(success: boolean = true, data?: Record<string, any>, message?: string): void {
     if (this.host) {
       this.host.closeWorkflow({ success, data, message });
     }
+    
+    // Dispatch event for workflow completion
+    this.dispatchEvent(new CustomEvent('workflow-complete', {
+      bubbles: true,
+      composed: true,
+      detail: { success, data, message } as WorkflowResult
+    }));
   }
   
   /**
@@ -82,8 +99,34 @@ export abstract class WorkflowBase extends FASTElement {
    */
   protected notifyValidation(isValid: boolean, message?: string): void {
     this.dispatchEvent(new CustomEvent('workflowValidation', {
-      detail: { isValid, message } as WorkflowValidationEvent
+      detail: { isValid, message } as WorkflowValidationEvent,
+      bubbles: true,
+      composed: true
     }));
+  }
+  
+  /**
+   * Start a nested workflow and get its result
+   * This will pause the current workflow and start a new one
+   */
+  protected async startNestedWorkflow(
+    workflowId: string, 
+    params?: Record<string, any>
+  ): Promise<WorkflowResult> {
+    console.log(`Starting nested workflow: ${workflowId}`);
+    // Prevent multiple nested workflows from starting
+    if (this._currentNestedWorkflowPromise) {
+      return this._currentNestedWorkflowPromise;
+    }
+    
+    this._currentNestedWorkflowPromise = workflowManager.startWorkflow(workflowId, params, true);
+    
+    try {
+      const result = await this._currentNestedWorkflowPromise;
+      return result;
+    } finally {
+      this._currentNestedWorkflowPromise = null;
+    }
   }
   
   /**

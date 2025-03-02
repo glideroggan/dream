@@ -1,6 +1,7 @@
 import { FASTElement, customElement, html, css, attr, observable, when } from "@microsoft/fast-element";
 import { WorkflowBase, WorkflowResult, WorkflowHost, WorkflowValidationEvent } from "../workflows/workflow-base";
 import { workflowService } from '../services/workflow-service';
+import { workflowManager } from '../services/workflow-manager-service';
 
 // Update the template to include the disabled state for the primary button
 const template = html<ModalComponent>/*html*/`
@@ -187,6 +188,13 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
     // }) as EventListener;
   }
   
+  connectedCallback() {
+    super.connectedCallback();
+    
+    // Register this modal with the workflow manager
+    workflowManager.setModalComponent(this);
+  }
+  
   /**
    * Opens the modal dialog
    */
@@ -197,22 +205,49 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
   
   /**
    * Closes the modal dialog
+   * If a workflow is active, we delegate to the workflow manager to handle
+   * the workflow specific cancel logic
    */
   public close(): void {
+    console.log("Modal close requested");
+    if (workflowManager.hasActiveWorkflow()) {
+      console.log("Active workflow detected, delegating close to workflow manager");
+      // Let the workflow manager handle the cancel logic
+      workflowManager.handleCancel();
+    } else {
+      // Standard close for non-workflow modals
+      console.log("No active workflow, performing standard close");
+      this.performStandardClose();
+    }
+  }
+  
+  /**
+   * Standard close operation without workflow handling
+   */
+  private performStandardClose(): void {
     this.isOpen = false;
     document.body.style.overflow = ""; // Restore body scrolling
     this.$emit("close");
     this.clearWorkflow();
+    
+    // Reset the button text to default when closing
+    this.primaryButtonText = "OK";
   }
   
   /**
    * Implementation of WorkflowHost interface
    */
   public closeWorkflow(result?: WorkflowResult): void {
+    console.log("closeWorkflow called with result:", result);
     if (result) {
+      // Emit event for workflow completion
       this.$emit("workflowComplete", { detail: result });
+    } else {
+      console.warn("No result provided when closing workflow");
     }
-    this.close();
+    
+    // DO NOT call this.close() here as it creates the loop
+    // Instead, let the workflow manager handle the close logic
   }
   
   /**
@@ -224,12 +259,17 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
   
   /**
    * Implementation of WorkflowHost interface
+   * Update the footer state of the modal
    */
   public updateFooter(showFooter: boolean, primaryButtonText?: string): void {
     this.showFooter = showFooter;
     if (primaryButtonText) {
       this.primaryButtonText = primaryButtonText;
     }
+    
+    // Force a render
+    this.$fastController.notify("showFooter");
+    this.$fastController.notify("primaryButtonText");
   }
   
   /**
@@ -276,10 +316,32 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
   
   /**
    * Loads a workflow into the modal
-   * @param workflowId ID of the workflow to load
+   * This version DELEGATES to the workflow manager to ensure proper tracking
+   * @param workflowIdOrElement Either a workflow ID string or a pre-created workflow element
    * @param params Optional parameters to pass to the workflow
    */
-  public async loadWorkflow(workflowId: string, params?: Record<string, any>): Promise<boolean> {
+  public async loadWorkflow(workflowIdOrElement: string | HTMLElement, params?: Record<string, any>): Promise<boolean> {
+    try {
+      // If workflowIdOrElement is a string (workflowId), use the workflow manager
+      if (typeof workflowIdOrElement === 'string') {
+        // Use workflow manager which will handle everything properly
+        workflowManager.startWorkflow(workflowIdOrElement, params);
+        return true;
+      } else {
+        // Handle pre-created elements (this path should be used mainly by the workflow manager)
+        return this.loadWorkflowElement(workflowIdOrElement);
+      }
+    } catch (error) {
+      console.error(`Error loading workflow:`, error);
+      return false;
+    }
+  }
+  
+  /**
+   * Private method to load workflow elements
+   * This should only be called by the workflow manager
+   */
+  private loadWorkflowElement(workflowElement: HTMLElement): boolean {
     try {
       // Clear any existing workflow
       this.clearWorkflow();
@@ -293,31 +355,31 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
         throw new Error("Modal body not found");
       }
       
-      // Create the workflow element
-      const workflowElement = await workflowService.createWorkflowElement(workflowId, params);
-      if (!workflowElement) {
-        throw new Error(`Failed to create workflow element for ${workflowId}`);
-      }
-      
       // Store reference to the workflow
       this.activeWorkflow = workflowElement as WorkflowBase;
       
-      // Set up event listener for validation events - use our bound handler
-      // workflowElement.addEventListener('workflowValidation', this.boundWorkflowValidationHandler);
+      // Set up event listener for validation events
       workflowElement.addEventListener('workflowValidation', this.handleWorkflowValidation.bind(this));
       
       // Connect the workflow to this host
-      this.activeWorkflow.setHost(this);
+      if (typeof (this.activeWorkflow as any).setHost === 'function') {
+        (this.activeWorkflow as any).setHost(this);
+      }
       
       // Add to DOM
       modalBody.appendChild(workflowElement);
       
-      // Initialize with params
-      this.activeWorkflow.initialize(params);
+      // Reset modal state
+      this.showFooter = true; 
+      
+      // Now initialize the workflow if needed (this will set the correct footer state)
+      if (typeof (this.activeWorkflow as any).initialize === 'function') {
+        (this.activeWorkflow as any).initialize();
+      }
       
       return true;
     } catch (error) {
-      console.error(`Error loading workflow ${workflowId}:`, error);
+      console.error(`Error loading workflow element:`, error);
       return false;
     }
   }
@@ -347,5 +409,14 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
       this.validationMessage = "";
       this.activeWorkflow = null;
     }
+  }
+  
+  /**
+   * Public method to force close the modal
+   * Only called by workflow manager when closing
+   */
+  public forceClose(): void {
+    console.log("Force close requested by workflow manager");
+    this.performStandardClose();
   }
 }

@@ -14,14 +14,18 @@ const template = html<SearchComponent>/*html*/`
       class="search-input" 
       @focus="${x => x.handleFocus()}"
       @blur="${x => x.handleBlur()}"
-      @input="${(x, c) => x.handleInput(c.event)}"
+      @input="${(x, c) => x.handleKeydown(c.event)}"
+      
     />
     <div class="search-suggestions ${x => x.showSuggestions ? 'visible' : ''}">
       ${when(x => x.searchResults.length === 0 && x.showSuggestions && !x.searchText, html<SearchComponent>/*html*/`
         <div class="suggestions-header">Popular</div>
         ${repeat(x => x.popularItems, html<SearchResultItem, SearchComponent>/*html*/`
           <div class="suggestion-item" 
-              @click="${(item, c) => c.parent.selectResult(item)}">
+              @click="${(item, c) => c.parent.selectResult(item)}"
+              @keydown="${(item, c) => c.parent.handleResultKeydown(item, c.event)}"
+              tabindex="-1"
+              data-result-index="${(item, c) => c.index}">
             <div class="suggestion-icon">${item => item.icon || getTypeIcon(item.type)}</div>
             <div class="suggestion-content">
               <div class="suggestion-title">${item => item.title}</div>
@@ -37,7 +41,10 @@ const template = html<SearchComponent>/*html*/`
         ${repeat(x => x.searchResults, html<SearchResultItem, SearchComponent>/*html*/`
           <div class="suggestion-item" 
                @click="${(item, c) => c.parent.handleItemClick(item, c.event)}"
-               @mousedown="${(item, c) => c.parent.handleItemClick(item, c.event)}">
+               @mousedown="${(item, c) => c.parent.handleItemClick(item, c.event)}"
+               @keydown="${(item, c) => c.parent.handleResultKeydown(item, c.event)}"
+               tabindex="-1"
+               data-result-index="${(item, c) => c.index}">
             <div class="suggestion-icon">${item => item.icon || getTypeIcon(item.type)}</div>
             <div class="suggestion-content">
               <div class="suggestion-title">${item => item.title}</div>
@@ -185,8 +192,16 @@ const styles = css`
     margin: 0 4px;
   }
   
-  .suggestion-item:hover {
+  .suggestion-item:hover,
+  .suggestion-item:focus,
+  .suggestion-item.focused {
     background-color: #f0f4f8;
+    outline: none;
+  }
+  
+  .suggestion-item:focus-visible {
+    box-shadow: 0 0 0 2px #1976d2;
+    outline: none;
   }
   
   .suggestion-icon {
@@ -262,6 +277,7 @@ export class SearchComponent extends FASTElement {
   @observable searchResults: SearchResultItem[] = [];
   @observable popularItems: SearchResultItem[] = [];
   @observable isLoading = false;
+  @observable currentFocusedIndex = -1;
   
   // Reference to the input element
   inputElement!: HTMLInputElement;
@@ -271,6 +287,9 @@ export class SearchComponent extends FASTElement {
   
   // Store unsubscribe function for cleanup
   private searchServiceUnsubscribe?: () => void;
+  
+  // Store all result elements for keyboard navigation
+  private resultElements: HTMLElement[] = [];
   
   connectedCallback(): void {
     super.connectedCallback();
@@ -332,7 +351,7 @@ export class SearchComponent extends FASTElement {
     }
   }
   
-  handleInput(event: Event) {
+  private handleSearch(event: Event) {
     console.debug("Input event:", event);
     this.searchText = (event.target as HTMLInputElement).value;
     
@@ -345,6 +364,94 @@ export class SearchComponent extends FASTElement {
     
     // Reset the flag since user is typing again
     this.resultJustSelected = false;
+  }
+  handleKeydown(event: Event) {
+    console.log("Keydown event:", event);
+    const keyboardEvent = event as KeyboardEvent;
+
+    this.handleSearch(event);
+    console.log('after handleSearch', event);
+    
+    
+    if (keyboardEvent.key === 'Tab' && !keyboardEvent.shiftKey && this.showSuggestions) {
+      console.log("Tab key pressed");
+      // Prevent default tab behavior
+      keyboardEvent.preventDefault();
+      
+      // Get available result items
+      const items = this.getResultElements();
+      
+      if (items.length > 0) {
+        // Focus the first result
+        this.focusResult(0);
+        return;
+      }
+    } else if (keyboardEvent.key === 'Enter') {
+      if (this.searchResults.length > 0) {
+        this.selectResult(this.searchResults[0]);
+      } else {
+        this.performSearch();
+      }
+    } else if (keyboardEvent.key === 'Escape') {
+      this.showSuggestions = false;
+      // Remove focus from the input field
+      this.inputElement.blur();
+    } else if (keyboardEvent.key === 'ArrowDown' && this.showSuggestions) {
+      // Prevent default to avoid scrolling
+      keyboardEvent.preventDefault();
+      
+      // Get available result items
+      const items = this.getResultElements();
+      
+      if (items.length > 0) {
+        // Focus the first result
+        this.focusResult(0);
+      }
+    }
+  }
+  
+  handleResultKeydown(item: SearchResultItem, event: Event) {
+    const keyboardEvent = event as KeyboardEvent;
+    const currentIndex = this.getCurrentFocusedIndex();
+    
+    switch (keyboardEvent.key) {
+      case 'ArrowDown':
+        keyboardEvent.preventDefault();
+        this.focusResult(currentIndex + 1);
+        break;
+        
+      case 'ArrowUp':
+        keyboardEvent.preventDefault();
+        if (currentIndex <= 0) {
+          // Return focus to the search input
+          this.inputElement.focus();
+        } else {
+          this.focusResult(currentIndex - 1);
+        }
+        break;
+        
+      case 'Enter':
+        keyboardEvent.preventDefault();
+        this.selectResult(item);
+        break;
+        
+      case 'Escape':
+        keyboardEvent.preventDefault();
+        this.showSuggestions = false;
+        this.inputElement.focus();
+        break;
+        
+      case 'Tab':
+        // Allow natural tab navigation after the first item
+        if (keyboardEvent.shiftKey) {
+          if (currentIndex === 0) {
+            keyboardEvent.preventDefault();
+            this.inputElement.focus();
+          }
+        }
+        break;
+    }
+    
   }
   
   handleFocus() {
@@ -378,20 +485,67 @@ export class SearchComponent extends FASTElement {
     }, 300);
   }
   
-  handleKeydown(event: Event) {
-    console.debug("Keydown event:", event);
-    const keyboardEvent = event as KeyboardEvent;
-    if (keyboardEvent.key === 'Enter') {
-      if (this.searchResults.length > 0) {
-        this.selectResult(this.searchResults[0]);
-      } else {
-        this.performSearch();
+  
+  
+  /**
+   * Get all result elements in the DOM
+   */
+  private getResultElements(): HTMLElement[] {
+    // Query all result elements inside the component
+    const container = this.shadowRoot?.querySelector('.search-suggestions');
+    if (!container) return [];
+    
+    return Array.from(container.querySelectorAll('.suggestion-item')) as HTMLElement[];
+  }
+  
+  /**
+   * Focus a specific result by index
+   */
+  private focusResult(index: number): void {
+    const items = this.getResultElements();
+    
+    // If there are no items or invalid index, do nothing
+    if (items.length === 0 || index < 0) return;
+    
+    // Wrap around to the beginning if we go past the end
+    const targetIndex = index >= items.length ? 0 : index;
+    
+    // Remove focused class from all items
+    items.forEach(item => item.classList.remove('focused'));
+    
+    // Set tabindex on the target item
+    const targetItem = items[targetIndex];
+    targetItem.tabIndex = 0;
+    
+    // Set tabindex on all other items to -1
+    items.forEach((item, i) => {
+      if (i !== targetIndex) {
+        item.tabIndex = -1;
       }
-    } else if (keyboardEvent.key === 'Escape') {
-      this.showSuggestions = false;
-      // Remove focus from the input field
-      this.inputElement.blur();
+    });
+    
+    // Focus the target item
+    targetItem.focus();
+    targetItem.classList.add('focused');
+    
+    // Track the current focused index
+    this.currentFocusedIndex = targetIndex;
+  }
+  
+  /**
+   * Get the current focused index
+   */
+  private getCurrentFocusedIndex(): number {
+    const items = this.getResultElements();
+    
+    // Find the index of the focused item
+    for (let i = 0; i < items.length; i++) {
+      if (items[i] === document.activeElement) {
+        return i;
+      }
     }
+    
+    return -1;
   }
   
   async updateResults() {

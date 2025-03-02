@@ -11,7 +11,7 @@ export interface WorkflowDefinition {
   icon?: string;
   searchable?: boolean;
   keywords?: string[];
-  popular?: boolean; // Added popular flag
+  popular?: boolean; 
   // Function that returns true if this workflow should NOT appear in search results
   searchDisabledCondition?: () => Promise<boolean>;
 }
@@ -44,7 +44,7 @@ const workflowDefinitions: WorkflowDefinition[] = [
     elementName: "kyc-workflow",
     module: "@workflows/kyc",
     icon: "🪪",
-    searchable: true,
+    searchable: false,
     keywords: ['identity', 'verification', 'kyc', 'know your customer', 'verify identity'],
   },
   {

@@ -6,6 +6,7 @@ import { ModalComponent } from "../../components/modal-component";
 import "./account-list-component";
 import "./transaction-list-component";
 import { TransactionListComponent, TransactionViewModel } from "./transaction-list-component";
+import { workflowManager } from "../../services/workflow-manager-service";
 
 const template = html<AccountWidget>/*html*/ `
   <div class="account-widget">
@@ -373,16 +374,28 @@ export class AccountWidget extends FASTElement {
     this.openModal();
   }
   
+  /**
+   * Opens a workflow using the workflow manager
+   */
   async openWorkflow(workflowId: string, params?: Record<string, any>) {
-    if (this.modal) {
-      // First open the modal
-      this.modal.open();
+    try {
+      // Use the workflow manager directly
+      const result = await workflowManager.startWorkflow(workflowId, params);
       
-      // Then load the workflow
-      const success = await this.modal.loadWorkflow(workflowId, params);
-      if (!success) {
-        console.error(`Failed to load workflow: ${workflowId}`);
+      // Handle the result after workflow completes
+      if (result.success) {
+        // If workflow was successful, refresh data
+        this.fetchAccounts();
+        
+        // Dispatch event about workflow completion
+        this.dispatchEvent(new CustomEvent('workflow-complete', {
+          bubbles: true,
+          composed: true,
+          detail: result
+        }));
       }
+    } catch (error) {
+      console.error(`Error running workflow ${workflowId}:`, error);
     }
   }
   

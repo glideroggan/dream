@@ -1,6 +1,7 @@
 import { customElement, html, css, observable, attr, repeat } from "@microsoft/fast-element";
-import { WorkflowBase } from "../workflow-base";
+import { WorkflowBase, WorkflowResult } from "../workflow-base";
 import { getRepositoryService } from "../../services/repository-service";
+import { kycService, KycLevel } from "../../services/kyc-service";
 
 // Define account types
 export interface AccountType {
@@ -8,6 +9,9 @@ export interface AccountType {
   name: string;
   description: string;
   iconEmoji: string;
+  requiresKyc?: boolean;
+  kycLevel?: KycLevel;
+  kycRequirementId?: string;
 }
 
 const template = html<CreateAccountWorkflow>/*html*/`
@@ -20,6 +24,11 @@ const template = html<CreateAccountWorkflow>/*html*/`
           <div class="account-type-details">
             <h3>${x => x.name}</h3>
             <p>${x => x.description}</p>
+            ${(x, c) => x.requiresKyc ? html`
+              <div class="kyc-badge" title="Requires identity verification">
+                🪪 Verification required
+              </div>
+            ` : ''}
           </div>
           <div class="account-type-indicator"></div>
         </div>
@@ -46,10 +55,39 @@ const template = html<CreateAccountWorkflow>/*html*/`
         </select>
       </div>
       
+      ${x => {
+        const selectedType = x.accountTypes.find(t => t.id === x.selectedTypeId);
+        if (selectedType?.requiresKyc && 
+            selectedType.kycRequirementId && 
+            !kycService.meetsKycRequirements(selectedType.kycRequirementId) &&
+            !x.kycCompleted) {
+          return html`
+            <div class="kyc-required-notice">
+              <div class="kyc-icon">🪪</div>
+              <div class="kyc-message">
+                <h4>Identity Verification Required</h4>
+                <p>To open this account type, you need to verify your identity first.</p>
+                <button class="verify-button" @click="${x => x.initiateKycWorkflow()}">
+                  Start Verification Process
+                </button>
+              </div>
+            </div>
+          `;
+        }
+        return '';
+      }}
+      
       ${x => x.errorMessage ? html`
         <div class="error-message">${x => x.errorMessage}</div>
       ` : ''}
     </div>
+    
+    ${x => x.isCreatingAccount ? html`
+      <div class="loading-indicator">
+        <div class="spinner"></div>
+        <p>Creating your account...</p>
+      </div>
+    ` : ''}
   </div>
 `;
 
@@ -177,6 +215,77 @@ const styles = css`
     border-radius: 4px;
     border-left: 4px solid var(--error-color, #e74c3c);
   }
+
+  .kyc-badge {
+    display: inline-flex;
+    align-items: center;
+    background-color: var(--warning-bg, rgba(243, 156, 18, 0.1));
+    color: var(--warning-color, #f39c12);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+    margin-top: 6px;
+  }
+  
+  .kyc-required-notice {
+    display: flex;
+    background-color: var(--warning-bg, rgba(243, 156, 18, 0.05));
+    border: 1px solid var(--warning-border, rgba(243, 156, 18, 0.3));
+    border-radius: 8px;
+    padding: 16px;
+    margin: 10px 0;
+    gap: 16px;
+    align-items: center;
+  }
+  
+  .kyc-icon {
+    font-size: 24px;
+  }
+  
+  .kyc-message h4 {
+    margin: 0 0 4px 0;
+  }
+  
+  .kyc-message p {
+    margin: 0 0 12px 0;
+    color: var (--text-secondary, #666);
+  }
+  
+  .verify-button {
+    background-color: var(--warning-color, #f39c12);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  
+  .verify-button:hover {
+    background-color: var(--warning-color-hover, #e67e22);
+  }
+  
+  .loading-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  
+  .spinner {
+    width: 30px;
+    height: 30px;
+    border: 3px solid rgba(0,0,0,0.1);
+    border-radius: 50%;
+    border-top-color: var(--primary-color, #3498db);
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 10px;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
 `;
 
 @customElement({
@@ -192,7 +301,10 @@ export class CreateAccountWorkflow extends WorkflowBase {
       id: "isk",
       name: "ISK Account",
       description: "Investment Savings Account with tax benefits",
-      iconEmoji: "📈"
+      iconEmoji: "📈",
+      requiresKyc: true,
+      kycLevel: KycLevel.STANDARD,
+      kycRequirementId: "isk-account"
     },
     {
       id: "savings",
@@ -204,7 +316,10 @@ export class CreateAccountWorkflow extends WorkflowBase {
       id: "pension",
       name: "Pension Account",
       description: "Long-term retirement savings",
-      iconEmoji: "🏖️"
+      iconEmoji: "🏖️",
+      requiresKyc: true,
+      kycLevel: KycLevel.STANDARD,
+      kycRequirementId: "pension-account"
     }
   ];
   
@@ -212,6 +327,8 @@ export class CreateAccountWorkflow extends WorkflowBase {
   @observable accountName: string = "";
   @observable currency: string = "SEK";
   @observable errorMessage: string = "";
+  @observable isCreatingAccount: boolean = false;
+  @observable kycCompleted: boolean = false;
   
   initialize(params?: Record<string, any>): void {
     // Set initial title and footer
@@ -229,6 +346,42 @@ export class CreateAccountWorkflow extends WorkflowBase {
         this.validateForm();
       }
     }
+  }
+  
+  // Implement the resume method to handle nested workflow completion
+  public resume(result?: WorkflowResult): void {
+    console.debug("Account workflow resumed after nested workflow", result);
+    
+    // Make sure we restore the original UI state - update the modal title and button text
+    this.updateTitle("Create New Account");
+    this.updateFooter(true, "Create Account");
+    
+    // Reset the error message by default
+    this.errorMessage = '';
+    
+    if (result?.success) {
+      // If the KYC workflow completed successfully
+      if (result.data?.verificationStatus === 'pending' || result.data?.verificationStatus === 'approved') {
+        this.kycCompleted = true;
+        
+        // Re-validate form now that KYC is completed
+        if (this.validateForm()) {
+          // Create account now that KYC is done
+          this.createAccount();
+        }
+      } else {
+        this.errorMessage = "Identity verification process incomplete";
+      }
+    } else {
+      // KYC was cancelled or failed - show a message but don't make it an error
+      // Only set error message if there's actually a message to show
+      if (result?.message && !result.message.includes("cancelled by user")) {
+        this.errorMessage = result.message;
+      }
+    }
+    
+    // Validate the form to update buttons
+    this.validateForm();
   }
   
   connectedCallback() {
@@ -287,6 +440,17 @@ export class CreateAccountWorkflow extends WorkflowBase {
       return false;
     }
     
+    // Check if selected account type requires KYC
+    const selectedType = this.accountTypes.find(t => t.id === this.selectedTypeId);
+    if (selectedType?.requiresKyc && !this.kycCompleted) {
+      // Check if user meets KYC requirements
+      if (selectedType.kycRequirementId && !kycService.meetsKycRequirements(selectedType.kycRequirementId)) {
+        this.notifyValidation(false, "Identity verification required for this account type");
+        // We don't set errorMessage here because we'll show verification button instead
+        return false;
+      }
+    }
+    
     // Reset invalid states
     this.resetInvalidStates();
     
@@ -312,8 +476,57 @@ export class CreateAccountWorkflow extends WorkflowBase {
     });
   }
   
+  /**
+   * Start the KYC process if needed for the selected account type
+   */
+  async initiateKycWorkflow(): Promise<WorkflowResult> {
+    console.log("Starting KYC process for account creation...");
+    const selectedType = this.accountTypes.find(t => t.id === this.selectedTypeId);
+    if (!selectedType?.requiresKyc) {
+      return { success: true };
+    }
+    
+    const kycLevel = selectedType.kycLevel || KycLevel.STANDARD;
+    
+    // Start the KYC workflow and wait for its result
+    return await this.startNestedWorkflow('kyc', {
+      kycLevel,
+      reason: `Opening a ${selectedType.name} requires identity verification.`
+    });
+  }
+  
   async createAccount() {
-    if (!this.validateForm()) return;
+    // First validate the form
+    if (!this.validateForm()) {
+      // Check if KYC is required but not completed
+      const selectedType = this.accountTypes.find(t => t.id === this.selectedTypeId);
+      
+      if (selectedType?.requiresKyc && 
+          selectedType.kycRequirementId && 
+          !kycService.meetsKycRequirements(selectedType.kycRequirementId) &&
+          !this.kycCompleted) {
+        
+        // Start KYC workflow
+        this.errorMessage = "Starting identity verification...";
+        const kycResult = await this.initiateKycWorkflow();
+        
+        // If KYC was successful, we'll continue in the resume method
+        // The workflow system will automatically call resume() with the KYC result
+        if (!kycResult.success) {
+          this.errorMessage = kycResult.message || "Identity verification was cancelled";
+        }
+        
+        // Always return early here - don't try to create account yet
+        return;
+      }
+      
+      // For other validation failures, just return
+      return;
+    }
+
+    // Proceed with account creation since validation passed
+    this.isCreatingAccount = true;
+    this.errorMessage = "";
     
     try {
       const repositoryService = getRepositoryService();
@@ -340,6 +553,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
       this.errorMessage = error instanceof Error 
         ? error.message 
         : 'Failed to create account. Please try again.';
+      this.isCreatingAccount = false;
     }
   }
   

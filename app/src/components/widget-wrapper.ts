@@ -857,7 +857,7 @@ export class WidgetWrapper extends FASTElement {
    * Close the widget 
    */
   closeWidget() {
-    console.log(`Closing widget: ${this.widgetId || this.displayName || 'Unknown'} - page type: ${this.pageType}`);
+    console.debug(`Closing widget: ${this.widgetId || this.displayName || 'Unknown'} - page type: ${this.pageType}`);
     this.dispatchEvent(this.closeEvent);
   }
 }

@@ -1010,10 +1010,10 @@ export class BasePage extends FASTElement {
    */
   protected handleCloseWidget(event: Event): void {
     const { widgetId, pageType } = (event as CustomEvent).detail;
-    console.log(`starting Closing widget ${widgetId} ${pageType} (user requested)`);
+    console.debug(`starting Closing widget ${widgetId} ${pageType} (user requested)`);
     if (!widgetId || this.pageType !== pageType) return;
 
-    console.log(`Closing widget ${widgetId} ${this.pageType} (user requested)`);
+    console.debug(`Closing widget ${widgetId} ${this.pageType} (user requested)`);
     
     this.removeWidgetFromPage(widgetId);
   }

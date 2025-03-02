@@ -18,6 +18,7 @@ const context = await build.context({
         // workflows
         'src/workflows/transfer/transfer-workflow.ts',
         'src/workflows/create-account/create-account-workflow.ts',
+        'src/workflows/kyc/kyc-workflow.ts',
         'src/workflows/swish-workflow.ts',
         // pages
         'src/pages/dashboard-page.ts',
@@ -42,6 +43,7 @@ const context = await build.context({
         "@workflows/transfer",
         "@workflows/create-account",
         "@workflows/swish-workflow",
+        "@workflows/kyc",
         "@widgets/swish",
         "@pages/dashboard", "@pages/investments", "@pages/savings",
         "@widgets/error", "@widgets/fast", "@widgets/slow",

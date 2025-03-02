@@ -1,5 +1,11 @@
-import { customElement, html, css, observable, attr } from "@microsoft/fast-element";
+import { customElement, html, css, observable, attr, when } from "@microsoft/fast-element";
 import { WorkflowBase } from "../workflow-base";
+import { kycService, KycLevel } from "../../services/kyc-service";
+
+// Import step components
+import "./step1-component";
+import "./step2-component";
+import "./step3-component";
 
 export interface PersonalInformation {
   fullName: string;
@@ -19,137 +25,98 @@ export interface KYCCompletionData {
   verificationStatus: 'pending' | 'approved' | 'rejected';
 }
 
-const template = html<KYCWorkflow>/*html*/`
+// Main workflow template
+const template = html<KycWorkflow>/*html*/`
   <div class="kyc-workflow">
-    <div class="kyc-form">
-      <div class="form-section">
-        <h4>Personal Information</h4>
-        <div class="form-group">
-          <label for="fullName">Full Name</label>
-          <input type="text" id="fullName" placeholder="Enter your full legal name"
-                 value="${x => x.personalInfo.fullName}"
-                 @input="${(x, c) => x.handleTextInput('fullName', c.event)}" />
+    <div class="kyc-header">
+      <div class="kyc-icon">🪪</div>
+      <h2>Identity Verification Required</h2>
+    </div>
+    
+    <div class="kyc-content">
+      <p>We need to verify your identity to proceed with this action.</p>
+      <p>This is required for your security and to comply with financial regulations.</p>
+      
+      <div class="kyc-steps">
+        <div class="kyc-step ${x => x.currentStep >= 1 ? 'active' : ''}">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h3>Personal Information</h3>
+            <p>Verify your personal details</p>
+          </div>
         </div>
-
-        <div class="form-group">
-          <label for="dateOfBirth">Date of Birth</label>
-          <input type="date" id="dateOfBirth" 
-                 value="${x => x.personalInfo.dateOfBirth}"
-                 @input="${(x, c) => x.handleTextInput('dateOfBirth', c.event)}" />
+        
+        <div class="kyc-step ${x => x.currentStep >= 2 ? 'active' : ''}">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h3>ID Verification</h3>
+            <p>Upload identification documents</p>
+          </div>
         </div>
-
-        <div class="form-group">
-          <label for="nationality">Nationality</label>
-          <select id="nationality" 
-                  @change="${(x, c) => x.handleTextInput('nationality', c.event)}">
-            <option value="" disabled selected>Select your nationality</option>
-            <option value="US" ?selected="${x => x.personalInfo.nationality === 'US'}">United States</option>
-            <option value="CA" ?selected="${x => x.personalInfo.nationality === 'CA'}">Canada</option>
-            <option value="UK" ?selected="${x => x.personalInfo.nationality === 'UK'}">United Kingdom</option>
-            <option value="AU" ?selected="${x => x.personalInfo.nationality === 'AU'}">Australia</option>
-            <option value="DE" ?selected="${x => x.personalInfo.nationality === 'DE'}">Germany</option>
-            <option value="FR" ?selected="${x => x.personalInfo.nationality === 'FR'}">France</option>
-            <!-- Add more countries as needed -->
-          </select>
-        </div>
-      </div>
-
-      <div class="form-section">
-        <h4>Identity Verification</h4>
-        <div class="form-group">
-          <label for="idType">ID Type</label>
-          <select id="idType" 
-                  @change="${(x, c) => x.handleTextInput('idType', c.event)}">
-            <option value="" disabled selected>Select ID type</option>
-            <option value="passport" ?selected="${x => x.personalInfo.idType === 'passport'}">Passport</option>
-            <option value="drivers_license" ?selected="${x => x.personalInfo.idType === 'drivers_license'}">Driver's License</option>
-            <option value="national_id" ?selected="${x => x.personalInfo.idType === 'national_id'}">National ID Card</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="idNumber">ID Number</label>
-          <input type="text" id="idNumber" placeholder="Enter your ID number"
-                 value="${x => x.personalInfo.idNumber}"
-                 @input="${(x, c) => x.handleTextInput('idNumber', c.event)}" />
-        </div>
-
-        <div class="form-group">
-          <label>ID Document Upload</label>
-          <div class="document-upload">
-            <input type="file" id="idDocument" accept="image/jpeg,image/png,application/pdf"
-                   @change="${(x, c) => x.handleFileUpload(c.event)}" />
-            <button class="upload-button" @click="${x => x.triggerFileUpload()}">
-              Upload ID Document
-            </button>
-            <span class="file-name">${x => x.uploadedFileName || 'No file selected'}</span>
+        
+        <div class="kyc-step ${x => x.currentStep >= 3 ? 'active' : ''}">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h3>Address Verification</h3>
+            <p>Confirm your residential address</p>
           </div>
         </div>
       </div>
 
-      <div class="form-section">
-        <h4>Address Information</h4>
-        <div class="form-group">
-          <label for="addressLine1">Address Line 1</label>
-          <input type="text" id="addressLine1" placeholder="Street address"
-                 value="${x => x.personalInfo.addressLine1}"
-                 @input="${(x, c) => x.handleTextInput('addressLine1', c.event)}" />
-        </div>
-
-        <div class="form-group">
-          <label for="addressLine2">Address Line 2 (Optional)</label>
-          <input type="text" id="addressLine2" placeholder="Apartment, suite, unit, etc."
-                 value="${x => x.personalInfo.addressLine2}"
-                 @input="${(x, c) => x.handleTextInput('addressLine2', c.event)}" />
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="city">City</label>
-            <input type="text" id="city" placeholder="City"
-                   value="${x => x.personalInfo.city}"
-                   @input="${(x, c) => x.handleTextInput('city', c.event)}" />
-          </div>
-
-          <div class="form-group">
-            <label for="postalCode">Postal Code</label>
-            <input type="text" id="postalCode" placeholder="Postal Code"
-                   value="${x => x.personalInfo.postalCode}"
-                   @input="${(x, c) => x.handleTextInput('postalCode', c.event)}" />
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="country">Country</label>
-          <select id="country" 
-                  @change="${(x, c) => x.handleTextInput('country', c.event)}">
-            <option value="" disabled selected>Select your country</option>
-            <option value="US" ?selected="${x => x.personalInfo.country === 'US'}">United States</option>
-            <option value="CA" ?selected="${x => x.personalInfo.country === 'CA'}">Canada</option>
-            <option value="UK" ?selected="${x => x.personalInfo.country === 'UK'}">United Kingdom</option>
-            <option value="AU" ?selected="${x => x.personalInfo.country === 'AU'}">Australia</option>
-            <option value="DE" ?selected="${x => x.personalInfo.country === 'DE'}">Germany</option>
-            <option value="FR" ?selected="${x => x.personalInfo.country === 'FR'}">France</option>
-            <!-- Add more countries as needed -->
-          </select>
-        </div>
+      <div class="kyc-form">
+        <!-- Step 1: Personal Information -->
+        ${when(x => x.currentStep === 1, html<KycWorkflow>/*html*/`
+          <kyc-step1 
+            :personalInfo="${x => x.personalInfo}"
+            @field-changed="${(x, c) => x.handleFieldChanged(c.event)}">
+          </kyc-step1>
+        `)}
+        
+        <!-- Step 2: Identity Verification -->
+        ${when(x => x.currentStep === 2, html<KycWorkflow>/*html*/`
+          <kyc-step2
+            :personalInfo="${x => x.personalInfo}"
+            :uploadedFileName="${x => x.uploadedFileName}"
+            @field-changed="${(x, c) => x.handleFieldChanged(c.event)}"
+            @document-uploaded="${(x, c) => x.handleDocumentUploaded(c.event)}">
+          </kyc-step2>
+        `)}
+        
+        <!-- Step 3: Address Information -->
+        ${when(x => x.currentStep === 3, html<KycWorkflow>/*html*/`
+          <kyc-step3
+            :personalInfo="${x => x.personalInfo}"
+            :consentChecked="${x => x.consentChecked}"
+            @field-changed="${(x, c) => x.handleFieldChanged(c.event)}"
+            @consent-changed="${(x, c) => x.handleConsentChanged(c.event)}">
+          </kyc-step3>
+        `)}
       </div>
-
-      <div class="disclaimer">
-        <label class="checkbox-container">
-          <input type="checkbox" id="consent" 
-                 ?checked="${x => x.consentChecked}"
-                 @change="${(x, c) => x.handleConsentChange(c.event)}" />
-          <span class="checkmark"></span>
-          I confirm that all information provided is accurate and I consent to having my identity verified.
-        </label>
+      
+      ${x => x.errorMessage ? html`
+        <div class="error-message">${x => x.errorMessage}</div>
+      ` : ''}
+      
+      <div class="kyc-navigation">
+        ${x => x.currentStep > 1 ? html`
+          <button class="back-button" @click="${x => x.handleBack()}" 
+                  ?disabled="${x => x.isProcessing}">
+            Back
+          </button>
+        ` : html`
+          <div></div> <!-- Placeholder to maintain flex layout -->
+        `}
+        
+        <button class="next-button" @click="${x => x.handleNext()}"
+                ?disabled="${x => !x.isCurrentStepValid || x.isProcessing}">
+          ${x => x.currentStep < 3 ? 'Next' : 'Complete Verification'}
+        </button>
       </div>
-
-      ${x => x.errorMessage ? html`<div class="error-message">${x => x.errorMessage}</div>` : ''}
     </div>
   </div>
 `;
 
+// Main CSS (now lighter since step-specific styles moved to components)
 const styles = css`
   .kyc-workflow {
     display: flex;
@@ -159,171 +126,75 @@ const styles = css`
     margin: 0 auto;
   }
   
-  .kyc-form {
+  .kyc-content p {
+    margin-bottom: 8px;
+  }
+  
+  .kyc-steps {
+    display: flex;
+    justify-content: space-between;
+    margin: 20px 0;
+    position: relative;
+  }
+  
+  .kyc-steps::after {
+    content: '';
+    position: absolute;
+    top: 24px;
+    left: 50px;
+    right: 50px;
+    height: 2px;
+    background-color: var(--border-color, #e0e0e0);
+    z-index: 0;
+  }
+  
+  .kyc-step {
+    position: relative;
     display: flex;
     flex-direction: column;
-    gap: 20px;
-  }
-  
-  .form-section {
-    background-color: var(--section-bg, #f8f9fa);
-    border-radius: 8px;
-    padding: 16px;
-    border: 1px solid var(--border-color, #e0e0e0);
-  }
-  
-  .form-section h4 {
-    margin-top: 0;
-    margin-bottom: 16px;
-    color: var(--heading-color, #333);
-    font-weight: 600;
-    font-size: 18px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--border-color, #e0e0e0);
-  }
-  
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-bottom: 16px;
-  }
-  
-  .form-group:last-child {
-    margin-bottom: 0;
-  }
-  
-  .form-row {
-    display: flex;
-    gap: 16px;
-  }
-  
-  .form-row > .form-group {
+    align-items: center;
     flex: 1;
+    z-index: 1;
   }
   
-  label {
-    font-weight: 500;
-    font-size: 14px;
-    color: var(--text-secondary, #666);
-  }
-  
-  input[type="text"],
-  input[type="date"],
-  select {
-    padding: 10px 12px;
-    border: 1px solid var(--border-color, #e0e0e0);
-    border-radius: 4px;
-    font-size: 16px;
-    transition: border-color 0.2s;
-    background-color: var(--input-bg, white);
-  }
-  
-  input[type="text"]:focus,
-  input[type="date"]:focus,
-  select:focus {
-    border-color: var(--primary-color, #3498db);
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
-  }
-  
-  /* Only show validation styles after user interaction */
-  input:user-invalid,
-  select:user-invalid {
-    border-color: var(--error-color, #e74c3c);
-    background-color: var(--error-bg, rgba(231, 76, 60, 0.05));
-  }
-  
-  .document-upload {
+  .step-number {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: white;
+    border: 2px solid var(--border-color, #e0e0e0);
     display: flex;
     align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
+    justify-content: center;
+    font-weight: bold;
+    margin-bottom: 8px;
+    transition: all 0.3s ease;
   }
   
-  .document-upload input[type="file"] {
-    display: none;
-  }
-  
-  .upload-button {
-    background-color: var(--upload-btn-bg, #f0f0f0);
-    color: var(--upload-btn-text, #333);
-    padding: 10px 16px;
-    border: 1px solid var(--border-color, #e0e0e0);
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    font-weight: 500;
-  }
-  
-  .upload-button:hover {
-    background-color: var(--upload-btn-hover, #e0e0e0);
-  }
-  
-  .file-name {
-    font-size: 14px;
-    color: var(--text-secondary, #666);
-    font-style: italic;
-  }
-  
-  .disclaimer {
-    margin-top: 8px;
-    font-size: 14px;
-    color: var(--text-secondary, #666);
-  }
-  
-  .checkbox-container {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    position: relative;
-    cursor: pointer;
-    user-select: none;
-  }
-  
-  .checkbox-container input {
-    position: absolute;
-    opacity: 0;
-    cursor: pointer;
-    height: 0;
-    width: 0;
-  }
-  
-  .checkmark {
-    position: relative;
-    top: 2px;
-    height: 18px;
-    width: 18px;
-    background-color: var(--checkbox-bg, #fff);
-    border: 2px solid var(--border-color, #e0e0e0);
-    border-radius: 4px;
-    flex-shrink: 0;
-  }
-  
-  .checkbox-container:hover input ~ .checkmark {
-    border-color: var(--checkbox-hover, #ccc);
-  }
-  
-  .checkbox-container input:checked ~ .checkmark {
+  .kyc-step.active .step-number {
     background-color: var(--primary-color, #3498db);
     border-color: var(--primary-color, #3498db);
+    color: white;
   }
   
-  .checkmark:after {
-    content: "";
-    position: absolute;
-    display: none;
+  .step-content {
+    text-align: center;
+    max-width: 120px;
   }
   
-  .checkbox-container input:checked ~ .checkmark:after {
-    display: block;
-    left: 5px;
-    top: 1px;
-    width: 5px;
-    height: 10px;
-    border: solid white;
-    border-width: 0 2px 2px 0;
-    transform: rotate(45deg);
+  .step-content h3 {
+    font-size: 14px;
+    margin: 0 0 4px 0;
+  }
+  
+  .step-content p {
+    font-size: 12px;
+    color: var(--text-secondary, #666);
+    margin: 0;
+  }
+  
+  .kyc-form {
+    margin-top: 20px;
   }
   
   .error-message {
@@ -334,6 +205,49 @@ const styles = css`
     background-color: var(--error-bg, rgba(231, 76, 60, 0.1));
     margin-top: 8px;
   }
+  
+  .kyc-navigation {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color, #e0e0e0);
+  }
+  
+  .back-button {
+    padding: 10px 20px;
+    border-radius: 4px;
+    border: none;
+    background-color: var(--secondary-bg, #f5f5f5);
+    color: var(--text-color, #333);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .back-button:hover:not(:disabled) {
+    background-color: var(--secondary-hover, #e0e0e0);
+  }
+  
+  .next-button {
+    padding: 10px 20px;
+    border-radius: 4px;
+    border: none;
+    background-color: var(--primary-color, #3498db);
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .next-button:hover:not(:disabled) {
+    background-color: var(--primary-hover, #2980b9);
+  }
+  
+  .next-button:disabled, .back-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 `;
 
 @customElement({
@@ -341,7 +255,7 @@ const styles = css`
   template,
   styles
 })
-export class KYCWorkflow extends WorkflowBase {
+export class KycWorkflow extends WorkflowBase {
   @attr({ mode: "boolean" }) autoFocus: boolean = true;
   
   @observable personalInfo: PersonalInformation = {
@@ -361,23 +275,48 @@ export class KYCWorkflow extends WorkflowBase {
   @observable consentChecked: boolean = false;
   @observable uploadedFile: File | null = null;
   @observable uploadedFileName: string = '';
+  @observable currentStep: number = 1;
+  @observable isCurrentStepValid: boolean = false;
+  @observable isProcessing: boolean = false;
+  @observable requiredKycLevel: KycLevel = KycLevel.STANDARD;
+  @observable requiredReason: string = "";
   
   initialize(params?: Record<string, any>): void {
-    // Set initial title and footer
-    this.updateTitle("Identity Verification (KYC)");
-    this.updateFooter(true, "Submit Verification");
+    // Set initial title but now change the cancel button text to "Back"
+    this.updateTitle("Identity Verification");
+    this.updateFooter(true, "Back to Account"); // Changed from "Cancel" to be more descriptive
     
-    // Pre-fill data if provided
-    if (params?.personalInfo) {
-      this.personalInfo = { ...this.personalInfo, ...params.personalInfo };
+    // Set the modal's primary button to disabled so they use our buttons instead
+    this.notifyValidation(false);
+    
+    if (params?.kycLevel) {
+      this.requiredKycLevel = params.kycLevel;
     }
     
-    // Default validation state is invalid until user completes form
-    this.validateForm();
+    if (params?.reason) {
+      this.requiredReason = params.reason;
+    }
+    
+    // Validate the first step
+    this.validateCurrentStep();
   }
   
   connectedCallback() {
     super.connectedCallback();
+    
+    // Initialize with empty strings to avoid undefined
+    this.personalInfo = {
+      fullName: '',
+      dateOfBirth: '',
+      nationality: '',
+      idType: '',
+      idNumber: '',
+      addressLine1: '',
+      addressLine2: '',
+      city: '',
+      postalCode: '',
+      country: ''
+    };
     
     // Add required attributes to form fields
     setTimeout(() => {
@@ -388,176 +327,215 @@ export class KYCWorkflow extends WorkflowBase {
       ];
       
       requiredFields.forEach(fieldId => {
-        const field = this.shadowRoot?.getElementById(fieldId) as HTMLInputElement | HTMLSelectElement;
+        const field = this.shadowRoot?.querySelector(`[id="${fieldId}"]`) as HTMLInputElement | HTMLSelectElement;
         if (field) field.required = true;
       });
-      
-      // Focus on first field when component is loaded
-      if (this.autoFocus) {
-        const firstField = this.shadowRoot?.getElementById('fullName') as HTMLInputElement;
-        if (firstField) firstField.focus();
-      }
     }, 0);
   }
   
-  handleTextInput(field: string, event: Event) {
-    const input = event.target as HTMLInputElement | HTMLSelectElement;
-    this.personalInfo = {
-      ...this.personalInfo,
-      [field]: input.value
-    };
-    this.validateForm();
-  }
-  
-  handleConsentChange(event: Event) {
-    const checkbox = event.target as HTMLInputElement;
-    this.consentChecked = checkbox.checked;
-    this.validateForm();
-  }
-  
-  handleFileUpload(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      this.uploadedFile = input.files[0];
-      this.uploadedFileName = input.files[0].name;
-      this.validateForm();
-    }
-  }
-  
-  triggerFileUpload() {
-    const fileInput = this.shadowRoot?.getElementById('idDocument') as HTMLInputElement;
-    if (fileInput) {
-      fileInput.click();
-    }
-  }
-  
-  validateForm(): boolean {
-    // Clear previous error message
-    this.errorMessage = '';
+  /**
+   * Handle field changes from step components
+   */
+  handleFieldChanged(event: Event): void {
+    const detail = (event as CustomEvent).detail;
     
-    // Validate required fields
-    const requiredFields: Array<[keyof PersonalInformation, string]> = [
-      ['fullName', 'Full Name'],
-      ['dateOfBirth', 'Date of Birth'],
-      ['nationality', 'Nationality'],
-      ['idType', 'ID Type'],
-      ['idNumber', 'ID Number'],
-      ['addressLine1', 'Address'],
-      ['city', 'City'],
-      ['postalCode', 'Postal Code'],
-      ['country', 'Country']
-    ];
-    
-    for (const [field, label] of requiredFields) {
-      if (!this.personalInfo[field]) {
-        this.errorMessage = `${label} is required`;
-        this.notifyValidation(false, this.errorMessage);
-        this.markInvalid(field as string);
-        return false;
-      }
-    }
-    
-    // Validate date of birth - must be at least 18 years ago
-    if (this.personalInfo.dateOfBirth) {
-      const birthDate = new Date(this.personalInfo.dateOfBirth);
-      const today = new Date();
-      const age = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (detail.field && detail.value !== undefined) {
+      // Update the specific field
+      this.personalInfo = {
+        ...this.personalInfo,
+        [detail.field]: detail.value
+      };
       
-      if (age < 18 || (age === 18 && monthDiff < 0) || 
-          (age === 18 && monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        this.errorMessage = 'You must be at least 18 years old';
-        this.notifyValidation(false, this.errorMessage);
-        this.markInvalid('dateOfBirth');
-        return false;
-      }
-    }
-    
-    // Validate ID document upload
-    if (!this.uploadedFile) {
-      this.errorMessage = 'Please upload your ID document';
-      this.notifyValidation(false, this.errorMessage);
-      return false;
-    }
-    
-    // Validate file type and size
-    const validFileTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-    if (!validFileTypes.includes(this.uploadedFile.type)) {
-      this.errorMessage = 'Invalid file type. Please upload a JPEG, PNG, or PDF';
-      this.notifyValidation(false, this.errorMessage);
-      return false;
-    }
-    
-    if (this.uploadedFile.size > 5 * 1024 * 1024) { // 5MB limit
-      this.errorMessage = 'File size exceeds 5MB limit';
-      this.notifyValidation(false, this.errorMessage);
-      return false;
-    }
-    
-    // Validate consent checkbox
-    if (!this.consentChecked) {
-      this.errorMessage = 'You must confirm that the information is accurate and consent to verification';
-      this.notifyValidation(false, this.errorMessage);
-      return false;
-    }
-    
-    // Reset any invalid states
-    this.resetInvalidStates();
-    
-    // If we got here, form is valid
-    this.notifyValidation(true);
-    return true;
-  }
-  
-  /**
-   * Mark a form element as invalid using HTML's validity API
-   */
-  private markInvalid(elementId: string): void {
-    const element = this.shadowRoot?.getElementById(elementId) as HTMLInputElement | HTMLSelectElement;
-    if (element) {
-      element.setCustomValidity(this.errorMessage);
-      element.reportValidity();
+      // Validate the current step
+      this.validateCurrentStep();
     }
   }
   
   /**
-   * Reset invalid states for all inputs
+   * Handle document upload event from step 2
    */
-  private resetInvalidStates(): void {
-    const fields = [
-      'fullName', 'dateOfBirth', 'nationality', 
-      'idType', 'idNumber', 'addressLine1', 
-      'addressLine2', 'city', 'postalCode', 'country'
-    ];
+  handleDocumentUploaded(event: Event): void {
+    const detail = (event as CustomEvent).detail;
     
-    fields.forEach(id => {
-      const element = this.shadowRoot?.getElementById(id) as HTMLInputElement | HTMLSelectElement;
-      if (element) {
-        element.setCustomValidity('');
-      }
-    });
+    if (detail.fileName) {
+      this.uploadedFileName = detail.fileName;
+      this.uploadedFile = {} as File; // Fake file object
+      
+      // Validate the current step
+      this.validateCurrentStep();
+    }
   }
   
   /**
-   * Submit KYC verification data
+   * Handle consent checkbox change from step 3
    */
-  private submitKYC() {
-    if (!this.validateForm()) return;
+  handleConsentChanged(event: Event): void {
+    const detail = (event as CustomEvent).detail;
     
-    // In a real app, you'd upload the document and personal information to a server
-    // For this example, we'll simulate a successful submission
-    
-    const kycData: KYCCompletionData = {
-      personalInfo: { ...this.personalInfo },
-      verificationStatus: 'pending'
-    };
-    
-    // Use the workflow base methods to complete
-    this.complete(true, { kyc: kycData }, "Your identity verification has been submitted");
+    if (detail.checked !== undefined) {
+      this.consentChecked = detail.checked;
+      
+      // Validate the current step
+      this.validateCurrentStep();
+    }
   }
   
-  // Handle primary action from modal footer
+  /**
+   * Validate the current step
+   */
+  validateCurrentStep(): void {
+    this.errorMessage = "";
+    this.isCurrentStepValid = false;
+    
+    switch (this.currentStep) {
+      case 1:
+        // Check personal information
+        if (!this.personalInfo.fullName) {
+          this.errorMessage = "Please enter your full name";
+          return;
+        }
+        
+        if (!this.personalInfo.dateOfBirth) {
+          this.errorMessage = "Please enter your date of birth";
+          return;
+        }
+        
+        // Validate age (must be at least 18)
+        const birthDate = new Date(this.personalInfo.dateOfBirth);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        
+        if (age < 18) {
+          this.errorMessage = "You must be at least 18 years old";
+          return;
+        }
+        
+        if (!this.personalInfo.nationality) {
+          this.errorMessage = "Please select your nationality";
+          return;
+        }
+        
+        this.isCurrentStepValid = true;
+        break;
+      
+      case 2:
+        // Check ID information
+        if (!this.personalInfo.idType) {
+          this.errorMessage = "Please select an ID type";
+          return;
+        }
+        
+        if (!this.personalInfo.idNumber) {
+          this.errorMessage = "Please enter your ID number";
+          return;
+        }
+        
+        // Simpler validation for the fake document upload
+        if (!this.uploadedFileName) {
+          this.errorMessage = "Please upload your ID document";
+          return;
+        }
+        
+        this.isCurrentStepValid = true;
+        break;
+      
+      case 3:
+        // Check address information
+        if (!this.personalInfo.addressLine1) {
+          this.errorMessage = "Please enter your address";
+          return;
+        }
+        
+        if (!this.personalInfo.city) {
+          this.errorMessage = "Please enter your city";
+          return;
+        }
+        
+        if (!this.personalInfo.postalCode) {
+          this.errorMessage = "Please enter your postal code";
+          return;
+        }
+        
+        if (!this.personalInfo.country) {
+          this.errorMessage = "Please select your country";
+          return;
+        }
+        
+        if (!this.consentChecked) {
+          this.errorMessage = "You must agree to the terms";
+          return;
+        }
+        
+        this.isCurrentStepValid = true;
+        break;
+      
+      default:
+        this.isCurrentStepValid = false;
+    }
+  }
+  
+  /**
+   * Handle going back to the previous step
+   */
+  handleBack(): void {
+    if (this.currentStep > 1 && !this.isProcessing) {
+      this.currentStep--;
+      this.validateCurrentStep();
+    }
+  }
+  
+  /**
+   * Handle clicking the next button
+   */
+  handleNext(): void {
+    if (!this.isCurrentStepValid || this.isProcessing) return;
+    
+    if (this.currentStep < 3) {
+      // Move to the next step
+      this.currentStep++;
+      this.validateCurrentStep();
+    } else {
+      // On the last step, complete the verification
+      this.completeKyc();
+    }
+  }
+  
+  /**
+   * Handle the primary button click from the modal
+   * For KYC workflow, the modal's primary button is actually a "Back" button
+   * that returns to the parent workflow
+   */
   public handlePrimaryAction(): void {
-    this.submitKYC();
+    // Just cancel this workflow, which will return to parent
+    // Use a more specific message that won't show up in the parent workflow
+    this.cancel("Identity verification cancelled by user");
+  }
+  
+  completeKyc(): void {
+    this.isProcessing = true;
+    this.errorMessage = "";
+    
+    // Simulate KYC completion
+    setTimeout(() => {
+      this.isProcessing = false;
+      
+      // Update KYC status in the service
+      kycService.updateKycStatus(
+        'pending' as any, // You would use proper enum values here
+        this.requiredKycLevel
+      );
+      
+      // Complete the workflow with success
+      this.complete(true, {
+        verificationStatus: 'pending',
+        level: this.requiredKycLevel
+      }, "Identity verification submitted successfully");
+      
+    }, 2000);
   }
 }

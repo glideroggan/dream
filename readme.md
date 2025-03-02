@@ -1,14 +1,21 @@
 # BUGS
 - modal primary buttons keeps their last workflow text, we need to reset it when closing
-- swish widget is only searchable after a reload. It should be searchable right after the workflow is done
+- ✔️swish widget is only searchable after a reload. It should be searchable right after the workflow is done
+## create-new-account-workflow
+- Account name do not update when switching between accounts
+
 
 
 # TODO
+- 🔧add tests to already built
+  - components
+  - services
+  - repositories
+- There is a bit of a mess with the workflow complete events. We should take a look at this
 - change the welcome widget to be more introductive
   - it should be able to close
     - so widget preference needs a repository
 - writing something in search, and then trying to tab over to result box, doesn't work
-- ✔️we need to cover the case of getting the wrong script path to a widget. Changing the path to something else isn't covered in the widget wrapper
 - We need to start refactor individual files, as they start to grow, and could be split into smaller files
 - dismiss the search result with esc
 
@@ -23,7 +30,6 @@
   - a pension widget (if you have a pension account)
 ### accounts
 - show a more dedicated page with more information about the account
-- ✔️show a list of transactions
 - show a list of upcoming payments
 
 # widgets
@@ -32,9 +38,12 @@
 - We should be able to remove them
    - How do we get it back?
 ## accounts✔️
+- 🔧more details on a specific account, implement the three dots
 - show a total of the upcoming payments on each account
-- ✔️clicking an account should fold down and show a few more transactions and a button to go to the account page
 - accounts needs to look into upcoming transactions, so that we can show the total amount of upcoming payments
+### account details
+- Where should we show this?
+  it opens today in a modal, which is fine, but that means we should add another type, not a workflow, but an info?
 ### smartness
 - check if there is any upcoming payment that will make the account go negative
 ## expenses
@@ -71,7 +80,6 @@
 - we should be able to transfer to other banks
 - ✔️should create transactions
   - ✔️we need a transaction repository
-    - ✔️a transaction can be upcoming or completed
     - a transaction can be recurring
       - We want this to be a checkbox on the transfer workflow
       - this will require some mocked logic in FE for actually processing the transaction at that date
