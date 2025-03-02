@@ -365,7 +365,7 @@ export class AccountWidget extends FASTElement {
     this.workflowTitle = "Transfer Money";
     this.selectedAccount = null;
     console.debug(`Opening transfer workflow with ${this.accounts.length} accounts:`, this.accounts);
-    this.openWorkflow("transfer", { accounts: this.accounts });
+    this.openWorkflow(WorkflowIds.TRANSFER, { accounts: this.accounts });
   }
   
   /**

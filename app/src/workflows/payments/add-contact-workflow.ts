@@ -301,6 +301,15 @@ export class AddContactWorkflow extends WorkflowBase {
         await paymentContactsService.addContact(contactData);
       }
       
+      // Dispatch a custom event before completing the workflow
+      // This allows parent workflows to react to the new contact
+      const contactCreatedEvent = new CustomEvent('contactCreated', {
+        bubbles: true,
+        composed: true,
+        detail: { contact: contactData }
+      });
+      this.dispatchEvent(contactCreatedEvent);
+      
       // Complete the workflow with success
       this.complete(true, {
         contact: contactData,

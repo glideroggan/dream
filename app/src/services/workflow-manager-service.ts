@@ -24,7 +24,9 @@ export class WorkflowManagerService {
   // Singleton accessor
   public static getInstance(): WorkflowManagerService {
     const singletonManager = getSingletonManager();
-    return singletonManager.getOrCreate<WorkflowManagerService>('WorkflowManagerService', () => new WorkflowManagerService());
+    const instance = singletonManager.getOrCreate<WorkflowManagerService>('WorkflowManagerService', () => new WorkflowManagerService());
+    console.debug('WorkflowManagerService instance retrieved:', instance);
+    return instance;
   }
 
   /**
@@ -122,6 +124,7 @@ export class WorkflowManagerService {
       return new Promise<WorkflowResult>((resolve) => {
         // Store the resolve function to call when the workflow completes
         const currentIndex = this.workflowStack.length - 1;
+        console.debug('decreasing workflowStack length by 1', currentIndex);
         this.workflowStack[currentIndex].resumeCallback = (result?: WorkflowResult) => {
           resolve(result || { success: false });
         };

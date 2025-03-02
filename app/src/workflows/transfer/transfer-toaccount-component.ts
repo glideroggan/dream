@@ -2,6 +2,7 @@ import { css, customElement, FASTElement, html, observable, attr, repeat, when }
 import { PaymentContact } from "../../repositories/models/payment-contact";
 import { Account } from "./transfer-workflow";
 import { workflowManager } from "../../services/workflow-manager-service";
+import { WorkflowIds } from "../workflow-registry";
 
 interface AutocompleteItem {
   id: string;
@@ -613,9 +614,9 @@ export class ToAccountField extends FASTElement {
   async createNewContact(): Promise<void> {
     try {
       // Start the add contact workflow
-      const result = await workflowManager.startWorkflow('add-contact', {
+      const result = await workflowManager.startWorkflow(WorkflowIds.ADD_CONTACT, {
         accountNumber: this.inputValue.trim()
-      });
+      }, true);
       
       if (result.success && result.data?.contact) {
         // If contact was successfully created, refresh the contacts

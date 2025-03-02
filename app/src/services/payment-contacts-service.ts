@@ -196,7 +196,7 @@ export class PaymentContactsService {
   private async loadContacts(): Promise<void> {
     try {
       const contacts = await repositoryService.getSettingsRepository().getPaymentContacts();
-      console.log('PaymentContactService contacts', contacts);
+      console.debug('PaymentContactService contacts', contacts);
       
       // Update in-memory cache
       this.contacts = contacts || [];

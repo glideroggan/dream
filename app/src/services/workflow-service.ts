@@ -2,9 +2,9 @@ import { getSingletonManager } from './singleton-manager';
 
 // Registry of available workflows
 interface WorkflowRegistry {
-  [key: string]: { 
+  [key: string]: {
     tagName: string;
-    importFunc?: () => Promise<any>; 
+    importFunc?: () => Promise<any>;
   };
 }
 
@@ -36,27 +36,27 @@ export class WorkflowService {
    * Register a workflow with the service
    */
   public registerWorkflow(
-    id: string, 
+    id: string,
     config: { tagName: string, importFunc?: () => Promise<any> }
   ): void {
     this.workflows[id] = config;
     console.debug(`Registered workflow: ${id} with tag ${config.tagName}`);
   }
-  
+
   /**
    * Create a workflow element by ID
    */
   public async createWorkflowElement(
-    workflowId: string, 
+    workflowId: string,
     params?: Record<string, any>
   ): Promise<HTMLElement | null> {
     const workflow = this.workflows[workflowId];
-    
+
     if (!workflow) {
       console.error(`Workflow ${workflowId} not found`);
       return null;
     }
-    
+
     // If there's a dynamic import function, call it first
     if (workflow.importFunc) {
       try {
@@ -66,13 +66,13 @@ export class WorkflowService {
         return null;
       }
     }
-    
+
     // Create the element
     const element = document.createElement(workflow.tagName);
-    
+
     return element;
   }
-  
+
   /**
    * Get list of available workflow IDs
    */
@@ -88,8 +88,9 @@ export class WorkflowService {
     this.registerWorkflow('transfer', { tagName: 'transfer-workflow' });
     this.registerWorkflow('kyc', { tagName: 'kyc-workflow' });
     this.registerWorkflow('swish', { tagName: 'swish-workflow' });
+    this.registerWorkflow('add-contact', { tagName: 'add-contact-workflow' });
   }
+
 }
 
 export const workflowService = WorkflowService.getInstance();
-console.debug("WorkflowService loaded");
