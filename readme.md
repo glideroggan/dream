@@ -1,12 +1,13 @@
 # BUGS
 - modal primary buttons keeps their last workflow text, we need to reset it when closing
-- ✔️swish widget is only searchable after a reload. It should be searchable right after the workflow is done
 ## create-new-account-workflow
 - Account name do not update when switching between accounts
 
 
 
 # TODO
+- fix a repository for kyc
+  - probably better with user settings
 - 🔧add tests to already built
   - components
   - services

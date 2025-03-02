@@ -1,6 +1,6 @@
 import { customElement, html, css, observable, attr, when } from "@microsoft/fast-element";
 import { WorkflowBase } from "../workflow-base";
-import { kycService, KycLevel } from "../../services/kyc-service";
+import { kycService, KycLevel, KycStatus } from "../../services/kyc-service";
 
 // Import step components
 import "./step1-component";
@@ -23,6 +23,7 @@ export interface PersonalInformation {
 export interface KYCCompletionData {
   personalInfo: PersonalInformation;
   verificationStatus: 'pending' | 'approved' | 'rejected';
+  uploadedFileName?: string;
 }
 
 // Main workflow template
@@ -520,22 +521,35 @@ export class KycWorkflow extends WorkflowBase {
     this.isProcessing = true;
     this.errorMessage = "";
     
-    // Simulate KYC completion
-    setTimeout(() => {
-      this.isProcessing = false;
-      
-      // Update KYC status in the service
-      kycService.updateKycStatus(
-        'pending' as any, // You would use proper enum values here
-        this.requiredKycLevel
-      );
-      
-      // Complete the workflow with success
-      this.complete(true, {
-        verificationStatus: 'pending',
-        level: this.requiredKycLevel
-      }, "Identity verification submitted successfully");
-      
-    }, 2000);
+    // Compile the completion data
+    const completionData: KYCCompletionData = {
+      personalInfo: this.personalInfo,
+      verificationStatus: 'pending', // Initially always pending until "verified" by backend
+      uploadedFileName: this.uploadedFileName
+    };
+    
+    // Save to the KYC service
+    kycService.saveKycVerificationData(completionData, this.requiredKycLevel)
+      .then(() => {
+        // Also update the KYC status
+        return kycService.updateKycStatus(
+          KycStatus.PENDING, 
+          this.requiredKycLevel
+        );
+      })
+      .then(() => {
+        // Complete the workflow with success
+        this.complete(true, {
+          verificationStatus: 'pending',
+          level: this.requiredKycLevel
+        }, "Identity verification submitted successfully");
+      })
+      .catch(error => {
+        console.error("Error saving KYC data:", error);
+        this.errorMessage = "An error occurred while submitting your verification.";
+      })
+      .finally(() => {
+        this.isProcessing = false;
+      });
   }
 }

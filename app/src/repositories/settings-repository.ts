@@ -1,6 +1,7 @@
 import { StorageService } from '../services/storage-service';
 import { UserService } from '../services/user-service';
 import { UserSettings } from '../services/repository-service';
+import { KycData } from '../services/kyc-service';
 
 export class SettingsRepository {
   // Default settings used when no settings exist for a user
@@ -12,7 +13,9 @@ export class SettingsRepository {
     // TODO: make these more dynamic, I might add more pages later, and I don't want to update this every time
     dashboardLayout: [],
     savingsWidgets: [],
-    investmentsWidgets: []
+    investmentsWidgets: [],
+    // Initialize with empty KYC data
+    kycData: undefined
   };
 
   constructor(
