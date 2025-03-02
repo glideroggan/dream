@@ -137,7 +137,7 @@ class KycService {
   public async startKycProcess(targetLevel: KycLevel): Promise<boolean> {
     // In a real app, this would launch the appropriate KYC flow
     // For now, we'll just simulate it
-    console.log(`Starting KYC process for level ${targetLevel}...`);
+    console.debug(`Starting KYC process for level ${targetLevel}...`);
     
     // Return true to indicate the process has started
     return true;

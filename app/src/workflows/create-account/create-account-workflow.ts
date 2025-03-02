@@ -480,7 +480,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
    * Start the KYC process if needed for the selected account type
    */
   async initiateKycWorkflow(): Promise<WorkflowResult> {
-    console.log("Starting KYC process for account creation...");
+    console.debug("Starting KYC process for account creation...");
     const selectedType = this.accountTypes.find(t => t.id === this.selectedTypeId);
     if (!selectedType?.requiresKyc) {
       return { success: true };

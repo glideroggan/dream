@@ -298,6 +298,7 @@ export class AccountWidget extends FASTElement {
     
     this.workflowTitle = "Transfer Money";
     this.selectedAccount = null;
+    console.debug(`Opening transfer workflow with ${this.accounts.length} accounts:`, this.accounts);
     this.openWorkflow("transfer", { accounts: this.accounts });
   }
   
@@ -379,6 +380,7 @@ export class AccountWidget extends FASTElement {
    */
   async openWorkflow(workflowId: string, params?: Record<string, any>) {
     try {
+      console.debug(`Starting workflow ${workflowId} with params:`, params);
       // Use the workflow manager directly
       const result = await workflowManager.startWorkflow(workflowId, params);
       

@@ -14,6 +14,7 @@ interface WorkflowState {
 export class WorkflowManagerService {
   private workflowStack: WorkflowState[] = [];
   private modalComponent: ModalComponent | null = null;
+  private isStartingWorkflow: boolean = false; // Add flag to prevent duplicate starts
   
   // Private constructor for singleton pattern
   private constructor() {
@@ -51,12 +52,21 @@ export class WorkflowManagerService {
     params?: Record<string, any>, 
     pauseCurrentWorkflow: boolean = false
   ): Promise<WorkflowResult> {
-    console.log(`Starting workflow: ${workflowId} (pauseCurrent: ${pauseCurrentWorkflow})`);
+    console.debug(`Starting workflow: ${workflowId} (pauseCurrent: ${pauseCurrentWorkflow})`, params);
+
+    // Prevent multiple simultaneous workflow starts
+    if (this.isStartingWorkflow) {
+      console.warn("Already starting a workflow, preventing duplicate");
+      return { success: false, message: "Workflow start in progress" };
+    }
 
     if (!this.modalComponent) {
       console.error("Modal component not set, cannot start workflow");
       return { success: false, message: "Modal component not set" };
     }
+
+    // Set flag to prevent multiple starts
+    this.isStartingWorkflow = true;
 
     // Dispatch transition start event
     document.dispatchEvent(new CustomEvent('workflow-transition-start', {
@@ -69,6 +79,20 @@ export class WorkflowManagerService {
     }));
 
     try {
+      // Check if we already have an active workflow with the same ID
+      const hasActiveWithSameId = this.workflowStack.some(w => w.id === workflowId && !w.paused);
+      if (hasActiveWithSameId) {
+        console.warn(`Workflow ${workflowId} is already active, preventing duplicate`);
+        
+        // End transition since we're not proceeding
+        document.dispatchEvent(new CustomEvent('workflow-transition-end', {
+          bubbles: true,
+          composed: true
+        }));
+        
+        return { success: false, message: "Workflow already active" };
+      }
+
       // Create the workflow element
       const workflowElement = await workflowService.createWorkflowElement(workflowId, params);
       if (!workflowElement) {
@@ -92,7 +116,7 @@ export class WorkflowManagerService {
         paused: false
       };
       this.workflowStack.push(workflowState);
-      console.log(`workflowStack:`, this.workflowStack.map(w => w.id));
+      console.debug(`workflowStack:`, this.workflowStack.map(w => w.id));
 
       // Return promise that resolves when workflow completes
       return new Promise<WorkflowResult>((resolve) => {
@@ -120,6 +144,9 @@ export class WorkflowManagerService {
       
       console.error(`Error starting workflow ${workflowId}:`, error);
       return { success: false, message: `Error starting workflow: ${error.message}` };
+    } finally {
+      // Reset the flag when done
+      this.isStartingWorkflow = false;
     }
   }
 
@@ -206,9 +233,9 @@ export class WorkflowManagerService {
    * For nested workflows, this will close only the current workflow
    */
   public handleCancel(): void {
-    console.log("Workflow manager handling cancel", this.workflowStack);
+    console.debug("Workflow manager handling cancel", this.workflowStack);
     if (!this.hasActiveWorkflow()) {
-      console.log("No active workflow to cancel");
+      console.debug("No active workflow to cancel");
       return;
     }
 
@@ -220,7 +247,7 @@ export class WorkflowManagerService {
       message: "Workflow cancelled" 
     };
     
-    console.log('handleCancel', currentWorkflow.id, this.workflowStack.length);
+    console.debug('handleCancel', currentWorkflow.id, this.workflowStack.length);
     
     // If there is a paused parent workflow, don't close the modal
     const hasParentWorkflow = this.workflowStack.length > 1 && 
@@ -249,11 +276,11 @@ export class WorkflowManagerService {
     
     if (hasParentWorkflow) {
       // Resume the parent workflow with the cancellation result
-      console.log("Resuming parent workflow after cancel");
+      console.debug("Resuming parent workflow after cancel");
       this.resumeWorkflow(result);
     } else {
       // No parent workflow, close the modal
-      console.log("No parent workflow, closing modal");
+      console.debug("No parent workflow, closing modal");
       if (this.modalComponent) {
         // Use forceClose to avoid the loop
         (this.modalComponent as any).forceClose();
@@ -289,7 +316,7 @@ export class WorkflowManagerService {
    * Handle workflow completion
    */
   private workflowComplete(result: WorkflowResult): void {
-    console.log("Workflow completion handler called with result:", result);
+    console.debug("Workflow completion handler called with result:", result);
     
     if (!this.hasActiveWorkflow()) {
       console.warn("workflowComplete called but no active workflow");
@@ -302,6 +329,9 @@ export class WorkflowManagerService {
     
     console.debug(`Workflow ${completedWorkflow.id} completed with result:`, result);
     
+    // Reset any flags
+    this.isStartingWorkflow = false;
+    
     // Call the resume callback if it exists
     if (completedWorkflow.resumeCallback) {
       completedWorkflow.resumeCallback(result);
@@ -311,11 +341,11 @@ export class WorkflowManagerService {
     if (this.hasActiveWorkflow() && 
         this.workflowStack[this.workflowStack.length - 1].paused) {
       // Resume the parent workflow
-      console.log("Resuming parent workflow after completion");
+      console.debug("Resuming parent workflow after completion");
       this.resumeWorkflow(result);
     } else {
       // No parent workflow, close the modal
-      console.log("No parent workflow, closing modal");
+      console.debug("No parent workflow, closing modal");
       if (this.modalComponent) {
         // Use forceClose to avoid the loop
         (this.modalComponent as any).forceClose();

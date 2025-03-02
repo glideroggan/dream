@@ -1,5 +1,5 @@
 import { customElement, html, css, observable, repeat, when } from "@microsoft/fast-element";
-import { WorkflowBase } from "./workflow-base";
+import { WorkflowBase, WorkflowResult } from "./workflow-base";
 import { getProductService, BaseProduct } from "../services/product-service";
 
 export interface SwishProduct extends BaseProduct {
@@ -29,11 +29,7 @@ const template = html<SwishWorkflow>/*html*/`
           ${repeat(x => x.product.features, html`<li>${x => x}</li>`)}
         </ul>
       </div>
-      
-      ${(x) => x.isProductAdded 
-        ? html`<div class="success-message">✓ Product added to your account!</div>` 
-        : html``
-      }
+      ${when(x => x.isProductAdded, html`<div class="success-message">✓ Product added to your account!</div>`)}
     </div>
     
     <div class="agreement-container">
@@ -233,6 +229,7 @@ const styles = css`
   styles
 })
 export class SwishWorkflow extends WorkflowBase {
+  // TODO: there should be a product registry
   @observable product: SwishProduct = {
     id: "swish-standard",  // This ID must match what's checked in searchDisabledCondition
     name: "Swish Premium",
@@ -256,6 +253,8 @@ export class SwishWorkflow extends WorkflowBase {
   @observable showValidationErrors: boolean = false;
   
   async initialize(params?: Record<string, any>): Promise<void> {
+    console.debug("Initializing SwishWorkflow with params:", params);
+    
     // Override product details if provided in params
     if (params?.product) {
       this.product = { ...this.product, ...params.product };
@@ -348,6 +347,57 @@ export class SwishWorkflow extends WorkflowBase {
     } catch (error) {
       console.error("Failed to add product:", error);
       this.complete(false, undefined, "Failed to add product to your account");
+    }
+  }
+  
+  /**
+   * Start the KYC process workflow
+   */
+  async initiateKycWorkflow(): Promise<WorkflowResult> {
+    console.debug("Starting KYC process for Swish activation...");
+    
+    // Make sure we're not trying to start a nested workflow if one is already active
+    if ((window as any).__nestedWorkflowActive) {
+      console.warn("Nested workflow already active, preventing duplicate");
+      return { success: false, message: "Workflow already in progress" };
+    }
+    
+    // Set flag to prevent multiple workflows
+    (window as any).__nestedWorkflowActive = true;
+    
+    try {
+      // Start the KYC workflow and wait for its result
+      const result = await this.startNestedWorkflow('kyc', {
+        reason: `Activating ${this.product.name} requires identity verification.`
+      });
+      return result;
+    } finally {
+      // Clear flag when finished
+      (window as any).__nestedWorkflowActive = false;
+    }
+  }
+  
+  /**
+   * Handle resuming after a nested workflow completes
+   */
+  public resume(result?: WorkflowResult): void {
+    console.debug("Swish workflow resumed after nested workflow", result);
+    
+    // Clear the nested workflow flag just to be sure
+    (window as any).__nestedWorkflowActive = false;
+    
+    // Restore the original UI state
+    this.updateTitle(`Add ${this.product.name} to Your Account`);
+    this.updateFooter(true, "Add to My Account");
+    
+    if (result?.success) {
+      // Handle successful completion of the nested workflow
+      console.debug("Nested workflow completed successfully:", result);
+      
+      // Continue with product activation if needed
+      this.validateForm();
+    } else {
+      console.debug("Nested workflow was cancelled or failed");
     }
   }
 }

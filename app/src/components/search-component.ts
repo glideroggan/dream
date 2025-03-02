@@ -366,15 +366,15 @@ export class SearchComponent extends FASTElement {
     this.resultJustSelected = false;
   }
   handleKeydown(event: Event) {
-    console.log("Keydown event:", event);
+    console.debug("Keydown event:", event);
     const keyboardEvent = event as KeyboardEvent;
 
     this.handleSearch(event);
-    console.log('after handleSearch', event);
+    console.debug('after handleSearch', event);
     
     
     if (keyboardEvent.key === 'Tab' && !keyboardEvent.shiftKey && this.showSuggestions) {
-      console.log("Tab key pressed");
+      console.debug("Tab key pressed");
       // Prevent default tab behavior
       keyboardEvent.preventDefault();
       

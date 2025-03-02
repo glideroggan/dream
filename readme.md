@@ -6,8 +6,8 @@
 
 
 # TODO
-- fix a repository for kyc
-  - probably better with user settings
+- there is bunch of template that could use the when directive, which isn't used
+- ✔️fix a repository for kyc
 - 🔧add tests to already built
   - components
   - services

@@ -113,7 +113,7 @@ export abstract class WorkflowBase extends FASTElement {
     workflowId: string, 
     params?: Record<string, any>
   ): Promise<WorkflowResult> {
-    console.log(`Starting nested workflow: ${workflowId}`);
+    console.debug(`Starting nested workflow: ${workflowId}`);
     // Prevent multiple nested workflows from starting
     if (this._currentNestedWorkflowPromise) {
       return this._currentNestedWorkflowPromise;

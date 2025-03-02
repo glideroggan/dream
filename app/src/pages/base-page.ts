@@ -24,6 +24,7 @@ import { getSearchService } from '../services/search-service';
 import '../components/grid-layout';
 import '../components/modal-component';
 import '../components/widget-wrapper';
+import { workflowManager } from '../services/workflow-manager-service';
 
 // Shared template parts that can be composed by child classes
 export const baseContentTemplate = html<BasePage>/*html*/ `
@@ -825,19 +826,15 @@ export class BasePage extends FASTElement {
    * Opens a workflow in the modal
    */
   protected async openWorkflow(workflowId: string, params?: Record<string, any>): Promise<void> {
-    if (!this.modal) {
-      console.error('Modal component not found');
-      return;
-    }
-
-    // First open the modal
-    this.modal.open();
-
-    // Then load the workflow
-    const success = await this.modal.loadWorkflow(workflowId, params);
-    if (!success) {
-      console.error(`Failed to load workflow: ${workflowId}`);
-      this.modal.close(); // Close modal on failure
+    // Directly use the workflow manager instead of manipulating the modal
+    // This ensures proper workflow lifecycle management
+    try {
+      console.debug(`Starting workflow via manager: ${workflowId}`);
+      
+      // Let the workflow manager handle everything - it will open the modal as needed
+      await workflowManager.startWorkflow(workflowId, params);
+    } catch (error) {
+      console.error(`Error starting workflow ${workflowId}:`, error);
     }
   }
 

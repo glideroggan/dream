@@ -176,9 +176,20 @@ export class TransferWorkflow extends WorkflowBase {
   @observable errorMessage: string | undefined = "";
   
   initialize(params?: Record<string, any>): void {
+    console.debug("Transfer workflow initialized with params:", params);
+    
     // Set any passed in accounts
     if (params?.accounts) {
       this.accounts = params.accounts;
+      console.debug(`Received ${this.accounts.length} accounts in transfer workflow`);
+      
+      // If we received accounts but they're empty, try loading them
+      if (this.accounts.length === 0) {
+        this.loadAccounts();
+      }
+    } else {
+      // No accounts were passed, load them directly
+      this.loadAccounts();
     }
     
     // Set initial title and footer
@@ -187,6 +198,21 @@ export class TransferWorkflow extends WorkflowBase {
     
     // Default validation state is invalid until user completes form
     this.validateForm();
+  }
+  
+  /**
+   * Load accounts from repository if they weren't passed in
+   */
+  private async loadAccounts(): Promise<void> {
+    try {
+      const accountRepo = getRepositoryService().getAccountRepository();
+      this.accounts = await accountRepo.getAll();
+      console.debug(`Loaded ${this.accounts.length} accounts from repository`);
+      this.$fastController.notify('accounts');
+    } catch (error) {
+      console.error("Failed to load accounts:", error);
+      this.errorMessage = "Failed to load accounts. Please try again.";
+    }
   }
   
   connectedCallback() {
