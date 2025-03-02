@@ -30,7 +30,7 @@ export abstract class LocalStorageRepository<T extends Entity> implements Reposi
   /**
    * Load entities from storage
    */
-  private loadFromStorage(): void {
+  protected loadFromStorage(): void {
     const key = this.getUserStorageKey();
     const data = this.storage.getItem<T[]>(key);
     

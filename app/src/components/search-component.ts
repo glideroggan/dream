@@ -1,5 +1,5 @@
 import { FASTElement, customElement, html, css, observable, repeat, when, ref } from '@microsoft/fast-element';
-import { searchService, SearchResultItem } from '../services/search-service';
+import { searchService, SearchResultItem, SearchServiceEvent } from '../services/search-service';
 import { getProductService, ProductChangeEvent } from '../services/product-service';
 import { updateWorkflowSearchability } from '../workflows/workflow-registry';
 import { updateWidgetSearchability } from '../widgets/widget-registry';
@@ -62,6 +62,41 @@ function getTypeIcon(type: string): string {
     case 'workflow': return '⚙️';
     default: return '📄';
   }
+}
+
+/**
+ * Helper to determine current page from URL
+ * This is a temporary solution until we implement a proper routing service
+ * that can track the current page during client-side navigation
+ */
+function getCurrentPage(): string {
+  // Extract the page name from the URL path
+  const path = window.location.pathname;
+  
+  // Remove leading slash and trailing slash if present
+  const normalizedPath = path.replace(/^\/|\/$/g, '');
+  
+  // If empty path, we're on the root/dashboard
+  if (!normalizedPath) {
+    return 'dashboard';
+  }
+  
+  // Get the first segment of the path
+  const pathSegments = normalizedPath.split('/');
+  const firstSegment = pathSegments[0].toLowerCase();
+
+  // Map common page paths to page types
+  const pageMap: Record<string, string> = {
+    '': 'dashboard',
+    'dashboard': 'dashboard',
+    'savings': 'savings',
+    'investments': 'investments',
+    'settings': 'settings',
+    'accounts': 'accounts',
+    'transactions': 'transactions'
+  };
+
+  return pageMap[firstSegment] || 'dashboard';
 }
 
 const styles = css`
@@ -232,66 +267,68 @@ export class SearchComponent extends FASTElement {
   private resultJustSelected = false;
   
   // Store unsubscribe function for cleanup
-  private unsubscribe?: () => void;
+  private searchServiceUnsubscribe?: () => void;
   
   connectedCallback(): void {
     super.connectedCallback();
     
     console.debug('Search component connected, loading popular items...');
     
-    // Add a slight delay to ensure all items are registered first
-    setTimeout(() => {
-      this.refreshPopularItems();
-    }, 300);
+    // Subscribe to search service events
+    this.searchServiceUnsubscribe = searchService.subscribe(this.handleSearchServiceEvent.bind(this));
+    console.debug('Search component subscribed to search service events');
     
-    // Subscribe to product changes using the subscription API
-    const productService = getProductService();
-    this.unsubscribe = productService.subscribe(this.handleProductChange.bind(this));
-    console.debug('Search component subscribed to product changes');
+    // Initial load of popular items
+    this.refreshPopularItems();
+  }
+  
+  /**
+   * Handle search service events
+   */
+  private handleSearchServiceEvent(event: SearchServiceEvent): void {
+    console.debug(`Search component received search service event: ${event.type}`);
+    
+    this.refreshPopularItems();
+    
+    // If we're currently showing search results and items changed, refresh results
+    if (event.type === 'itemsChanged' && this.searchText && this.showSuggestions) {
+      this.updateResults();
+    }
   }
   
   // Update method to refresh popular items
   async refreshPopularItems(): Promise<void> {
     console.debug('Refreshing popular items in search component...');
     
-    // Get and log popular items
-    this.popularItems = await searchService.getPopularItems();
-
-    console.debug('Popular items loaded:', 
-      this.popularItems.map(i => `${i.title} (${i.type}): popular=${i.popular === true}`).join(', '));
+    try {
+      // Get and log popular items
+      this.popularItems = await searchService.getPopularItems();
+      
+      // Log more detailed information about each popular item
+      if (this.popularItems.length > 0) {
+        console.debug(`Popular items loaded (${this.popularItems.length}):`);
+        this.popularItems.forEach(item => {
+          console.debug(`- ${item.title} (${item.type}) - ID: ${item.id}`);
+        });
+      } else {
+        console.debug('No popular items found');
+      }
+    } catch (error) {
+      console.error('Error loading popular items:', error);
+      this.popularItems = [];
+    }
   }
   
   disconnectedCallback(): void {
     super.disconnectedCallback();
     
     // Clean up subscription when component is disconnected
-    if (this.unsubscribe) {
-      this.unsubscribe();
-      console.debug('Search component unsubscribed from product changes');
+    if (this.searchServiceUnsubscribe) {
+      this.searchServiceUnsubscribe();
+      console.debug('Search component unsubscribed from search service events');
     }
   }
   
-  // Handle product changes via subscription
-  handleProductChange(event: ProductChangeEvent): void {
-    console.debug(`Product ${event.type} event received for ${event.productId}, updating search results`);
-
-    // Clear out the lists
-    this.searchResults = [];
-    this.popularItems = [];
-    
-    // Update both workflows and widgets searchability
-    updateWorkflowSearchability();
-    updateWidgetSearchability();
-
-    // Refresh popular items
-    this.refreshPopularItems();
-    
-    // If we're currently showing search results, update them as well
-    if (this.searchText) {
-      this.updateResults();
-    }
-  }
-
   handleInput(event: Event) {
     console.debug("Input event:", event);
     this.searchText = (event.target as HTMLInputElement).value;
@@ -382,33 +419,22 @@ export class SearchComponent extends FASTElement {
     console.debug("selectResult called with:", result);
     this.showSuggestions = false;
     
-    // Don't set searchText to result title anymore
-    // Instead we'll clear it after the action is performed
-    
     // Update input field value to match the selected result temporarily
-    // This provides visual feedback that the selection was recognized
     if (this.inputElement) {
       this.inputElement.value = result.title;
-      
-      // Remove focus from the input after selection
       this.inputElement.blur();
     }
     
     // Handle the result based on its type
     if (result.action) {
-      console.debug("Executing action for:", result.title);
-      result.action();
+      // Get the current page in a more robust way
+      const currentPage = getCurrentPage();
+      console.debug(`Current page detected as: ${currentPage}`);
+      result.action(currentPage);
     } else if (result.route) {
       console.debug("Navigating to:", result.route);
       window.location.href = result.route;
     }
-    
-    // Emit an event for the selected result
-    const event = new CustomEvent('search-result-selected', {
-      bubbles: true,
-      detail: { result }
-    });
-    this.dispatchEvent(event);
     
     // Clear the search after a short delay to allow the action to complete
     setTimeout(() => {

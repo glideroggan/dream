@@ -67,12 +67,26 @@ const workflowDefinitions: WorkflowDefinition[] = [
     searchable: true,
     popular: true, // Mark Swish as popular
     keywords: ['swish', 'payment', 'add swish', 'payment solution', 'instant transfer'],
-    // Don't show "Add Swish" in search results if user already has Swish
+    // Improved condition with additional debugging
     searchDisabledCondition: async () => {
-      const productService = getProductService();
-      // Use more specific check for Swish product
-      const hasSwish = await productService.hasProduct("swish-standard");
-      return hasSwish;
+      console.debug(`Checking if Swish workflow should be hidden (timestamp=${Date.now()})`);
+      
+      try {
+        const productService = getProductService();
+        
+        // Force a full refresh before checking
+        await productService.refreshProducts();
+        
+        // Check for the product
+        const hasSwish = await productService.hasProduct("swish-standard");
+        console.log(`Swish workflow searchability check result: hasSwish=${hasSwish}, timestamp=${Date.now()}`);
+        
+        // If user has Swish, the workflow should be disabled (return true)
+        return hasSwish;
+      } catch (error) {
+        console.error("Error checking Swish product:", error);
+        return false; // Default to showing the workflow if there's an error
+      }
     }
   }
 ];
@@ -133,29 +147,57 @@ async function registerWorkflowWithSearch(workflow: WorkflowDefinition): Promise
 }
 
 /**
- * Update the searchability of all workflows based on current conditions
- * This will add or remove workflows from search as needed
+ * Get all searchable workflows as search items
+ * This method is called by the search service to refresh its data
  */
-export function updateWorkflowSearchability(): void {
-  console.debug("Updating workflow searchability...");
-  
-  for (const workflow of workflowDefinitions) {
-    if (!workflow.searchable || !workflow.keywords) {
-      continue;
-    }
-    
-    const searchItemId = `workflow-${workflow.id}`;
-    const shouldBeDisabled = workflow.searchDisabledCondition && workflow.searchDisabledCondition();
-    
-    if (shouldBeDisabled) {
-      // Remove from search results if condition says it should be disabled
-      console.debug(`Removing workflow ${workflow.id} from search due to disabled condition`);
-      searchService.unregisterItem(searchItemId);
-    } else {
-      // Re-register with search to ensure it's present and updated
-      registerWorkflowWithSearch(workflow);
-    }
+export function getAllSearchableWorkflows(): SearchResultItem[] {
+  if (!workflowDefinitions || !Array.isArray(workflowDefinitions) || workflowDefinitions.length === 0) {
+    console.warn("Workflow definitions not available or not an array");
+    return [];
   }
+  
+  const searchItems: SearchResultItem[] = [];
+  
+  try {
+    for (const workflow of workflowDefinitions) {
+      // Skip non-searchable workflows
+      if (!workflow.searchable || !workflow.keywords) continue;
+      
+      // Create search item
+      searchItems.push({
+        id: `workflow-${workflow.id}`,
+        title: workflow.name,
+        type: 'workflow',
+        keywords: workflow.keywords || [],
+        description: workflow.description,
+        icon: workflow.icon,
+        popular: workflow.popular,
+        searchDisabledCondition: workflow.searchDisabledCondition,
+        action: () => {
+          console.debug(`Starting workflow from search: ${workflow.id}`);
+          
+          const event = new CustomEvent('start-workflow', {
+            bubbles: true, 
+            composed: true,
+            detail: { workflowId: workflow.id }
+          });
+          
+          document.dispatchEvent(event);
+        }
+      });
+    }
+  } catch (error) {
+    console.error("Error creating workflow search items:", error);
+  }
+  
+  return searchItems;
+}
+
+// DEPRECATED: This will be removed in favor of the search service pulling data
+export function updateWorkflowSearchability(): void {
+  console.debug("Workflow searchability update method called - this is deprecated");
+  // This function is now just a stub that does nothing
+  // The search service will pull fresh data when needed
 }
 
 /**

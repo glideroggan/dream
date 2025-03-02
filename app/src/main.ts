@@ -1,7 +1,5 @@
 import { WorkflowService } from './services/workflow-service';
-import { RepositoryService, getRepositoryService } from './services/repository-service';
-import { storageService } from './services/storage-service';
-import { userService } from './services/user-service';
+import { RepositoryService } from './services/repository-service';
 // Import workflow components
 import './services/product-service';
 import './workflows/swish-workflow';
@@ -19,46 +17,60 @@ declare global {
   }
 }
 
+// Import and initialize services in the right order
+
+// Import this early to ensure singleton manager is available
 console.debug('Main.ts started executing - before imports');
 import { getSingletonManager, initSingletonManager } from './services/singleton-manager'
 initSingletonManager()
+
+// Import base services first
 import { WidgetDefinition, widgetService } from './services/widget-service'
-import { registerAllWidgets } from './widgets/widget-registry';
+import { storageService } from './services/storage-service';
+import { userService } from './services/user-service';
+import { getRepositoryService } from './services/repository-service';
 
-// Import this early to ensure search service is available
-import { searchService } from './services/search-service';
-
-// Import registries early so they can register with search
-import { registerAllWorkflows } from './workflows/workflow-registry';
-
-console.debug('Main.ts initializing services...')
-
-// Initialize storage and user services first
+// Initialize storage and user services early
 window.storageService = storageService;
 window.userService = userService;
 console.debug('Storage and user services initialized');
 
-// Initialize the singleton manager
-console.debug('Widget service initialized', widgetService)
-// Make services globally available
+// Initialize widget service after storage services
 window.widgetService = widgetService
+console.debug('Widget service initialized', widgetService);
 
 // Initialize repository service
 const repositoryService = getRepositoryService();
 window.repositoryService = repositoryService;
 console.debug('Repository service initialized');
 
-// Register widgets with widget service and search
+// Import registries that register with search service
+import { registerAllWidgets } from './widgets/widget-registry';
+import { registerAllWorkflows } from './workflows/workflow-registry';
+
+// Now import search service after registries are imported
+import { searchService } from './services/search-service';
+
+// Register widgets with widget service
 await registerAllWidgets(widgetService);
 console.debug('Widgets registered');
 
+// Initialize workflow service
 const workflowService = getSingletonManager().get('WorkflowService')
 window.workflowService = workflowService
+console.debug('Workflow service initialized');
 
 // Register workflows - only call once
 registerAllWorkflows().then(() => {
   console.debug("Workflows registered successfully");
-  }).catch(error => {
+  
+  // Ensure search service gets updated after everything is registered
+  setTimeout(() => {
+    searchService.refreshAllSearchableItems();
+    console.debug(`Search service initialized with ${searchService.getSearchableItemsCount()} items`);
+  }, 300);
+  
+}).catch(error => {
   console.error("Failed to register workflows:", error);
 });
 
@@ -69,12 +81,6 @@ import './components/sidebar-component'
 import './components/content-component'
 import './components/footer-component'
 import './components/search-component'
-
-// Log search service status at the end
-// setTimeout(() => {
-//   console.debug(`Search service has ${searchService.getSearchableItemsCount()} items registered`);
-//   searchService.logSearchableItems();
-// }, 1000);
 
 // Signal that widgets are now registered
 console.debug('Application initialized')

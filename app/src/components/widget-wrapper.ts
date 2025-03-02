@@ -4,6 +4,13 @@ import { widgetService } from "../services/widget-service";
 
 const template = html<WidgetWrapper>/*html*/ `
   <div class="widget-wrapper ${x => x.state}" data-widget-id="${x => x.widgetId}">
+    <!-- Close button shown only for loaded widgets -->
+    ${(x) => x.state === 'loaded' && !x.hideCloseButton ? html<WidgetWrapper>/*html*/`
+      <button class="close-button" title="Remove widget" @click="${x => x.closeWidget()}">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    ` : ''}
+
     <!-- Loading state -->
     ${(x) => x.state === 'loading' ? html<WidgetWrapper>/*html*/`
       <div class="widget-loading">
@@ -73,6 +80,43 @@ const styles = css`
     background: var(--background-color, #ffffff);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     box-sizing: border-box;
+  }
+
+  /* Close button styles */
+  .close-button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: var(--neutral-layer-4, #f0f0f0);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--neutral-foreground-rest, #333);
+    z-index: 10;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+  }
+  
+  .close-button:hover {
+    opacity: 1;
+    background-color: var(--neutral-layer-3, #e0e0e0);
+  }
+
+  /* Only show close button on hover for cleaner look */
+  .close-button {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+
+  .widget-wrapper:hover .close-button {
+    opacity: 0.7;
+    transform: scale(1);
   }
   
   .widget-loading, .widget-error, .widget-timeout {
@@ -239,6 +283,9 @@ export class WidgetWrapper extends FASTElement {
   @attr state: 'loading' | 'loaded' | 'error' | 'import-error' | 'timeout-warning' = 'loading';
   @attr errorMessage: string = '';
   @attr moduleImportPath: string = '';
+  
+  // New attribute to control close button visibility
+  @attr({ mode: "boolean" }) hideCloseButton: boolean = false;
 
   // Optional attribute for widget name (to be consistent)
   @attr widgetName: string = '';
@@ -295,6 +342,13 @@ export class WidgetWrapper extends FASTElement {
     detail: { widgetId: this.widgetId }
   });
 
+  // Event for close requests
+  private closeEvent = new CustomEvent('close-widget', {
+    bubbles: true,
+    composed: true,
+    detail: { widgetId: this.widgetId }
+  });
+
   // Bound event handlers to ensure proper 'this' context
   private boundHandleChildError = this.handleChildError.bind(this);
   private boundHandleInitialized = this.handleInitialized.bind(this);
@@ -321,6 +375,7 @@ export class WidgetWrapper extends FASTElement {
     this.retryEvent.detail.widgetId = this.widgetId;
     this.dismissEvent.detail.widgetId = this.widgetId;
     this.cancelEvent.detail.widgetId = this.widgetId;
+    this.closeEvent.detail.widgetId = this.widgetId;
     this.connectedToDomEvent.detail.widgetId = this.widgetId;
 
     // Use bound event handlers to ensure proper 'this' context
@@ -616,6 +671,7 @@ export class WidgetWrapper extends FASTElement {
       this.retryEvent.detail.widgetId = this.widgetId;
       this.dismissEvent.detail.widgetId = this.widgetId;
       this.cancelEvent.detail.widgetId = this.widgetId;
+      this.closeEvent.detail.widgetId = this.widgetId;
     }
 
     // Handle timeout configuration changes
@@ -793,5 +849,13 @@ export class WidgetWrapper extends FASTElement {
     this.state = 'error';
     this.errorMessage = 'Widget loading cancelled by user';
     this.dispatchEvent(this.cancelEvent);
+  }
+
+  /**
+   * Close the widget 
+   */
+  closeWidget() {
+    console.debug(`Closing widget: ${this.widgetId || this.displayName || 'Unknown'}`);
+    this.dispatchEvent(this.closeEvent);
   }
 }

@@ -1,9 +1,9 @@
 import { StorageService, storageService } from './storage-service';
 import { UserService, userService } from './user-service';
-import { SettingsRepository } from '../repositories/settings-repository';
 import { AccountRepository } from '../repositories/account-repository';
 import { TransactionRepository } from '../repositories/transaction-repository';
 import { ProductRepository } from '../repositories/product-repository';
+import { SettingsRepository } from '../repositories/settings-repository';
 
 // Type definitions
 export interface Entity {
@@ -57,12 +57,18 @@ export interface Repository<T extends Entity> {
   delete(id: string): Promise<boolean>;
 }
 
-// Settings repository for user preferences
+// Define types for user settings
 export interface UserSettings extends Entity {
-  theme: string;
-  enableNotifications: boolean;
-  dashboardLayout: string[];
-  preferredWidgets: string[];
+  // General preferences
+  theme?: string;
+  language?: string;
+  enableNotifications?: boolean;
+  
+  // Allow for additional dynamic properties
+  [key: string]: any;
+
+  // Record of product IDs to array of page types where widgets were auto-added
+  autoAddedProducts?: Record<string, string[]>; 
 }
 
 // Repository service implementation

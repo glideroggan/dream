@@ -1,8 +1,12 @@
 # BUGS
 - modal primary buttons keeps their last workflow text, we need to reset it when closing
+- swish widget is only searchable after a reload. It should be searchable right after the workflow is done
 
 
 # TODO
+- change the welcome widget to be more introductive
+  - it should be able to close
+    - so widget preference needs a repository
 - writing something in search, and then trying to tab over to result box, doesn't work
 - ✔️we need to cover the case of getting the wrong script path to a widget. Changing the path to something else isn't covered in the widget wrapper
 - We need to start refactor individual files, as they start to grow, and could be split into smaller files

@@ -22,6 +22,9 @@ export interface WidgetOptions {
   
   // Whether to add size class automatically based on widget registry
   autoAddSizeClass?: boolean;
+
+  // Whether to hide the close button
+  hideCloseButton?: boolean;
 }
 
 /**
@@ -33,7 +36,8 @@ const DEFAULT_OPTIONS: Partial<WidgetOptions> = {
   failureTimeout: 10000,
   autoAddSizeClass: true,
   additionalClasses: [],
-  additionalAttributes: {}
+  additionalAttributes: {},
+  hideCloseButton: false
 };
 
 /**
@@ -89,6 +93,11 @@ export function createWidgetWrapper(options: WidgetOptions): HTMLElement {
     Object.entries(opts.additionalAttributes).forEach(([key, value]) => {
       wrapperElement.setAttribute(key, value);
     });
+  }
+
+  // Set hide-close-button attribute if needed
+  if (opts.hideCloseButton) {
+    wrapperElement.setAttribute('hide-close-button', '');
   }
   
   return wrapperElement;

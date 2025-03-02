@@ -131,18 +131,52 @@ export class ProductService {
   }
   
   /**
+   * Force refresh of products from repository
+   * This can be used to ensure we have the latest data
+   */
+  public async refreshProducts(): Promise<void> {
+    await this.ensureRepositoryInitialized();
+    
+    if (this.productRepository) {
+      try {
+        // Clear the current products list
+        this.products = [];
+        
+        // Load fresh from repository
+        const storedProducts = await this.productRepository.getActiveProducts();
+        this.products = storedProducts;
+        
+        // Log all product IDs for debugging
+        console.log("Products refreshed from repository:", 
+          this.products.map(p => `${p.id} (active=${p.active})`).join(', '));
+      } catch (error) {
+        console.error("Error refreshing products:", error);
+      }
+    }
+  }
+  
+  /**
    * Check if the user has a specific product
    */
   public async hasProduct(productId: string): Promise<boolean> {
     await this.ensureRepositoryInitialized();
     
+    // Force refresh from repository to ensure we have the latest data
+    // Use direct repository method instead of refreshProducts to avoid circular refreshing
     if (this.productRepository) {
-      // Use the repository to check
-      return await this.productRepository.hasActiveProduct(productId);
+      try {
+        const hasProduct = await this.productRepository.hasActiveProduct(productId);
+        console.debug(`Direct repository check: User has product ${productId} = ${hasProduct}`);
+        return hasProduct;
+      } catch (error) {
+        console.error(`Error checking if user has product ${productId}:`, error);
+      }
     }
     
-    // Fallback to in-memory check
-    return this.products.some(p => p.id === productId && p.active);
+    // Fallback to in-memory check if repository check failed
+    const hasProductInMemory = this.products.some(p => p.id === productId && p.active);
+    console.debug(`In-memory check: User has product ${productId} = ${hasProductInMemory}`);
+    return hasProductInMemory;
   }
   
   /**
@@ -214,6 +248,13 @@ export class ProductService {
     
     // Also dispatch DOM event for backward compatibility
     this.dispatchProductChangeEvent();
+    
+    // Force a full refresh after adding the product to ensure
+    // all components will see the change immediately
+    setTimeout(() => {
+      console.debug(`Refreshing products after adding ${normalizedProduct.id}`);
+      this.refreshProducts();
+    }, 100);
     
     return Promise.resolve();
   }

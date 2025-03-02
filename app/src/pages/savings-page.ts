@@ -1,84 +1,28 @@
 import {
-  FASTElement,
   customElement,
+  attr,
   html,
-  css,
-  observable
+  css
 } from '@microsoft/fast-element';
+import { BasePage, baseContentTemplate, baseStyles } from './base-page';
 
-const template = html<SavingsPage>/*html*/`
-  <div class="page-container">
-    <div class="page-header">
-      <h1>${x => x.pageTitle}</h1>
-    </div>
+// Use the base template
+const template = baseContentTemplate;
 
-    <div class="page-content">
-      <div class="info-card">
-        <div class="info-card-header">
-          <h2>Savings Overview</h2>
-        </div>
-        <div class="info-card-content">
-          <p>This is the savings page. It will show your savings accounts and goals.</p>
-          <p>Coming soon!</p>
-        </div>
-      </div>
-    </div>
-  </div>
-`;
-
+// Extend base styles with savings-specific styling
 const styles = css`
-  :host {
-    display: block;
-    height: 100%;
-    overflow-y: auto;
-  }
-
-  .page-container {
-    padding: 1.5rem;
-    height: 100%;
-  }
-
-  .page-header {
-    margin-bottom: 2rem;
-  }
-
-  .page-header h1 {
-    margin: 0;
-    font-size: 1.8rem;
-  }
-
-  .page-content {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-
-  .info-card {
-    background-color: white;
+  ${baseStyles}
+  
+  /* Savings-specific styles */
+  .content-header {
+    background-color: var(--neutral-layer-1);
+    padding: 16px 20px;
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-    overflow: hidden;
+    margin-bottom: 24px;
   }
-
-  .info-card-header {
-    padding: 1.25rem;
-    border-bottom: 1px solid #eee;
-  }
-
-  .info-card-header h2 {
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: 600;
-  }
-
-  .info-card-content {
-    padding: 1.5rem;
-  }
-
-  @media (min-width: 768px) {
-    .page-content {
-      grid-template-columns: repeat(2, 1fr);
-    }
+  
+  .content-header h1 {
+    color: var(--accent-foreground-rest);
   }
 `;
 
@@ -87,6 +31,63 @@ const styles = css`
   template,
   styles
 })
-export class SavingsPage extends FASTElement {
-  @observable pageTitle: string = 'Savings';
+export class SavingsPage extends BasePage {
+  // Initial empty widgets list - will use settings if available
+  @attr({ attribute: 'initialwidgets' })
+  initialWidgets: string = '';
+
+  constructor() {
+    super();
+    this.pageTitle = 'Savings';
+    this.pageType = 'savings';
+  }
+  
+  async loadWidgets(): Promise<void> {
+    console.debug('Savings page loading widgets...');
+    
+    // First check if we have user-saved preferences
+    await this.loadUserWidgetPreferences();
+    
+    // Then load any widgets we have (from settings or initial defaults)
+    await this.loadWidgetsFromList(this.initialWidgets);
+    
+    // Set ready state even if we have no widgets
+    this.ready = true;
+  }
+  
+  attributeChangedCallback(
+    name: string,
+    oldValue: string,
+    newValue: string
+  ): void {
+    super.attributeChangedCallback(name, oldValue, newValue);
+
+    if (name === 'initialwidgets' && newValue !== oldValue) {
+      console.debug(`initialWidgets attribute changed to: "${newValue}"`);
+      this.initialWidgets = newValue;
+      if (this.isConnected && !this._initialWidgetsLoaded) {
+        this.loadWidgets();
+      }
+    }
+  }
+  
+  /**
+   * Override workflow title formatting for savings-specific workflows
+   */
+  protected getWorkflowTitle(workflowId: string): string {
+    // Add savings-specific workflow titles
+    const savingsWorkflowTitles: Record<string, string> = {
+      'create-savings-goal': 'Create New Savings Goal',
+      'deposit-savings': 'Deposit to Savings',
+      'withdraw-savings': 'Withdraw from Savings'
+    };
+    
+    // Check if it's a savings-specific workflow
+    if (savingsWorkflowTitles[workflowId]) {
+      return savingsWorkflowTitles[workflowId];
+    }
+    
+    // Fall back to base implementation for other workflows
+    return super.getWorkflowTitle(workflowId);
+  }
 }

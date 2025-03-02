@@ -173,14 +173,22 @@ function registerWidgetWithSearch(widget: EnhancedWidgetDefinition): void {
     keywords: widget.keywords || [],
     description: widget.description || `View ${widget.name} widget`,
     icon: widget.icon,
-    // Pass through the searchDisabledCondition if it exists
     searchDisabledCondition: widget.searchDisabledCondition,
-    action: () => {
-      console.debug(`Navigate or focus on widget: ${widget.id}`);
-      // You would typically focus on the widget or navigate to its page
+    // FIXED: Let search component determine targetPage dynamically at runtime
+    // instead of hardcoding it here
+    action: (currentPage:string) => {
+      console.log(`Search requesting focus on widget: ${widget.id}`);
+      
+      // The focus-widget event will be processed by the event handler in base-page.ts
+      // and the current page will be determined by the search component
       const event = new CustomEvent('focus-widget', {
-        bubbles: true, composed: true,
-        detail: { widgetId: widget.id }
+        bubbles: true, 
+        composed: true,
+        detail: { 
+          widgetId: widget.id,
+          // targetPage will be added by search component
+          targetPage: currentPage
+        }
       });
       document.dispatchEvent(event);
     }
@@ -190,18 +198,59 @@ function registerWidgetWithSearch(widget: EnhancedWidgetDefinition): void {
   console.debug(`Registered widget with search: ${widget.id}`);
 }
 
-// Add a new function to update widget searchability
-export function updateWidgetSearchability(): void {
-  console.debug("Updating widget searchability...");
-  
-  for (const widget of widgetDefinitions) {
-    if (!widget.searchable || !widget.keywords) {
-      continue;
-    }
-    
-    // Re-register with search to ensure it's present and updated
-    registerWidgetWithSearch(widget);
+/**
+ * Get all searchable widgets as search items
+ * This method is called by the search service to refresh its data
+ */
+export function getAllSearchableWidgets(): SearchResultItem[] {
+  if (!widgetDefinitions || !Array.isArray(widgetDefinitions) || widgetDefinitions.length === 0) {
+    console.warn("Widget definitions not available or not an array");
+    return [];
   }
+  
+  const searchItems: SearchResultItem[] = [];
+  
+  try {
+    for (const widget of widgetDefinitions) {
+      if (!widget.searchable || !widget.keywords) continue;
+      
+      // Create a search item for each searchable widget
+      searchItems.push({
+        id: `widget-${widget.id}`,
+        title: widget.name,
+        type: 'widget',
+        keywords: widget.keywords || [],
+        description: widget.description || `View ${widget.name} widget`,
+        icon: widget.icon,
+        searchDisabledCondition: widget.searchDisabledCondition,
+        action: (currentPage:string) => {
+          console.log(`Search requesting focus on widget: ${widget.id}`);
+          
+          const event = new CustomEvent('focus-widget', {
+            bubbles: true, 
+            composed: true,
+            detail: { 
+              widgetId: widget.id,
+              targetPage: currentPage
+            }
+          });
+          
+          document.dispatchEvent(event);
+        }
+      });
+    }
+  } catch (error) {
+    console.error("Error creating widget search items:", error);
+  }
+  
+  return searchItems;
+}
+
+// DEPRECATED: This will be removed in favor of the search service pulling data
+export function updateWidgetSearchability(): void {
+  console.debug("Widget searchability updated method called - this is deprecated");
+  // This function is now just a stub that does nothing
+  // The search service will pull fresh data when needed
 }
 
 /**
@@ -217,4 +266,51 @@ export function getWidgetById(widgetId: string): EnhancedWidgetDefinition | unde
 export function getWidgetMinWidth(widgetId: string): number {
   const widget = widgetDefinitions.find(w => w.id === widgetId);
   return widget?.minWidth || 300; // Default to 300px if not specified
+}
+
+/**
+ * Gets widgets that should be automatically added when a product is activated
+ * These widgets will only be automatically added once, then their presence
+ * will be managed by user preferences saved in settings.
+ * 
+ * @param productId The product ID to check
+ * @returns Array of widgets that should be automatically added for this product
+ */
+export function getAutoWidgetsForProduct(productId: string): EnhancedWidgetDefinition[] {
+  // Get all widgets that require this product
+  return widgetDefinitions.filter(widget => widget.requiresProduct === productId);
+}
+
+/**
+ * Check if a widget is available for the current user based on product requirements
+ * 
+ * @param widgetId The widget ID to check
+ * @returns boolean indicating if the widget is available (has required products)
+ */
+export async function isWidgetAvailableForUser(widgetId: string): Promise<boolean> {
+  const widget = widgetDefinitions.find(w => w.id === widgetId);
+  if (!widget) return false;
+  
+  // If the widget doesn't require a product, it's always available
+  if (!widget.requiresProduct) return true;
+  
+  // Check if the user has the required product
+  const productService = getProductService();
+  return await productService.hasProduct(widget.requiresProduct);
+}
+
+/**
+ * Get all widgets that are available to the user based on their products
+ */
+export async function getAllAvailableWidgets(): Promise<EnhancedWidgetDefinition[]> {
+  const productService = getProductService();
+  const userProducts = await productService.getProducts();
+  const userProductIds = userProducts.map(p => p.id);
+  
+  return widgetDefinitions.filter(widget => {
+    // Widget is available if it doesn't require a product
+    // or if the user has the required product
+    return !widget.requiresProduct || 
+      userProductIds.includes(widget.requiresProduct);
+  });
 }

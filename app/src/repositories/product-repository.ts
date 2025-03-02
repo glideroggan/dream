@@ -95,8 +95,31 @@ export class ProductRepository extends LocalStorageRepository<ProductEntity> {
    * Check if a product exists and is active
    */
   async hasActiveProduct(productId: string): Promise<boolean> {
-    const product = await this.getById(productId);
-    return !!product && product.active;
+    try {
+      // Force a refresh from storage first
+      await this.loadFromStorage();
+      
+      const product = await this.getById(productId);
+      const result = !!product && product.active;
+      
+      // Log more details
+      if (product) {
+        console.log(`Repository: Product ${productId} found, active = ${product.active}`);
+      } else {
+        console.debug(`Repository: Product ${productId} not found`);
+      }
+      
+      if (!result) {
+        // Log all available products for debugging
+        const allProducts = await this.getAll();
+        console.debug(`All products in repository: ${allProducts.map(p => `${p.id} (active=${p.active})`).join(', ')}`);
+      }
+      
+      return result;
+    } catch (error) {
+      console.error(`Error checking if product ${productId} is active:`, error);
+      return false;
+    }
   }
   
   /**
