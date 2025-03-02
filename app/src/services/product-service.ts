@@ -147,7 +147,7 @@ export class ProductService {
         this.products = storedProducts;
         
         // Log all product IDs for debugging
-        console.log("Products refreshed from repository:", 
+        console.debug("Products refreshed from repository:", 
           this.products.map(p => `${p.id} (active=${p.active})`).join(', '));
       } catch (error) {
         console.error("Error refreshing products:", error);

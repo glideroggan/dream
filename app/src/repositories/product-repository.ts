@@ -104,7 +104,7 @@ export class ProductRepository extends LocalStorageRepository<ProductEntity> {
       
       // Log more details
       if (product) {
-        console.log(`Repository: Product ${productId} found, active = ${product.active}`);
+        console.debug(`Repository: Product ${productId} found, active = ${product.active}`);
       } else {
         console.debug(`Repository: Product ${productId} not found`);
       }

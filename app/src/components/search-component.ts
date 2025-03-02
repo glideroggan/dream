@@ -71,7 +71,10 @@ function getTypeIcon(type: string): string {
  */
 function getCurrentPage(): string {
   // Extract the page name from the URL path
-  const path = window.location.pathname;
+  // Check if the URL contains a hash for client-side routing
+  const path = window.location.hash ? window.location.hash.substring(1) : window.location.pathname;
+  // TODO: Implement a proper routing service to handle client-side navigation
+  // const path = window.location.pathname;
   
   // Remove leading slash and trailing slash if present
   const normalizedPath = path.replace(/^\/|\/$/g, '');

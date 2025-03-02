@@ -79,7 +79,7 @@ const workflowDefinitions: WorkflowDefinition[] = [
         
         // Check for the product
         const hasSwish = await productService.hasProduct("swish-standard");
-        console.log(`Swish workflow searchability check result: hasSwish=${hasSwish}, timestamp=${Date.now()}`);
+        console.debug(`Swish workflow searchability check result: hasSwish=${hasSwish}, timestamp=${Date.now()}`);
         
         // If user has Swish, the workflow should be disabled (return true)
         return hasSwish;

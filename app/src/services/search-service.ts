@@ -75,7 +75,7 @@ class SearchService {
 
   // NEW: Central method to refresh all searchable content
   public refreshAllSearchableItems(): void {
-    console.log('Refreshing all searchable items');
+    console.debug('Refreshing all searchable items');
     
     // Clear existing items
     this.searchableItems = [];
@@ -111,7 +111,7 @@ class SearchService {
       // Also notify about popular items changing since they're derived from searchable items
       this.notifySubscribers({ type: 'popularItemsChanged', source: 'refreshAllSearchableItems' });
       
-      console.log(`Search service refreshed with ${this.searchableItems.length} total items`);
+      console.debug(`Search service refreshed with ${this.searchableItems.length} total items`);
     } catch (error) {
       console.error('Error refreshing search items:', error);
     }

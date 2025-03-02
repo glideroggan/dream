@@ -282,8 +282,9 @@ export class WidgetWrapper extends FASTElement {
   @attr widgetId: string = "";
   @attr state: 'loading' | 'loaded' | 'error' | 'import-error' | 'timeout-warning' = 'loading';
   @attr errorMessage: string = '';
+  @attr({attribute: 'page-type'}) pageType: string = '';
   @attr moduleImportPath: string = '';
-  
+
   // New attribute to control close button visibility
   @attr({ mode: "boolean" }) hideCloseButton: boolean = false;
 
@@ -346,7 +347,7 @@ export class WidgetWrapper extends FASTElement {
   private closeEvent = new CustomEvent('close-widget', {
     bubbles: true,
     composed: true,
-    detail: { widgetId: this.widgetId }
+    detail: { widgetId: this.widgetId, pageType: this.pageType }
   });
 
   // Bound event handlers to ensure proper 'this' context
@@ -356,7 +357,7 @@ export class WidgetWrapper extends FASTElement {
 
   // Track if widget initialization already happened
   private initialized: boolean = false;
-  
+
   // Track if we've dispatched the connected-to-dom event
   private connectedEventDispatched: boolean = false;
 
@@ -376,13 +377,14 @@ export class WidgetWrapper extends FASTElement {
     this.dismissEvent.detail.widgetId = this.widgetId;
     this.cancelEvent.detail.widgetId = this.widgetId;
     this.closeEvent.detail.widgetId = this.widgetId;
+    this.closeEvent.detail.pageType = this.pageType
     this.connectedToDomEvent.detail.widgetId = this.widgetId;
 
     // Use bound event handlers to ensure proper 'this' context
     this.addEventListener('error', this.boundHandleChildError);
     this.addEventListener('initialized', this.boundHandleInitialized);
     this.addEventListener('load-complete', this.boundHandleInitialized);
-    
+
     // Also listen for module errors that bubble up from widget-service
     document.addEventListener('widget-module-error', this.boundHandleModuleError);
 
@@ -396,7 +398,7 @@ export class WidgetWrapper extends FASTElement {
     this.initializeWidgetModule();
 
     console.debug(`Widget wrapper connected: ${this.widgetId || this.displayName || 'Unknown'}, timeouts: warning=${this.warningTimeout}ms, failure=${this.failureTimeout}ms`);
-    
+
     // Important: Dispatch connected-to-dom event to notify child elements
     // We do this on next tick to ensure all initialization is complete
     setTimeout(() => {
@@ -425,22 +427,22 @@ export class WidgetWrapper extends FASTElement {
     //   this.mutationObserver = null;
     // }
   }
-  
+
   /**
    * Check if the widget service already has errors for this widget
    * This handles the case where module loading failed before we added the event listener
    */
   private checkForExistingErrors(): void {
     if (!this.widgetId) return;
-    
+
     if (widgetService.hasLoadError(this.widgetId)) {
       const errorMessage = widgetService.getLoadErrorMessage(this.widgetId);
-      
+
       // Check if it's an import error or other error
       if (errorMessage && (
-          errorMessage.includes('import') || 
-          errorMessage.includes('module') ||
-          errorMessage.includes('not found'))) {
+        errorMessage.includes('import') ||
+        errorMessage.includes('module') ||
+        errorMessage.includes('not found'))) {
         // It's an import error
         this.handleImportError(errorMessage);
       } else {
@@ -457,30 +459,30 @@ export class WidgetWrapper extends FASTElement {
   private handleModuleError(event: Event): void {
     const customEvent = event as CustomEvent;
     const { widgetId, error, modulePath } = customEvent.detail;
-    
+
     // Only process if it's for our widget
     if (widgetId !== this.widgetId) return;
-    
+
     console.debug(`Widget ${this.widgetId} received module error:`, error);
-    
+
     // Handle as an import error
     this.handleImportError(error?.message || 'Failed to load widget module', modulePath);
   }
-  
+
   /**
    * Handle import errors specifically
    */
   private handleImportError(errorMessage: string, modulePath?: string): void {
     this.state = 'import-error';
     this.errorMessage = errorMessage;
-    
+
     // If we have the module definition, show the path
     if (modulePath) {
       this.moduleImportPath = modulePath;
     } else if (this._widgetDefinition?.module) {
       this.moduleImportPath = this._widgetDefinition.module;
     }
-    
+
     this.clearTimeoutTracking();
   }
 
@@ -506,7 +508,7 @@ export class WidgetWrapper extends FASTElement {
   //         // Content has been added, treat this as initialization
   //         console.debug(`Widget ${this.widgetId || this.displayName || 'Unknown'} content detected, treating as initialized`);
   //         this.handleInitialized(new Event('content-detected'));
-          
+
   //         // If we haven't dispatched the connected event, do so now
   //         if (!this.connectedEventDispatched) {
   //           Array.from(this.children).forEach(child => {
@@ -532,7 +534,7 @@ export class WidgetWrapper extends FASTElement {
     console.debug(`Widget ${this.widgetId || this.displayName || 'Unknown'} initialized (from ${event.type}) after ${Date.now() - this.startTime}ms`);
     this.initialized = true;
     this.state = 'loaded';
-    
+
     // Clear timeout tracking since we're initialized
     this.clearTimeoutTracking();
   }
@@ -543,22 +545,22 @@ export class WidgetWrapper extends FASTElement {
   private handleChildError(event: Event) {
     // Record elapsed time for better debugging
     const elapsedTime = this.startTime ? `${Date.now() - this.startTime}ms` : 'unknown';
-    
+
     console.debug(`Widget ${this.widgetId || this.displayName || 'Unknown'} error after ${elapsedTime}:`, event);
-  
+
     // Update state to error
     this.state = 'error';
-  
+
     // Update error message if available
     if (event instanceof ErrorEvent && event.message) {
       this.errorMessage = event.message;
     } else {
       this.errorMessage = 'Widget encountered an error during initialization';
     }
-  
+
     // Clear timeout tracking
     this.clearTimeoutTracking();
-  
+
     // Prevent further propagation since we've handled it
     event.stopPropagation();
   }
@@ -597,22 +599,22 @@ export class WidgetWrapper extends FASTElement {
     // Check for failure timeout first (more severe)
     if (elapsedTime >= this.failureTimeout) {
       console.debug(`Widget ${this.displayName} failure timeout reached after ${elapsedTime}ms`);
-      
+
       // Clear the interval since we're done monitoring
       this.clearTimeoutTracking();
-      
+
       // Set error state
       this.state = 'error';
       this.errorMessage = `Widget failed to initialize within ${this.failureTimeout / 1000} seconds`;
-      
+
       return;
     }
-    
+
     // Check for warning timeout
     if (elapsedTime >= this.warningTimeout && this.state === 'loading') {
       console.debug(`Widget ${this.displayName} warning timeout reached after ${elapsedTime}ms`);
       this.state = 'timeout-warning';
-      
+
       // Important: We don't clear timeouts here, just change the visual state
     }
   }
@@ -643,13 +645,13 @@ export class WidgetWrapper extends FASTElement {
           // Start timeout tracking when entering loading state
           this.startTimeoutTracking();
           break;
-        
+
         case 'loaded':
         case 'error':
           // Stop timeout tracking when the widget is fully loaded or has errored
           this.clearTimeoutTracking();
           break;
-          
+
         case 'timeout-warning':
           // Continue timeout tracking when showing warning
           // Don't reset or clear timeouts here
@@ -729,7 +731,7 @@ export class WidgetWrapper extends FASTElement {
       this.setErrorState("Missing widget ID");
       return;
     }
-    
+
     try {
       // Check if widget definition exists
       this._widgetDefinition = getWidgetById(this.widgetId);
@@ -746,21 +748,21 @@ export class WidgetWrapper extends FASTElement {
 
       // Check if there are existing errors for this widget
       if (widgetService.hasLoadError(this.widgetId)) {
-        const errorMessage = widgetService.getLoadErrorMessage(this.widgetId) || 
-                            "Unknown widget loading error";
-        
+        const errorMessage = widgetService.getLoadErrorMessage(this.widgetId) ||
+          "Unknown widget loading error";
+
         this.handleWidgetLoadError(errorMessage);
         return;
       }
 
       // Register a load handler with the widget service
       console.debug(`Requesting widget service to load module for ${this.widgetId}`);
-      
+
       try {
         // Use widget service to load the module
         await widgetService.loadWidgetModule(this._widgetDefinition);
         console.debug(`Widget ${this.widgetId} module loaded successfully`);
-        
+
         // Note: We don't set state=loaded here because we wait for the 
         // actual widget element to initialize itself
       } catch (error) {
@@ -782,15 +784,15 @@ export class WidgetWrapper extends FASTElement {
    */
   private handleWidgetLoadError(message: string): void {
     console.error(`Widget ${this.widgetId} load error:`, message);
-    
+
     // Determine if this is an import error or a general error
-    if (message.includes('import') || 
-        message.includes('module') ||
-        message.includes('not found')) {
-      
+    if (message.includes('import') ||
+      message.includes('module') ||
+      message.includes('not found')) {
+
       this.state = 'import-error';
       this.errorMessage = message;
-      
+
       // Add module path info if available
       if (this._widgetDefinition?.module) {
         this.moduleImportPath = this._widgetDefinition.module;
@@ -814,21 +816,21 @@ export class WidgetWrapper extends FASTElement {
    */
   retry() {
     console.debug(`Retrying widget: ${this.widgetId || this.displayName || 'Unknown'}`);
-    
+
     // Clear any errors in the widget service for this widget
     widgetService.clearLoadError(this.widgetId);
-    
+
     this.initialized = false;
     this.state = 'loading';
     this.errorMessage = '';
     this.moduleImportPath = '';
-    
+
     // Start timeout tracking again
     this.startTimeoutTracking();
-    
+
     // Re-initialize the widget module
     this.initializeWidgetModule();
-    
+
     // Also dispatch the retry event for parent containers
     this.dispatchEvent(this.retryEvent);
   }
@@ -855,7 +857,7 @@ export class WidgetWrapper extends FASTElement {
    * Close the widget 
    */
   closeWidget() {
-    console.debug(`Closing widget: ${this.widgetId || this.displayName || 'Unknown'}`);
+    console.log(`Closing widget: ${this.widgetId || this.displayName || 'Unknown'} - page type: ${this.pageType}`);
     this.dispatchEvent(this.closeEvent);
   }
 }

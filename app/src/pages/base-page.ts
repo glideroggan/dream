@@ -4,7 +4,8 @@ import {
   DOM,
   when,
   html,
-  css
+  css,
+  Observable
 } from '@microsoft/fast-element';
 import { WidgetDefinition, widgetService } from '../services/widget-service';
 import { getRepositoryService, UserSettings } from '../services/repository-service';
@@ -326,7 +327,7 @@ export class BasePage extends FASTElement {
    * Handle product changes from ProductService
    */
   protected handleProductChange(event: ProductChangeEvent): void {
-    console.log(`Product ${event.type} event received:`, event.product?.id);
+    console.debug(`Product ${event.type} event received:`, event.product?.id);
     const productId = event.productId;
 
     if (event.type === 'add') {
@@ -340,7 +341,7 @@ export class BasePage extends FASTElement {
     // Refresh search service when products change
     const searchService = getSearchService();
     searchService.refreshAllSearchableItems();
-    console.log('Search service refreshed after product change');
+    console.debug('Search service refreshed after product change');
   }
 
   /**
@@ -489,6 +490,7 @@ export class BasePage extends FASTElement {
       if (widgets.length > 0) {
         const widget = widgets[0];
         this.activeWidgets.push(widget);
+        Observable.notify(this, 'activeWidgets');
 
         // Add new widget with wrapper to DOM
         const widgetContainer = this.shadowRoot?.querySelector('.widgets-container') as HTMLElement;
@@ -593,7 +595,8 @@ export class BasePage extends FASTElement {
         warningTimeout: 5000,
         failureTimeout: 10000,
         additionalAttributes: {
-          'widget-name': widget.name || widget.id
+          'widget-name': widget.name || widget.id,
+          'page-type': this.pageType
         }
       });
 
@@ -893,12 +896,12 @@ export class BasePage extends FASTElement {
       return;
     }
 
-    console.log(`Focusing widget: ${widgetId}, target page: ${detail.targetPage}, current page: ${this.pageType}`);
+    console.debug(`Focusing widget: ${widgetId}, target page: ${detail.targetPage}, current page: ${this.pageType}`);
     
 
     // Only proceed if this is the target page or no target page was specified
     if (targetPage && targetPage !== this.pageType) {
-      console.log(`Ignoring widget focus event for ${widgetId} because target page ${targetPage} doesn't match current page ${this.pageType}`);
+      console.debug(`Ignoring widget focus event for ${widgetId} because target page ${targetPage} doesn't match current page ${this.pageType}`);
       return;
     }
 
@@ -1006,10 +1009,11 @@ export class BasePage extends FASTElement {
    * This is called when a user manually closes a widget via the "X" close button
    */
   protected handleCloseWidget(event: Event): void {
-    const { widgetId } = (event as CustomEvent).detail;
-    if (!widgetId) return;
+    const { widgetId, pageType } = (event as CustomEvent).detail;
+    console.log(`starting Closing widget ${widgetId} ${pageType} (user requested)`);
+    if (!widgetId || this.pageType !== pageType) return;
 
-    console.debug(`Closing widget ${widgetId} (user requested)`);
+    console.log(`Closing widget ${widgetId} ${this.pageType} (user requested)`);
     
     this.removeWidgetFromPage(widgetId);
   }

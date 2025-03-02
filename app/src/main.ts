@@ -78,7 +78,6 @@ registerAllWorkflows().then(() => {
 import './components/app-component'
 import './components/header-component'
 import './components/sidebar-component'
-import './components/content-component'
 import './components/footer-component'
 import './components/search-component'
 
