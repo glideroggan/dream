@@ -1,6 +1,6 @@
 import { getSingletonManager } from './singleton-manager';
-import { getRepositoryService } from './repository-service';
 import { ProductRepository } from '../repositories/product-repository';
+import { repositoryService } from './repository-service';
 
 // Base product interface that all product types extend
 export interface BaseProduct {
@@ -47,7 +47,6 @@ export class ProductService {
    */
   private async ensureRepositoryInitialized(): Promise<void> {
     if (!this.productRepository) {
-      const repositoryService = getRepositoryService();
       this.productRepository = repositoryService.getProductRepository();
       await this.loadProductsFromRepository();
     }

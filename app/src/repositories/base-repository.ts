@@ -76,7 +76,10 @@ export abstract class LocalStorageRepository<T extends Entity> implements Reposi
   
   async create(data: Omit<T, 'id'>): Promise<T> {
     const id = this.generateId();
-    const entity = { id, ...data } as T;
+    // const accountNumber = Math.floor(Math.random() * 1000000000).toString()
+    // const isActive = true
+    // const createdAt = new Date().toISOString()
+    const entity = { id,  ...data } as unknown as T;
     
     this.entities.set(id, entity);
     this.saveToStorage();

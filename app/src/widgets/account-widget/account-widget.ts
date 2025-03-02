@@ -1,10 +1,10 @@
 import { FASTElement, customElement, html, css, observable, when, attr } from "@microsoft/fast-element";
-import "../../components/modal-component";
-import { Account, getRepositoryService } from "../../services/repository-service";
+import { Account, repositoryService } from "../../services/repository-service";
 import { WorkflowIds } from "../../workflows/workflow-registry";
 import { ModalComponent } from "../../components/modal-component";
 import "./account-list-component";
 import "./transaction-list-component";
+import "./account-info-component";
 import { TransactionListComponent, TransactionViewModel } from "./transaction-list-component";
 import { workflowManager } from "../../services/workflow-manager-service";
 
@@ -52,8 +52,32 @@ const template = html<AccountWidget>/*html*/ `
     <dream-modal 
       id="accountModal"
       title="${x => x.workflowTitle}" 
-      @close="${x => x.handleModalClose()}">
-      <!-- Empty modal content for now, will be replaced with workflow components -->
+      @close="${x => x.handleModalClose()}"
+      showFooter="${x => x.showWorkflowActions}">
+      
+      ${when(x => x.selectedAccount && !x.showWorkflow, html<AccountWidget>/*html*/`
+        <!-- Show account info when an account is selected and no workflow is active -->
+        <account-info :account="${x => x.selectedAccount}">
+          <div slot="actions" class="account-action-buttons">
+            <button class="action-button edit" @click="${x => x.editAccount()}">
+              Edit Account
+            </button>
+            <button class="action-button deposit" @click="${x => x.handleDepositToAccount()}">
+              Deposit
+            </button>
+            <button class="action-button withdraw" @click="${x => x.handleWithdrawFromAccount()}">
+              Withdraw
+            </button>
+            <button class="action-button delete" @click="${x => x.confirmDeleteAccount()}">
+              Delete Account
+            </button>
+          </div>
+        </account-info>
+      `)}
+      
+      ${when(x => x.showWorkflow, html<AccountWidget>/*html*/`
+        <!-- This slot is used for workflows -->
+      `)}
     </dream-modal>
   </div>
 `;
@@ -190,6 +214,46 @@ const styles = css`
   .retry-button:hover {
     background-color: #c0392b;
   }
+  
+  .account-action-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 8px;
+    margin-top: 16px;
+  }
+  
+  .account-action-buttons .action-button {
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+    padding: 10px;
+    font-weight: 500;
+    font-size: 14px;
+    text-align: center;
+    background-color: var(--button-bg, #f0f0f0);
+    color: var(--text-primary, #333);
+    display: block;
+  }
+  
+  .action-button.edit {
+    background-color: var(--primary-light, #d6eaf8);
+    color: var(--primary-color, #2980b9);
+  }
+  
+  .action-button.deposit {
+    background-color: var(--success-light, #d5f5e3);
+    color: var(--success-color, #27ae60);
+  }
+  
+  .action-button.withdraw {
+    background-color: var(--warning-light, #fef9e7);
+    color: var(--warning-color, #f39c12);
+  }
+  
+  .action-button.delete {
+    background-color: var(--error-light, #fadbd8);
+    color: var(--error-color, #e74c3c);
+  }
 `;
 
 @customElement({
@@ -205,6 +269,8 @@ export class AccountWidget extends FASTElement {
   
   @observable workflowTitle: string = "Account Actions";
   @observable selectedAccount: Account | null = null;
+  @observable showWorkflow: boolean = false;
+  @observable showWorkflowActions: boolean = true;
   
   // Properties for transaction display
   @observable expandedAccountId: string | null = null;
@@ -271,7 +337,7 @@ export class AccountWidget extends FASTElement {
     
     try {
       // Get the repository service
-      const repositoryService = getRepositoryService();
+      // const repositoryService = repositoryService;
       const accountRepo = repositoryService.getAccountRepository();
       
       // Fetch accounts with a slight delay to show loading state
@@ -338,7 +404,7 @@ export class AccountWidget extends FASTElement {
     this.accountTransactions = [];
     
     try {
-      const repositoryService = getRepositoryService();
+      // const repositoryService = getRepositoryService();
       const transactionRepo = repositoryService.getTransactionRepository();
       
       // Remove the artificial delay
@@ -370,8 +436,10 @@ export class AccountWidget extends FASTElement {
   }
   
   openAccountActions(account: Account) {
-    this.workflowTitle = `${account.name} Actions`;
+    this.workflowTitle = `${account.name}`;
     this.selectedAccount = account;
+    this.showWorkflow = false;
+    this.showWorkflowActions = false; // Hide footer with buttons - we have custom ones
     this.openModal();
   }
   
@@ -381,8 +449,15 @@ export class AccountWidget extends FASTElement {
   async openWorkflow(workflowId: string, params?: Record<string, any>) {
     try {
       console.debug(`Starting workflow ${workflowId} with params:`, params);
+      // Show workflow state
+      this.showWorkflow = true;
+      this.showWorkflowActions = true;
+      
       // Use the workflow manager directly
       const result = await workflowManager.startWorkflow(workflowId, params);
+      
+      // Reset state
+      this.showWorkflow = false;
       
       // Handle the result after workflow completes
       if (result.success) {
@@ -398,6 +473,7 @@ export class AccountWidget extends FASTElement {
       }
     } catch (error) {
       console.error(`Error running workflow ${workflowId}:`, error);
+      this.showWorkflow = false;
     }
   }
   
@@ -441,7 +517,7 @@ export class AccountWidget extends FASTElement {
    */
   async updateAccount(account: Account, updates: Partial<Account>): Promise<void> {
     try {
-      const repositoryService = getRepositoryService();
+      // const repositoryService = getRepositoryService();
       const accountRepo = repositoryService.getAccountRepository();
       
       await accountRepo.update(account.id, updates);
@@ -457,7 +533,7 @@ export class AccountWidget extends FASTElement {
    */
   async deleteAccount(accountId: string): Promise<void> {
     try {
-      const repositoryService = getRepositoryService();
+      // const repositoryService = getRepositoryService();
       const accountRepo = repositoryService.getAccountRepository();
       
       const success = await accountRepo.delete(accountId);
@@ -478,7 +554,7 @@ export class AccountWidget extends FASTElement {
     this.isLoading = true;
     
     try {
-      const transactionRepo = getRepositoryService().getTransactionRepository();
+      const transactionRepo = repositoryService.getTransactionRepository();
       const rawTransactions = await transactionRepo.getByAccountId(this.accountId);
       
       // Sort transactions by date (newest first)
@@ -493,6 +569,42 @@ export class AccountWidget extends FASTElement {
       console.error("Error loading transactions:", error);
     } finally {
       this.isLoading = false;
+    }
+  }
+  
+  // New methods for account actions
+  editAccount() {
+    if (!this.selectedAccount) return;
+    
+    this.workflowTitle = `Edit ${this.selectedAccount.name}`;
+    this.showWorkflow = true;
+    // this.openWorkflow(WorkflowIds.EDIT_ACCOUNT, { account: this.selectedAccount });
+  }
+  
+  handleDepositToAccount() {
+    if (!this.selectedAccount) return;
+    
+    this.workflowTitle = `Deposit to ${this.selectedAccount.name}`;
+    this.showWorkflow = true;
+    // this.openWorkflow(WorkflowIds.DEPOSIT, { account: this.selectedAccount });
+  }
+  
+  handleWithdrawFromAccount() {
+    if (!this.selectedAccount) return;
+    
+    this.workflowTitle = `Withdraw from ${this.selectedAccount.name}`;
+    this.showWorkflow = true;
+    // this.openWorkflow(WorkflowIds.WITHDRAW, { account: this.selectedAccount });
+  }
+  
+  confirmDeleteAccount() {
+    if (!this.selectedAccount) return;
+    
+    if (confirm(`Are you sure you want to delete the account "${this.selectedAccount.name}"? This action cannot be undone.`)) {
+      this.deleteAccount(this.selectedAccount.id);
+      if (this.modal) {
+        this.modal.close();
+      }
     }
   }
 }

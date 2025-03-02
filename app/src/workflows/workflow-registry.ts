@@ -22,6 +22,7 @@ export const WorkflowIds = {
   KYC: "kyc",
   CREATE_ACCOUNT: "create-account",
   SWISH: "swish",
+  ADD_CONTACT: "add-contact", // Add new workflow ID
 };
 
 // Define all available workflows
@@ -88,7 +89,17 @@ const workflowDefinitions: WorkflowDefinition[] = [
         return false; // Default to showing the workflow if there's an error
       }
     }
-  }
+  },
+  {
+    id: WorkflowIds.ADD_CONTACT,
+    name: "Add Payment Contact",
+    description: "Add a new payment contact for transfers",
+    elementName: "add-contact-workflow",
+    module: "@workflows/add-contact-workflow",
+    icon: "👤",
+    searchable: true,
+    keywords: ['contact', 'add contact', 'payment contact', 'recipient', 'payee'],
+  },
 ];
 
 /**

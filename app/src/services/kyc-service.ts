@@ -1,6 +1,6 @@
 import { getSingletonManager } from './singleton-manager';
 import { PersonalInformation, KYCCompletionData } from '../workflows/kyc/kyc-workflow';
-import { getRepositoryService } from './repository-service';
+import { repositoryService } from './repository-service';
 
 // KYC verification levels
 export enum KycLevel {
@@ -38,7 +38,7 @@ export interface KycRequirement {
 }
 
 class KycService {
-  private settingsRepo = getRepositoryService().getSettingsRepository();
+  private settingsRepo = repositoryService.getSettingsRepository();
   private currentKycLevel: KycLevel = KycLevel.NONE;
   private kycStatus: KycStatus = KycStatus.NOT_STARTED;
   

@@ -4,6 +4,7 @@ import { AccountRepository } from '../repositories/account-repository';
 import { TransactionRepository } from '../repositories/transaction-repository';
 import { ProductRepository } from '../repositories/product-repository';
 import { SettingsRepository } from '../repositories/settings-repository';
+import { PaymentContact } from '../repositories/models/payment-contact';
 
 // Type definitions
 export interface Entity {
@@ -15,6 +16,10 @@ export interface Account extends Entity {
   balance: number;
   currency: string;
   type: string;
+  accountNumber: string;
+  interestRate?: number;
+  isActive: boolean;
+  createdAt: string; // ISO date string
 }
 
 export enum TransactionStatus {
@@ -63,6 +68,7 @@ export interface UserSettings extends Entity {
   theme?: string;
   language?: string;
   enableNotifications?: boolean;
+  paymentContacts: PaymentContact[]
   
   // Allow for additional dynamic properties
   [key: string]: any;
@@ -144,7 +150,9 @@ export class RepositoryService {
   }
 }
 
+// TODO: can't we just expose it better? like
+export const repositoryService = RepositoryService.getInstance();
 // Singleton getter for convenience
-export function getRepositoryService(): RepositoryService {
-  return RepositoryService.getInstance();
-}
+// export function getRepositoryService(): RepositoryService {
+//   return RepositoryService.getInstance();
+// }

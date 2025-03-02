@@ -1,5 +1,5 @@
 import { WorkflowService } from './services/workflow-service';
-import { RepositoryService } from './services/repository-service';
+import { repositoryService, RepositoryService } from './services/repository-service';
 // Import workflow components
 import './services/product-service';
 import './workflows/swish-workflow';
@@ -28,7 +28,6 @@ initSingletonManager()
 import { WidgetDefinition, widgetService } from './services/widget-service'
 import { storageService } from './services/storage-service';
 import { userService } from './services/user-service';
-import { getRepositoryService } from './services/repository-service';
 
 // Initialize storage and user services early
 window.storageService = storageService;
@@ -40,7 +39,6 @@ window.widgetService = widgetService
 console.debug('Widget service initialized', widgetService);
 
 // Initialize repository service
-const repositoryService = getRepositoryService();
 window.repositoryService = repositoryService;
 console.debug('Repository service initialized');
 

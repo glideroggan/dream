@@ -1,7 +1,7 @@
 import { customElement, html, css, observable, attr, repeat } from "@microsoft/fast-element";
 import { WorkflowBase, WorkflowResult } from "../workflow-base";
-import { getRepositoryService } from "../../services/repository-service";
 import { kycService, KycLevel } from "../../services/kyc-service";
+import { repositoryService } from "../../services/repository-service";
 
 // Define account types
 export interface AccountType {
@@ -529,7 +529,6 @@ export class CreateAccountWorkflow extends WorkflowBase {
     this.errorMessage = "";
     
     try {
-      const repositoryService = getRepositoryService();
       const accountRepo = repositoryService.getAccountRepository();
       
       const selectedType = this.accountTypes.find(t => t.id === this.selectedTypeId)!;

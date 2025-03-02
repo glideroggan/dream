@@ -1,17 +1,22 @@
 import { customElement, html, css, observable, attr, repeat, when } from "@microsoft/fast-element";
 import { WorkflowBase } from "../workflow-base";
-import { getRepositoryService } from "../../services/repository-service";
+import { repositoryService } from "../../services/repository-service";
+import { PaymentContact } from "../../repositories/models/payment-contact";
+import './transfer-toaccount-component';
+import { paymentContactsService } from "../../services/payment-contacts-service";
 
 export interface Account {
   id: string;
   name: string;
   balance: number;
   currency: string;
+  accountNumber: string;
 }
 
 export interface TransferDetails {
   fromAccountId: string;
   toAccountId: string;
+  toContactId?: string;
   amount: number;
   currency: string;
   description?: string;
@@ -32,19 +37,15 @@ const template = html<TransferWorkflow>/*html*/`
         </select>
       </div>
       
-      <div class="form-group">
-        <label for="toAccount">To Account</label>
-        <select id="toAccount" @change="${(x, c) => x.handleToAccountChange(c.event)}">
-          <option value="">-- Select Account --</option>
-          ${repeat(x => x.accounts, html`
-            <option value="${x => x.id}" 
-                    ?selected="${(x, c) => x.id === c.parent.toAccountId}"
-                    ?disabled="${(x, c) => x.id === c.parent.fromAccountId}">
-              ${x => x.name} (${x => x.balance.toFixed(2)} ${x => x.currency})
-            </option>
-          `)}
-        </select>
-      </div>
+      <to-account-field
+        :accounts="${x => x.accounts}"
+        :paymentContacts="${x => x.paymentContacts}"
+        :fromAccountId="${x => x.fromAccountId}"
+        :toAccountId="${x => x.toAccountId}"
+        required="true"
+        @valueChanged="${(x, c) => x.handleToAccountValueChanged(c.event)}"
+        @validationError="${(x, c) => x.handleToAccountValidationError(c.event)}"
+      ></to-account-field>
       
       <div class="form-group">
         <label for="amount">Amount</label>
@@ -167,45 +168,62 @@ const styles = css`
 export class TransferWorkflow extends WorkflowBase {
   @attr({ mode: "boolean" }) autoFocus: boolean = true;
   @observable accounts: Account[] = [];
-  
+  @observable paymentContacts: PaymentContact[] = [];
+
   @observable fromAccountId: string = "";
   @observable toAccountId: string = "";
+  @observable toContactId: string | undefined = undefined;
   @observable amount: number = 0;
   @observable currency: string = "USD";
   @observable description: string = "";
   @observable errorMessage: string | undefined = "";
-  
-  initialize(params?: Record<string, any>): void {
-    console.debug("Transfer workflow initialized with params:", params);
+
+  async initialize(params?: Record<string, any>): Promise<void> {
+    console.debug("Initializing TransferWorkflow with params:", params);
     
-    // Set any passed in accounts
-    if (params?.accounts) {
-      this.accounts = params.accounts;
-      console.debug(`Received ${this.accounts.length} accounts in transfer workflow`);
-      
-      // If we received accounts but they're empty, try loading them
-      if (this.accounts.length === 0) {
-        this.loadAccounts();
-      }
-    } else {
-      // No accounts were passed, load them directly
-      this.loadAccounts();
+    this.updateTitle("Transfer Money");
+    this.updateFooter(true, "Continue");
+    
+    // Load accounts
+    await this.loadAccounts();
+    
+    // Load payment contacts
+    await this.loadPaymentContacts();
+    
+    // Set default 'from' account if one wasn't provided
+    if (!this.fromAccountId && this.accounts.length > 0) {
+      this.fromAccountId = this.accounts[0].id;
     }
     
-    // Set initial title and footer
-    this.updateTitle("Transfer Between Accounts");
-    this.updateFooter(true, "Transfer Money");
+    // Handle any prefilled fields from params
+    if (params) {
+      if (params.fromAccountId) {
+        this.fromAccountId = params.fromAccountId;
+      }
+      if (params.toAccountId) {
+        this.toAccountId = params.toAccountId;
+      }
+      if (params.amount) {
+        this.amount = params.amount;
+      }
+      if (params.reference) {
+        // TODO: Handle reference field
+        // this.reference = params.reference;
+      }
+    }
     
-    // Default validation state is invalid until user completes form
-    this.validateForm();
+    this.notifyValidation(this.validateForm());
+    
+    // Listen for contact created events
+    this.addEventListener('contactCreated', this.handleContactCreated.bind(this));
   }
-  
+
   /**
    * Load accounts from repository if they weren't passed in
    */
   private async loadAccounts(): Promise<void> {
     try {
-      const accountRepo = getRepositoryService().getAccountRepository();
+      const accountRepo = repositoryService.getAccountRepository();
       this.accounts = await accountRepo.getAll();
       console.debug(`Loaded ${this.accounts.length} accounts from repository`);
       this.$fastController.notify('accounts');
@@ -214,34 +232,63 @@ export class TransferWorkflow extends WorkflowBase {
       this.errorMessage = "Failed to load accounts. Please try again.";
     }
   }
-  
+
+  /**
+   * Load payment contacts from settings repository
+   */
+  private async loadPaymentContacts(): Promise<void> {
+    try {
+      console.debug("Loading payment contacts...");
+      
+      // Force a refresh to ensure we have the latest contacts
+      await paymentContactsService.refreshContacts();
+      const contacts = await paymentContactsService.getAllContacts();
+      
+      this.paymentContacts = contacts;
+      console.debug(`Loaded ${contacts.length} payment contacts`);
+    } catch (error) {
+      console.error("Failed to load payment contacts:", error);
+      this.paymentContacts = [];
+    }
+  }
+
   connectedCallback() {
     super.connectedCallback();
-    
+
     // Add HTML validation attributes to inputs
     setTimeout(() => {
       const fromSelect = this.shadowRoot?.getElementById('fromAccount') as HTMLSelectElement;
       const toSelect = this.shadowRoot?.getElementById('toAccount') as HTMLSelectElement;
       const amountInput = this.shadowRoot?.getElementById('amount') as HTMLInputElement;
-      
+
       if (fromSelect) fromSelect.required = true;
       if (toSelect) toSelect.required = true;
       if (amountInput) {
         amountInput.required = true;
         amountInput.min = "0.01"; // Ensure positive amount
       }
-      
+
       // Focus the first field when component is loaded
       if (this.autoFocus && fromSelect) {
         fromSelect.focus();
       }
     }, 0);
+    
+    // Add event listener for new contact creation
+    this.addEventListener('contactCreated', this.handleContactCreated.bind(this));
   }
-  
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    
+    // Clean up event listener
+    this.removeEventListener('contactCreated', this.handleContactCreated.bind(this));
+  }
+
   handleFromAccountChange(event: Event) {
     const select = event.target as HTMLSelectElement;
     this.fromAccountId = select.value;
-    
+
     // Set currency based on selected account
     if (this.fromAccountId) {
       const account = this.accounts.find(acc => acc.id === this.fromAccountId);
@@ -249,36 +296,60 @@ export class TransferWorkflow extends WorkflowBase {
         this.currency = account.currency;
       }
     }
-    
+
     // If from and to are the same, clear the to field
     if (this.fromAccountId === this.toAccountId) {
       this.toAccountId = "";
+    }
+
+    this.validateForm();
+  }
+
+  handleToAccountValueChanged(event: Event) {
+    const customEvent = event as CustomEvent;
+    const { value } = customEvent.detail;
+    this.toAccountId = value;
+    
+    // Check if this is a payment contact
+    if (this.toAccountId && this.toAccountId.startsWith('contact:')) {
+      const contactId = this.toAccountId.substring(8); // Remove 'contact:' prefix
+      this.toContactId = contactId;
+      
+      // Update last used timestamp for the selected contact
+      // this.updateContactLastUsed(contactId);
+      repositoryService.getSettingsRepository().updateContactLastUsed(contactId);
+    } else {
+      this.toContactId = undefined;
     }
     
     this.validateForm();
   }
   
-  handleToAccountChange(event: Event) {
-    const select = event.target as HTMLSelectElement;
-    this.toAccountId = select.value;
-    this.validateForm();
+  /**
+   * Handle validation errors from the to account component
+   */
+  handleToAccountValidationError(event: Event) {
+    const customEvent = event as CustomEvent;
+    const { error } = customEvent.detail;
+    this.errorMessage = error;
+    this.notifyValidation(false, error);
   }
-  
+
   handleAmountChange(event: Event) {
     const input = event.target as HTMLInputElement;
     this.amount = parseFloat(input.value) || 0;
     this.validateForm();
   }
-  
+
   handleDescriptionChange(event: Event) {
     const input = event.target as HTMLInputElement;
     this.description = input.value;
   }
-  
+
   validateForm(): boolean {
     // Clear any previous error
     this.errorMessage = "";
-    
+
     // Check various validation rules
     if (!this.fromAccountId) {
       this.errorMessage = "Please select a source account";
@@ -286,28 +357,29 @@ export class TransferWorkflow extends WorkflowBase {
       this.markInvalid('fromAccount');
       return false;
     }
-    
+
     if (!this.toAccountId) {
-      this.errorMessage = "Please select a destination account";
+      this.errorMessage = "Please select a destination account or contact";
       this.notifyValidation(false, this.errorMessage);
-      this.markInvalid('toAccount');
+      // No need to mark invalid, the component handles its own validation
       return false;
     }
-    
+
     if (!this.amount || this.amount <= 0) {
       this.errorMessage = "Please enter a valid amount";
       this.notifyValidation(false, this.errorMessage);
       this.markInvalid('amount');
       return false;
     }
-    
-    if (this.fromAccountId === this.toAccountId) {
+
+    // Only check for same account if we're transferring between our own accounts
+    if (!this.toAccountId.startsWith('contact:') && this.fromAccountId === this.toAccountId) {
       this.errorMessage = "Cannot transfer to the same account";
       this.notifyValidation(false, this.errorMessage);
-      this.markInvalid('toAccount');
+      // Component handles its own validation display
       return false;
     }
-    
+
     // Check if source account has sufficient balance
     const fromAccount = this.accounts.find(acc => acc.id === this.fromAccountId);
     if (fromAccount && fromAccount.balance < this.amount) {
@@ -316,16 +388,16 @@ export class TransferWorkflow extends WorkflowBase {
       this.markInvalid('amount');
       return false;
     }
-    
+
     // Reset any invalid states
     this.resetInvalidStates();
-    
+
     // If we got here, form is valid
     console.debug("Form is valid");
     this.notifyValidation(true);
     return true;
   }
-  
+
   /**
    * Mark a form element as invalid using HTML's validity API
    */
@@ -337,7 +409,7 @@ export class TransferWorkflow extends WorkflowBase {
       element.reportValidity();
     }
   }
-  
+
   /**
    * Reset invalid states for all inputs
    */
@@ -349,47 +421,93 @@ export class TransferWorkflow extends WorkflowBase {
       }
     });
   }
-  
+
   async executeTransfer() {
     if (!this.validateForm()) return;
-    
+
     const transferDetails: TransferDetails = {
       fromAccountId: this.fromAccountId,
       toAccountId: this.toAccountId,
+      toContactId: this.toContactId,
       amount: this.amount,
       currency: this.currency,
       description: this.description
     };
 
-    // Use the improved account repository transfer method
-    const accountRepo = getRepositoryService().getAccountRepository();
-    
-    const result = await accountRepo.transfer(
-      transferDetails.fromAccountId,
-      transferDetails.toAccountId,
-      transferDetails.amount,
-      transferDetails.description
-    );
-    
-    if (result.success) {
-      // Use the workflow base methods to complete
-      this.complete(true, { 
-        transfer: transferDetails,
-        transactionId: result.transactionId 
-      }, "Transfer completed successfully");
+    // Determine if this is an external transfer (to a contact) or internal transfer
+    if (this.toContactId) {
+      // This is an external transfer to a contact
+      const accountRepo = repositoryService.getAccountRepository();
+
+      const result = await accountRepo.externalTransfer({
+        fromAccountId: transferDetails.fromAccountId,
+        toContactId: this.toContactId!,
+        amount: transferDetails.amount,
+        description: transferDetails.description
+      });
+
+      if (result.success) {
+        this.complete(true, {
+          transfer: transferDetails,
+          transactionId: result.transactionId
+        }, "External transfer initiated successfully");
+      } else {
+        this.errorMessage = result.message;
+        this.notifyValidation(false, this.errorMessage);
+      }
     } else {
-      this.errorMessage = result.message;
-      this.notifyValidation(false, this.errorMessage);
+      // This is an internal transfer between accounts
+      const accountRepo = repositoryService.getAccountRepository();
+
+      const result = await accountRepo.transfer(
+        transferDetails.fromAccountId,
+        transferDetails.toAccountId,
+        transferDetails.amount,
+        transferDetails.description
+      );
+
+      if (result.success) {
+        this.complete(true, {
+          transfer: transferDetails,
+          transactionId: result.transactionId
+        }, "Transfer completed successfully");
+      } else {
+        this.errorMessage = result.message;
+        this.notifyValidation(false, this.errorMessage);
+      }
     }
   }
-  
+
   cancelA() {
     this.cancel("Transfer cancelled by user");
   }
-  
+
   // Handle primary action from modal footer
   public handlePrimaryAction(): void {
     console.debug("primary action, transfer");
     this.executeTransfer();
+  }
+  
+  /**
+   * Handle contact created event from the to-account field
+   */
+  private async handleContactCreated(event: Event): Promise<void> {
+    const customEvent = event as CustomEvent;
+    const newContact = customEvent.detail.contact;
+    
+    if (!newContact) return;
+    
+    try {
+      // Refresh contacts by fetching them again from the service
+      const allContacts = await paymentContactsService.getAllContacts();
+      this.paymentContacts = allContacts;
+      
+      // Set the newly created contact as the selected to-account
+      setTimeout(() => {
+        this.toAccountId = `contact:${newContact.id}`;
+      }, 100);
+    } catch (error) {
+      console.error("Error handling new contact:", error);
+    }
   }
 }

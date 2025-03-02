@@ -8,7 +8,7 @@ import {
   Observable
 } from '@microsoft/fast-element';
 import { WidgetDefinition, widgetService } from '../services/widget-service';
-import { getRepositoryService, UserSettings } from '../services/repository-service';
+import { repositoryService, UserSettings } from '../services/repository-service';
 import { getProductService, ProductService, ProductChangeEvent } from '../services/product-service';
 import { 
   getWidgetPreferredSize, 
@@ -432,8 +432,7 @@ export class BasePage extends FASTElement {
     
     // 2. Remove from ALL pages in user settings
     try {
-      const repoService = getRepositoryService();
-      const settingsRepo = repoService.getSettingsRepository();
+      const settingsRepo = repositoryService.getSettingsRepository();
       const userSettings = await settingsRepo.getCurrentSettings();
       
       // Get all widget IDs to remove
@@ -746,8 +745,7 @@ export class BasePage extends FASTElement {
    */
   protected async saveWidgetPreferences(widgetIds: string[]): Promise<void> {
     try {
-      const repoService = getRepositoryService();
-      const settingsRepo = repoService.getSettingsRepository();
+      const settingsRepo = repositoryService.getSettingsRepository();
       
       // Get the page-specific settings key
       const pageKey = `${this.pageType}Widgets`;
@@ -768,8 +766,7 @@ export class BasePage extends FASTElement {
    */
   protected async loadUserWidgetPreferences(): Promise<void> {
     try {
-      const repoService = getRepositoryService();
-      const settingsRepo = repoService.getSettingsRepository();
+      const settingsRepo = repositoryService.getSettingsRepository();
       const userSettings = await settingsRepo.getCurrentSettings();
 
       // Check for page-specific widget settings using pageType

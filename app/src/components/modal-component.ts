@@ -49,6 +49,18 @@ const styles = css`
     transition: opacity 0.3s, visibility 0s 0.3s;
   }
 
+  /* Tooltip fix: Hide all tooltips when modal is open */
+  :host([isopen]) ::slotted(*[title]),
+  :host([isopen]) *[title] {
+    position: relative;
+  }
+  
+  :host([isopen]) ::slotted(*[title])::before,
+  :host([isopen]) *[title]::before {
+    content: "";
+    display: none;
+  }
+
   .modal-overlay.visible {
     opacity: 1;
     visibility: visible;
@@ -210,6 +222,9 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
     try {
       this.isOpen = true;
       document.body.style.overflow = "hidden"; // Prevent body scrolling
+      
+      // Store and remove title attributes
+      this.disableTooltips();
     } finally {
       // Reset the flag
       setTimeout(() => {
@@ -244,6 +259,9 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
     document.body.style.overflow = ""; // Restore body scrolling
     this.$emit("close");
     this.clearWorkflow();
+    
+    // Restore title attributes
+    this.enableTooltips();
     
     // Reset the button text to default when closing
     this.primaryButtonText = "OK";
@@ -439,5 +457,33 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
   public forceClose(): void {
     console.debug("Force close requested by workflow manager");
     this.performStandardClose();
+  }
+  
+  /**
+   * Disable tooltips by finding elements with title attributes in the document
+   * and temporarily storing them in a data attribute
+   */
+  private disableTooltips(): void {
+    // Handle title attributes in the document that might show tooltips through the modal
+    document.querySelectorAll('[title]').forEach(el => {
+      const titleValue = el.getAttribute('title');
+      if (titleValue) {
+        el.setAttribute('data-original-title', titleValue);
+        el.removeAttribute('title');
+      }
+    });
+  }
+  
+  /**
+   * Re-enable tooltips by restoring title attributes from data attributes
+   */
+  private enableTooltips(): void {
+    document.querySelectorAll('[data-original-title]').forEach(el => {
+      const titleValue = el.getAttribute('data-original-title');
+      if (titleValue) {
+        el.setAttribute('title', titleValue);
+        el.removeAttribute('data-original-title');
+      }
+    });
   }
 }

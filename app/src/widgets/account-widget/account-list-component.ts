@@ -141,7 +141,7 @@ export class AccountListComponent extends FASTElement {
   @observable isLoadingTransactions: boolean = false;
   @observable accountTransactions: TransactionViewModel[] = [];
   @observable maxTransactionsToShow: number = 3;
-  
+
   handleAccountClick(account: Account) {
     this.dispatchEvent(new CustomEvent('account-toggle', {
       detail: { accountId: account.id }

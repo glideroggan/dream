@@ -1,11 +1,14 @@
 # BUGS
+- when you add the swish widget, you can't remove it until you reload, or switch page
 - modal primary buttons keeps their last workflow text, we need to reset it when closing
+
 ## create-new-account-workflow
 - Account name do not update when switching between accounts
 
 
 
 # TODO
+- no feedback when adding a new account
 - there is bunch of template that could use the when directive, which isn't used
 - ✔️fix a repository for kyc
 - 🔧add tests to already built
