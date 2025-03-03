@@ -1,20 +1,16 @@
 # BUGS
-- fix bug with circular dependencies
-  - repository service should "new" up the repositories
-  - no export of the repositories
-  - when a repositories need another repo, it will go via the repository service
-  
+- ✔️fix bug with circular dependencies
+  - ✔️repository service should "new" up the repositories
+  - ✔️no export of the repositories
+  - ✔️when a repositories need another repo, it will go via the repository service
 - when you add the swish widget, you can't remove it until you reload, or switch page
 - modal primary buttons keeps their last workflow text, we need to reset it when closing
 
 ## create-new-account-workflow
 - Account name do not update when switching between accounts
 
-
-
 # TODO
-
-- Need better way of getting singletons, look into kidwallet
+- change the name "Dream" to "Wallet"
 - no feedback when adding a new account
 - there is bunch of template that could use the when directive, which isn't used
 - ✔️fix a repository for kyc
@@ -39,7 +35,9 @@
   - maybe pinnable?
 ## mfes/widgets
   
-
+# Features
+- add toasts
+  - when creating an account
 
 
 # menu

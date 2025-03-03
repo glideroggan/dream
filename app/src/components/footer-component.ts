@@ -2,7 +2,7 @@ import { FASTElement, customElement, html, css } from '@microsoft/fast-element';
 
 const template = html<FooterComponent>`
   <div class="footer-container">
-    <slot>© ${new Date().getFullYear()} Dream App. All rights reserved.</slot>
+    <slot>© ${new Date().getFullYear()} Wallet App. All rights reserved.</slot>
   </div>
 `;
 

@@ -6,7 +6,7 @@ import { Route, routerService } from '../services/router-service';
 export const appRoutes: Route[] = [
   {
     path: 'home',
-    title: 'Dashboard - Dream Banking',
+    title: 'Dashboard - Wallet Banking',
     elementName: 'dashboard-page',
     modulePath: '@pages/dashboard',
     defaultParams: {
@@ -15,13 +15,13 @@ export const appRoutes: Route[] = [
   },
   {
     path: 'savings',
-    title: 'Savings - Dream Banking',
+    title: 'Savings - Wallet Banking',
     elementName: 'savings-page',
     modulePath: '@pages/savings'
   },
   {
     path: 'investments',
-    title: 'Investments - Dream Banking',
+    title: 'Investments - Wallet Banking',
     elementName: 'investments-page',
     modulePath: '@pages/investments'
   }

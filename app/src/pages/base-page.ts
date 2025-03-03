@@ -1,7 +1,6 @@
 import {
   FASTElement,
   observable,
-  DOM,
   when,
   html,
   css,
@@ -24,8 +23,7 @@ import '../components/grid-layout';
 import '../components/modal-component';
 import '../components/widget-wrapper';
 import { workflowManager } from '../services/workflow-manager-service';
-import { getSingletonManager } from '../services/singleton-manager';
-import { repositoryService, RepositoryService } from '../services/repository-service';
+import { repositoryService } from '../services/repository-service';
 import { UserSettings } from '../repositories/settings-repository';
 
 // Shared template parts that can be composed by child classes

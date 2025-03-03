@@ -28,7 +28,7 @@ const styles = css`
   styles
 })
 export class WelcomeWidget extends FASTElement {
-  @attr title = 'Welcome to Dream!';
+  @attr title = 'Welcome to Wallet!';
   @observable message = 'This is a dynamically loaded widget.';
   @observable config: Record<string, unknown> = {};
 

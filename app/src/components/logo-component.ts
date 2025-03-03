@@ -4,7 +4,7 @@ const template = html<LogoComponent>/*html*/`
   <div class="logo">
     <div class="logo-icon">✨</div>
     <div class="logo-text">
-      <span class="logo-name">Dream</span>
+      <span class="logo-name">Wallet</span>
       <span class="logo-tagline">Make it happen</span>
     </div>
   </div>
