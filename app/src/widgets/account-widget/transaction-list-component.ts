@@ -1,6 +1,6 @@
 import { FASTElement, customElement, html, css, observable, repeat, when } from "@microsoft/fast-element";
-import { Transaction } from "../../services/repository-service";
 import { TransactionViewModelHelper } from "./transaction-view-model-helper";
+import { Transaction } from "../../repositories/transaction-repository";
 
 // The enhanced transaction interface to hold display properties
 export interface TransactionViewModel extends Transaction {

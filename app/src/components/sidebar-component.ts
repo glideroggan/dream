@@ -18,7 +18,7 @@ const template = html<SidebarComponent>/*html*/`
   <div class="sidebar">
     <nav class="menu">
       <ul>
-        ${repeat(x => x.menuItems, html<MenuItem, SidebarComponent>`
+        ${repeat(x => x.menuItems, html<MenuItem, SidebarComponent>/*html*/`
           <li class="menu-item ${item => item.active ? 'active' : ''}">
             <a href="${item => item.route}" @click="${(item, c) => c.parent.handleNavigation(item)}">
               <div class="menu-item-icon">${item => item.icon}</div>

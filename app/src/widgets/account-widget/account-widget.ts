@@ -1,12 +1,12 @@
 import { FASTElement, customElement, html, css, observable, when, attr } from "@microsoft/fast-element";
-import { Account, repositoryService } from "../../services/repository-service";
+import { repositoryService } from "../../services/repository-service";
 import { WorkflowIds } from "../../workflows/workflow-registry";
 import { ModalComponent } from "../../components/modal-component";
 import "./account-list-component";
-import "./transaction-list-component";
 import "./account-info-component";
 import { TransactionListComponent, TransactionViewModel } from "./transaction-list-component";
 import { workflowManager } from "../../services/workflow-manager-service";
+import { Account } from "../../repositories/account-repository";
 
 const template = html<AccountWidget>/*html*/ `
   <div class="account-widget">

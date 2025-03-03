@@ -1,4 +1,4 @@
-import { FASTElement, customElement, html, css, observable, attr } from "@microsoft/fast-element";
+import { FASTElement, customElement, html, css, observable, attr, when } from "@microsoft/fast-element";
 import { getWidgetById } from "../widgets/widget-registry";
 import { widgetService } from "../services/widget-service";
 
@@ -12,16 +12,15 @@ const template = html<WidgetWrapper>/*html*/ `
     ` : ''}
 
     <!-- Loading state -->
-    ${(x) => x.state === 'loading' ? html<WidgetWrapper>/*html*/`
+    ${when(x => x.state === 'loading',html<WidgetWrapper>/*html*/`
       <div class="widget-loading">
         <div class="spinner"></div>
         <p>Loading widget...</p>
         <span class="widget-identifier">${x => x.displayName}</span>
-      </div>
-    ` : ''}
+      </div>`)}
     
     <!-- Error state -->
-    ${(x) => x.state === 'error' ? html<WidgetWrapper>/*html*/`
+    ${when(x => x.state === 'error',html<WidgetWrapper>/*html*/`
       <div class="widget-error">
         <h3>Widget failed to load</h3>
         <p>${x => x.errorMessage || 'There was an error loading this widget.'}</p>
@@ -31,10 +30,10 @@ const template = html<WidgetWrapper>/*html*/ `
           <button class="dismiss-button" @click="${x => x.dismiss()}">Dismiss</button>
         </div>
       </div>
-    ` : ''}
+    `)}
     
     <!-- Import error state -->
-    ${(x) => x.state === 'import-error' ? html<WidgetWrapper>/*html*/`
+    ${when(x => x.state === 'import-error',html<WidgetWrapper>/*html*/`
       <div class="widget-error widget-import-error">
         <h3>Widget Import Error</h3>
         <p>${x => x.errorMessage || 'There was an error loading this widget module.'}</p>
@@ -45,22 +44,22 @@ const template = html<WidgetWrapper>/*html*/ `
           <button class="dismiss-button" @click="${x => x.dismiss()}">Dismiss</button>
         </div>
       </div>
-    ` : ''}
+    `)}
     
     <!-- Timeout warning state (slow loading) -->
-    ${(x) => x.state === 'timeout-warning' ? html<WidgetWrapper>/*html*/`
+    ${when(x => x.state === 'timeout-warning',html<WidgetWrapper>/*html*/`
       <div class="widget-timeout">
         <div class="spinner"></div>
         <p>Still loading...</p>
         <span class="widget-identifier">${x => x.displayName}</span>
         <button class="cancel-button" @click="${x => x.cancel()}">Cancel</button>
       </div>
-    ` : ''}
+    `)}
     
     <!-- Widget content -->
-    ${(x) => x.state === 'loaded' ? html<WidgetWrapper>/*html*/`
+    ${when(x => x.state === 'loaded' , html<WidgetWrapper>/*html*/`
       <slot></slot>
-    ` : ''}
+    `)}
   </div>
 `;
 

@@ -1,5 +1,5 @@
 import { FASTElement, customElement, html, css, observable, attr } from "@microsoft/fast-element";
-import { Account } from "../../services/repository-service";
+import { Account } from "../../repositories/account-repository";
 
 const template = html<AccountInfoComponent>/*html*/`
   <div class="account-info">

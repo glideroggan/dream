@@ -1,7 +1,6 @@
-import { FASTElement, customElement, html, css, observable, repeat, when, attr } from "@microsoft/fast-element";
-import { Account } from "../../services/repository-service";
+import { FASTElement, customElement, html, css, observable, repeat, when } from "@microsoft/fast-element";
 import { TransactionViewModel } from "./transaction-list-component";
-import "./transaction-list-component";
+import { Account } from "../../repositories/account-repository";
 
 const template = html<AccountListComponent>/*html*/ `
   <div class="accounts-list">

@@ -1,8 +1,5 @@
 import { FASTElement, customElement, html, css, observable, repeat, when, ref } from '@microsoft/fast-element';
 import { getSearchService, SearchResultItem, SearchService, SearchServiceEvent } from '../services/search-service';
-import { getProductService, ProductChangeEvent } from '../services/product-service';
-import { updateWorkflowSearchability } from '../workflows/workflow-registry';
-import { updateWidgetSearchability } from '../widgets/widget-registry';
 
 const template = html<SearchComponent>/*html*/`
   <div class="search-container">
