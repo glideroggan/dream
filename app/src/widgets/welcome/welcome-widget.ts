@@ -6,20 +6,20 @@ const template = html<WelcomeWidget>/*html*/`
     <p class="intro">${x => x.message}</p>
     
     <div class="tabs">
-      <button class="tab-button ${x => x.activeTab === 'navigation' ? 'active' : ''}" 
-              @click="${x => x.setActiveTab('navigation')}">
+      <button id="navigation" class="tab-button active" 
+              @click="${(x,c) => x.setActiveTab(c.event)}">
         <i class="icon-menu"></i> Navigation
       </button>
-      <button class="tab-button ${x => x.activeTab === 'search' ? 'active' : ''}" 
-              @click="${x => x.setActiveTab('search')}">
+      <button id="search" class="tab-button" 
+              @click="${(x,c) => x.setActiveTab(c.event)}">
         <i class="icon-search"></i> Search
       </button>
-      <button class="tab-button ${x => x.activeTab === 'widgets' ? 'active' : ''}" 
-              @click="${x => x.setActiveTab('widgets')}">
+      <button id="widgets" class="tab-button" 
+              @click="${(x,c) => x.setActiveTab(c.event)}">
         <i class="icon-widget"></i> Widgets
       </button>
-      <button class="tab-button ${x => x.activeTab === 'workflows' ? 'active' : ''}" 
-              @click="${x => x.setActiveTab('workflows')}">
+      <button id="workflows" class="tab-button" 
+              @click="${(x,c) => x.setActiveTab(c.event)}">
         <i class="icon-workflow"></i> Workflows
       </button>
     </div>
@@ -44,9 +44,8 @@ const template = html<WelcomeWidget>/*html*/`
       <p>Widgets provide information and functionality at a glance. You can:</p>
       <ul>
         <li>Add widgets through the search bar</li>
-        <li>Close widgets you don't need</li>
-        <li>Rearrange widgets on your theme pages</li>
-        <li>Configure widgets for personalized information</li>
+        <li>Close widgets you don't need (top right corner)</li>
+        <li>Rearrange widgets on your theme pages (TBD)</li>
       </ul>
       <button class="action-button" @click="${x => x.showWidgetsDemo()}">Explore widgets</button>
     </div>
@@ -61,14 +60,6 @@ const template = html<WelcomeWidget>/*html*/`
         <li>Context menus within the application</li>
       </ul>
       <button class="action-button" @click="${x => x.showWorkflowsDemo()}">Discover workflows</button>
-    </div>
-    
-    <div class="controls">
-      <button class="dismiss-button" @click="${x => x.dismiss()}">Got it</button>
-      <label class="show-again">
-        <input type="checkbox" ?checked="${x => x.showOnStartup}" @change="${x => x.toggleShowOnStartup()}">
-        Show on startup
-      </label>
     </div>
   </div>
 `;
@@ -266,17 +257,25 @@ export class WelcomeWidget extends FASTElement {
       this.message = String(this.config.message);
     }
     
-    if (this.config.activeTab && typeof this.config.activeTab === 'string') {
-      this.activeTab = this.config.activeTab;
-    }
-    
     if (this.config.showOnStartup !== undefined) {
       this.showOnStartup = Boolean(this.config.showOnStartup);
     }
   }
   
-  setActiveTab(tab: string): void {
-    this.activeTab = tab;
+  setActiveTab(event: Event): void {
+    const target = event.target as HTMLElement;
+    const button = target.closest('.tab-button');
+
+    // get all tab buttons
+    const tabButtons = this.shadowRoot?.querySelectorAll('.tab-button');
+    tabButtons?.forEach(tabButton => {
+      tabButton.setAttribute('aria-selected', 'false');
+      tabButton.classList.remove('active');
+    });
+
+    this.activeTab = button?.id ?? 'navigation';
+    button?.setAttribute('aria-selected', 'true');
+    button?.classList.add('active');
   }
   
   showThemeDemo(): void {
