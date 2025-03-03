@@ -1,286 +1,10 @@
-import { FASTElement, customElement, html, css, observable, attr, when } from "@microsoft/fast-element";
+import { FASTElement, customElement, observable, attr } from "@microsoft/fast-element";
 import { getWidgetById } from "../widgets/widget-registry";
 import { widgetService } from "../services/widget-service";
-
-const template = html<WidgetWrapper>/*html*/ `
-  <div class="widget-wrapper ${x => x.state}" data-widget-id="${x => x.widgetId}">
-    <!-- Close button shown only for loaded widgets -->
-    ${(x) => x.state === 'loaded' && !x.hideCloseButton ? html<WidgetWrapper>/*html*/`
-      <button class="close-button" title="Remove widget" @click="${x => x.closeWidget()}">
-        <span aria-hidden="true">&times;</span>
-      </button>
-    ` : ''}
-
-    <!-- Loading state -->
-    ${when(x => x.state === 'loading',html<WidgetWrapper>/*html*/`
-      <div class="widget-loading">
-        <div class="spinner"></div>
-        <p>Loading widget...</p>
-        <span class="widget-identifier">${x => x.displayName}</span>
-      </div>`)}
-    
-    <!-- Error state -->
-    ${when(x => x.state === 'error',html<WidgetWrapper>/*html*/`
-      <div class="widget-error">
-        <h3>Widget failed to load</h3>
-        <p>${x => x.errorMessage || 'There was an error loading this widget.'}</p>
-        <span class="widget-identifier">${x => x.displayName}</span>
-        <div class="action-buttons">
-          <button class="retry-button" @click="${x => x.retry()}">Try Again</button>
-          <button class="dismiss-button" @click="${x => x.dismiss()}">Dismiss</button>
-        </div>
-      </div>
-    `)}
-    
-    <!-- Import error state -->
-    ${when(x => x.state === 'import-error',html<WidgetWrapper>/*html*/`
-      <div class="widget-error widget-import-error">
-        <h3>Widget Import Error</h3>
-        <p>${x => x.errorMessage || 'There was an error loading this widget module.'}</p>
-        <code class="module-path">${x => x.moduleImportPath}</code>
-        <span class="widget-identifier">${x => x.displayName}</span>
-        <div class="action-buttons">
-          <button class="retry-button" @click="${x => x.retry()}">Try Again</button>
-          <button class="dismiss-button" @click="${x => x.dismiss()}">Dismiss</button>
-        </div>
-      </div>
-    `)}
-    
-    <!-- Timeout warning state (slow loading) -->
-    ${when(x => x.state === 'timeout-warning',html<WidgetWrapper>/*html*/`
-      <div class="widget-timeout">
-        <div class="spinner"></div>
-        <p>Still loading...</p>
-        <span class="widget-identifier">${x => x.displayName}</span>
-        <button class="cancel-button" @click="${x => x.cancel()}">Cancel</button>
-      </div>
-    `)}
-    
-    <!-- Widget content -->
-    ${when(x => x.state === 'loaded' , html<WidgetWrapper>/*html*/`
-      <slot></slot>
-    `)}
-  </div>
-`;
-
-const styles = css`
-  :host {
-    display: block;
-    width: 100%;
-    height: 100%;
-  }
-  
-  /* Disable default tooltip behavior */
-  :host [title] {
-    position: absolute;
-  }
-  
-  /* Only allow tooltips on interactive elements */
-  :host .widget-wrapper:not(button):not([role="button"]):not(a)[title] {
-    title: none;
-  }
-  
-  .widget-wrapper {
-    height: 100%;
-    width: 100%;
-    border-radius: 8px;
-    overflow: hidden;
-    position: relative;
-    background: var(--background-color, #ffffff);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    box-sizing: border-box;
-  }
-
-  /* Close button styles */
-  .close-button {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background-color: var(--neutral-layer-4, #f0f0f0);
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 18px;
-    color: var(--neutral-foreground-rest, #333);
-    z-index: 10;
-    opacity: 0.7;
-    transition: all 0.2s ease;
-  }
-  
-  .close-button:hover {
-    opacity: 1;
-    background-color: var(--neutral-layer-3, #e0e0e0);
-  }
-
-  /* Only show close button on hover for cleaner look */
-  .close-button {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-
-  .widget-wrapper:hover .close-button {
-    opacity: 0.7;
-    transform: scale(1);
-  }
-  
-  .widget-loading, .widget-error, .widget-timeout {
-    height: 100%;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 1.5rem;
-    text-align: center;
-    color: var(--text-color, #333);
-    box-sizing: border-box;
-    overflow: auto;
-    position: relative;
-  }
-  
-  .widget-error {
-    background-color: var(--background-color, #ffffff);
-    border: 1px solid var(--error-color-light, #fadbd8);
-  }
-  
-  .widget-import-error {
-    border: 1px solid var(--warning-color-light, #fdebd0);
-    background-color: var(--warning-color-bg, #fef9e7);
-  }
-  
-  .module-path {
-    display: block;
-    font-family: monospace;
-    background-color: rgba(0, 0, 0, 0.05);
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    margin: 0.5rem 0;
-    font-size: 0.8rem;
-    max-width: 100%;
-    overflow-x: auto;
-    white-space: nowrap;
-    text-align: left;
-    max-width: 90%;
-  }
-  
-  .widget-error h3 {
-    color: var(--error-color, #e74c3c);
-    margin-top: 0;
-    margin-bottom: 0.75rem;
-    font-size: 1rem;
-  }
-  
-  .widget-import-error h3 {
-    color: var(--warning-color, #f39c12);
-  }
-  
-  .widget-error p {
-    margin: 0.5rem 0;
-    max-width: 100%;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-    font-size: 0.9rem;
-  }
-  
-  .widget-identifier {
-    font-size: 0.7rem;
-    color: var(--subtle-text-color, #aaa);
-    margin-top: 0.5rem;
-    font-style: italic;
-    opacity: 0.75;
-    max-width: 90%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  
-  .spinner {
-    width: 36px;
-    height: 36px;
-    border: 3px solid rgba(0, 0, 0, 0.1);
-    border-radius: 50%;
-    border-top-color: var(--primary-color, #3498db);
-    animation: spin 1s ease-in-out infinite;
-    margin-bottom: 0.75rem;
-    flex-shrink: 0;
-  }
-  
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-  
-  .action-buttons {
-    display: flex;
-    margin-top: 1rem;
-  }
-  
-  .retry-button, .dismiss-button, .cancel-button {
-    padding: 6px 12px;
-    border-radius: 4px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    font-size: 0.85rem;
-    flex-shrink: 0;
-  }
-  
-  .retry-button {
-    background-color: var(--primary-color, #3498db);
-    color: white;
-    border: none;
-  }
-  
-  .retry-button:hover {
-    background-color: var(--primary-color-hover, #2980b9);
-  }
-  
-  .dismiss-button {
-    background-color: transparent;
-    color: var (--text-color, #333);
-    border: 1px solid var(--border-color, #ddd);
-    margin-left: 0.5rem;
-  }
-  
-  .dismiss-button:hover {
-    background-color: var(--hover-bg, rgba(0, 0, 0, 0.05));
-  }
-  
-  .cancel-button {
-    background-color: transparent;
-    color: var(--text-color, #333);
-    border: 1px solid var(--border-color, #ddd);
-    margin-top: 0.75rem;
-  }
-  
-  .cancel-button:hover {
-    background-color: var(--hover-bg, rgba(0, 0, 0, 0.05));
-  }
-
-  @media (max-width: 300px) {
-    .widget-error, .widget-loading, .widget-timeout {
-      padding: 0.75rem;
-    }
-    
-    .widget-error h3 {
-      font-size: 0.9rem;
-      margin-bottom: 0.5rem;
-    }
-    
-    .widget-error p {
-      font-size: 0.8rem;
-    }
-    
-    .retry-button, .dismiss-button, .cancel-button {
-      padding: 4px 8px;
-      font-size: 0.75rem;
-    }
-  }
-`;
+import { template } from "./widget-wrapper-template";
+import { styles } from "./widget-wrapper-styles";
+import { createWidgetEvents, createBoundEventHandlers, isModuleError } from "./widget-wrapper-events";
+import { WidgetTimeoutHandler } from "./widget-wrapper-timeout";
 
 @customElement({
   name: "widget-wrapper",
@@ -288,24 +12,67 @@ const styles = css`
   styles
 })
 export class WidgetWrapper extends FASTElement {
-  // DON'T USE @attr title - this is causing the tooltip issue
-  // Using a different name to avoid conflicts with HTML's native title attribute
+  // Widget attributes
   @attr widgetTitle: string = "";
   @attr widgetId: string = "";
   @attr state: 'loading' | 'loaded' | 'error' | 'import-error' | 'timeout-warning' = 'loading';
   @attr errorMessage: string = '';
   @attr({attribute: 'page-type'}) pageType: string = '';
   @attr moduleImportPath: string = '';
-
-  // New attribute to control close button visibility
   @attr({ mode: "boolean" }) hideCloseButton: boolean = false;
-
-  // Optional attribute for widget name (to be consistent)
   @attr widgetName: string = '';
 
-  // Computed property for display name
+  // Timeout configuration
+  @attr({ mode: "fromView" }) warningTimeout: number = 5000; // 5 seconds for warning
+  @attr({ mode: "fromView" }) failureTimeout: number = 10000; // 10 seconds for auto-failure
+
+  // Widget definition object
   @observable private _widgetDefinition: any = null;
 
+  // Events
+  private events: ReturnType<typeof createWidgetEvents>;
+  
+  // Timeout handler
+  private timeoutHandler: WidgetTimeoutHandler;
+  
+  // Event handlers
+  private eventHandlers: ReturnType<typeof createBoundEventHandlers>;
+  
+  // Track initialization state
+  private initialized: boolean = false;
+  private connectedEventDispatched: boolean = false;
+
+  constructor() {
+    super();
+    
+    // Create custom events
+    this.events = createWidgetEvents(this.widgetId, this.pageType);
+    
+    // Create bound event handlers
+    this.eventHandlers = createBoundEventHandlers(this);
+    
+    // Initialize timeout handler
+    this.timeoutHandler = new WidgetTimeoutHandler(
+      this.widgetId || 'unknown',
+      // Warning timeout callback
+      () => {
+        if (this.state === 'loading') {
+          this.state = 'timeout-warning';
+        }
+      },
+      // Failure timeout callback
+      () => {
+        this.state = 'error';
+        this.errorMessage = `Widget failed to initialize within ${this.failureTimeout / 1000} seconds`;
+      },
+      this.warningTimeout,
+      this.failureTimeout
+    );
+  }
+
+  /**
+   * Computed property for display name
+   */
   get displayName(): string {
     // First use explicit widget name if provided
     if (this.widgetName) {
@@ -318,60 +85,6 @@ export class WidgetWrapper extends FASTElement {
     // Fall back to widget ID
     return this.widgetId || 'Unknown widget';
   }
-
-  // Config options with defaults
-  @attr({ mode: "fromView" }) warningTimeout: number = 5000; // 5 seconds for warning
-  @attr({ mode: "fromView" }) failureTimeout: number = 10000; // 10 seconds for auto-failure
-
-  // Timeout handlers
-  private timeoutInterval: number | null = null;
-  private startTime: number = 0;
-
-  // Event for retry requests
-  private retryEvent = new CustomEvent('retry-widget', {
-    bubbles: true,
-    composed: true,
-    detail: { widgetId: this.widgetId }
-  });
-
-  // Event for dismiss requests
-  private dismissEvent = new CustomEvent('dismiss-widget', {
-    bubbles: true,
-    composed: true,
-    detail: { widgetId: this.widgetId }
-  });
-
-  // Event for cancel requests
-  private cancelEvent = new CustomEvent('cancel-widget-load', {
-    bubbles: true,
-    composed: true,
-    detail: { widgetId: this.widgetId }
-  });
-
-  // Create a new event for notifying when the wrapper is connected
-  private connectedToDomEvent = new CustomEvent('connected-to-dom', {
-    bubbles: true,
-    composed: false,
-    detail: { widgetId: this.widgetId }
-  });
-
-  // Event for close requests
-  private closeEvent = new CustomEvent('close-widget', {
-    bubbles: true,
-    composed: true,
-    detail: { widgetId: this.widgetId, pageType: this.pageType }
-  });
-
-  // Bound event handlers to ensure proper 'this' context
-  private boundHandleChildError = this.handleChildError.bind(this);
-  private boundHandleInitialized = this.handleInitialized.bind(this);
-  private boundHandleModuleError = this.handleModuleError.bind(this);
-
-  // Track if widget initialization already happened
-  private initialized: boolean = false;
-
-  // Track if we've dispatched the connected-to-dom event
-  private connectedEventDispatched: boolean = false;
 
   connectedCallback() {
     super.connectedCallback();
@@ -386,42 +99,34 @@ export class WidgetWrapper extends FASTElement {
 
     // Start timeout tracking if in loading state
     if (this.state === 'loading') {
-      this.startTimeoutTracking();
+      this.timeoutHandler.startTracking();
     }
 
-    // Update event detail with current widget ID
-    this.retryEvent.detail.widgetId = this.widgetId;
-    this.dismissEvent.detail.widgetId = this.widgetId;
-    this.cancelEvent.detail.widgetId = this.widgetId;
-    this.closeEvent.detail.widgetId = this.widgetId;
-    this.closeEvent.detail.pageType = this.pageType
-    this.connectedToDomEvent.detail.widgetId = this.widgetId;
+    // Update event details with current widget ID and page type
+    this.events.updateEventDetails(this.widgetId, this.pageType);
 
     // Use bound event handlers to ensure proper 'this' context
-    this.addEventListener('error', this.boundHandleChildError);
-    this.addEventListener('initialized', this.boundHandleInitialized);
-    this.addEventListener('load-complete', this.boundHandleInitialized);
+    this.addEventListener('error', this.eventHandlers.handleChildError);
+    this.addEventListener('initialized', this.eventHandlers.handleInitialized);
+    this.addEventListener('load-complete', this.eventHandlers.handleInitialized);
 
     // Also listen for module errors that bubble up from widget-service
-    document.addEventListener('widget-module-error', this.boundHandleModuleError);
-
-    // Handle DOM mutation to detect when widget content appears
-    // this.observeChildElements();
+    document.addEventListener('widget-module-error', this.eventHandlers.handleModuleError);
 
     // Check for existing error in widget service
     this.checkForExistingErrors();
 
-    // NEW: Check if we need to load the module for this widget
+    // Check if we need to load the module for this widget
     this.initializeWidgetModule();
 
-    console.debug(`Widget wrapper connected: ${this.widgetId || this.displayName || 'Unknown'}, timeouts: warning=${this.warningTimeout}ms, failure=${this.failureTimeout}ms`);
+    console.debug(`Widget wrapper connected: ${this.displayName}, timeouts: warning=${this.warningTimeout}ms, failure=${this.failureTimeout}ms`);
 
     // Important: Dispatch connected-to-dom event to notify child elements
     // We do this on next tick to ensure all initialization is complete
     setTimeout(() => {
       if (!this.connectedEventDispatched) {
         Array.from(this.children).forEach(child => {
-          child.dispatchEvent(this.connectedToDomEvent);
+          child.dispatchEvent(this.events.connectedToDomEvent);
         });
         this.connectedEventDispatched = true;
       }
@@ -430,24 +135,17 @@ export class WidgetWrapper extends FASTElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    this.clearTimeoutTracking();
+    this.timeoutHandler.clearTracking();
 
     // Remove bound event listeners
-    this.removeEventListener('error', this.boundHandleChildError);
-    this.removeEventListener('initialized', this.boundHandleInitialized);
-    this.removeEventListener('load-complete', this.boundHandleInitialized);
-    document.removeEventListener('widget-module-error', this.boundHandleModuleError);
-
-    // Disconnect mutation observer if exists
-    // if (this.mutationObserver) {
-    //   this.mutationObserver.disconnect();
-    //   this.mutationObserver = null;
-    // }
+    this.removeEventListener('error', this.eventHandlers.handleChildError);
+    this.removeEventListener('initialized', this.eventHandlers.handleInitialized);
+    this.removeEventListener('load-complete', this.eventHandlers.handleInitialized);
+    document.removeEventListener('widget-module-error', this.eventHandlers.handleModuleError);
   }
 
   /**
    * Check if the widget service already has errors for this widget
-   * This handles the case where module loading failed before we added the event listener
    */
   private checkForExistingErrors(): void {
     if (!this.widgetId) return;
@@ -456,10 +154,7 @@ export class WidgetWrapper extends FASTElement {
       const errorMessage = widgetService.getLoadErrorMessage(this.widgetId);
 
       // Check if it's an import error or other error
-      if (errorMessage && (
-        errorMessage.includes('import') ||
-        errorMessage.includes('module') ||
-        errorMessage.includes('not found'))) {
+      if (isModuleError(errorMessage)) {
         // It's an import error
         this.handleImportError(errorMessage);
       } else {
@@ -473,7 +168,7 @@ export class WidgetWrapper extends FASTElement {
   /**
    * Handle widget module error events
    */
-  private handleModuleError(event: Event): void {
+  handleModuleError(event: Event): void {
     const customEvent = event as CustomEvent;
     const { widgetId, error, modulePath } = customEvent.detail;
 
@@ -489,9 +184,9 @@ export class WidgetWrapper extends FASTElement {
   /**
    * Handle import errors specifically
    */
-  private handleImportError(errorMessage: string, modulePath?: string): void {
+  private handleImportError(errorMessage: string | undefined, modulePath?: string): void {
     this.state = 'import-error';
-    this.errorMessage = errorMessage;
+    this.errorMessage = errorMessage!;
 
     // If we have the module definition, show the path
     if (modulePath) {
@@ -500,70 +195,28 @@ export class WidgetWrapper extends FASTElement {
       this.moduleImportPath = this._widgetDefinition.module;
     }
 
-    this.clearTimeoutTracking();
+    this.timeoutHandler.clearTracking();
   }
-
-  // /**
-  //  * Set up a mutation observer to detect when content appears
-  //  * This is a fallback for widgets that don't emit initialization events
-  //  */
-  // private mutationObserver: MutationObserver | null = null;
-
-  // private observeChildElements() {
-  //   // Look for slot element
-  //   const slot = this.shadowRoot?.querySelector('slot');
-  //   if (!slot) return;
-
-  //   this.mutationObserver = new MutationObserver((mutations) => {
-  //     // Check if we have any assigned nodes in the slot
-  //     const slotNodes = slot.assignedNodes();
-  //     if (slotNodes.length > 0) {
-  //       // Check if there's actual widget content (not just text nodes)
-  //       const hasElements = Array.from(slotNodes).some(node => node.nodeType === Node.ELEMENT_NODE);
-
-  //       if (hasElements && !this.initialized && this.state === 'loading') {
-  //         // Content has been added, treat this as initialization
-  //         console.debug(`Widget ${this.widgetId || this.displayName || 'Unknown'} content detected, treating as initialized`);
-  //         this.handleInitialized(new Event('content-detected'));
-
-  //         // If we haven't dispatched the connected event, do so now
-  //         if (!this.connectedEventDispatched) {
-  //           Array.from(this.children).forEach(child => {
-  //             child.dispatchEvent(this.connectedToDomEvent);
-  //           });
-  //           this.connectedEventDispatched = true;
-  //         }
-  //       }
-  //     }
-  //   });
-
-  //   // Observe both the slot element and the light DOM
-  //   this.mutationObserver.observe(slot, { childList: true, subtree: true });
-  //   this.mutationObserver.observe(this, { childList: true });
-  // }
 
   /**
    * Handle initialization event from child widget
    */
-  private handleInitialized(event: Event) {
+  handleInitialized(event: Event) {
     if (this.initialized) return;
 
-    console.debug(`Widget ${this.widgetId || this.displayName || 'Unknown'} initialized (from ${event.type}) after ${Date.now() - this.startTime}ms`);
+    console.debug(`Widget ${this.displayName} initialized (from ${event.type}) after ${this.timeoutHandler.getElapsedTime()}`);
     this.initialized = true;
     this.state = 'loaded';
 
     // Clear timeout tracking since we're initialized
-    this.clearTimeoutTracking();
+    this.timeoutHandler.clearTracking();
   }
 
   /**
    * Handle errors from child widgets
    */
-  private handleChildError(event: Event) {
-    // Record elapsed time for better debugging
-    const elapsedTime = this.startTime ? `${Date.now() - this.startTime}ms` : 'unknown';
-
-    console.debug(`Widget ${this.widgetId || this.displayName || 'Unknown'} error after ${elapsedTime}:`, event);
+  handleChildError(event: Event) {
+    console.debug(`Widget ${this.displayName} error after ${this.timeoutHandler.getElapsedTime()}:`, event);
 
     // Update state to error
     this.state = 'error';
@@ -576,74 +229,10 @@ export class WidgetWrapper extends FASTElement {
     }
 
     // Clear timeout tracking
-    this.clearTimeoutTracking();
+    this.timeoutHandler.clearTracking();
 
     // Prevent further propagation since we've handled it
     event.stopPropagation();
-  }
-
-  /**
-   * Start tracking for slow loading widgets using interval
-   */
-  private startTimeoutTracking() {
-    // Clear any existing interval
-    this.clearTimeoutTracking();
-
-    // Record the start time
-    this.startTime = Date.now();
-
-    console.debug(`Started timeout tracking for ${this.displayName} widget: warning=${this.warningTimeout}ms, failure=${this.failureTimeout}ms`);
-
-    // Start an interval that checks elapsed time
-    this.timeoutInterval = window.setInterval(() => {
-      this.checkTimeouts();
-    }, 500); // Check every 500ms
-  }
-
-  /**
-   * Check if timeouts have been reached
-   */
-  private checkTimeouts() {
-    const elapsedTime = Date.now() - this.startTime;
-
-    // Only check timeouts if we're still in a loading-related state
-    // (but don't check if we're already in error or loaded state)
-    if (this.state !== 'loading' && this.state !== 'timeout-warning') {
-      this.clearTimeoutTracking();
-      return;
-    }
-
-    // Check for failure timeout first (more severe)
-    if (elapsedTime >= this.failureTimeout) {
-      console.debug(`Widget ${this.displayName} failure timeout reached after ${elapsedTime}ms`);
-
-      // Clear the interval since we're done monitoring
-      this.clearTimeoutTracking();
-
-      // Set error state
-      this.state = 'error';
-      this.errorMessage = `Widget failed to initialize within ${this.failureTimeout / 1000} seconds`;
-
-      return;
-    }
-
-    // Check for warning timeout
-    if (elapsedTime >= this.warningTimeout && this.state === 'loading') {
-      console.debug(`Widget ${this.displayName} warning timeout reached after ${elapsedTime}ms`);
-      this.state = 'timeout-warning';
-
-      // Important: We don't clear timeouts here, just change the visual state
-    }
-  }
-
-  /**
-   * Clear timeout tracking
-   */
-  private clearTimeoutTracking() {
-    if (this.timeoutInterval !== null) {
-      window.clearInterval(this.timeoutInterval);
-      this.timeoutInterval = null;
-    }
   }
 
   /**
@@ -654,24 +243,20 @@ export class WidgetWrapper extends FASTElement {
 
     // Handle state changes
     if (name === 'state' && oldValue !== newValue) {
-      console.debug(`Widget ${this.widgetId || this.displayName || 'Unknown'} state changed: ${oldValue} -> ${newValue}`);
+      console.debug(`Widget ${this.displayName} state changed: ${oldValue} -> ${newValue}`);
 
       // State transition logic
       switch (newValue) {
         case 'loading':
           // Start timeout tracking when entering loading state
-          this.startTimeoutTracking();
+          this.timeoutHandler.startTracking();
           break;
 
         case 'loaded':
         case 'error':
+        case 'import-error':
           // Stop timeout tracking when the widget is fully loaded or has errored
-          this.clearTimeoutTracking();
-          break;
-
-        case 'timeout-warning':
-          // Continue timeout tracking when showing warning
-          // Don't reset or clear timeouts here
+          this.timeoutHandler.clearTracking();
           break;
       }
     }
@@ -686,51 +271,46 @@ export class WidgetWrapper extends FASTElement {
       // Update widget definition
       this.updateWidgetDefinition();
 
-      // Update event details with current widget ID
-      this.retryEvent.detail.widgetId = this.widgetId;
-      this.dismissEvent.detail.widgetId = this.widgetId;
-      this.cancelEvent.detail.widgetId = this.widgetId;
-      this.closeEvent.detail.widgetId = this.widgetId;
+      // Update event details
+      this.events.updateEventDetails(this.widgetId, this.pageType);
+      
+      // Update timeout handler
+      this.timeoutHandler = new WidgetTimeoutHandler(
+        this.widgetId || 'unknown',
+        () => { if (this.state === 'loading') this.state = 'timeout-warning'; },
+        () => {
+          this.state = 'error';
+          this.errorMessage = `Widget failed to initialize within ${this.failureTimeout / 1000} seconds`;
+        },
+        this.warningTimeout,
+        this.failureTimeout
+      );
+    }
+
+    // Handle page type changes
+    if ((name === 'pageType' || name === 'page-type') && oldValue !== newValue) {
+      this.events.updateEventDetails(this.widgetId, newValue);
     }
 
     // Handle timeout configuration changes
     if ((name === 'warningTimeout' || name === 'warning-timeout') && oldValue !== newValue) {
       // Convert string to number
       const numericValue = parseInt(newValue, 10) || 5000;
-
-      // Update the property
       this.warningTimeout = numericValue;
-
-      // Restart timeout tracking if we're in a loading state
-      if (this.state === 'loading') {
-        this.startTimeoutTracking();
-      }
+      this.timeoutHandler.updateTimeouts(numericValue);
     }
 
     if ((name === 'failureTimeout' || name === 'failure-timeout') && oldValue !== newValue) {
       // Convert string to number
       const numericValue = parseInt(newValue, 10) || 10000;
-
-      // Update the property
       this.failureTimeout = numericValue;
-
-      // Restart timeout tracking if we're in a loading state
-      if (this.state === 'loading') {
-        this.startTimeoutTracking();
-      }
-    }
-
-    // Handle error message
-    if ((name === 'errorMessage' || name === 'error-message') && oldValue !== newValue) {
-      this.errorMessage = newValue;
-    }
-
-    // Handle widget name
-    if ((name === 'widgetName' || name === 'widget-name') && oldValue !== newValue) {
-      this.widgetName = newValue;
+      this.timeoutHandler.updateTimeouts(undefined, numericValue);
     }
   }
 
+  /**
+   * Update widget definition from registry
+   */
   private updateWidgetDefinition(): void {
     if (this.widgetId) {
       this._widgetDefinition = getWidgetById(this.widgetId);
@@ -740,7 +320,6 @@ export class WidgetWrapper extends FASTElement {
 
   /**
    * Initialize the widget module loading process
-   * This method directly interacts with the widget service to handle module loading
    */
   private async initializeWidgetModule(): Promise<void> {
     if (!this.widgetId) {
@@ -759,7 +338,6 @@ export class WidgetWrapper extends FASTElement {
       // Check if the widget module is already loaded
       if (widgetService.isWidgetLoaded(this.widgetId)) {
         console.debug(`Widget ${this.widgetId} module already loaded, no need to load again`);
-        // No need to do anything, child elements will trigger their own initialization events
         return;
       }
 
@@ -779,9 +357,6 @@ export class WidgetWrapper extends FASTElement {
         // Use widget service to load the module
         await widgetService.loadWidgetModule(this._widgetDefinition);
         console.debug(`Widget ${this.widgetId} module loaded successfully`);
-
-        // Note: We don't set state=loaded here because we wait for the 
-        // actual widget element to initialize itself
       } catch (error) {
         // Handle the error from widget service
         this.handleWidgetLoadError(
@@ -803,10 +378,7 @@ export class WidgetWrapper extends FASTElement {
     console.error(`Widget ${this.widgetId} load error:`, message);
 
     // Determine if this is an import error or a general error
-    if (message.includes('import') ||
-      message.includes('module') ||
-      message.includes('not found')) {
-
+    if (isModuleError(message)) {
       this.state = 'import-error';
       this.errorMessage = message;
 
@@ -825,7 +397,7 @@ export class WidgetWrapper extends FASTElement {
   private setErrorState(message: string): void {
     this.state = 'error';
     this.errorMessage = message;
-    this.clearTimeoutTracking();
+    this.timeoutHandler.clearTracking();
   }
 
   /**
@@ -843,13 +415,13 @@ export class WidgetWrapper extends FASTElement {
     this.moduleImportPath = '';
 
     // Start timeout tracking again
-    this.startTimeoutTracking();
+    this.timeoutHandler.startTracking();
 
     // Re-initialize the widget module
     this.initializeWidgetModule();
 
     // Also dispatch the retry event for parent containers
-    this.dispatchEvent(this.retryEvent);
+    this.dispatchEvent(this.events.retryEvent);
   }
 
   /**
@@ -857,7 +429,7 @@ export class WidgetWrapper extends FASTElement {
    */
   dismiss() {
     console.debug(`Dismissing widget: ${this.widgetId || this.displayName || 'Unknown'}`);
-    this.dispatchEvent(this.dismissEvent);
+    this.dispatchEvent(this.events.dismissEvent);
   }
 
   /**
@@ -867,7 +439,7 @@ export class WidgetWrapper extends FASTElement {
     console.debug(`Cancelling widget: ${this.widgetId || this.displayName || 'Unknown'}`);
     this.state = 'error';
     this.errorMessage = 'Widget loading cancelled by user';
-    this.dispatchEvent(this.cancelEvent);
+    this.dispatchEvent(this.events.cancelEvent);
   }
 
   /**
@@ -875,6 +447,6 @@ export class WidgetWrapper extends FASTElement {
    */
   closeWidget() {
     console.debug(`Closing widget: ${this.widgetId || this.displayName || 'Unknown'} - page type: ${this.pageType}`);
-    this.dispatchEvent(this.closeEvent);
+    this.dispatchEvent(this.events.closeEvent);
   }
 }
