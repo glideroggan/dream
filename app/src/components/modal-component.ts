@@ -181,25 +181,27 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
   @attr primaryButtonText: string = "OK";
   @attr({ mode: "boolean" }) showFooter: boolean = false;
   @attr({ mode: "boolean" }) closeOnOverlayClick: boolean = true;
-  
+
   @observable private modalWidth: string = "500px";
   @observable private activeWorkflow: WorkflowBase | null = null;
   @observable isPrimaryActionEnabled: boolean = true;
   @observable private validationMessage: string = "";
   @observable private isOpeningModal: boolean = false; // Add flag to prevent duplicate opens
-  
+
+  private boundHandleWorkflowValidation: (event: Event) => void;
+
   constructor() {
     super();
-    
+    this.boundHandleWorkflowValidation = this.handleWorkflowValidation.bind(this);
   }
-  
+
   connectedCallback() {
     super.connectedCallback();
-    
+
     // Register this modal with the workflow manager
     workflowManager.setModalComponent(this);
   }
-  
+
   /**
    * Opens the modal dialog
    */
@@ -209,12 +211,12 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
       console.debug("Modal is already open or opening, ignoring duplicate open request");
       return;
     }
-    
+
     this.isOpeningModal = true;
     try {
       this.isOpen = true;
       document.body.style.overflow = "hidden"; // Prevent body scrolling
-      
+
       // Store and remove title attributes
       this.disableTooltips();
     } finally {
@@ -224,7 +226,7 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
       }, 300); // Wait for animation to complete
     }
   }
-  
+
   /**
    * Closes the modal dialog
    * If a workflow is active, we delegate to the workflow manager to handle
@@ -233,7 +235,7 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
   public close(): void {
     console.debug("Modal close requested");
     if (workflowManager.hasActiveWorkflow()) {
-      console.debug("Active workflow detected, delegating close to workflow manager");
+      console.log("Active workflow detected, delegating close to workflow manager");
       // Let the workflow manager handle the cancel logic
       workflowManager.handleCancel();
     } else {
@@ -242,23 +244,24 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
       this.performStandardClose();
     }
   }
-  
+
   /**
    * Standard close operation without workflow handling
    */
   private performStandardClose(): void {
+    console.log("[modal] standard Closing modal");
     this.isOpen = false;
     document.body.style.overflow = ""; // Restore body scrolling
     this.$emit("close");
     this.clearWorkflow();
-    
+
     // Restore title attributes
     this.enableTooltips();
-    
+
     // Reset the button text to default when closing
     this.primaryButtonText = "OK";
   }
-  
+
   /**
    * Implementation of WorkflowHost interface
    */
@@ -271,18 +274,18 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
     } else {
       console.warn("No result provided when closing workflow");
     }
-    
+
     // DO NOT call this.close() here as it creates the loop
     // Instead, let the workflow manager handle the close logic
   }
-  
+
   /**
    * Implementation of WorkflowHost interface
    */
   public updateTitle(title: string): void {
     this.title = title;
   }
-  
+
   /**
    * Implementation of WorkflowHost interface
    * Update the footer state of the modal
@@ -292,12 +295,12 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
     if (primaryButtonText) {
       this.primaryButtonText = primaryButtonText;
     }
-    
+
     // Force a render
     this.$fastController.notify("showFooter");
     this.$fastController.notify("primaryButtonText");
   }
-  
+
   /**
    * Handles click on the primary button
    */
@@ -309,7 +312,7 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
       this.$emit("action");
     }
   }
-  
+
   /**
    * Handles click on the overlay background
    */
@@ -318,7 +321,7 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
       this.close();
     }
   }
-  
+
   /**
    * Sets the modal width (can be used to adjust size)
    * @param width CSS width value (e.g., "600px", "80%")
@@ -327,7 +330,7 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
     this.modalWidth = width;
     this.style.setProperty("--modal-width", width);
   }
-  
+
   /**
    * Handle workflow validation events
    */
@@ -336,10 +339,10 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
     const validationData = customEvent.detail as WorkflowValidationEvent;
     this.isPrimaryActionEnabled = validationData.isValid;
     this.validationMessage = validationData.message || "";
-    
+
     console.debug(`Workflow validation: ${validationData.isValid ? 'valid' : 'invalid'} - ${this.validationMessage}`);
   }
-  
+
   /**
    * Loads a workflow into the modal
    * This version DELEGATES to the workflow manager to ensure proper tracking
@@ -348,11 +351,12 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
    */
   public async loadWorkflow(workflowIdOrElement: string | HTMLElement, params?: Record<string, any>): Promise<boolean> {
     // Prevent loading if already loading or opening
+    console.log("Loading workflow:", workflowIdOrElement);
     if (this.isOpeningModal || this.activeWorkflow) {
       console.debug("Modal is busy, cannot load workflow now");
       return false;
     }
-    
+
     try {
       // If workflowIdOrElement is a string (workflowId), use the workflow manager
       if (typeof workflowIdOrElement === 'string') {
@@ -368,81 +372,90 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
       return false;
     }
   }
-  
+
   /**
    * Private method to load workflow elements
    * This should only be called by the workflow manager
    */
   private loadWorkflowElement(workflowElement: HTMLElement): boolean {
     try {
+      console.log('[modal] Loading workflow element:', workflowElement);
+
       // Clear any existing workflow
-      this.clearWorkflow();
-      
+      this.clearWorkflow(this.activeWorkflow !== null);
+
       // Reset validation state for new workflow - default to disabled until validation
       this.isPrimaryActionEnabled = false;
-      
+
       // Get the modal body where we'll add the workflow
-      const modalBody = this.shadowRoot?.querySelector('.modal-body');
-      if (!modalBody) {
-        throw new Error("Modal body not found");
-      }
-      
+      // const modalBody = this.shadowRoot?.querySelector('.modal-body');
+      // if (!modalBody) {
+      //   throw new Error("Modal body not found");
+      // }
+
       // Store reference to the workflow
       this.activeWorkflow = workflowElement as WorkflowBase;
-      
+
       // Set up event listener for validation events
-      workflowElement.addEventListener('workflowValidation', this.handleWorkflowValidation.bind(this));
-      
+      workflowElement.addEventListener('workflowValidation', this.boundHandleWorkflowValidation);
+
       // Connect the workflow to this host
       if (typeof (this.activeWorkflow as any).setHost === 'function') {
         (this.activeWorkflow as any).setHost(this);
       }
-      
+
       // Add to DOM
-      modalBody.appendChild(workflowElement);
-      
+      this.appendChild(workflowElement);
+
       // Reset modal state
-      this.showFooter = true; 
-      
+      this.showFooter = true;
+
       // Now initialize the workflow if needed (this will set the correct footer state)
       if (typeof (this.activeWorkflow as any).initialize === 'function') {
         (this.activeWorkflow as any).initialize();
       }
-      
+
       return true;
     } catch (error) {
       console.error(`Error loading workflow element:`, error);
       return false;
     }
   }
-  
+
+
   /**
    * Clear the current workflow
    */
-  private clearWorkflow(): void {
+  private clearWorkflow(startingNew: boolean = false): void {
     if (this.activeWorkflow) {
-      // Remove event listeners - use our bound handler to ensure proper removal
-      // this.activeWorkflow.removeEventListener('workflowValidation', this.boundWorkflowValidationHandler);
-      this.activeWorkflow.removeEventListener('workflowValidation', this.handleWorkflowValidation.bind(this));
-      
-      // Reference the modal body
-      const modalBody = this.shadowRoot?.querySelector('.modal-body');
-      if (modalBody) {
-        // Remove all child nodes except slots
-        Array.from(modalBody.children).forEach(child => {
-          if (child.tagName !== 'SLOT') {
-            modalBody.removeChild(child);
+      console.log("Clearing active workflow");
+      // Remove event listeners
+      this.activeWorkflow.removeEventListener('workflowValidation', this.boundHandleWorkflowValidation);
+
+      if (!startingNew) {
+        // Add fadeout animation
+        this.activeWorkflow.style.transition = 'opacity 0.1s ease';
+        this.activeWorkflow.style.opacity = '0';
+        // Wait for animation to complete before removing
+        setTimeout(() => {
+          if (this.activeWorkflow && this.contains(this.activeWorkflow)) {
+            this.removeChild(this.activeWorkflow);
           }
-        });
+          this.activeWorkflow = null;
+        }, 500); // Match the transition duration
+      } else {
+        // Remove workflow from modal
+        if (this.activeWorkflow && this.contains(this.activeWorkflow)) {
+          this.removeChild(this.activeWorkflow);
+        }
+        this.activeWorkflow = null;
       }
-      
+
       // Reset validation state
       this.isPrimaryActionEnabled = true;
       this.validationMessage = "";
-      this.activeWorkflow = null;
     }
   }
-  
   /**
    * Public method to force close the modal
    * Only called by workflow manager when closing
@@ -451,7 +464,7 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
     console.debug("Force close requested by workflow manager");
     this.performStandardClose();
   }
-  
+
   /**
    * Disable tooltips by finding elements with title attributes in the document
    * and temporarily storing them in a data attribute
@@ -466,7 +479,7 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
       }
     });
   }
-  
+
   /**
    * Re-enable tooltips by restoring title attributes from data attributes
    */

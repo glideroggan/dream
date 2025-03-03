@@ -119,7 +119,7 @@ export class WorkflowManagerService {
         paused: false
       };
       this.workflowStack.push(workflowState);
-      console.debug(`workflowStack:`, this.workflowStack.map(w => w.id));
+      console.log(`workflowStack:`, this.workflowStack.map(w => w.id));
 
       // Return promise that resolves when workflow completes
       return new Promise<WorkflowResult>((resolve) => {
@@ -164,7 +164,7 @@ export class WorkflowManagerService {
     currentWorkflow.paused = true;
     
     // The current workflow is now paused but still in our stack
-    console.debug(`Workflow ${currentWorkflow.id} paused`);
+    console.log(`Workflow ${currentWorkflow.id} paused`);
   }
 
   /**
@@ -287,7 +287,9 @@ export class WorkflowManagerService {
       console.debug("No parent workflow, closing modal");
       if (this.modalComponent) {
         // Use forceClose to avoid the loop
-        (this.modalComponent as any).forceClose();
+        console.log('[workflowManager] - calling forceClose');
+        this.modalComponent.forceClose();
+        // (this.modalComponent as any).forceClose();
       }
     }
   }
