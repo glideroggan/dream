@@ -1,5 +1,10 @@
 import { WorkflowService } from './services/workflow-service';
+import { getSingletonManager, initSingletonManager } from './services/singleton-manager'
+initSingletonManager()
 import { repositoryService, RepositoryService } from './services/repository-service';
+// Initialize repository service
+window.repositoryService = repositoryService;
+console.log('Repository service initialized');
 // Import workflow components
 import './services/product-service';
 import './workflows/swish-workflow';
@@ -21,8 +26,7 @@ declare global {
 
 // Import this early to ensure singleton manager is available
 console.debug('Main.ts started executing - before imports');
-import { getSingletonManager, initSingletonManager } from './services/singleton-manager'
-initSingletonManager()
+
 
 // Import base services first
 import { WidgetDefinition, widgetService } from './services/widget-service'
@@ -38,16 +42,14 @@ console.debug('Storage and user services initialized');
 window.widgetService = widgetService
 console.debug('Widget service initialized', widgetService);
 
-// Initialize repository service
-window.repositoryService = repositoryService;
-console.debug('Repository service initialized');
+
 
 // Import registries that register with search service
 import { registerAllWidgets } from './widgets/widget-registry';
 import { registerAllWorkflows } from './workflows/workflow-registry';
 
 // Now import search service after registries are imported
-import { searchService } from './services/search-service';
+// import { searchService } from './services/search-service';
 
 // Register widgets with widget service
 await registerAllWidgets(widgetService);
@@ -64,8 +66,8 @@ registerAllWorkflows().then(() => {
   
   // Ensure search service gets updated after everything is registered
   setTimeout(() => {
-    searchService.refreshAllSearchableItems();
-    console.debug(`Search service initialized with ${searchService.getSearchableItemsCount()} items`);
+    getSearchService().refreshAllSearchableItems();
+    console.debug(`Search service initialized with ${getSearchService().getSearchableItemsCount()} items`);
   }, 300);
   
 }).catch(error => {
@@ -78,6 +80,7 @@ import './components/header-component'
 import './components/sidebar-component'
 import './components/footer-component'
 import './components/search-component'
+import { getSearchService } from './services/search-service';
 
 // Signal that widgets are now registered
 console.debug('Application initialized')

@@ -1,11 +1,27 @@
-import { LocalStorageRepository } from './base-repository';
+import { Entity, LocalStorageRepository } from './base-repository';
 import { StorageService } from '../services/storage-service';
 import { UserService } from '../services/user-service';
 import { 
-  Transaction, 
   TransactionStatus, 
   TransactionType 
 } from '../services/repository-service';
+
+
+export interface Transaction extends Entity {
+  fromAccountId: string;
+  toAccountId?: string;  // Optional for withdrawals, fees
+  amount: number;
+  currency: string;
+  description?: string;
+  status: TransactionStatus;
+  type: TransactionType;
+  createdAt: string; // ISO date string
+  scheduledDate?: string; // ISO date string for upcoming transactions
+  completedDate?: string; // ISO date string for completed transactions
+  // New properties for balance tracking
+  fromAccountBalance?: number; // Balance of fromAccount after transaction
+  toAccountBalance?: number;   // Balance of toAccount after transaction
+}
 
 export class TransactionRepository extends LocalStorageRepository<Transaction> {
   constructor(storage: StorageService, userService: UserService) {
@@ -155,3 +171,5 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
     return this.create(transaction);
   }
 }
+
+// export const transactionRepository = repositoryService.getTransactionRepository();

@@ -6,21 +6,7 @@ import { ProductRepository } from '../repositories/product-repository';
 import { SettingsRepository } from '../repositories/settings-repository';
 import { PaymentContact } from '../repositories/models/payment-contact';
 
-// Type definitions
-export interface Entity {
-  id: string;
-}
 
-export interface Account extends Entity {
-  name: string;
-  balance: number;
-  currency: string;
-  type: string;
-  accountNumber: string;
-  interestRate?: number;
-  isActive: boolean;
-  createdAt: string; // ISO date string
-}
 
 export enum TransactionStatus {
   UPCOMING = 'upcoming',
@@ -37,45 +23,12 @@ export enum TransactionType {
   FEE = 'fee'
 }
 
-export interface Transaction extends Entity {
-  fromAccountId: string;
-  toAccountId?: string;  // Optional for withdrawals, fees
-  amount: number;
-  currency: string;
-  description?: string;
-  status: TransactionStatus;
-  type: TransactionType;
-  createdAt: string; // ISO date string
-  scheduledDate?: string; // ISO date string for upcoming transactions
-  completedDate?: string; // ISO date string for completed transactions
-  // New properties for balance tracking
-  fromAccountBalance?: number; // Balance of fromAccount after transaction
-  toAccountBalance?: number;   // Balance of toAccount after transaction
-}
 
-// Repository interface
-export interface Repository<T extends Entity> {
-  getAll(): Promise<T[]>;
-  getById(id: string): Promise<T | undefined>;
-  create(data: Omit<T, 'id'>): Promise<T>;
-  update(id: string, data: Partial<T>): Promise<T | undefined>;
-  delete(id: string): Promise<boolean>;
-}
+
+
 
 // Define types for user settings
-export interface UserSettings extends Entity {
-  // General preferences
-  theme?: string;
-  language?: string;
-  enableNotifications?: boolean;
-  paymentContacts: PaymentContact[]
-  
-  // Allow for additional dynamic properties
-  [key: string]: any;
 
-  // Record of product IDs to array of page types where widgets were auto-added
-  autoAddedProducts?: Record<string, string[]>; 
-}
 
 // Repository service implementation
 export class RepositoryService {
@@ -150,9 +103,4 @@ export class RepositoryService {
   }
 }
 
-// TODO: can't we just expose it better? like
 export const repositoryService = RepositoryService.getInstance();
-// Singleton getter for convenience
-// export function getRepositoryService(): RepositoryService {
-//   return RepositoryService.getInstance();
-// }

@@ -1,8 +1,21 @@
 import { StorageService } from '../services/storage-service';
 import { UserService } from '../services/user-service';
-import { UserSettings } from '../services/repository-service';
-import { KycData } from '../services/kyc-service';
+import { Entity } from './base-repository';
 import { PaymentContact } from './models/payment-contact';
+
+export interface UserSettings extends Entity {
+  // General preferences
+  theme?: string;
+  language?: string;
+  enableNotifications?: boolean;
+  paymentContacts: PaymentContact[]
+  
+  // Allow for additional dynamic properties
+  [key: string]: any;
+
+  // Record of product IDs to array of page types where widgets were auto-added
+  autoAddedProducts?: Record<string, string[]>; 
+}
 
 export class SettingsRepository {
   // Default settings used when no settings exist for a user
@@ -175,3 +188,5 @@ export class SettingsRepository {
     await this.updatePaymentContact(contactId, { lastUsed: new Date() });
   }
 }
+
+// export const settingsRepository = repositoryService.getSettingsRepository();

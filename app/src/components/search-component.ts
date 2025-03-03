@@ -1,5 +1,5 @@
 import { FASTElement, customElement, html, css, observable, repeat, when, ref } from '@microsoft/fast-element';
-import { searchService, SearchResultItem, SearchServiceEvent } from '../services/search-service';
+import { getSearchService, SearchResultItem, SearchService, SearchServiceEvent } from '../services/search-service';
 import { getProductService, ProductChangeEvent } from '../services/product-service';
 import { updateWorkflowSearchability } from '../workflows/workflow-registry';
 import { updateWidgetSearchability } from '../widgets/widget-registry';
@@ -279,6 +279,13 @@ export class SearchComponent extends FASTElement {
   @observable isLoading = false;
   @observable currentFocusedIndex = -1;
   
+  private searchService: SearchService
+
+  constructor() {
+    super()
+    this.searchService = getSearchService()
+  }
+
   // Reference to the input element
   inputElement!: HTMLInputElement;
   
@@ -297,7 +304,7 @@ export class SearchComponent extends FASTElement {
     console.debug('Search component connected, loading popular items...');
     
     // Subscribe to search service events
-    this.searchServiceUnsubscribe = searchService.subscribe(this.handleSearchServiceEvent.bind(this));
+    this.searchServiceUnsubscribe = this.searchService.subscribe(this.handleSearchServiceEvent.bind(this));
     console.debug('Search component subscribed to search service events');
     
     // Initial load of popular items
@@ -324,7 +331,7 @@ export class SearchComponent extends FASTElement {
     
     try {
       // Get and log popular items
-      this.popularItems = await searchService.getPopularItems();
+      this.popularItems = await this.searchService.getPopularItems();
       
       // Log more detailed information about each popular item
       if (this.popularItems.length > 0) {
@@ -552,7 +559,7 @@ export class SearchComponent extends FASTElement {
     this.isLoading = true;
     try {
       // Get fresh search results that reflect current state
-      this.searchResults = await searchService.search(this.searchText);
+      this.searchResults = await this.searchService.search(this.searchText);
       console.debug(`Updated search results for "${this.searchText}":`, this.searchResults.length);
     } catch (error) {
       console.error("Error during search:", error);

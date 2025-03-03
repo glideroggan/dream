@@ -1,7 +1,6 @@
-import { LocalStorageRepository } from './base-repository';
+import { Entity, LocalStorageRepository } from './base-repository';
 import { StorageService } from '../services/storage-service';
 import { UserService } from '../services/user-service';
-import { Entity } from '../services/repository-service';
 import { Product } from '../services/product-service';
 
 /**

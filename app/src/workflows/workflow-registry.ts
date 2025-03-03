@@ -1,5 +1,5 @@
 import { workflowService } from '../services/workflow-service';
-import { searchService, SearchResultItem } from '../services/search-service';
+import { getSearchService, SearchResultItem } from '../services/search-service';
 import { getProductService, ProductChangeEvent } from '../services/product-service';
 
 export interface WorkflowDefinition {
@@ -153,7 +153,7 @@ async function registerWorkflowWithSearch(workflow: WorkflowDefinition): Promise
     }
   };
   
-  searchService.registerItem(searchItem);
+  getSearchService().registerItem(searchItem);
   console.debug(`Registered workflow with search: ${workflow.id}`);
 }
 

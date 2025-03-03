@@ -1,4 +1,4 @@
-import { Entity, Repository } from '../services/repository-service';
+import { Entity, Repository } from "./base-repository";
 
 // REST API configuration interface
 export interface RestConfig {

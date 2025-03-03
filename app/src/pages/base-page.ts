@@ -8,7 +8,6 @@ import {
   Observable
 } from '@microsoft/fast-element';
 import { WidgetDefinition, widgetService } from '../services/widget-service';
-import { repositoryService, UserSettings } from '../services/repository-service';
 import { getProductService, ProductService, ProductChangeEvent } from '../services/product-service';
 import { 
   getWidgetPreferredSize, 
@@ -25,6 +24,9 @@ import '../components/grid-layout';
 import '../components/modal-component';
 import '../components/widget-wrapper';
 import { workflowManager } from '../services/workflow-manager-service';
+import { getSingletonManager } from '../services/singleton-manager';
+import { repositoryService, RepositoryService } from '../services/repository-service';
+import { UserSettings } from '../repositories/settings-repository';
 
 // Shared template parts that can be composed by child classes
 export const baseContentTemplate = html<BasePage>/*html*/ `
@@ -432,7 +434,7 @@ export class BasePage extends FASTElement {
     
     // 2. Remove from ALL pages in user settings
     try {
-      const settingsRepo = repositoryService.getSettingsRepository();
+      const settingsRepo = repositoryService.getSettingsRepository()
       const userSettings = await settingsRepo.getCurrentSettings();
       
       // Get all widget IDs to remove
@@ -746,6 +748,7 @@ export class BasePage extends FASTElement {
   protected async saveWidgetPreferences(widgetIds: string[]): Promise<void> {
     try {
       const settingsRepo = repositoryService.getSettingsRepository();
+      // const settingsRepo = repositoryService.getSettingsRepository();
       
       // Get the page-specific settings key
       const pageKey = `${this.pageType}Widgets`;
@@ -766,7 +769,7 @@ export class BasePage extends FASTElement {
    */
   protected async loadUserWidgetPreferences(): Promise<void> {
     try {
-      const settingsRepo = repositoryService.getSettingsRepository();
+      const settingsRepo = repositoryService.getSettingsRepository()
       const userSettings = await settingsRepo.getCurrentSettings();
 
       // Check for page-specific widget settings using pageType

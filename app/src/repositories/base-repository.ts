@@ -1,6 +1,19 @@
-import { Entity, Repository } from '../services/repository-service';
 import { StorageService } from '../services/storage-service';
 import { UserService } from '../services/user-service';
+
+// Type definitions
+export interface Entity {
+  id: string;
+}
+
+// Repository interface
+export interface Repository<T extends Entity> {
+  getAll(): Promise<T[]>;
+  getById(id: string): Promise<T | undefined>;
+  create(data: Omit<T, 'id'>): Promise<T>;
+  update(id: string, data: Partial<T>): Promise<T | undefined>;
+  delete(id: string): Promise<boolean>;
+}
 
 // Base repository implementation using local storage
 export abstract class LocalStorageRepository<T extends Entity> implements Repository<T> {

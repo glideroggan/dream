@@ -26,7 +26,7 @@ export interface SearchServiceEvent {
 // Define subscriber callback type
 export type SearchServiceSubscriber = (event: SearchServiceEvent) => void;
 
-class SearchService {
+export class SearchService {
   private searchableItems: SearchResultItem[] = [];
   private initialized = false;
   
@@ -310,7 +310,7 @@ class SearchService {
   // }
 }
 
-export const searchService = new SearchService();
+const searchService = new SearchService();
 
 // Export a function to access the singleton
 export function getSearchService(): SearchService {

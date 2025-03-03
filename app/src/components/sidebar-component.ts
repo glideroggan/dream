@@ -1,6 +1,6 @@
 import { FASTElement, customElement, html, css, Observable, observable, repeat, when } from '@microsoft/fast-element';
 import { userService } from '../services/user-service';
-import { searchService, SearchResultItem } from '../services/search-service';
+import { getSearchService, SearchResultItem, SearchService } from '../services/search-service';
 import { routerService } from '../services/router-service';
 import { appRoutes, routeIcons, routeMetadata } from '../routes/routes-registry';
 
@@ -196,6 +196,13 @@ export class SidebarComponent extends FASTElement {
   @observable userRole: string = 'Visitor';
   @observable userInitials: string = 'G';
 
+  private searchService: SearchService
+
+  constructor() {
+    super()
+    this.searchService = getSearchService()
+  }
+
   connectedCallback(): void {
     super.connectedCallback();
     
@@ -253,7 +260,7 @@ export class SidebarComponent extends FASTElement {
     
     // Clean up search registrations
     this.menuItems.forEach(item => {
-      searchService.unregisterItem(item.id);
+      this.searchService.unregisterItem(item.id);
     });
   }
   
@@ -339,7 +346,7 @@ export class SidebarComponent extends FASTElement {
         action: () => this.handleNavigation(item)
       };
       
-      searchService.registerItem(searchItem);
+      this.searchService.registerItem(searchItem);
     });
   }
 }

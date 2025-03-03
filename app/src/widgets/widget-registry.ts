@@ -1,5 +1,5 @@
 import { WidgetDefinition, WidgetService } from '../services/widget-service';
-import { searchService, SearchResultItem } from '../services/search-service';
+import { getSearchService, SearchResultItem } from '../services/search-service';
 import { getProductService } from '../services/product-service';
 
 // Define all available widget IDs
@@ -194,7 +194,7 @@ function registerWidgetWithSearch(widget: EnhancedWidgetDefinition): void {
     }
   };
   
-  searchService.registerItem(searchItem);
+  getSearchService().registerItem(searchItem);
   console.debug(`Registered widget with search: ${widget.id}`);
 }
 
