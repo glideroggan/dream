@@ -195,6 +195,26 @@ export class BasePage extends FASTElement {
   };
   protected pageType: string = 'base';
 
+  private boundHandleResize: EventListener;
+  private boundHandleWorkflowStart: EventListener;
+  private boundHandleWidgetFocus: EventListener;
+  private boundHandleCloseWidget: EventListener;
+  private boundHandleRetryWidget: EventListener;
+  private boundHandleDismissWidget: EventListener;
+  private boundHandleCancelWidget: EventListener;
+
+  constructor() {
+    super();
+    // Create bound handlers once to ensure we can remove the same function references
+    this.boundHandleResize = this.handleResize.bind(this);
+    this.boundHandleWorkflowStart = this.handleWorkflowStart.bind(this);
+    this.boundHandleWidgetFocus = this.handleWidgetFocus.bind(this);
+    this.boundHandleCloseWidget = this.handleCloseWidget.bind(this);
+    this.boundHandleRetryWidget = this.handleRetryWidget.bind(this);
+    this.boundHandleDismissWidget = this.handleDismissWidget.bind(this);
+    this.boundHandleCancelWidget = this.handleCancelWidget.bind(this);
+  }
+
   protected get modal(): ModalComponent | null {
     return this.shadowRoot?.getElementById('workflowModal') as ModalComponent | null;
   }
@@ -211,32 +231,40 @@ export class BasePage extends FASTElement {
       this.loadWidgets();
     }
 
-    window.addEventListener('resize', this.handleResize.bind(this));
-    document.addEventListener('start-workflow', this.handleWorkflowStart.bind(this));
-    document.addEventListener('focus-widget', this.handleWidgetFocus.bind(this));
+    // Use bound event handlers
+    window.addEventListener('resize', this.boundHandleResize);
+    document.addEventListener('start-workflow', this.boundHandleWorkflowStart);
+    document.addEventListener('focus-widget', this.boundHandleWidgetFocus);
+    document.addEventListener('close-widget', this.boundHandleCloseWidget);
+    document.addEventListener('retry-widget', this.boundHandleRetryWidget);
+    document.addEventListener('dismiss-widget', this.boundHandleDismissWidget);
+    document.addEventListener('cancel-widget-load', this.boundHandleCancelWidget);
+    
     this.subscribeToProductChanges();
-
-    document.addEventListener('close-widget', this.handleCloseWidget.bind(this));
-    document.addEventListener('retry-widget', this.handleRetryWidget.bind(this));
-    document.addEventListener('dismiss-widget', this.handleDismissWidget.bind(this));
-    document.addEventListener('cancel-widget-load', this.handleCancelWidget.bind(this));
+    
+    // Diagnostic log to track page lifecycle
+    console.debug(`${this.pageType} page connected`);
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
     
-    window.removeEventListener('resize', this.handleResize.bind(this));
-    document.removeEventListener('start-workflow', this.handleWorkflowStart.bind(this));
-    document.removeEventListener('focus-widget', this.handleWidgetFocus.bind(this));
-    document.removeEventListener('close-widget', this.handleCloseWidget.bind(this));
-    document.removeEventListener('retry-widget', this.handleRetryWidget.bind(this));
-    document.removeEventListener('dismiss-widget', this.handleDismissWidget.bind(this));
-    document.removeEventListener('cancel-widget-load', this.handleCancelWidget.bind(this));
+    // Use bound event handlers for removal
+    window.removeEventListener('resize', this.boundHandleResize);
+    document.removeEventListener('start-workflow', this.boundHandleWorkflowStart);
+    document.removeEventListener('focus-widget', this.boundHandleWidgetFocus); 
+    document.removeEventListener('close-widget', this.boundHandleCloseWidget);
+    document.removeEventListener('retry-widget', this.boundHandleRetryWidget);
+    document.removeEventListener('dismiss-widget', this.boundHandleDismissWidget);
+    document.removeEventListener('cancel-widget-load', this.boundHandleCancelWidget);
 
     if (this.productChangeUnsubscribe) {
       this.productChangeUnsubscribe();
       this.productChangeUnsubscribe = null;
     }
+    
+    // Diagnostic log
+    console.debug(`${this.pageType} page disconnected`);
   }
 
   async loadWidgets(): Promise<void> {

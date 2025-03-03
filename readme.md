@@ -8,6 +8,8 @@
 - Account name do not update when switching between accounts
 
 # TODO
+- start thinking about the size and splitting
+  check bundle size with esbuild
 - no feedback when adding a new account
   - toast?
 - add tests to already built
