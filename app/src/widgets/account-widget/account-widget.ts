@@ -51,7 +51,7 @@ const template = html<AccountWidget>/*html*/ `
     <!-- Use the reusable modal component -->
     <dream-modal 
       id="accountModal"
-      title="${x => x.workflowTitle}" 
+      modalTitle="${x => x.workflowTitle}" 
       @close="${x => x.handleModalClose()}"
       showFooter="${x => x.showWorkflowActions}">
       

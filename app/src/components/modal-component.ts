@@ -7,7 +7,7 @@ const template = html<ModalComponent>/*html*/`
   <div class="modal-overlay ${x => x.isOpen ? 'visible' : ''}" @click="${(x, c) => x.handleOverlayClick(c)}">
     <div class="modal-container" @click="${(x, c) => c.event.stopPropagation()}">
       <div class="modal-header">
-        <h3>${x => x.title}</h3>
+        <h3>${x => x.modalTitle}</h3>
         <button class="modal-close-button" @click="${x => x.close()}" aria-label="Close">
           <span aria-hidden="true">✕</span>
         </button>
@@ -48,6 +48,8 @@ const styles = css`
     transition: opacity 0.3s, visibility 0s 0.3s;
   }
 
+  
+
   /* Tooltip fix: Hide all tooltips when modal is open */
   :host([isopen]) ::slotted(*[title]),
   :host([isopen]) *[title] {
@@ -78,6 +80,7 @@ const styles = css`
     transform: translateY(20px);
     transition: transform 0.3s;
   }
+  
 
   .modal-overlay.visible .modal-container {
     transform: translateY(0);
@@ -176,7 +179,7 @@ const styles = css`
   styles
 })
 export class ModalComponent extends FASTElement implements WorkflowHost {
-  @attr title: string = "Modal Title";
+  @attr modalTitle: string = "Modal Title";
   @attr({ mode: "boolean" }) isOpen: boolean = false;
   @attr primaryButtonText: string = "OK";
   @attr({ mode: "boolean" }) showFooter: boolean = false;
@@ -218,7 +221,7 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
       document.body.style.overflow = "hidden"; // Prevent body scrolling
 
       // Store and remove title attributes
-      this.disableTooltips();
+      // this.disableTooltips();
     } finally {
       // Reset the flag
       setTimeout(() => {
@@ -256,7 +259,7 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
     this.clearWorkflow();
 
     // Restore title attributes
-    this.enableTooltips();
+    // this.enableTooltips();
 
     // Reset the button text to default when closing
     this.primaryButtonText = "OK";
@@ -283,7 +286,7 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
    * Implementation of WorkflowHost interface
    */
   public updateTitle(title: string): void {
-    this.title = title;
+    this.modalTitle = title;
   }
 
   /**
@@ -469,27 +472,27 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
    * Disable tooltips by finding elements with title attributes in the document
    * and temporarily storing them in a data attribute
    */
-  private disableTooltips(): void {
-    // Handle title attributes in the document that might show tooltips through the modal
-    document.querySelectorAll('[title]').forEach(el => {
-      const titleValue = el.getAttribute('title');
-      if (titleValue) {
-        el.setAttribute('data-original-title', titleValue);
-        el.removeAttribute('title');
-      }
-    });
-  }
+  // private disableTooltips(): void {
+  //   // Handle title attributes in the document that might show tooltips through the modal
+  //   document.querySelectorAll('[title]').forEach(el => {
+  //     const titleValue = el.getAttribute('title');
+  //     if (titleValue) {
+  //       el.setAttribute('data-original-title', titleValue);
+  //       el.removeAttribute('title');
+  //     }
+  //   });
+  // }
 
   /**
    * Re-enable tooltips by restoring title attributes from data attributes
    */
-  private enableTooltips(): void {
-    document.querySelectorAll('[data-original-title]').forEach(el => {
-      const titleValue = el.getAttribute('data-original-title');
-      if (titleValue) {
-        el.setAttribute('title', titleValue);
-        el.removeAttribute('data-original-title');
-      }
-    });
-  }
+  // private enableTooltips(): void {
+  //   document.querySelectorAll('[data-original-title]').forEach(el => {
+  //     const titleValue = el.getAttribute('data-original-title');
+  //     if (titleValue) {
+  //       el.setAttribute('modalTitle', titleValue);
+  //       el.removeAttribute('data-original-title');
+  //     }
+  //   });
+  // }
 }
