@@ -464,6 +464,7 @@ export class AccountWidget extends FASTElement {
         // If workflow was successful, refresh data
         this.fetchAccounts();
         
+        // TODO: workflow-complete
         // Dispatch event about workflow completion
         this.dispatchEvent(new CustomEvent('workflow-complete', {
           bubbles: true,

@@ -271,7 +271,7 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
    * Implementation of WorkflowHost interface
    */
   public closeWorkflow(result?: WorkflowResult): void {
-    console.debug("closeWorkflow called with result:", result);
+    console.log("[modal] closeWorkflow called with result:", result);
     if (result) {
       // Emit event for workflow completion
       this.$emit("workflowComplete", { detail: result });

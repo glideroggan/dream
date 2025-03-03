@@ -848,7 +848,7 @@ export class BasePage extends FASTElement {
    */
   public handleWorkflowComplete(event: Event): void {
     const result = (event as CustomEvent).detail;
-    console.debug('Workflow completed:', result);
+    console.log('[base-page] Workflow completed:', result);
 
     // Handle specific workflow result actions if needed
     if (result?.success) {

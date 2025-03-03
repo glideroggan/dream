@@ -1,8 +1,4 @@
 # BUGS
-- ✔️fix bug with circular dependencies
-  - ✔️repository service should "new" up the repositories
-  - ✔️no export of the repositories
-  - ✔️when a repositories need another repo, it will go via the repository service
 - when you add the swish widget, you can't remove it until you reload, or switch page
 - modal primary buttons keeps their last workflow text, we need to reset it when closing
 
@@ -10,16 +6,19 @@
 - Account name do not update when switching between accounts
 
 # TODO
-- ✔️change the name "Dream" to "Wallet"
 - no feedback when adding a new account
   - toast?
-- ✔️there is bunch of template that could use the when directive, which isn't used
-- ✔️fix a repository for kyc
 - 🔧add tests to already built
   - components
   - services
   - repositories
 - There is a bit of a mess with the workflow complete events. We should take a look at this
+Looks like there are different events
+workflow-complete
+workflow-completed
+workflowComplete
+Which one should we use? and why are there different ones?
+  - align these to just use one, probably emitted by the workflow-base to be catched by the modal?
 - change the welcome widget to be more introductive
   - it should be able to close
     - so widget preference needs a repository
