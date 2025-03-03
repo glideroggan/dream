@@ -10,8 +10,9 @@
 - Account name do not update when switching between accounts
 
 # TODO
-- change the name "Dream" to "Wallet"
+- ✔️change the name "Dream" to "Wallet"
 - no feedback when adding a new account
+  - toast?
 - there is bunch of template that could use the when directive, which isn't used
 - ✔️fix a repository for kyc
 - 🔧add tests to already built
