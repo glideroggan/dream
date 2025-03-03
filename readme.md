@@ -1,4 +1,5 @@
 # BUGS
+- add contact workflow is overflowing the modal
 - ✔️the transfer-workflow is a bit overflowing the modal, in width
 - when you add the swish widget, you can't remove it until you reload, or switch page
 - ✔️modal primary buttons keeps their last workflow text, we need to reset it when closing
