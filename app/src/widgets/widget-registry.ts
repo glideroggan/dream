@@ -19,6 +19,7 @@ export type WidgetSize = 'sm' | 'md' | 'lg' | 'xl';
 interface EnhancedWidgetDefinition extends WidgetDefinition {
   preferredSize?: WidgetSize;
   minWidth?: number; // Minimum width in pixels
+  fullWidth?: boolean; // Add this property to force full width
   searchable?: boolean;
   keywords?: string[];
   description?: string;
@@ -49,8 +50,9 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     elementName: 'welcome-widget',
     module: '@widgets/welcome',
     defaultConfig: { username: 'Guest' },
-    preferredSize: 'sm', 
-    minWidth: 300, // Welcome widget can be smaller
+    preferredSize: 'xl', 
+    minWidth: 800, // Welcome widget can be smaller
+    fullWidth: true, // Force this widget to take up the entire row
     searchable: true,
     keywords: ['welcome', 'introduction', 'guide', 'getting started', 'help'],
     icon: '👋'
@@ -266,6 +268,14 @@ export function getWidgetById(widgetId: string): EnhancedWidgetDefinition | unde
 export function getWidgetMinWidth(widgetId: string): number {
   const widget = widgetDefinitions.find(w => w.id === widgetId);
   return widget?.minWidth || 300; // Default to 300px if not specified
+}
+
+/**
+ * Check if a widget should span the full width of the container
+ */
+export function shouldWidgetBeFullWidth(widgetId: string): boolean {
+  const widget = widgetDefinitions.find(w => w.id === widgetId);
+  return widget?.fullWidth === true;
 }
 
 /**

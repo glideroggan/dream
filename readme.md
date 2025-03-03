@@ -1,7 +1,7 @@
 # BUGS
-- the transfer-workflow is a bit overflowing the modal, in width
+- ✔️the transfer-workflow is a bit overflowing the modal, in width
 - when you add the swish widget, you can't remove it until you reload, or switch page
-- modal primary buttons keeps their last workflow text, we need to reset it when closing
+- ✔️modal primary buttons keeps their last workflow text, we need to reset it when closing
 
 ## create-new-account-workflow
 - Account name do not update when switching between accounts
@@ -13,9 +13,9 @@
   - components
   - services
   - repositories
-- change the welcome widget to be more introductive
-  - it should be able to close
-    - so widget preference needs a repository
+- 🔧change the welcome widget to be more introductive
+  - ✔️it should be able to close
+    - ✔️so widget preference needs a repository
 - writing something in search, and then trying to tab over to result box, doesn't work
 - We need to start refactor individual files, as they start to grow, and could be split into smaller files
 - dismiss the search result with esc

@@ -43,6 +43,11 @@ const styles = css`
     grid-column: 1 / -1;
   }
   
+  /* Add explicit support for full-width widgets */
+  ::slotted(.widget-full-width) {
+    grid-column: 1 / -1 !important;
+  }
+  
   @media (max-width: 800px) {
     ::slotted(.grid-item-sm),
     ::slotted(.grid-item-md),
@@ -61,6 +66,7 @@ export interface GridItemMetadata {
   id: string;
   minWidth?: number;
   preferredSize?: GridItemSize;
+  fullWidth?: boolean; // Add this property
 }
 
 @customElement({
@@ -117,6 +123,11 @@ export class GridLayout extends FASTElement {
       element.classList.add(`grid-item-${metadata.preferredSize}`);
     } else {
       element.classList.add('grid-item-md');
+    }
+    
+    // Add full-width class if specified
+    if (metadata.fullWidth) {
+      element.classList.add('widget-full-width');
     }
     
     // Add data attributes for size calculation
@@ -256,6 +267,9 @@ export class GridLayout extends FASTElement {
       const id = item.getAttribute('data-grid-item-id') || '';
       const metadata = this.itemMetadata.get(id);
       if (!metadata) return;
+      
+      // Skip items that should be full width - they already have the appropriate class
+      if (metadata.fullWidth) return;
       
       const minWidth = metadata.minWidth || this.minColumnWidth;
       let size = metadata.preferredSize || 'md';
