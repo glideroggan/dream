@@ -1,4 +1,5 @@
 # BUGS
+- the transfer-workflow is a bit overflowing the modal, in width
 - when you add the swish widget, you can't remove it until you reload, or switch page
 - modal primary buttons keeps their last workflow text, we need to reset it when closing
 
@@ -12,7 +13,6 @@
   - components
   - services
   - repositories
-- ✔️There is a bit of a mess with the workflow complete events. We should take a look at this
 - change the welcome widget to be more introductive
   - it should be able to close
     - so widget preference needs a repository

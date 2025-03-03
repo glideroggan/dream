@@ -145,11 +145,6 @@ async function registerWorkflowWithSearch(workflow: WorkflowDefinition): Promise
       });
       
       document.dispatchEvent(event);
-      
-      // For compatibility with existing code, also use the global service if available
-      // if (window.workflowService) {
-      //   window.workflowService.startWorkflow(workflow.id);
-      // }
     }
   };
   
@@ -204,20 +199,20 @@ export function getAllSearchableWorkflows(): SearchResultItem[] {
   return searchItems;
 }
 
-// DEPRECATED: This will be removed in favor of the search service pulling data
-export function updateWorkflowSearchability(): void {
-  console.debug("Workflow searchability update method called - this is deprecated");
-  // This function is now just a stub that does nothing
-  // The search service will pull fresh data when needed
-}
+// // DEPRECATED: This will be removed in favor of the search service pulling data
+// export function updateWorkflowSearchability(): void {
+//   console.debug("Workflow searchability update method called - this is deprecated");
+//   // This function is now just a stub that does nothing
+//   // The search service will pull fresh data when needed
+// }
 
 /**
  * Handle product changes by updating workflow searchability
  */
-function handleProductChange(event: ProductChangeEvent): void {
-  console.debug(`Product ${event.type} detected for ${event.productId}, updating workflow searchability`);
-  updateWorkflowSearchability();
-}
+// function handleProductChange(event: ProductChangeEvent): void {
+//   console.debug(`Product ${event.type} detected for ${event.productId}, updating workflow searchability`);
+//   // updateWorkflowSearchability();
+// }
 
 /**
  * Registers all workflow definitions with the workflow service
@@ -239,8 +234,8 @@ export async function registerAllWorkflows(): Promise<void> {
   }
   
   // Subscribe to product changes using the product service API
-  const productService = getProductService();
-  const unsubscribe = productService.subscribe(handleProductChange);
+  // const productService = getProductService();
+  // const unsubscribe = productService.subscribe(handleProductChange);
   
   // Store the unsubscribe function somewhere if needed for cleanup
   // For now, we'll assume these subscriptions live for the lifetime of the application

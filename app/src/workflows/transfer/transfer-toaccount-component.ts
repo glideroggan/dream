@@ -112,6 +112,8 @@ const styles = css`
   
   .autocomplete-wrapper {
     position: relative;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   input {
@@ -122,6 +124,7 @@ const styles = css`
     font-size: 16px;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
     background-color: var(--input-bg, white);
+    box-sizing: border-box;
   }
   
   input:focus {
@@ -149,6 +152,7 @@ const styles = css`
     align-items: center;
     padding: 0 8px;
     border-radius: 3px;
+    box-sizing: border-box;
   }
   
   .selected-item-display.visible {
@@ -165,6 +169,7 @@ const styles = css`
     border-radius: 16px;
     padding: 4px 8px;
     max-width: 100%;
+    box-sizing: border-box;
   }
   
   .item-badge {
@@ -225,6 +230,8 @@ const styles = css`
     max-height: 300px;
     overflow-y: auto;
     z-index: 100;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .group-label {
