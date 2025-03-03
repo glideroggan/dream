@@ -447,7 +447,7 @@ export class TransferWorkflow extends WorkflowBase {
       });
 
       if (result.success) {
-        this.complete(true, {
+          this.complete(true, {
           transfer: transferDetails,
           transactionId: result.transactionId
         }, "External transfer initiated successfully");

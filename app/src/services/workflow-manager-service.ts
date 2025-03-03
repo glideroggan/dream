@@ -37,6 +37,7 @@ export class WorkflowManagerService {
     
     // Listen for workflow completion events from the modal
     modal.addEventListener('workflowComplete', ((event: CustomEvent) => {
+      console.log('[workflowManager] workflowComplete event received:', event.detail);
       const result = event.detail as WorkflowResult;
       this.workflowComplete(result);
     }) as EventListener);
@@ -319,7 +320,7 @@ export class WorkflowManagerService {
    * Handle workflow completion
    */
   private workflowComplete(result: WorkflowResult): void {
-    console.debug("Workflow completion handler called with result:", result);
+    console.log("Workflow completion handler called with result:", result);
     
     if (!this.hasActiveWorkflow()) {
       console.warn("workflowComplete called but no active workflow");
@@ -351,7 +352,7 @@ export class WorkflowManagerService {
       console.debug("No parent workflow, closing modal");
       if (this.modalComponent) {
         // Use forceClose to avoid the loop
-        (this.modalComponent as any).forceClose();
+        this.modalComponent.forceClose();
       }
     }
     

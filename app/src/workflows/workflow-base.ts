@@ -56,11 +56,14 @@ export abstract class WorkflowBase extends FASTElement {
    * Close the workflow with a result
    */
   protected complete(success: boolean = true, data?: Record<string, any>, message?: string): void {
+    console.log(`base workflow complete: ${success}, ${message}`);
     if (this.host) {
       this.host.closeWorkflow({ success, data, message });
     }
     
     // Dispatch event for workflow completion
+    console.log('[base workflow] dispatching workflow-complete event');
+    // TODO: nobody listens to this? who is it for?
     this.dispatchEvent(new CustomEvent('workflow-complete', {
       bubbles: true,
       composed: true,

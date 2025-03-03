@@ -70,6 +70,16 @@ const styles = css`
     height: 100%;
   }
   
+  /* Disable default tooltip behavior */
+  :host [title] {
+    position: absolute;
+  }
+  
+  /* Only allow tooltips on interactive elements */
+  :host .widget-wrapper:not(button):not([role="button"]):not(a)[title] {
+    title: none;
+  }
+  
   .widget-wrapper {
     height: 100%;
     width: 100%;
@@ -278,6 +288,9 @@ const styles = css`
   styles
 })
 export class WidgetWrapper extends FASTElement {
+  // DON'T USE @attr title - this is causing the tooltip issue
+  // Using a different name to avoid conflicts with HTML's native title attribute
+  @attr widgetTitle: string = "";
   @attr widgetId: string = "";
   @attr state: 'loading' | 'loaded' | 'error' | 'import-error' | 'timeout-warning' = 'loading';
   @attr errorMessage: string = '';
@@ -363,6 +376,11 @@ export class WidgetWrapper extends FASTElement {
   connectedCallback() {
     super.connectedCallback();
 
+    // Prevent unwanted tooltips by removing any title attribute from the host element
+    if (this.hasAttribute('title')) {
+      this.removeAttribute('title');
+    }
+    
     // Get widget info from registry
     this.updateWidgetDefinition();
 

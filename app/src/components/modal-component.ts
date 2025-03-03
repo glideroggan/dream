@@ -1,6 +1,5 @@
 import { FASTElement, customElement, html, css, attr, observable, when } from "@microsoft/fast-element";
 import { WorkflowBase, WorkflowResult, WorkflowHost, WorkflowValidationEvent } from "../workflows/workflow-base";
-import { workflowService } from '../services/workflow-service';
 import { workflowManager } from '../services/workflow-manager-service';
 
 // Update the template to include the disabled state for the primary button
@@ -189,16 +188,9 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
   @observable private validationMessage: string = "";
   @observable private isOpeningModal: boolean = false; // Add flag to prevent duplicate opens
   
-  // private boundWorkflowValidationHandler: EventListener; 
-  
   constructor() {
     super();
     
-    // Create a bound handler that we can both add and remove
-    // this.boundWorkflowValidationHandler = ((event: Event) => {
-    //   console.debug("Workflow validation event received", (event as any).detail);
-    //   this.handleWorkflowValidation(event as CustomEvent);
-    // }) as EventListener;
   }
   
   connectedCallback() {
@@ -274,6 +266,7 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
     console.log("[modal] closeWorkflow called with result:", result);
     if (result) {
       // Emit event for workflow completion
+      console.log("[modal] Emitting workflowComplete event with result:", result);
       this.$emit("workflowComplete", { detail: result });
     } else {
       console.warn("No result provided when closing workflow");

@@ -28,12 +28,17 @@ const styles = css`
   styles
 })
 export class WelcomeWidget extends FASTElement {
-  @attr title = 'Welcome to Wallet!';
+  @attr({ attribute: 'widget-title' }) title = 'Welcome to Wallet!';
   @observable message = 'This is a dynamically loaded widget.';
   @observable config: Record<string, unknown> = {};
 
   connectedCallback(): void {
     super.connectedCallback();
+    
+    // Remove any title attribute to avoid unwanted tooltips
+    if (this.hasAttribute('title')) {
+      this.removeAttribute('title');
+    }
     
     // Signal that the widget is initialized once connected
     setTimeout(() => {

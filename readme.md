@@ -8,17 +8,11 @@
 # TODO
 - no feedback when adding a new account
   - toast?
-- 🔧add tests to already built
+- add tests to already built
   - components
   - services
   - repositories
-- There is a bit of a mess with the workflow complete events. We should take a look at this
-Looks like there are different events
-workflow-complete
-workflow-completed
-workflowComplete
-Which one should we use? and why are there different ones?
-  - align these to just use one, probably emitted by the workflow-base to be catched by the modal?
+- ✔️There is a bit of a mess with the workflow complete events. We should take a look at this
 - change the welcome widget to be more introductive
   - it should be able to close
     - so widget preference needs a repository
@@ -36,9 +30,18 @@ Which one should we use? and why are there different ones?
 ## mfes/widgets
   
 # Features
+- create a better FE logger
+  - should have categories, so that we can choose to see the logs of a workflow, modal specifics, etc
 - add toasts
   - when creating an account
 
+
+# Worksflows (explain how the work with the modal, base and manager)
+Looks like there are different events
+workflow-complete: emitted by workflow-base, no one seems to listen to this
+workflow-completed
+workflowComplete: emitted by modal, catched by workflow-manager, to be used when multiple workflows are in the same modal
+Which one should we use? and why are there different ones?
 
 # menu
 ## theme pages

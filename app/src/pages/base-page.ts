@@ -47,11 +47,12 @@ export const baseContentTemplate = html<BasePage>/*html*/ `
     <dream-modal 
       id="workflowModal"
       title="${x => x.workflowTitle}" 
-      @close="${x => x.handleModalClose()}"
-      @workflowComplete="${(x, e) => x.handleWorkflowComplete(e.event)}">
+      @close="${x => x.handleModalClose()}">
     </dream-modal>
   </div>
 `;
+
+// @workflowComplete="${(x, e) => x.handleWorkflowComplete(e.event)}"
 
 // Shared styles
 export const baseStyles = css`
@@ -846,36 +847,36 @@ export class BasePage extends FASTElement {
   /**
    * Handle workflow completion - must be public to be accessible from template
    */
-  public handleWorkflowComplete(event: Event): void {
-    const result = (event as CustomEvent).detail;
-    console.log('[base-page] Workflow completed:', result);
+  // public handleWorkflowComplete(event: Event): void {
+  //   const result = (event as CustomEvent).detail;
+  //   console.log('[base-page] Workflow completed:', result);
 
-    // Handle specific workflow result actions if needed
-    if (result?.success) {
-      console.debug(`Workflow completed successfully: ${JSON.stringify(result.data || {})}`);
+  //   // Handle specific workflow result actions if needed
+  //   if (result?.success) {
+  //     console.debug(`Workflow completed successfully: ${JSON.stringify(result.data || {})}`);
       
-      // Check if this was a product-related workflow
-      if (result.data?.productId) {
-        console.debug(`Workflow added product: ${result.data.productId}, refreshing search`);
+  //     // Check if this was a product-related workflow
+  //     if (result.data?.productId) {
+  //       console.debug(`Workflow added product: ${result.data.productId}, refreshing search`);
         
-        // Force product service to refresh its data
-        const productService = getProductService();
-        productService.refreshProducts().then(() => {
-          // Only refresh search service after products are refreshed
-          const searchService = getSearchService();
-          searchService.refreshAllSearchableItems();
-          console.debug('Search service refreshed after product change');
-        });
+  //       // Force product service to refresh its data
+  //       const productService = getProductService();
+  //       productService.refreshProducts().then(() => {
+  //         // Only refresh search service after products are refreshed
+  //         const searchService = getSearchService();
+  //         searchService.refreshAllSearchableItems();
+  //         console.debug('Search service refreshed after product change');
+  //       });
         
-        // Add a delayed refresh for extra safety
-        setTimeout(() => {
-          const searchService = getSearchService();
-          searchService.refreshAllSearchableItems();
-          console.debug('Extra search service refresh after delay');
-        }, 500);
-      }
-    }
-  }
+  //       // Add a delayed refresh for extra safety
+  //       setTimeout(() => {
+  //         const searchService = getSearchService();
+  //         searchService.refreshAllSearchableItems();
+  //         console.debug('Extra search service refresh after delay');
+  //       }, 500);
+  //     }
+  //   }
+  // }
 
   /**
    * Handles widget focus events
