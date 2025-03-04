@@ -1,30 +1,31 @@
 # BUGS
-- add contact workflow is overflowing the modal
+- ✔️add contact workflow is overflowing the modal
 - ✔️the transfer-workflow is a bit overflowing the modal, in width
 - when you add the swish widget, you can't remove it until you reload, or switch page
 - ✔️modal primary buttons keeps their last workflow text, we need to reset it when closing
+- ✔️tabbing from search input to results, doesn't work
+- dismiss the search result with esc
+- dismiss a workflow with esc
 
 ## create-new-account-workflow
-- Account name do not update when switching between accounts
+- ✔️Account name do not update when switching between accounts
 
 # TODO
 - being able to save workflows
   I might be on page 3, and want to pause/save to do something else
   and have the ability to continue later
 - start thinking about the size and splitting
-  check bundle size with esbuild
-- no feedback when adding a new account
-  - toast?
+  ✔️check bundle size with esbuild
+  - ✔️Break out fast-element to a CDN
 - add tests to already built
   - components
   - services
   - repositories
-- 🔧change the welcome widget to be more introductive
+- ✔️change the welcome widget to be more introductive
   - ✔️it should be able to close
     - ✔️so widget preference needs a repository
-- writing something in search, and then trying to tab over to result box, doesn't work
-- We need to start refactor individual files, as they start to grow, and could be split into smaller files
-- dismiss the search result with esc
+- ✔️We need to start refactor individual files, as they start to grow, and could be split into smaller files
+
 ## workflows
 - edit payment contacts
   Doesn't need to be a "page", can just be a workflow, showing different buttons for doing things
@@ -36,6 +37,10 @@
 ## mfes/widgets
   
 # Features
+- Toast
+  - Give some visual feedback when completing workflows or other actions
+- Create a coach mark feature
+  - Let the welcome-widget use it to demonstrate how to use the app
 - create a better FE logger
   - should have categories, so that we can choose to see the logs of a workflow, modal specifics, etc
 - add toasts
