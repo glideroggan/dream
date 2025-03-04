@@ -1,14 +1,12 @@
 # BUGS
 - when you add the swish widget, you can't remove it until you reload, or switch page
 - dismiss the search result with esc
-- ⚒️dismiss a workflow with esc
-  - we don't have the correct focus
-  - we 'had' several modals, we should only have one
-    problem is that we need the modal the be opened in a regular way also, that is not a workflow (maybe we need some other type), but workflows can work without params, and we need another type that NEEDS params, like account-details, so then the params needs to be 'what account?'
-    - Maybe it doesn't matter, a workflow doesn't specifically need to do an action, and in regards to the parameters, we could always do defaults...
-    So when it comes to account-details, we could have empty states in the workflow when no params is there, and it would be up to the workflow to retrieve the data, or show an empty state
+- ✔️dismiss a workflow with esc
+  - ✔️we don't have the correct focus
+  - ✔️we 'had' several modals, we should only have one
 
 # TODO
+- account info workflow, needs an empty/default state when no account is selected
 - being able to save workflows
   I might be on page 3, and want to pause/save to do something else
   and have the ability to continue later

@@ -258,24 +258,37 @@ export class TransferWorkflow extends WorkflowBase {
     // Add HTML validation attributes to inputs
     setTimeout(() => {
       const fromSelect = this.shadowRoot?.getElementById('fromAccount') as HTMLSelectElement;
-      const toSelect = this.shadowRoot?.getElementById('toAccount') as HTMLSelectElement;
       const amountInput = this.shadowRoot?.getElementById('amount') as HTMLInputElement;
 
       if (fromSelect) fromSelect.required = true;
-      if (toSelect) toSelect.required = true;
       if (amountInput) {
         amountInput.required = true;
         amountInput.min = "0.01"; // Ensure positive amount
-      }
-
-      // Focus the first field when component is loaded
-      if (this.autoFocus && fromSelect) {
-        fromSelect.focus();
       }
     }, 0);
     
     // Add event listener for new contact creation
     this.addEventListener('contactCreated', this.handleContactCreated.bind(this));
+  }
+  
+  /**
+   * Override focusFirstElement to specifically focus the fromAccount dropdown
+   */
+  public focusFirstElement(): void {
+    console.log('[transfer-workflow] focusFirstElement called');
+    
+    // Try to focus the fromAccount dropdown
+    setTimeout(() => {
+      const fromSelect = this.shadowRoot?.getElementById('fromAccount') as HTMLSelectElement;
+      if (fromSelect) {
+        console.log('[transfer-workflow] focusing fromAccount select');
+        fromSelect.focus();
+      } else {
+        // Fall back to base class behavior
+        console.log('[transfer-workflow] fromAccount not found, using default focus behavior');
+        super.focusFirstElement();
+      }
+    }, 50);
   }
 
   disconnectedCallback() {

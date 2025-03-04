@@ -192,10 +192,12 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
   @observable private isOpeningModal: boolean = false; // Add flag to prevent duplicate opens
 
   private boundHandleWorkflowValidation: (event: Event) => void;
+  private boundHandleKeyDown: (event: KeyboardEvent) => void;
 
   constructor() {
     super();
     this.boundHandleWorkflowValidation = this.handleWorkflowValidation.bind(this);
+    this.boundHandleKeyDown = this.handleKeyDown.bind(this);
   }
 
   connectedCallback() {
@@ -216,9 +218,17 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
     //   console.log('[Modal] ', getActive())
     // }, 1000)
   }
-
-
   
+  /**
+   * Handle keyboard events for the modal
+   */
+  private handleKeyDown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      console.log('[modal] Escape key pressed, closing modal');
+      this.close();
+    }
+  }
+
   /**
    * Opens the modal dialog
    */
@@ -233,14 +243,41 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
     try {
       this.isOpen = true;
       document.body.style.overflow = "hidden"; // Prevent body scrolling
+      
+      // Add the keydown event listener when modal opens
+      document.addEventListener('keydown', this.boundHandleKeyDown);
 
-      // Store and remove title attributes
-      // this.disableTooltips();
+      // Set focus after the modal is visible and animation completes
+      setTimeout(() => {
+        this.setInitialFocus();
+      }, 300); // Match the animation timing
     } finally {
       // Reset the flag
       setTimeout(() => {
         this.isOpeningModal = false;
       }, 300); // Wait for animation to complete
+    }
+  }
+
+  /**
+   * Set initial focus in the modal
+   * If there's an active workflow, focus its first element
+   */
+  private setInitialFocus(): void {
+    if (this.activeWorkflow && typeof (this.activeWorkflow as any).focusFirstElement === 'function') {
+      console.log('[modal] Setting focus to workflow first element');
+      (this.activeWorkflow as any).focusFirstElement();
+    } else if (this.activeWorkflow) {
+      console.log('[modal] Focusing workflow itself');
+      this.activeWorkflow.focus();
+    } else {
+      // For non-workflow modals, focus the container
+      const container = this.shadowRoot?.querySelector('.modal-container');
+      if (container) {
+        console.log('[modal] Focusing modal container');
+        (container as HTMLElement).setAttribute('tabindex', '-1');
+        (container as HTMLElement).focus();
+      }
     }
   }
 
@@ -269,11 +306,12 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
     console.log("[modal] standard Closing modal");
     this.isOpen = false;
     document.body.style.overflow = ""; // Restore body scrolling
+    
+    // Remove the keydown event listener when modal closes
+    document.removeEventListener('keydown', this.boundHandleKeyDown);
+    
     this.$emit("close");
     this.clearWorkflow();
-
-    // Restore title attributes
-    // this.enableTooltips();
 
     // Reset the button text to default when closing
     this.primaryButtonText = "OK";
@@ -398,19 +436,11 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
     try {
       console.log('[modal] Loading workflow element:', workflowElement);
 
-      workflowElement.focus()
-
       // Clear any existing workflow
       this.clearWorkflow(this.activeWorkflow !== null);
 
       // Reset validation state for new workflow - default to disabled until validation
       this.isPrimaryActionEnabled = false;
-
-      // Get the modal body where we'll add the workflow
-      // const modalBody = this.shadowRoot?.querySelector('.modal-body');
-      // if (!modalBody) {
-      //   throw new Error("Modal body not found");
-      // }
 
       // Store reference to the workflow
       this.activeWorkflow = workflowElement as WorkflowBase;
@@ -433,6 +463,11 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
       if (typeof (this.activeWorkflow as any).initialize === 'function') {
         (this.activeWorkflow as any).initialize();
       }
+      
+      // Set focus after a short delay to ensure DOM is rendered
+      setTimeout(() => {
+        this.setInitialFocus();
+      }, 100);
 
       return true;
     } catch (error) {

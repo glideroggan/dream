@@ -39,6 +39,30 @@ export abstract class WorkflowBase extends FASTElement {
   }
 
   /**
+   * Focus the first focusable element within the workflow
+   * This is called by the modal container after the workflow is loaded
+   */
+  public focusFirstElement(): void {
+    console.log('[workflow-base] focusFirstElement called');
+    const focusableElements = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    
+    // Wait for the component to be fully rendered
+    setTimeout(() => {
+      // Try to find the first focusable element in the shadow DOM
+      const firstFocusable = this.shadowRoot?.querySelector(focusableElements) as HTMLElement;
+      
+      if (firstFocusable) {
+        console.log('[workflow-base] focusing element:', firstFocusable);
+        firstFocusable.focus();
+      } else {
+        // If no focusable element found, focus the workflow itself
+        console.log('[workflow-base] no focusable elements, focusing workflow itself');
+        this.focus();
+      }
+    }, 50); // Small delay to ensure DOM is ready
+  }
+
+  /**
    * Get workflow host interface
    */
   protected get host(): WorkflowHost | null {

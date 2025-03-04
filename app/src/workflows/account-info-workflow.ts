@@ -217,6 +217,8 @@ export class AccountInfoWorkflow extends WorkflowBase {
   async initialize(params?: Record<string, any>): Promise<void> {
     console.log('Initializing Account-info-workflow with params:', params)
 
+    this.updateTitle('Account Details')
+
     if (params?.account) {
       this.account = params.account
     }
