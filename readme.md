@@ -26,14 +26,16 @@
 ## mfes/widgets
   
 # Features
+- rearrange widgets
+  This is a big change. But it should be just the grid-layout and the widget-wrapper
 - Toast
   - Give some visual feedback when completing workflows or other actions
+  - when creating an account
 - Create a coach mark feature
   - Let the welcome-widget use it to demonstrate how to use the app
 - create a better FE logger
   - should have categories, so that we can choose to see the logs of a workflow, modal specifics, etc
-- add toasts
-  - when creating an account
+  
 
 
 # Worksflows (explain how the work with the modal, base and manager)
@@ -62,7 +64,7 @@ Which one should we use? and why are there different ones?
 - We should be able to remove them
    - How do we get it back?
 ## accounts✔️
-- 🔧more details on a specific account, implement the three dots
+- ✔️more details on a specific account, implement the three dots
 - show a total of the upcoming payments on each account
 - accounts needs to look into upcoming transactions, so that we can show the total amount of upcoming payments
 ### account details
