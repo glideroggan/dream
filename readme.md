@@ -6,6 +6,8 @@
   - ✔️we 'had' several modals, we should only have one
 
 # TODO
+- should we change the name? widgets are the MFE equivalent, while same component, but with -at-a-glance, is the widget?
+  or should each widget have two states, one full-size, and one at-a-glance? so that you can always minimize each section, and if you minimize all, you get the at-a-glance view?
 - account info workflow, needs an empty/default state when no account is selected
 - being able to save workflows
   I might be on page 3, and want to pause/save to do something else
@@ -26,8 +28,6 @@
 ## mfes/widgets
   
 # Features
-- rearrange widgets
-  This is a big change. But it should be just the grid-layout and the widget-wrapper
 - Toast
   - Give some visual feedback when completing workflows or other actions
   - when creating an account
@@ -35,6 +35,8 @@
   - Let the welcome-widget use it to demonstrate how to use the app
 - create a better FE logger
   - should have categories, so that we can choose to see the logs of a workflow, modal specifics, etc
+- rearrange widgets
+  This is a big change. But it should be just the grid-layout and the widget-wrapper
   
 
 
@@ -63,6 +65,8 @@ Which one should we use? and why are there different ones?
    - Drag it below one, and it should be placed below that one?
 - We should be able to remove them
    - How do we get it back?
+## Savings
+### smartness
 ## accounts✔️
 - ✔️more details on a specific account, implement the three dots
 - show a total of the upcoming payments on each account

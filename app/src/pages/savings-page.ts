@@ -34,7 +34,7 @@ const styles = css`
 export class SavingsPage extends BasePage {
   // Initial empty widgets list - will use settings if available
   @attr({ attribute: 'initialwidgets' })
-  initialWidgets: string = '';
+  initialWidgets: string = 'financial-health';
 
   constructor() {
     super();
@@ -43,7 +43,7 @@ export class SavingsPage extends BasePage {
   }
   
   async loadWidgets(): Promise<void> {
-    console.debug('Savings page loading widgets...');
+      console.debug('Savings page loading widgets...');
     
     // First check if we have user-saved preferences
     await this.loadUserWidgetPreferences();

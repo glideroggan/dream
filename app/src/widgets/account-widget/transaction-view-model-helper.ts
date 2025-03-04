@@ -13,7 +13,7 @@ export class TransactionViewModelHelper {
    * @returns A TransactionViewModel with display properties
    */
   static processTransaction(transaction: Transaction, accountId: string): TransactionViewModel {
-    const isIncoming = transaction.toAccountId === accountId;
+    const isIncoming = transaction.amount > 0 ?  true : false
     const relevantBalance = isIncoming ? transaction.toAccountBalance : transaction.fromAccountBalance;
     
     // Create view model with display properties
@@ -21,7 +21,7 @@ export class TransactionViewModelHelper {
       ...transaction,
       isIncoming,
       amountClass: isIncoming ? 'incoming' : 'outgoing',
-      formattedAmount: `${isIncoming ? '+' : '-'}${transaction.amount.toFixed(2)} ${transaction.currency}`,
+      formattedAmount: `${transaction.amount.toFixed(2)} ${transaction.currency}`,
       formattedBalance: relevantBalance ? `${relevantBalance.toFixed(2)} ${transaction.currency}` : undefined
     };
   }

@@ -12,9 +12,9 @@ const context = await build.context({
         // Widget entry points
         'src/widgets/welcome/welcome-widget.ts',
         'src/widgets/dashboard/dashboard-widget.ts',
-        'src/widgets/chart/chart-widget.ts',
         'src/widgets/account-widget/account-widget.ts',
         'src/widgets/swish-widget.ts',
+        'src/widgets/financial-health-widget/financial-health-widget.ts',
         // workflows
         'src/workflows/transfer/transfer-workflow.ts',
         'src/workflows/create-account/create-account-workflow.ts',
@@ -43,14 +43,18 @@ const context = await build.context({
     minify: true,
     external: [
         "@microsoft/fast-element",
+        "@chart/js",
         "@widgets/welcome", "@widgets/account", 
+        "@widgets/financial-health",
+        "@widgets/swish",
+        // workflows
         "@workflows/transfer",
         "@workflows/create-account",
         "@workflows/swish-workflow",
         "@workflows/account-info",
         "@workflows/add-contact-workflow",
         "@workflows/kyc",
-        "@widgets/swish",
+        // pages
         "@pages/dashboard", "@pages/investments", "@pages/savings",
         "@widgets/error", "@widgets/fast", "@widgets/slow",
     ],

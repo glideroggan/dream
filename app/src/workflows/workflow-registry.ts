@@ -24,6 +24,7 @@ export const WorkflowIds = {
   SWISH: "swish",
   ADD_CONTACT: "add-contact", 
   ACCOUNT_INFO: "account-info",
+  FINANCIAL_DETAILS: "financial-details", // TODO: implement this workflow
 };
 
 // Define all available workflows

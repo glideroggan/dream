@@ -9,6 +9,7 @@ export const WidgetIds = {
   SWISH: "swish-widget",
   SLOW: "slow-widget",
   ERROR: "error-widget",
+  FINANCIAL_HEALTH: "financial-health"  // Add new widget ID
   // Add more widget IDs here as needed
 };
 
@@ -30,6 +31,19 @@ interface EnhancedWidgetDefinition extends WidgetDefinition {
 
 // Define all available widgets
 const widgetDefinitions: EnhancedWidgetDefinition[] = [
+  {
+    id: WidgetIds.FINANCIAL_HEALTH,
+    name: 'Financial Health',
+    description: 'Analyze your financial health with personalized insights and recommendations',
+    elementName: 'financial-health-widget',
+    module: '@widgets/financial-health',
+    defaultConfig: {},
+    preferredSize: 'lg',
+    minWidth: 380,
+    searchable: true,
+    keywords: ['financial health', 'net worth', 'savings rate', 'spending trends', 'recommendations', 'financial advisor'],
+    icon: '📊'
+  },
   {
     id: WidgetIds.ACCOUNT,
     name: 'Account Balances',
