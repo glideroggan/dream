@@ -22,11 +22,23 @@ export const WorkflowIds = {
   KYC: "kyc",
   CREATE_ACCOUNT: "create-account",
   SWISH: "swish",
-  ADD_CONTACT: "add-contact", // Add new workflow ID
+  ADD_CONTACT: "add-contact", 
+  ACCOUNT_INFO: "account-info",
 };
 
 // Define all available workflows
 const workflowDefinitions: WorkflowDefinition[] = [
+  {
+    id: WorkflowIds.ACCOUNT_INFO,
+    name: "Account Information",
+    description: "View account information and details",
+    elementName: "account-info-workflow",
+    module: "@workflows/account-info",
+    icon: "💸",
+    searchable: true,
+    popular: true, 
+    keywords: ['account', 'information', 'details', 'account info', 'account details'],
+  },
   {
     id: WorkflowIds.TRANSFER,
     name: "Transfer Money",

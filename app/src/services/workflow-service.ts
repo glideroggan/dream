@@ -1,3 +1,4 @@
+import { WorkflowBase } from '../workflows/workflow-base';
 import { getSingletonManager } from './singleton-manager';
 
 // Registry of available workflows
@@ -68,7 +69,8 @@ export class WorkflowService {
     }
 
     // Create the element
-    const element = document.createElement(workflow.tagName);
+    const element = document.createElement(workflow.tagName) as WorkflowBase
+    element.initialize(params);
 
     return element;
   }

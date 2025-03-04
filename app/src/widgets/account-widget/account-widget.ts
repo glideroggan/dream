@@ -7,6 +7,7 @@ import "./account-info-component";
 import { TransactionListComponent, TransactionViewModel } from "./transaction-list-component";
 import { workflowManager } from "../../services/workflow-manager-service";
 import { Account } from "../../repositories/account-repository";
+// import { AccountInfoComponent } from "./account-info-component";
 
 const template = html<AccountWidget>/*html*/ `
   <div class="account-widget">
@@ -47,38 +48,6 @@ const template = html<AccountWidget>/*html*/ `
         <button class="primary-button" @click="${x => x.addAccount()}">Add Account</button>
       </div>
     `)}
-    
-    <!-- Use the reusable modal component -->
-    <dream-modal 
-      id="accountModal"
-      modalTitle="${x => x.workflowTitle}" 
-      @close="${x => x.handleModalClose()}"
-      showFooter="${x => x.showWorkflowActions}">
-      
-      ${when(x => x.selectedAccount && !x.showWorkflow, html<AccountWidget>/*html*/`
-        <!-- Show account info when an account is selected and no workflow is active -->
-        <account-info :account="${x => x.selectedAccount}">
-          <div slot="actions" class="account-action-buttons">
-            <button class="action-button edit" @click="${x => x.editAccount()}">
-              Edit Account
-            </button>
-            <button class="action-button deposit" @click="${x => x.handleDepositToAccount()}">
-              Deposit
-            </button>
-            <button class="action-button withdraw" @click="${x => x.handleWithdrawFromAccount()}">
-              Withdraw
-            </button>
-            <button class="action-button delete" @click="${x => x.confirmDeleteAccount()}">
-              Delete Account
-            </button>
-          </div>
-        </account-info>
-      `)}
-      
-      ${when(x => x.showWorkflow, html<AccountWidget>/*html*/`
-        <!-- This slot is used for workflows -->
-      `)}
-    </dream-modal>
   </div>
 `;
 
@@ -267,7 +236,7 @@ export class AccountWidget extends FASTElement {
   @observable error: boolean = false;
   @observable errorMessage: string = '';
   
-  @observable workflowTitle: string = "Account Actions";
+  // @observable workflowTitle: string = "Account Actions";
   @observable selectedAccount: Account | null = null;
   @observable showWorkflow: boolean = false;
   @observable showWorkflowActions: boolean = true;
@@ -282,9 +251,9 @@ export class AccountWidget extends FASTElement {
   @observable transactions: TransactionViewModel[] = [];
   @observable isLoading: boolean = false;
   
-  private get modal(): ModalComponent | null {
-    return this.shadowRoot?.getElementById('accountModal') as ModalComponent | null;
-  }
+  // private get modal(): ModalComponent | null {
+  //   return this.shadowRoot?.getElementById('accountModal') as ModalComponent | null;
+  // }
 
   async connectedCallback() {
     super.connectedCallback();
@@ -362,7 +331,7 @@ export class AccountWidget extends FASTElement {
       return;
     }
     
-    this.workflowTitle = "Transfer Money";
+    // this.workflowTitle = "Transfer Money";
     this.selectedAccount = null;
     console.debug(`Opening transfer workflow with ${this.accounts.length} accounts:`, this.accounts);
     this.openWorkflow(WorkflowIds.TRANSFER, { accounts: this.accounts });
@@ -390,10 +359,10 @@ export class AccountWidget extends FASTElement {
   /**
    * Handle account actions button click
    */
-  handleAccountActions(event: Event) {
+  async handleAccountActions(event: Event) {
     const customEvent = event as CustomEvent;
     const account = customEvent.detail.account;
-    this.openAccountActions(account);
+    await this.openAccountActions(account);
   }
   
   /**
@@ -435,12 +404,22 @@ export class AccountWidget extends FASTElement {
     this.maxTransactionsToShow = this.accountTransactions.length;
   }
   
-  openAccountActions(account: Account) {
-    this.workflowTitle = `${account.name}`;
+  async openAccountActions(account: Account): Promise<void> {
+    console.log('Opening account actions for:', account);
+    // this.workflowTitle = `${account.name}`;
     this.selectedAccount = account;
     this.showWorkflow = false;
     this.showWorkflowActions = false; // Hide footer with buttons - we have custom ones
-    this.openModal();
+    // this.openModal();
+    // TODO: find the main modal
+    
+    // add accountInfo as our content
+    // const accountInfoEl = document.createElement('account-info') as AccountInfoComponent
+    // accountInfoEl.account = account;
+
+    // await workflowManager.startInfoflow(accountInfoEl)
+    console.log(`Opening account-info workflow with account`, this.selectedAccount);
+    const result = await this.openWorkflow(WorkflowIds.ACCOUNT_INFO, { account: this.selectedAccount });
   }
   
   /**
@@ -448,7 +427,7 @@ export class AccountWidget extends FASTElement {
    */
   async openWorkflow(workflowId: string, params?: Record<string, any>) {
     try {
-      console.debug(`Starting workflow ${workflowId} with params:`, params);
+      console.log(`Starting workflow ${workflowId} with params:`, params);
       // Show workflow state
       this.showWorkflow = true;
       this.showWorkflowActions = true;
@@ -478,12 +457,6 @@ export class AccountWidget extends FASTElement {
     }
   }
   
-  openModal() {
-    // Use the modal component's API
-    if (this.modal) {
-      this.modal.open();
-    }
-  }
   
   handleModalClose() {
     console.debug("Modal closed");
@@ -492,7 +465,7 @@ export class AccountWidget extends FASTElement {
   }
   
   async addAccount() {
-    this.workflowTitle = "Create New Account";
+    // this.workflowTitle = "Create New Account";
     this.selectedAccount = null;
     
     // Use the create account workflow instead of directly creating an account
@@ -577,7 +550,7 @@ export class AccountWidget extends FASTElement {
   editAccount() {
     if (!this.selectedAccount) return;
     
-    this.workflowTitle = `Edit ${this.selectedAccount.name}`;
+    // this.workflowTitle = `Edit ${this.selectedAccount.name}`;
     this.showWorkflow = true;
     // this.openWorkflow(WorkflowIds.EDIT_ACCOUNT, { account: this.selectedAccount });
   }
@@ -585,7 +558,7 @@ export class AccountWidget extends FASTElement {
   handleDepositToAccount() {
     if (!this.selectedAccount) return;
     
-    this.workflowTitle = `Deposit to ${this.selectedAccount.name}`;
+    // this.workflowTitle = `Deposit to ${this.selectedAccount.name}`;
     this.showWorkflow = true;
     // this.openWorkflow(WorkflowIds.DEPOSIT, { account: this.selectedAccount });
   }
@@ -593,7 +566,7 @@ export class AccountWidget extends FASTElement {
   handleWithdrawFromAccount() {
     if (!this.selectedAccount) return;
     
-    this.workflowTitle = `Withdraw from ${this.selectedAccount.name}`;
+    // this.workflowTitle = `Withdraw from ${this.selectedAccount.name}`;
     this.showWorkflow = true;
     // this.openWorkflow(WorkflowIds.WITHDRAW, { account: this.selectedAccount });
   }
@@ -601,11 +574,11 @@ export class AccountWidget extends FASTElement {
   confirmDeleteAccount() {
     if (!this.selectedAccount) return;
     
-    if (confirm(`Are you sure you want to delete the account "${this.selectedAccount.name}"? This action cannot be undone.`)) {
-      this.deleteAccount(this.selectedAccount.id);
-      if (this.modal) {
-        this.modal.close();
-      }
-    }
+    // if (confirm(`Are you sure you want to delete the account "${this.selectedAccount.name}"? This action cannot be undone.`)) {
+    //   this.deleteAccount(this.selectedAccount.id);
+    //   if (this.modal) {
+    //     this.modal.close();
+    //   }
+    // }
   }
 }

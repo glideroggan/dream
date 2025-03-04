@@ -1,30 +1,21 @@
 # BUGS
-- ✔️add contact workflow is overflowing the modal
-- ✔️the transfer-workflow is a bit overflowing the modal, in width
 - when you add the swish widget, you can't remove it until you reload, or switch page
-- ✔️modal primary buttons keeps their last workflow text, we need to reset it when closing
-- ✔️tabbing from search input to results, doesn't work
 - dismiss the search result with esc
-- dismiss a workflow with esc
-
-## create-new-account-workflow
-- ✔️Account name do not update when switching between accounts
+- ⚒️dismiss a workflow with esc
+  - we don't have the correct focus
+  - we 'had' several modals, we should only have one
+    problem is that we need the modal the be opened in a regular way also, that is not a workflow (maybe we need some other type), but workflows can work without params, and we need another type that NEEDS params, like account-details, so then the params needs to be 'what account?'
+    - Maybe it doesn't matter, a workflow doesn't specifically need to do an action, and in regards to the parameters, we could always do defaults...
+    So when it comes to account-details, we could have empty states in the workflow when no params is there, and it would be up to the workflow to retrieve the data, or show an empty state
 
 # TODO
 - being able to save workflows
   I might be on page 3, and want to pause/save to do something else
   and have the ability to continue later
-- start thinking about the size and splitting
-  ✔️check bundle size with esbuild
-  - ✔️Break out fast-element to a CDN
 - add tests to already built
   - components
   - services
   - repositories
-- ✔️change the welcome widget to be more introductive
-  - ✔️it should be able to close
-    - ✔️so widget preference needs a repository
-- ✔️We need to start refactor individual files, as they start to grow, and could be split into smaller files
 
 ## workflows
 - edit payment contacts

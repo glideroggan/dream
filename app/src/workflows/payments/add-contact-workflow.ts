@@ -184,10 +184,13 @@ export class AddContactWorkflow extends WorkflowBase {
   @attr existingContactId: string = '';
   
   initialize(params?: Record<string, any>): void {
-    console.debug("Initializing AddContactWorkflow with params:", params);
+    console.log("Initializing AddContactWorkflow with params:", params);
     
     this.updateTitle("Add Payment Contact");
     this.updateFooter(true, "Save Contact");
+
+    console.log('[AddContactWorkflow] initialize')
+
     
     // If we're editing an existing contact, populate the form
     if (params?.contactId) {
