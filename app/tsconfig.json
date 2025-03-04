@@ -21,6 +21,7 @@
     "emitDeclarationOnly": true,
     "esModuleInterop": true,
     "paths": {
+      "@microsoft/fast-elements": ["./node_modules/@microsoft/fast-elements/dist/fast-elements.d.ts"],
       "@widgets/account": ["./dist/widgets/account-widget/account-widget.d.ts"],
       "@widgets/welcome": ["./dist/widgets/welcome/welcome-widget.d.ts"],
       "@workflows/transfer": ["./dist/workflows/transfer/transfer-workflow.d.ts"],

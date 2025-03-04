@@ -34,12 +34,14 @@ const context = await build.context({
     bundle: true,
     splitting: true, // Enable code splitting for dynamic imports
     format: 'esm',
+    metafile: true,
     sourcemap: true,
     outdir: 'dist',
     logLevel: 'info',
     metafile: true,
     minify: true,
     external: [
+        "@microsoft/fast-element",
         "@widgets/welcome", "@widgets/account", 
         "@workflows/transfer",
         "@workflows/create-account",

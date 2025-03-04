@@ -88,8 +88,6 @@ const styles = css`
     display: flex;
     flex-direction: column;
     gap: 16px;
-    padding: 0;
-    width: 100%;
   }
   
   form {
@@ -111,7 +109,6 @@ const styles = css`
   }
   
   input, textarea {
-    width: 100%;
     padding: 10px 12px;
     border: 1px solid var(--border-color, #e0e0e0);
     border-radius: 4px;

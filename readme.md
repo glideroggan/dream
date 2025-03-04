@@ -8,6 +8,9 @@
 - Account name do not update when switching between accounts
 
 # TODO
+- being able to save workflows
+  I might be on page 3, and want to pause/save to do something else
+  and have the ability to continue later
 - start thinking about the size and splitting
   check bundle size with esbuild
 - no feedback when adding a new account
