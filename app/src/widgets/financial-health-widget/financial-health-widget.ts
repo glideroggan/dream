@@ -6,14 +6,14 @@ import { Account } from "../../repositories/account-repository";
 import { Transaction } from "../../repositories/transaction-repository";
 
 // Import components
-import Chart from 'chart.js/auto'
 import "./components/health-score-component";
-import "./components/chart-components";
+import "./components/monthly-spending-chart";
 
 // Import component interfaces
-import { DataPoint, CategoryExpense } from "./components/chart-components";
 import { SavingsGoal } from "./components/savings-rate-component";
 import { AccountTypeMapItem } from "./components/net-worth-component";
+import { CategoryExpense } from "./components/monthly-spending-component";
+import { DataPoint } from "./components/monthly-spending-chart";
 
 const template = html<FinancialHealthWidget>/*html*/ `
   <div class="financial-health-widget">

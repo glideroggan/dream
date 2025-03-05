@@ -1,5 +1,7 @@
 import { FASTElement, customElement, html, css, attr, observable } from "@microsoft/fast-element";
 
+import Chart from 'chart.js/auto'
+
 export interface DataPoint {
   month: string;
   value: number;
@@ -8,12 +10,7 @@ export interface DataPoint {
 const template = html<MonthlySpendingChart>/*html*/ `
   <div class="monthly-spending-container">
     <div class="chart-wrapper">
-      <chart-js
-        height="200px"
-        :chartType="${x => x.chartType}"
-        :chartData="${x => x.prepareChartData()}"
-        :chartOptions="${x => x.getChartOptions()}">
-      </chart-js>
+      <canvas id="spending-canvas"></canvas>
     </div>
     
     <div class="trend-info ${x => x.trend}">
@@ -66,12 +63,26 @@ const styles = css`
   styles
 })
 export class MonthlySpendingChart extends FASTElement {
-  @attr chartType: string = "line";
+  @attr chartType: string = 'line';
   @attr trend: 'up' | 'down' | 'flat' = 'flat';
   @attr trendMessage: string = '';
   @observable dataPoints: DataPoint[] = [];
   @observable maxValue: number = 1000;
   
+  async connectedCallback() {
+    super.connectedCallback();
+    await this.loadChart();
+  }
+
+  async loadChart() {
+    const canvas = this.shadowRoot?.getElementById('spending-canvas') as HTMLCanvasElement
+    if (!canvas) return;
+    new Chart(canvas, {
+      type: 'line',
+      data: this.prepareChartData(),
+    });
+  }
+
   prepareChartData() {
     // Extract months and values from data points
     const labels = this.dataPoints.map(point => point.month);
@@ -124,8 +135,7 @@ export class MonthlySpendingChart extends FASTElement {
         }
       },
       interaction: {
-        intersect: false,
-        mode: 'index'
+        intersect: false
       }
     };
   }
