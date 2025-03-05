@@ -1,10 +1,11 @@
 import { FASTElement, customElement, html, css, attr, observable } from "@microsoft/fast-element";
-
-import Chart from 'chart.js/auto'
+import Chart from 'chart.js/auto';
 
 export interface DataPoint {
   month: string;
   value: number;
+  essential?: number;
+  discretionary?: number;
 }
 
 const template = html<MonthlySpendingChart>/*html*/ `
@@ -15,6 +16,17 @@ const template = html<MonthlySpendingChart>/*html*/ `
     
     <div class="trend-info ${x => x.trend}">
       ${x => x.trendMessage}
+    </div>
+    
+    <div class="spending-legend">
+      <div class="legend-item">
+        <div class="legend-color essential"></div>
+        <div class="legend-label">Essential Spending</div>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color discretionary"></div>
+        <div class="legend-label">Discretionary Spending</div>
+      </div>
     </div>
   </div>
 `;
@@ -33,9 +45,7 @@ const styles = css`
 
   .chart-wrapper {
     margin-bottom: 8px;
-    
     width: 100%;
-    width: 800px;
     height: 200px;
   }
   
@@ -58,6 +68,34 @@ const styles = css`
   .trend-info.flat {
     color: var(--secondary-text, #666);
   }
+  
+  .spending-legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 8px;
+    font-size: 12px;
+  }
+  
+  .legend-item {
+    display: flex;
+    align-items: center;
+  }
+  
+  .legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    margin-right: 6px;
+  }
+  
+  .legend-color.essential {
+    background-color: var(--primary-color, #3498db);
+  }
+  
+  .legend-color.discretionary {
+    background-color: var(--secondary-color, #9b59b6);
+  }
 `;
 
 @customElement({
@@ -78,18 +116,24 @@ export class MonthlySpendingChart extends FASTElement {
   }
 
   async loadChart() {
-    const canvas = this.shadowRoot?.getElementById('spending-canvas') as HTMLCanvasElement
+    const canvas = this.shadowRoot?.getElementById('spending-canvas') as HTMLCanvasElement;
     if (!canvas) return;
-    console.log(canvas)
-    const data = this.prepareChartData()
-    console.log(data)
+    
+    // Check if we have essential and discretionary data
+    const hasDetailedData = this.dataPoints.length > 0 && 
+      typeof this.dataPoints[0].essential === 'number' && 
+      typeof this.dataPoints[0].discretionary === 'number';
+    
+    const data = hasDetailedData ? 
+      this.prepareStackedChartData() : 
+      this.prepareChartData();
+      
     new Chart(canvas, {
-      type: 'line',
+      type: hasDetailedData ? 'bar' : 'line',
       data: data,
-      options:{
-        responsive: true,
-        maintainAspectRatio: false
-    }
+      options: hasDetailedData ?
+        this.getStackedChartOptions() :
+        this.getChartOptions()
     });
   }
 
@@ -98,7 +142,6 @@ export class MonthlySpendingChart extends FASTElement {
     const labels = this.dataPoints.map(point => point.month);
     const values = this.dataPoints.map(point => point.value);
 
-    // Create gradient fill
     return {
       labels: labels,
       datasets: [
@@ -110,10 +153,31 @@ export class MonthlySpendingChart extends FASTElement {
           pointBackgroundColor: '#fff',
           pointRadius: 4,
           pointHoverRadius: 6
-          // NOTE: below values seems to destroy the graph
-          // borderColor: '#36A2EB',
-          // backgroundColor: '#9BD0F5',
-          // pointBorderColor: 'rgb(53, 162, 235)',
+        }
+      ]
+    };
+  }
+  
+  prepareStackedChartData() {
+    // Extract data for stacked bar chart
+    const labels = this.dataPoints.map(point => point.month);
+    const essentialValues = this.dataPoints.map(point => point.essential || 0);
+    const discretionaryValues = this.dataPoints.map(point => point.discretionary || 0);
+
+    return {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Essential',
+          data: essentialValues,
+          // backgroundColor: 'var(--primary-color, #3498db)',
+          borderWidth: 0
+        },
+        {
+          label: 'Discretionary',
+          data: discretionaryValues,
+          // backgroundColor: 'var(--secondary-color, #9b59b6)',
+          borderWidth: 0
         }
       ]
     };
@@ -121,14 +185,23 @@ export class MonthlySpendingChart extends FASTElement {
   
   getChartOptions() {
     return {
+      responsive: true,
+      maintainAspectRatio: false,
       scales: {
         y: {
           beginAtZero: true,
           suggestedMax: this.maxValue,
           ticks: {
-            // Use a callback to format the tick values
-            callback: (value: number) => {
-              return this.formatAxisLabel(value);
+            callback: function(tickValue: number | string, index: number, ticks: any[]): string {
+              // Convert to number if it's a string
+              const value = typeof tickValue === 'string' ? parseFloat(tickValue) : tickValue;
+              // For larger values, abbreviate with K or M
+              if (value >= 1000000) {
+                return `$${(value / 1000000).toFixed(1)}M`;
+              } else if (value >= 1000) {
+                return `$${(value / 1000).toFixed(1)}K`;
+              }
+              return `$${value}`;
             }
           }
         }
@@ -151,14 +224,53 @@ export class MonthlySpendingChart extends FASTElement {
     };
   }
   
-  formatAxisLabel(value: number): string {
-    // For larger values, abbreviate with K or M
-    if (value >= 1000000) {
-      return `$${(value / 1000000).toFixed(1)}M`;
-    } else if (value >= 1000) {
-      return `$${(value / 1000).toFixed(1)}K`;
-    }
-    return `$${value}`;
+  getStackedChartOptions() {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          stacked: true
+        },
+        y: {
+          stacked: true,
+          beginAtZero: true,
+          suggestedMax: this.maxValue,
+          ticks: {
+            callback: function(tickValue: number | string, index: number, ticks: any[]): string {
+              // Convert to number if it's a string
+              const value = typeof tickValue === 'string' ? parseFloat(tickValue) : tickValue;
+              // For larger values, abbreviate with K or M
+              if (value >= 1000000) {
+                return `$${(value / 1000000).toFixed(1)}M`;
+              } else if (value >= 1000) {
+                return `$${(value / 1000).toFixed(1)}K`;
+              }
+              return `$${value}`;
+            }
+          }
+        }
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: (context: any) => {
+              const dataset = context.dataset.label;
+              const value = context.parsed.y;
+              return `${dataset}: ${this.formatCurrency(value)}`;
+            },
+            footer: (tooltipItems: any[]) => {
+              // Calculate the total from all datasets for this month
+              const total = tooltipItems.reduce((sum, item) => sum + (item.parsed.y || 0), 0);
+              return `Total: ${this.formatCurrency(total)}`;
+            }
+          }
+        },
+        legend: {
+          display: false
+        }
+      }
+    };
   }
   
   formatCurrency(value: number): string {

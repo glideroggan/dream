@@ -1,4 +1,5 @@
 import { FASTElement, customElement, html, css, attr, observable, repeat } from "@microsoft/fast-element";
+import Chart from 'chart.js/auto';
 
 // Interfaces for account type visualization
 export interface AccountTypeData {
@@ -31,10 +32,8 @@ const template = html<NetWorthComponent>/*html*/ `
     </div>
     
     <div class="accounts-summary">
-      <div class="account-type-bar">
-        ${repeat(x => x.accountTypeData, html<AccountTypeData>/*html*/`
-          <div style="width: ${x => x.percentage}%; background-color: ${x => x.color}"></div>
-        `)}
+      <div class="chart-wrapper">
+        <canvas id="account-types-canvas"></canvas>
       </div>
       <div class="account-type-legend">
         ${repeat(x => x.accountTypeLegendItems, html<AccountTypeMapItem>/*html*/`
@@ -91,17 +90,14 @@ const styles = css`
     color: var(--error-color, #e74c3c);
   }
   
-  /* Account Type Bar */
+  /* Account Type Chart */
   .accounts-summary {
     margin-top: 16px;
   }
   
-  .account-type-bar {
-    height: 24px;
-    border-radius: 4px;
-    overflow: hidden;
-    display: flex;
-    margin-bottom: 8px;
+  .chart-wrapper {
+    height: 200px;
+    margin-bottom: 16px;
   }
   
   .account-type-legend {
@@ -137,6 +133,63 @@ export class NetWorthComponent extends FASTElement {
 
   @observable accountTypeData: AccountTypeData[] = [];
   @observable accountTypeLegendItems: AccountTypeMapItem[] = [];
+  private chart: Chart | null = null;
+
+  connectedCallback() {
+    super.connectedCallback();
+    setTimeout(() => this.loadChart(), 50); // Give a little more time for accountTypeData to be set
+  }
+
+  async loadChart() {
+    // Wait for shadowRoot to be available
+    await new Promise(resolve => setTimeout(resolve, 0));
+    
+    const canvas = this.shadowRoot?.getElementById('account-types-canvas') as HTMLCanvasElement;
+    if (!canvas) return;
+    
+    // Destroy previous chart if it exists
+    if (this.chart) {
+      this.chart.destroy();
+    }
+
+    // Only create chart if we have data
+    if (this.accountTypeData.length === 0) return;
+    
+    // Prepare data for doughnut chart
+    const data = {
+      labels: this.accountTypeData.map(item => item.type.charAt(0).toUpperCase() + item.type.slice(1)),
+      datasets: [{
+        data: this.accountTypeData.map(item => item.balance),
+        backgroundColor: this.accountTypeData.map(item => item.color),
+        borderWidth: 1,
+        borderColor: 'white'
+      }]
+    };
+    
+    // Create new chart
+    this.chart = new Chart(canvas, {
+      type: 'doughnut',
+      data: data,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '65%',
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: (context) => {
+                const dataPoint = this.accountTypeData[context.dataIndex];
+                return `${dataPoint.type}: ${this.formatCurrency(dataPoint.balance)} (${Math.round(dataPoint.percentage)}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
 
   /**
    * Format currency numbers

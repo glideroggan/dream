@@ -1,4 +1,5 @@
 import { FASTElement, customElement, html, css, observable, repeat } from "@microsoft/fast-element";
+import Chart from 'chart.js/auto';
 
 export interface CategoryItem {
   category: string;
@@ -9,17 +10,18 @@ export interface CategoryItem {
 
 const template = html<CategoryChart>/*html*/ `
   <div class="category-chart">
-    ${repeat(x => x.categories.slice(0, x.maxCategories), html<CategoryItem>/*html*/`
-      <div class="category-item">
-        <div class="category-header">
-          <div class="category-label">${x => x.category}</div>
-          <div class="category-amount">${(x, c) => c.parent.formatCurrency(x.amount)} (${x => Math.round(x.percentage)}%)</div>
+    <div class="chart-wrapper">
+      <canvas id="category-canvas"></canvas>
+    </div>
+    <div class="category-legend">
+      ${repeat(x => x.categories.slice(0, x.maxCategories), html<CategoryItem>/*html*/`
+        <div class="legend-item">
+          <div class="legend-color" style="background-color: ${x => x.color}"></div>
+          <div class="legend-label">${x => x.category}</div>
+          <div class="legend-amount">${(x, c) => c.parent.formatCurrency(x.amount)} (${x => Math.round(x.percentage)}%)</div>
         </div>
-        <div class="category-bar-container">
-          <div class="category-bar" style="width: ${x => x.percentage}%; background-color: ${x => x.color}"></div>
-        </div>
-      </div>
-    `)}
+      `)}
+    </div>
   </div>
 `;
 
@@ -27,43 +29,43 @@ const styles = css`
   .category-chart {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
     margin-top: 16px;
   }
   
-  .category-item {
+  .chart-wrapper {
+    height: 200px;
+    width: 100%;
+    position: relative;
+  }
+  
+  .category-legend {
     display: flex;
     flex-direction: column;
+    gap: 8px;
   }
   
-  .category-header {
+  .legend-item {
     display: flex;
-    justify-content: space-between;
-    margin-bottom: 4px;
-  }
-  
-  .category-label {
+    align-items: center;
     font-size: 12px;
-    color: var(--secondary-text, #666);
-    font-weight: 500;
   }
   
-  .category-amount {
-    font-size: 12px;
-    color: var(--secondary-text, #666);
-  }
-  
-  .category-bar-container {
+  .legend-color {
+    width: 12px;
     height: 12px;
-    border-radius: 4px;
-    background-color: var(--divider-color, #eaeaea);
-    overflow: hidden;
+    border-radius: 2px;
+    margin-right: 8px;
   }
   
-  .category-bar {
-    height: 100%;
-    border-radius: 4px;
-    transition: width 0.5s ease;
+  .legend-label {
+    flex-grow: 1;
+    color: var(--secondary-text, #666);
+  }
+  
+  .legend-amount {
+    color: var(--text-color, #333);
+    font-weight: 500;
   }
 `;
 
@@ -75,6 +77,86 @@ const styles = css`
 export class CategoryChart extends FASTElement {
   @observable categories: CategoryItem[] = [];
   @observable maxCategories: number = 5;
+  private chart: Chart | null = null;
+  
+  async connectedCallback() {
+    super.connectedCallback();
+    await this.loadChart();
+  }
+  
+  async loadChart() {
+    // Wait for shadowRoot to be available
+    await new Promise(resolve => setTimeout(resolve, 0));
+    
+    const canvas = this.shadowRoot?.getElementById('category-canvas') as HTMLCanvasElement;
+    if (!canvas) return;
+    
+    // Destroy previous chart if it exists
+    if (this.chart) {
+      this.chart.destroy();
+    }
+    
+    // Prepare data for horizontal bar chart
+    const data = {
+      labels: this.categories.slice(0, this.maxCategories).map(item => item.category),
+      datasets: [{
+        data: this.categories.slice(0, this.maxCategories).map(item => item.amount),
+        backgroundColor: this.categories.slice(0, this.maxCategories).map(item => item.color),
+        borderWidth: 0,
+        borderRadius: 4,
+      }]
+    };
+    
+    // Create new chart
+    this.chart = new Chart(canvas, {
+      type: 'bar',
+      data: data,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: (context) => {
+                const value = context.raw as number;
+                return `${this.formatCurrency(value)}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            ticks: {
+              callback: (value) => {
+                return this.formatAxisLabel(value as number);
+              }
+            }
+          },
+          y: {
+            grid: {
+              display: false,
+              // drawBorder: false
+            }
+          }
+        }
+      }
+    });
+  }
+  
+  formatAxisLabel(value: number): string {
+    // For larger values, abbreviate with K or M
+    if (value >= 1000000) {
+      return `$${(value / 1000000).toFixed(1)}M`;
+    } else if (value >= 1000) {
+      return `$${(value / 1000).toFixed(1)}K`;
+    }
+    return `$${value}`;
+  }
   
   /**
    * Format currency numbers

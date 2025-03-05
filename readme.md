@@ -26,6 +26,9 @@
   Once done, it goes away
   - maybe pinnable?
 ## mfes/widgets
+### Financial-Health-widget
+- Monthly spending, is it only looking at expenses?
+  Because there should be a difference about recurring payments, and expenses
   
 # Features
 - Toast
