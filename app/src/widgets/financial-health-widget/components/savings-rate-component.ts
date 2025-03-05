@@ -9,21 +9,19 @@ export interface SavingsGoal {
 }
 
 const template = html<SavingsRateComponent>/*html*/ `
-  <div class="section savings-section">
-    <div class="savings-rate-container">
+  <div class="savings-rate-container">
+    <div class="savings-rate-header">
       <div class="rate-chart-container">
         <canvas id="savings-rate-canvas"></canvas>
         <div class="rate-text">${x => Math.round(x.rate)}%</div>
       </div>
-      <div class="savings-rate-text">
-        ${x => x.getSavingsRateMessage()}
-      </div>
+      <div class="savings-message">${x => x.getSavingsRateMessage()}</div>
     </div>
     
     <div class="savings-goals">
-      <h5>Savings Goals Progress</h5>
+      <h5>Goals Progress</h5>
       <div class="goals-list">
-        ${repeat(x => x.goals, html<SavingsGoal, SavingsRateComponent>/*html*/`
+        ${repeat(x => x.goals.slice(0, 2), html<SavingsGoal, SavingsRateComponent>/*html*/`
           <div class="goal-item">
             <div class="goal-header">
               <div class="goal-label">${x => x.label}</div>
@@ -43,34 +41,23 @@ const template = html<SavingsRateComponent>/*html*/ `
 `;
 
 const styles = css`
-  .savings-section {
-    padding: 16px;
-    background-color: var(--background-light, #f9f9f9);
-    border-radius: 6px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  .savings-rate-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
   }
   
-  h4, h5 {
-    margin: 0 0 12px 0;
-    font-size: 16px;
-    color: var(--secondary-text, #555);
-  }
-  
-  h5 {
-    margin: 16px 0 8px 0;
-    font-size: 14px;
+  .savings-rate-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 10px;
   }
   
   /* Savings Rate Ring */
-  .savings-rate-container {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-  
   .rate-chart-container {
-    width: 80px;
-    height: 80px;
+    width: 56px;
+    height: 56px;
     position: relative;
     flex-shrink: 0;
   }
@@ -85,76 +72,87 @@ const styles = css`
     color: var(--text-color, #333);
   }
   
-  .savings-rate-text {
-    font-size: 14px;
-    flex-grow: 1;
+  .savings-message {
+    font-size: 13px;
+    flex: 1;
+    min-width: 0;
   }
   
   /* Savings Goals */
   .savings-goals {
-    margin-top: 16px;
+    margin-top: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  
+  h5 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: var(--secondary-text, #555);
   }
   
   .goals-list {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 10px;
+    overflow-y: auto;
   }
   
   .goal-item {
     display: flex;
     flex-direction: column;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--divider-color, #eaeaea);
-  }
-  
-  .goal-item:last-child {
-    border-bottom: none;
   }
   
   .goal-header {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
   }
   
   .goal-label {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--text-color, #333);
     font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 70%;
   }
   
   .goal-amount {
-    font-size: 14px;
+    font-size: 12px;
     color: var(--secondary-text, #666);
+    white-space: nowrap;
   }
   
   .goal-progress-container {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 6px;
   }
   
   .goal-progress-bar {
     flex-grow: 1;
-    height: 8px;
+    height: 6px;
     background-color: var(--divider-color, #eaeaea);
-    border-radius: 4px;
+    border-radius: 3px;
     overflow: hidden;
   }
   
   .goal-progress-fill {
     height: 100%;
     background-color: var(--success-color, #2ecc71);
-    border-radius: 4px;
+    border-radius: 3px;
     transition: width 0.5s ease;
   }
   
   .goal-percentage {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--text-color, #333);
-    min-width: 40px;
+    min-width: 36px;
     text-align: right;
   }
 `;
@@ -318,13 +316,13 @@ export class SavingsRateComponent extends FASTElement {
    */
   getSavingsRateMessage(): string {
     if (this.rate >= 20) {
-      return "Excellent! You're saving 20%+ of your income. You're on track for financial independence and building wealth for the future.";
+      return "Excellent! Your 20%+ savings rate is building wealth for the future.";
     } else if (this.rate >= 10) {
-      return "Good job! Saving 10-20% of your income is building a solid financial foundation. Consider increasing this rate over time.";
+      return "Good job! Your 10-20% savings rate builds a solid financial foundation.";
     } else if (this.rate > 0) {
-      return "You're making progress by saving some of your income. Try to increase your savings rate to at least 10% for better financial security.";
+      return "You're making progress. Try to increase to at least 10% for better security.";
     } else {
-      return "You're currently not allocating any income to savings or investments. Focus on reducing expenses or increasing income to start saving.";
+      return "Focus on reducing expenses or increasing income to start saving.";
     }
   }
 

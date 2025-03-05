@@ -18,11 +18,14 @@ const template = html<ExpenseCategoriesChart>/*html*/ `
 
 const styles = css`
   .expense-categories-chart {
-    margin-top: 12px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
   }
   
   .chart-container {
-    height: 200px;
+    flex: 1;
+    min-height: 0;
     width: 100%;
     position: relative;
   }
@@ -57,50 +60,75 @@ export class ExpenseCategoriesChart extends FASTElement {
     // Only create chart if we have data
     if (this.categories.length === 0) return;
     
-    // Prepare data for pie chart - limit to top 5 categories
+    // Get top categories sorted by amount
     const topCategories = [...this.categories]
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 5);
-      console.log('topCategories', topCategories.map(item => item.category));
-      console.log('topCategories-data', topCategories.map(item => item.amount));
     
+    // Prepare data for horizontal stacked bar chart
     const data = {
-      labels: topCategories.map(item => item.category),
-      datasets: [{
-        data: topCategories.map(item => item.amount),
-        // backgroundColor: topCategories.map(item => item.color),
-        // borderWidth: 1,
-        // borderColor: 'white'
-      }]
+      labels: ['Expenses'],
+      datasets: topCategories.map(category => ({
+        label: category.category,
+        data: [category.amount],
+        backgroundColor: category.color,
+        borderColor: 'white',
+        borderWidth: 0.5,
+        barPercentage: 0.8,
+        categoryPercentage: 0.9
+      }))
     };
-
-    console.log('expenses', data);
     
-    // Create new chart
+    // Create new horizontal stacked bar chart
     this.chart = new Chart(canvas, {
-      type: 'pie',
+      type: 'bar',
       data: data,
       options: {
+        indexAxis: 'y', // Horizontal bar
         responsive: true,
         maintainAspectRatio: false,
+        scales: {
+          x: {
+            stacked: true,
+            grid: {
+              display: false
+            },
+            ticks: {
+              callback: (value) => {
+                return value === 0 ? '' : this.formatCurrencyShort(Number(value));
+              }
+            }
+          },
+          y: {
+            stacked: true,
+            display: false
+          }
+        },
         plugins: {
           legend: {
-            position: 'right',
+            position: 'bottom',
+            align: 'start',
             labels: {
               boxWidth: 12,
               font: {
                 size: 11
-              }
+              },
+              padding: 8
             }
           },
           tooltip: {
             callbacks: {
               label: (context) => {
-                const dataIndex = context.dataIndex;
-                const category = topCategories[dataIndex];
+                const category = topCategories[context.datasetIndex];
                 return `${category.category}: ${this.formatCurrency(category.amount)} (${Math.round(category.percentage)}%)`;
               }
             }
+          }
+        },
+        layout: {
+          padding: {
+            top: 5,
+            bottom: 5
           }
         }
       }
@@ -115,5 +143,17 @@ export class ExpenseCategoriesChart extends FASTElement {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0 
     });
+  }
+
+  /**
+   * Format currency with K/M abbreviations for axis labels
+   */
+  formatCurrencyShort(value: number): string {
+    if (value >= 1000000) {
+      return `$${(value / 1000000).toFixed(1)}M`;
+    } else if (value >= 1000) {
+      return `$${(value / 1000).toFixed(0)}K`;
+    }
+    return `$${value}`;
   }
 }

@@ -16,108 +16,60 @@ export interface AccountTypeMapItem {
 
 const template = html<NetWorthComponent>/*html*/ `
   <div class="accounts-visualization">
-    <div class="visual-balance">
-      <div class="balance-bar-container">
-        <div class="balance-bar assets-bar" 
-             style="width: ${x => x.getAssetsPercentageWidth()}%">
-          <span class="bar-label">Assets</span>
+    <div class="chart-section">
+      <div class="chart-wrapper">
+        <canvas id="account-types-canvas"></canvas>
+      </div>
+      
+      <div class="account-legend">
+        ${repeat(x => x.accountTypeLegendItems, html<AccountTypeMapItem>/*html*/`
+          <div class="legend-item">
+            <div class="legend-color" style="background-color: ${x => x.color}"></div>
+            <div class="legend-label">${x => x.type.charAt(0).toUpperCase() + x.type.slice(1)}</div>
+          </div>
+        `)}
+      </div>
+      
+      <div class="account-summary">
+        <div class="summary-item assets">
+          <div class="summary-label">Assets:</div>
+          <div class="summary-value">${x => x.formatCurrencyShort(x.totalAssets)}</div>
         </div>
-        <div class="balance-bar liabilities-bar" 
-             style="width: ${x => x.getLiabilitiesPercentageWidth()}%">
-          <span class="bar-label">Liabilities</span>
+        <div class="summary-item liabilities">
+          <div class="summary-label">Liabilities:</div>
+          <div class="summary-value">${x => x.formatCurrencyShort(x.totalLiabilities)}</div>
         </div>
       </div>
     </div>
-    
-    ${when(x => x.showChart && x.accountTypeData.length > 0, html<NetWorthComponent>/*html*/`
-      <div class="chart-section">
-        <h5>Account Distribution</h5>
-        <div class="chart-wrapper">
-          <canvas id="account-types-canvas"></canvas>
-        </div>
-        <div class="account-type-legend">
-          ${repeat(x => x.accountTypeLegendItems, html<AccountTypeMapItem>/*html*/`
-            <div class="legend-item">
-              <span class="legend-color" style="background-color: ${x => x.color}"></span>
-              <span class="legend-label">${x => x.type.charAt(0).toUpperCase() + x.type.slice(1)}</span>
-            </div>
-          `)}
-        </div>
-      </div>
-    `)}
   </div>
 `;
 
 const styles = css`
   .accounts-visualization {
-    margin-top: 16px;
-  }
-  
-  h5 {
-    margin: 16px 0 8px 0;
-    font-size: 15px;
-    color: var(--secondary-text, #555);
-  }
-  
-  /* Visual Balance Bar */
-  .visual-balance {
-    margin: 12px 0;
-  }
-  
-  .balance-bar-container {
-    display: flex;
-    height: 36px;
-    border-radius: 18px;
-    overflow: hidden;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
-  }
-  
-  .balance-bar {
-    display: flex;
-    align-items: center;
-    justify-content: center;
     height: 100%;
-    min-width: 40px;
-    color: white;
-    font-weight: 600;
-    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
   }
   
-  .assets-bar {
-    background: linear-gradient(to right, #2ecc71, #27ae60);
-    border-right: 1px solid rgba(0,0,0,0.1);
-  }
-  
-  .liabilities-bar {
-    background: linear-gradient(to right, #e74c3c, #c0392b);
-  }
-  
-  .bar-label {
-    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-    font-size: 14px;
-    white-space: nowrap;
-    padding: 0 12px;
-  }
-  
-  /* Chart Section */
   .chart-section {
-    margin-top: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
   }
   
   .chart-wrapper {
-    height: 180px;
-    margin-bottom: 16px;
+    height: 50px;
+    position: relative;
+    margin-bottom: 8px;
   }
   
-  .account-type-legend {
+  .account-legend {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
-    font-size: 13px;
+    gap: 8px;
+    margin-bottom: 8px;
     justify-content: center;
-    background: rgba(255,255,255,0.6);
-    padding: 8px;
-    border-radius: 6px;
   }
   
   .legend-item {
@@ -126,11 +78,47 @@ const styles = css`
   }
   
   .legend-color {
-    width: 14px;
-    height: 14px;
+    width: 10px;
+    height: 10px;
     border-radius: 2px;
-    margin-right: 6px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    margin-right: 4px;
+  }
+  
+  .legend-label {
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  
+  .account-summary {
+    display: flex;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid var(--divider-color, #eaeaea);
+    font-size: 12px;
+  }
+  
+  .summary-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  
+  .summary-label {
+    font-weight: 500;
+    color: var(--secondary-text, #666);
+  }
+  
+  .summary-value {
+    font-weight: 600;
+  }
+  
+  .assets .summary-value {
+    color: var(--success-color, #2ecc71);
+  }
+  
+  .liabilities .summary-value {
+    color: var(--error-color, #e74c3c);
   }
 `;
 
@@ -179,18 +167,6 @@ export class NetWorthComponent extends FASTElement {
     }
   }
 
-  getAssetsPercentageWidth(): number {
-    const total = Math.abs(this.totalAssets) + Math.abs(this.totalLiabilities);
-    if (total === 0) return 50; // Default to 50-50 if no values
-    return (Math.abs(this.totalAssets) / total) * 100;
-  }
-
-  getLiabilitiesPercentageWidth(): number {
-    const total = Math.abs(this.totalAssets) + Math.abs(this.totalLiabilities);
-    if (total === 0) return 50; // Default to 50-50 if no values
-    return (Math.abs(this.totalLiabilities) / total) * 100;
-  }
-
   async initChart() {
     if (!this.showChart || this.accountTypeData.length === 0) return;
     
@@ -210,43 +186,49 @@ export class NetWorthComponent extends FASTElement {
       };
     });
 
-    // Prepare data for doughnut chart
+    // Prepare data for horizontal stacked bar chart
     const data = {
-      labels: processedData.map(item => item.type.charAt(0).toUpperCase() + item.type.slice(1)),
-      datasets: [{
-        data: processedData.map(item => Math.abs(item.balance)),
-        backgroundColor: processedData.map(item => item.actualColor),
-        borderWidth: 2,
-        borderColor: '#ffffff',
-        hoverOffset: 4
-      }]
+      labels: [''],
+      datasets: processedData.map(item => ({
+        label: item.type.charAt(0).toUpperCase() + item.type.slice(1),
+        data: [Math.abs(item.balance)], // Use absolute value for visualization
+        backgroundColor: item.actualColor,
+        borderColor: 'white',
+        borderWidth: 0.5
+      }))
     };
     
-    // Create new chart
+    // Create new horizontal stacked bar chart
     this.chart = new Chart(canvas, {
-      type: 'doughnut',
+      type: 'bar',
       data: data,
       options: {
+        indexAxis: 'y',
         responsive: true,
         maintainAspectRatio: false,
-        cutout: '65%',
+        scales: {
+          x: {
+            stacked: true,
+            display: false
+          },
+          y: {
+            stacked: true,
+            display: false
+          }
+        },
         plugins: {
           legend: {
-            display: false
+            display: false // We're using custom legends
           },
           tooltip: {
             callbacks: {
               label: (context) => {
-                const dataPoint = this.accountTypeData[context.dataIndex];
-                const formattedBalance = this.formatCurrency(dataPoint.balance);
+                const dataPoint = this.accountTypeData[context.datasetIndex];
+                const formattedBalance = this.formatCurrency(Math.abs(dataPoint.balance));
                 return `${dataPoint.type}: ${formattedBalance} (${Math.round(dataPoint.percentage)}%)`;
               }
             }
           }
-        },
-        animation: {
-          animateScale: true,
-          animateRotate: true
         }
       }
     });
@@ -278,5 +260,17 @@ export class NetWorthComponent extends FASTElement {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2 
     });
+  }
+
+  /**
+   * Format currency with K/M abbreviations for axis labels
+   */
+  formatCurrencyShort(value: number): string {
+    if (value >= 1000000) {
+      return `$${(value / 1000000).toFixed(1)}M`;
+    } else if (value >= 1000) {
+      return `$${(value / 1000).toFixed(0)}K`;
+    }
+    return `$${value}`;
   }
 }

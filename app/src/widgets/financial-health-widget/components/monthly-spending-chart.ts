@@ -21,11 +21,11 @@ const template = html<MonthlySpendingChart>/*html*/ `
     <div class="spending-legend">
       <div class="legend-item">
         <div class="legend-color essential"></div>
-        <div class="legend-label">Essential Spending</div>
+        <div class="legend-label">Essential</div>
       </div>
       <div class="legend-item">
         <div class="legend-color discretionary"></div>
-        <div class="legend-label">Discretionary Spending</div>
+        <div class="legend-label">Discretionary</div>
       </div>
     </div>
   </div>
@@ -35,26 +35,27 @@ const styles = css`
   :host {
     display: block;
     width: 100%;
+    height: 100%;
   }
 
   .monthly-spending-container {
     display: flex;
     flex-direction: column;
     width: 100%;
+    height: 100%;
   }
 
   .chart-wrapper {
-    margin-bottom: 8px;
+    flex: 1;
+    min-height: 0;
     width: 100%;
-    height: 200px;
+    position: relative;
   }
   
   .trend-info {
     text-align: center;
-    font-size: 14px;
-    margin-top: 8px;
-    padding: 4px;
-    border-radius: 4px;
+    font-size: 11px;
+    padding: 2px 0;
   }
   
   .trend-info.up {
@@ -72,9 +73,9 @@ const styles = css`
   .spending-legend {
     display: flex;
     justify-content: center;
-    gap: 20px;
-    margin-top: 8px;
-    font-size: 12px;
+    gap: 14px;
+    margin-top: 2px;
+    font-size: 10px;
   }
   
   .legend-item {
@@ -83,10 +84,10 @@ const styles = css`
   }
   
   .legend-color {
-    width: 12px;
-    height: 12px;
+    width: 8px;
+    height: 8px;
     border-radius: 2px;
-    margin-right: 6px;
+    margin-right: 3px;
   }
   
   .legend-color.essential {

@@ -47,52 +47,69 @@ const template = html<FinancialHealthWidget>/*html*/ `
     
     ${when(x => !x.loading && !x.error, html<FinancialHealthWidget>/*html*/`
       <div class="health-content">
-        <div class="section net-worth-section">
-          <h4>Net Worth Summary</h4>
-          <div class="net-worth-value" style="color: ${x => x.netWorth >= 0 ? 'var(--success-color, #2ecc71)' : 'var(--error-color, #e74c3c)'}">
-            ${x => x.formatCurrency(x.netWorth)} ${x => x.primaryCurrency}
+        <!-- Recommendations banner -->
+        <div class="recommendations-banner">
+          <div class="banner-header">
+            <h4>Recommendations</h4>
+            <span class="recommendation-count">${x => x.recommendations.length} items</span>
           </div>
-          <div class="net-worth-details">
-            <div class="detail-item">
-              <span class="detail-label">Assets:</span>
-              <span class="detail-value positive">${x => x.formatCurrency(x.totalAssets)} ${x => x.primaryCurrency}</span>
+          <recommendations-component :recommendations="${x => x.recommendations}"></recommendations-component>
+        </div>
+        
+        <!-- Row 1: Net Worth and Savings Rate -->
+        <div class="panel-row net-worth-savings-row">
+          <div class="panel net-worth-panel">
+            <h4>Net Worth</h4>
+            <div class="net-worth-value" style="color: ${x => x.netWorth >= 0 ? 'var(--success-color, #2ecc71)' : 'var(--error-color, #e74c3c)'}">
+              ${x => x.formatCurrency(x.netWorth)} ${x => x.primaryCurrency}
             </div>
-            <div class="detail-item">
-              <span class="detail-label">Liabilities:</span>
-              <span class="detail-value negative">${x => x.formatCurrency(x.totalLiabilities)} ${x => x.primaryCurrency}</span>
+            <div class="net-worth-details">
+              <div class="detail-item">
+                <span class="detail-label">Assets:</span>
+                <span class="detail-value positive">${x => x.formatCurrency(x.totalAssets)}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Liabilities:</span>
+                <span class="detail-value negative">${x => x.formatCurrency(x.totalLiabilities)}</span>
+              </div>
+            </div>
+
+            <div class="account-types">
+              ${when(x => x.accountTypeData.length > 1, html<FinancialHealthWidget>`
+                <net-worth-component 
+                  totalAssets="${x => x.totalAssets}"
+                  totalLiabilities="${x => x.totalLiabilities}"
+                  :accountTypeData="${x => x.accountTypeData}"
+                  ?showChart="${true}">
+                </net-worth-component>
+              `)}
             </div>
           </div>
           
-          <!-- Use the simplified net-worth-component -->
-          <net-worth-component 
-            totalAssets="${x => x.totalAssets}"
-            totalLiabilities="${x => x.totalLiabilities}"
-            :accountTypeData="${x => x.accountTypeData}"
-            ?showChart="${x => x.accountTypeData.length > 1}">
-          </net-worth-component>
+          <div class="panel savings-panel">
+            <h4>Savings Rate</h4>
+            <savings-rate-component 
+              rate="${x => x.savingsRate}" 
+              :goals="${x => x.savingsGoals}">
+            </savings-rate-component>
+          </div>
         </div>
         
-        <div class="section">
+        <!-- Row 2: Monthly Spending -->
+        <div class="panel spending-panel">
           <h4>Monthly Spending</h4>
           <monthly-spending-chart 
             :dataPoints="${x => x.monthlySpendingDataPoints}"
             trend="${x => x.spendingTrend}"
             trendMessage="${x => x.spendingTrendText}">
           </monthly-spending-chart>
-          
-          <h5>Top Expense Categories</h5>
+        </div>
+        
+        <!-- Row 3: Top Expenses -->
+        <div class="panel expenses-panel">
+          <h4>Top Expenses</h4>
           <expense-categories-chart :categories="${x => x.expenseCategories}"></expense-categories-chart>
         </div>
-        
-        <div class="section">
-          <h4>Savings Rate</h4>
-          <savings-rate-component 
-            rate="${x => x.savingsRate}" 
-            :goals="${x => x.savingsGoals}">
-          </savings-rate-component>
-        </div>
-        
-        <recommendations-component :recommendations="${x => x.recommendations}"></recommendations-component>
       </div>
       
       <div class="widget-footer">
@@ -115,7 +132,7 @@ const styles = css`
   }
   
   .widget-header {
-    padding: 16px;
+    padding: 12px 16px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -127,107 +144,169 @@ const styles = css`
     font-size: 18px;
   }
   
-  h4, h5 {
-    margin: 0 0 12px 0;
-    font-size: 16px;
+  h4 {
+    margin: 0 0 8px 0;
+    font-size: 15px;
     color: var(--secondary-text, #555);
   }
   
-  h5 {
-    margin: 16px 0 8px 0;
-    font-size: 14px;
-  }
-  
   .health-content {
-    padding: 16px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 12px;
     overflow-y: auto;
     flex: 1;
   }
   
-  .section {
-    padding: 16px;
+  /* Recommendations banner */
+  .recommendations-banner {
+    background-color: var(--background-light, #f0f8ff);
+    border-radius: 6px;
+    padding: 10px 12px;
+    border-left: 4px solid var(--primary-color, #3498db);
+  }
+  
+  .banner-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  
+  .banner-header h4 {
+    margin: 0;
+  }
+  
+  .recommendation-count {
+    font-size: 12px;
+    color: var(--secondary-text, #666);
+    background-color: var(--background-color, #fff);
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  
+  /* Panel row for net worth and savings */
+  .panel-row {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+  }
+  
+  .net-worth-savings-row {
+    height: 220px;
+  }
+  
+  .panel {
     background-color: var(--background-light, #f9f9f9);
     border-radius: 6px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    min-width: 0; /* For flex shrinking */
+    overflow: hidden;
+  }
+  
+  /* Net worth panel (left, row 1) */
+  .net-worth-panel {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .net-worth-value {
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 6px;
+  }
+  
+  .net-worth-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+  
+  .detail-item {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .detail-label {
+    color: var(--secondary-text, #666);
+  }
+  
+  .detail-value.positive {
+    color: var(--success-color, #2ecc71);
+  }
+  
+  .detail-value.negative {
+    color: var(--error-color, #e74c3c);
+  }
+  
+  .account-types {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Savings panel (right, row 1) */
+  .savings-panel {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  /* Spending panel (row 2) */
+  .spending-panel {
+    height: 180px;
+  }
+  
+  /* Expenses panel (row 3) */
+  .expenses-panel {
+    height: 180px;
+    display: flex;
+    flex-direction: column;
   }
   
   /* Loading and Error States */
-  .loading-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 32px;
-    flex: 1;
-  }
-  
-  .spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid rgba(0, 0, 0, 0.1);
-    border-radius: 50%;
-    border-top-color: var(--primary-color, #3498db);
-    animation: spin 1s ease-in-out infinite;
-    margin-bottom: 16px;
-  }
-  
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-  
-  .error-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 32px;
-    flex: 1;
-  }
-  
-  .error-message {
-    color: var(--error-color, #e74c3c);
-    text-align: center;
-    margin-bottom: 16px;
-  }
-  
-  .retry-button {
-    background-color: var(--error-color, #e74c3c);
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: background-color 0.2s;
-  }
-  
-  .retry-button:hover {
-    background-color: #c0392b;
+  .loading-state, .error-state {
+    // ...existing code...
   }
   
   /* Widget Footer */
   .widget-footer {
-    padding: 12px 16px;
-    border-top: 1px solid var(--divider-color, #eaeaea);
-    text-align: right;
+    // ...existing code...
   }
   
   .primary-button {
-    background-color: var(--primary-color, #3498db);
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s;
+    // ...existing code...
   }
   
-  .primary-button:hover {
-    background-color: var(--primary-color-hover, #2980b9);
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .panel-row {
+      flex-direction: column;
+      height: auto;
+    }
+    
+    .net-worth-savings-row, .net-worth-panel, .savings-panel {
+      height: auto;
+      min-height: 200px;
+    }
+    
+    .spending-panel, .expenses-panel {
+      height: 180px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .spending-panel, .expenses-panel {
+      height: 220px;
+    }
   }
 `;
 

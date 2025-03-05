@@ -1,49 +1,71 @@
-import { FASTElement, customElement, html, css, observable, repeat } from "@microsoft/fast-element";
+import { FASTElement, customElement, html, css, observable, when } from "@microsoft/fast-element";
 
 const template = html<RecommendationsComponent>/*html*/ `
-  <div class="section recommendations-section">
-    <h4>Recommendations</h4>
-    <div class="recommendations-list">
-      ${repeat(x => x.recommendations.length > 0 ? x.recommendations : ['no-recommendations'], html<string, RecommendationsComponent>`
-        ${(x, c) => x === 'no-recommendations' 
-          ? html<RecommendationsComponent>`<div class="no-recommendations">No recommendations at this time. Keep up the good work!</div>`
-          : html<RecommendationsComponent>`<div class="recommendation-item">${x}</div>`
-        }
-      `)}
-    </div>
+  <div class="recommendations-container">
+    ${when(x => x.recommendations.length > 0, html<RecommendationsComponent>`
+      <div class="recommendations-list">
+        <div class="recommendation-item">${x => x.recommendations[0]}</div>
+        ${when(x => x.recommendations.length > 1, html<RecommendationsComponent>`
+          <div class="more-recommendations">
+            +${x => x.recommendations.length - 1} more recommendation${x => x.recommendations.length > 2 ? 's' : ''}
+          </div>
+        `)}
+      </div>
+    `)}
+    
+    ${when(x => x.recommendations.length === 0, html<RecommendationsComponent>`
+      <div class="no-recommendations">No recommendations at this time. Keep up the good work!</div>
+    `)}
   </div>
 `;
 
 const styles = css`
-  .recommendations-section {
-    padding: 16px;
-    background-color: var(--background-light, #f9f9f9);
-    border-radius: 6px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  }
-  
-  h4 {
-    margin: 0 0 12px 0;
-    font-size: 16px;
-    color: var(--secondary-text, #555);
+  .recommendations-container {
+    width: 100%;
   }
   
   .recommendations-list {
-    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
   
   .recommendation-item {
-    margin-bottom: 8px;
-    padding: 8px 12px;
+    font-size: 13px;
+    flex-grow: 1;
+    padding: 4px 0;
+  }
+  
+  .more-recommendations {
+    font-size: 12px;
+    color: var(--primary-color, #3498db);
     background-color: var(--background-color, #fff);
-    border-left: 3px solid var(--primary-color, #3498db);
-    border-radius: 0 4px 4px 0;
+    padding: 2px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
   }
   
   .no-recommendations {
     color: var(--secondary-text, #666);
     font-style: italic;
-    padding: 8px 0;
+    padding: 4px 0;
+    font-size: 13px;
+  }
+  
+  @media (max-width: 600px) {
+    .recommendations-list {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+    
+    .recommendation-item {
+      width: 100%;
+    }
+    
+    .more-recommendations {
+      align-self: flex-end;
+    }
   }
 `;
 

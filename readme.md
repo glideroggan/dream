@@ -6,6 +6,7 @@
   - ✔️we 'had' several modals, we should only have one
 
 # TODO
+
 - should we change the name? widgets are the MFE equivalent, while same component, but with -at-a-glance, is the widget?
   or should each widget have two states, one full-size, and one at-a-glance? so that you can always minimize each section, and if you minimize all, you get the at-a-glance view?
 - account info workflow, needs an empty/default state when no account is selected
@@ -16,6 +17,9 @@
   - components
   - services
   - repositories
+- importmaps
+  - it doesn't look like we can "download" a json acting as an importmap, but nothing is stopping us from hitting an api that creates the document for us, and at that time we can create the JSON file for the importmap
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules#importing_modules_using_import_maps
 
 ## workflows
 - edit payment contacts
@@ -27,6 +31,22 @@
   - maybe pinnable?
 ## mfes/widgets
 ### Financial-Health-widget
+- We should make each section into a widget
+- all widgets should have different layouts depending on the size
+  - at a glance
+  - full size
+  - squarish
+  - tall
+  - wide
+- a widget can be inside another widget
+  - make this work with slots
+  This means that the Financial Health widget are supposed to have these widgets, but these widgets can also be found through search, and added to the home page, or any other page, and resized to fit the layout
+- be able to resize widgets
+
+yeah, not happy with this. 
+- The net worth summary is too big
+- should we break out some of the insights into their own widgets?
+  
 - one full widget
 - collapsable to at-a-glance
 - collapsable sections inside the widget
