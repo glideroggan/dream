@@ -33,7 +33,10 @@ const styles = css`
 
   .chart-wrapper {
     margin-bottom: 8px;
+    
     width: 100%;
+    width: 800px;
+    height: 200px;
   }
   
   .trend-info {
@@ -77,9 +80,16 @@ export class MonthlySpendingChart extends FASTElement {
   async loadChart() {
     const canvas = this.shadowRoot?.getElementById('spending-canvas') as HTMLCanvasElement
     if (!canvas) return;
+    console.log(canvas)
+    const data = this.prepareChartData()
+    console.log(data)
     new Chart(canvas, {
       type: 'line',
-      data: this.prepareChartData(),
+      data: data,
+      options:{
+        responsive: true,
+        maintainAspectRatio: false
+    }
     });
   }
 
@@ -95,14 +105,15 @@ export class MonthlySpendingChart extends FASTElement {
         {
           label: 'Monthly Spending',
           data: values,
-          borderColor: 'rgb(53, 162, 235)',
-          backgroundColor: 'rgba(53, 162, 235, 0.2)',
           tension: 0.4,
           fill: true,
           pointBackgroundColor: '#fff',
-          pointBorderColor: 'rgb(53, 162, 235)',
           pointRadius: 4,
           pointHoverRadius: 6
+          // NOTE: below values seems to destroy the graph
+          // borderColor: '#36A2EB',
+          // backgroundColor: '#9BD0F5',
+          // pointBorderColor: 'rgb(53, 162, 235)',
         }
       ]
     };
