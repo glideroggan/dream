@@ -27,8 +27,10 @@
   - maybe pinnable?
 ## mfes/widgets
 ### Financial-Health-widget
-- Monthly spending, is it only looking at expenses?
-  Because there should be a difference about recurring payments, and expenses
+- one full widget
+- collapsable to at-a-glance
+- collapsable sections inside the widget
+  
   
 # Features
 - Toast
@@ -120,3 +122,5 @@ Which one should we use? and why are there different ones?
 
 # search
 ## smartness
+
+

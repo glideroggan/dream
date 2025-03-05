@@ -15,9 +15,10 @@ import "./components/recommendations-component";
 
 // Import component interfaces
 import { SavingsGoal } from "./components/savings-rate-component";
-import { AccountTypeMapItem } from "./components/net-worth-component";
+import { AccountTypeData, AccountTypeMapItem } from "./components/net-worth-component";
 import { DataPoint } from "./components/monthly-spending-chart";
 import { CategoryExpense } from "./components/expense-categories-chart";
+
 
 const template = html<FinancialHealthWidget>/*html*/ `
   <div class="financial-health-widget">
@@ -46,7 +47,7 @@ const template = html<FinancialHealthWidget>/*html*/ `
     
     ${when(x => !x.loading && !x.error, html<FinancialHealthWidget>/*html*/`
       <div class="health-content">
-        <div class="section">
+        <div class="section net-worth-section">
           <h4>Net Worth Summary</h4>
           <div class="net-worth-value" style="color: ${x => x.netWorth >= 0 ? 'var(--success-color, #2ecc71)' : 'var(--error-color, #e74c3c)'}">
             ${x => x.formatCurrency(x.netWorth)} ${x => x.primaryCurrency}
@@ -62,7 +63,13 @@ const template = html<FinancialHealthWidget>/*html*/ `
             </div>
           </div>
           
-          <net-worth-chart :accountTypeData="${x => x.accountTypeData}"></net-worth-chart>
+          <!-- Use the simplified net-worth-component -->
+          <net-worth-component 
+            totalAssets="${x => x.totalAssets}"
+            totalLiabilities="${x => x.totalLiabilities}"
+            :accountTypeData="${x => x.accountTypeData}"
+            ?showChart="${x => x.accountTypeData.length > 1}">
+          </net-worth-component>
         </div>
         
         <div class="section">
@@ -260,7 +267,7 @@ export class FinancialHealthWidget extends FASTElement {
   @observable expenseCategories: CategoryExpense[] = [];
 
   // Account type data for visualization
-  @observable accountTypeData: any[] = [];
+  @observable accountTypeData: AccountTypeData[] = [];
   @observable accountTypeLegendItems: AccountTypeMapItem[] = [];
   @observable savingsGoals: SavingsGoal[] = [];
   
@@ -649,13 +656,14 @@ export class FinancialHealthWidget extends FASTElement {
     const accountBalances = new Map<string, number>();
     const accountTypeColorMap = new Map<string, string>();
     
-    // Define colors for account types
-    accountTypeColorMap.set('checking', 'var(--primary-color, #3498db)');
-    accountTypeColorMap.set('savings', 'var(--success-color, #2ecc71)');
-    accountTypeColorMap.set('investment', 'var(--warning-color, #f39c12)');
-    accountTypeColorMap.set('credit', 'var(--error-color, #e74c3c)');
-    accountTypeColorMap.set('loan', 'var(--secondary-color, #9b59b6)');
-    
+    // Define colors for account types using direct hex values instead of CSS variables
+    accountTypeColorMap.set('checking', '#3498db');  // Blue
+    accountTypeColorMap.set('savings', '#2ecc71');   // Green
+    accountTypeColorMap.set('investment', '#f39c12'); // Yellow/Orange
+    accountTypeColorMap.set('credit', '#e74c3c');    // Red
+    accountTypeColorMap.set('loan', '#9b59b6');      // Purple
+    accountTypeColorMap.set('other', '#95a5a6');     // Gray
+
     // Calculate total balance (absolute values) by account type
     for (const account of this.accounts) {
       const type = account.type.toLowerCase();
@@ -671,16 +679,19 @@ export class FinancialHealthWidget extends FASTElement {
     // Calculate total balance across all account types
     const totalBalance = Array.from(accountBalances.values())
       .reduce((sum, balance) => sum + balance, 0);
+
+      console.log('accountBalances', accountBalances.entries());
     
     // Generate account type data for visualization
     this.accountTypeData = Array.from(accountBalances.entries())
       .map(([type, balance]) => ({
         type,
         balance,
-        color: accountTypeColorMap.get(type) || 'gray',
+        color: accountTypeColorMap.get(type) || '#95a5a6', // Default to gray
         percentage: totalBalance > 0 ? (balance / totalBalance) * 100 : 0
       }))
       .sort((a, b) => b.balance - a.balance); // Sort by balance descending
+    console.log('accountTypeData', this.accountTypeData);
     
     // Generate legend items based on what account types are actually present
     this.accountTypeLegendItems = Array.from(accountBalances.keys()).map(type => ({
@@ -721,11 +732,11 @@ export class FinancialHealthWidget extends FASTElement {
    */
   getCategoryColor(index: number): string {
     const colors = [
-      'var(--primary-color, #3498db)',
-      'var(--success-color, #2ecc71)',
-      'var(--warning-color, #f39c12)',
-      'var(--error-color, #e74c3c)',
-      'var(--secondary-color, #9b59b6)'
+      '#3498db', // Blue
+      '#2ecc71', // Green
+      '#f39c12', // Yellow/Orange
+      '#e74c3c', // Red
+      '#9b59b6'  // Purple
     ];
     return colors[index % colors.length];
   }
