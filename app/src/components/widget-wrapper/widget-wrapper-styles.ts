@@ -5,6 +5,11 @@ export const styles = css`
     display: block;
     width: 100%;
     height: 100%;
+    font-family: var(--font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
+    background-color: var(--widget-bg-color, #fff);
+    border-radius: var(--widget-border-radius, 8px);
+    box-shadow: var(--widget-shadow, 0 2px 8px rgba(0, 0, 0, 0.1));
+    overflow: hidden;
     
     /* Define color palette that widgets can inherit */
     --widget-background: #ffffff;
@@ -65,6 +70,12 @@ export const styles = css`
     box-sizing: border-box;
   }
 
+  .widget-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
   .widget-header {
     position: relative;
     padding: var(--widget-header-padding);
@@ -87,6 +98,51 @@ export const styles = css`
     flex: 1;
   }
 
+  .widget-size-controls {
+    display: flex;
+    gap: 4px;
+    margin-right: 12px;
+  }
+
+  .size-button {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    background-color: var(--size-button-bg, #f0f0f0);
+    border: 1px solid var(--size-button-border, #ddd);
+    color: var(--size-button-color, #666);
+    font-size: 12px;
+    font-weight: bold;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
+
+  .size-button:hover {
+    background-color: var(--size-button-hover-bg, #e0e0e0);
+    border-color: var(--size-button-hover-border, #ccc);
+  }
+
+  .size-button-active {
+    background-color: var(--size-button-active-bg, #0078d4);
+    border-color: var(--size-button-active-border, #0078d4);
+    color: var(--size-button-active-color, white);
+  }
+
+  .widget-title {
+    flex: 1;
+    font-size: var(--widget-title-size, 1rem);
+    font-weight: var(--widget-title-weight, 600);
+    text-align: left;
+    color: var(--widget-title-color, #333);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
   /* Close button styles */
   .close-button {
     position: relative;
@@ -105,11 +161,19 @@ export const styles = css`
     opacity: 0.6;
     margin-left: 8px;
     padding: 0;
+    background: none;
+    cursor: pointer;
+    color: var(--widget-close-color, #777);
+    font-size: var(--widget-close-size, 1.2rem);
+    line-height: 1;
+    padding: 0 0 0 8px;
+    margin-left: auto;
   }
   
   .close-button:hover {
     opacity: 1;
     background-color: var(--neutral-layer-3, rgba(0,0,0,0.05));
+    color: var(--widget-close-hover-color, #333);
   }
 
   /* Only show close button on hover for cleaner look */
@@ -274,6 +338,102 @@ export const styles = css`
   
   .cancel-button:hover {
     background-color: var(--hover-bg, rgba(0, 0, 0, 0.05));
+  }
+
+  .widget-content {
+    flex: 1;
+    padding: var(--widget-content-padding, 1rem);
+    overflow: auto;
+  }
+
+  .widget-content.seamless {
+    padding: 0;
+  }
+
+  .loading-container,
+  .error-container,
+  .timeout-warning-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    text-align: center;
+    min-height: 150px;
+  }
+
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 3px solid rgba(0, 120, 212, 0.2);
+    border-top-color: #0078d4;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+  }
+
+  .loading-text {
+    color: #666;
+  }
+
+  .timeout-warning-message {
+    color: #856404;
+    margin-bottom: 1rem;
+  }
+
+  .timeout-buttons {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .timeout-button {
+    padding: 0.375rem 0.75rem;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    cursor: pointer;
+  }
+
+  .timeout-button-wait {
+    background-color: #0078d4;
+    border-color: #0078d4;
+    color: white;
+  }
+
+  .error-container {
+    color: #721c24;
+  }
+
+  .error-icon {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #dc3545;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #dc3545;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+
+  .error-message {
+    margin-bottom: 1rem;
+    max-width: 100%;
+    word-break: break-word;
+  }
+
+  /* State-based styling */
+  .widget-container[state="error"] .widget-header,
+  .widget-container[state="import-error"] .widget-header {
+    background-color: var(--widget-error-header-bg, rgba(220, 53, 69, 0.1));
+    border-bottom-color: var(--widget-error-header-border, rgba(220, 53, 69, 0.2));
+  }
+
+  .widget-container[state="timeout-warning"] .widget-header {
+    background-color: var(--widget-warning-header-bg, rgba(255, 193, 7, 0.1));
+    border-bottom-color: var(--widget-warning-header-border, rgba(255, 193, 7, 0.2));
   }
 
   @media (max-width: 300px) {

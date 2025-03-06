@@ -22,7 +22,7 @@ import { getSearchService } from '../services/search-service';
 // Import grid layout and modal components
 import '../components/grid-layout';
 import '../components/modal-component';
-import '../components/widget-wrapper';
+import '../components/widget-wrapper/widget-wrapper';
 import { workflowManager } from '../services/workflow-manager-service';
 import { repositoryService } from '../services/repository-service';
 import { UserSettings } from '../repositories/settings-repository';

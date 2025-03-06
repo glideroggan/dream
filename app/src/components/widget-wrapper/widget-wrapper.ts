@@ -1,10 +1,11 @@
 import { FASTElement, customElement, observable, attr } from "@microsoft/fast-element";
-import { getWidgetById } from "../widgets/widget-registry";
-import { widgetService } from "../services/widget-service";
+import { getWidgetById } from "../../widgets/widget-registry";
+import { widgetService } from "../../services/widget-service";
 import { template } from "./widget-wrapper-template";
 import { styles } from "./widget-wrapper-styles";
 import { createWidgetEvents, createBoundEventHandlers, isModuleError } from "./widget-wrapper-events";
 import { WidgetTimeoutHandler } from "./widget-wrapper-timeout";
+import { GridItemSize } from "../grid-layout";
 
 /**
  * Widget loading states
@@ -27,6 +28,8 @@ export class WidgetWrapper extends FASTElement {
   @attr({ mode: "boolean" }) hideCloseButton: boolean = false;
   @attr widgetName: string = '';
   @attr({ attribute: 'seamless-integration', mode: 'boolean' }) seamlessIntegration: boolean = false;
+  @attr currentSize: GridItemSize = 'md'; // Default widget size
+  @attr({ mode: "boolean" }) showSizeControls: boolean = true; // Whether to show size controls
 
   // Timeout configuration
   @attr({ mode: "fromView" }) warningTimeout: number = 5000; // 5 seconds for warning
@@ -75,6 +78,9 @@ export class WidgetWrapper extends FASTElement {
       this.failureTimeout
     );
   }
+
+  // Available sizes for widget
+  readonly availableSizes: GridItemSize[] = ['sm', 'md', 'lg', 'xl'];
 
   /**
    * Computed property for display name
@@ -443,5 +449,66 @@ export class WidgetWrapper extends FASTElement {
   closeWidget() {
     console.debug(`Closing widget: ${this.widgetId || this.displayName || 'Unknown'} - page type: ${this.pageType}`);
     this.dispatchEvent(this.events.closeEvent);
+  }
+
+  /**
+   * Change widget size and emit change event
+   * @param newSize The new size to apply to the widget
+   */
+  changeSize(newSize: GridItemSize): void {
+    if (this.currentSize === newSize) return;
+    
+    const oldSize = this.currentSize;
+    this.currentSize = newSize;
+    
+    console.debug(`Widget ${this.widgetId} size changing from ${oldSize} to ${newSize}`);
+    
+    // Create and dispatch a custom event for the size change
+    const sizeChangeEvent = new CustomEvent('widget-size-change', {
+      bubbles: true,
+      composed: true,
+      detail: {
+        widgetId: this.widgetId,
+        oldSize,
+        newSize
+      }
+    });
+    
+    this.dispatchEvent(sizeChangeEvent);
+  }
+  
+  /**
+   * Get CSS class for size button based on whether it's the current size
+   * @param size The size to check
+   * @returns CSS class names for the button
+   */
+  getSizeButtonClass(size: string): string {
+    return size === this.currentSize ? 'size-button size-button-active' : 'size-button';
+  }
+  
+  /**
+   * Get display text for size button
+   * @param size The size to get display text for
+   * @returns Display text for the size button
+   */
+  getSizeButtonText(size: GridItemSize): string {
+    switch (size as string) {
+      case 'sm': return 'S';
+      case 'md': return 'M';
+      case 'lg': return 'L';
+      case 'xl': return 'XL';
+      default: return size.charAt(0).toUpperCase();
+    }
+  }
+  
+  /**
+   * Handle size button click event
+   * @param event The click event
+   * @param size The size selected
+   */
+  handleSizeButtonClick(event: Event, size: GridItemSize): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.changeSize(size);
   }
 }

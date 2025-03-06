@@ -107,6 +107,9 @@ export class GridLayout extends FASTElement {
     // Initialize grid style with default settings
     this.updateGridStyle();
     
+    // Listen for widget size change events
+    this.addEventListener('widget-size-change', this.handleWidgetSizeChange.bind(this));
+    
     console.debug("GridLayout connected, metadata size:", this.itemMetadata.size);
   }
   
@@ -117,8 +120,37 @@ export class GridLayout extends FASTElement {
       this.resizeObserver.disconnect();
       this.resizeObserver = null;
     }
+    
+    // Remove event listeners
+    this.removeEventListener('widget-size-change', this.handleWidgetSizeChange.bind(this));
   }
   
+  /**
+   * Handle widget size change events from widget-wrapper components
+   */
+  private handleWidgetSizeChange(event: Event): void {
+    const customEvent = event as CustomEvent;
+    const { widgetId, newSize } = customEvent.detail;
+    
+    console.debug(`GridLayout: Received size change event for widget ${widgetId} to ${newSize}`);
+    
+    // Update the item metadata
+    const metadata = this.itemMetadata.get(widgetId);
+    if (metadata) {
+      metadata.preferredSize = newSize;
+      
+      // Find the element and update its size class
+      const element = this.querySelector(`[data-grid-item-id="${widgetId}"]`) as HTMLElement;
+      if (element) {
+        this.setItemSize(element, newSize);
+        console.debug(`GridLayout: Updated size for ${widgetId} to ${newSize}`);
+        
+        // Update layout to adjust for the new size
+        this.updateLayout();
+      }
+    }
+  }
+
   /**
    * Add an item to the grid with its metadata
    */
@@ -182,6 +214,12 @@ export class GridLayout extends FASTElement {
     const element = this.querySelector(`[data-grid-item-id="${id}"]`) as HTMLElement;
     if (element) {
       this.setItemSize(element, size);
+      
+      // Also update the widget-wrapper's current size if it exists
+      const widgetWrapper = element.querySelector('widget-wrapper');
+      if (widgetWrapper && 'currentSize' in widgetWrapper) {
+        (widgetWrapper as any).currentSize = size;
+      }
     }
     
     console.debug(`GridLayout: Updated size for ${id} to ${size}`);
