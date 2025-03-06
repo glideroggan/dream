@@ -41,7 +41,7 @@ const styles = css`
   }
   
   .widget-action-bar {
-    padding: 12px 16px;
+    padding: 6px 16px;
     display: flex;
     justify-content: flex-end;
     align-items: center;

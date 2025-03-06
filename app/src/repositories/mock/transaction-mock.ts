@@ -454,6 +454,53 @@ export function generateMockTransactions(): Transaction[] {
     }
   );
   
+  // Add upcoming transactions that will cause an overdraft for acc-1 (balance $2549.23)
+  transactions.push(
+    // Large car repair in 2 days
+    {
+      id: generateUUID(),
+      fromAccountId: 'acc-1',
+      toAccountId: 'ext-auto-repair',
+      amount: -1850.00,
+      currency: 'USD',
+      description: 'Emergency Car Repair',
+      status: TransactionStatus.UPCOMING,
+      type: TransactionType.PAYMENT,
+      createdAt: now.toISOString(),
+      scheduledDate: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+      category: 'Auto'
+    },
+    // Insurance payment in 3 days
+    {
+      id: generateUUID(),
+      fromAccountId: 'acc-1',
+      toAccountId: 'ext-insurance',
+      amount: -420.75,
+      currency: 'USD',
+      description: 'Quarterly Insurance Premium',
+      status: TransactionStatus.UPCOMING,
+      type: TransactionType.PAYMENT,
+      createdAt: now.toISOString(),
+      scheduledDate: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+      category: 'Insurance'
+    },
+    // Medical bill in 5 days
+    {
+      id: generateUUID(),
+      fromAccountId: 'acc-1',
+      toAccountId: 'ext-medical',
+      amount: -350.00,
+      currency: 'USD',
+      description: 'Medical Specialist Visit',
+      status: TransactionStatus.UPCOMING,
+      type: TransactionType.PAYMENT,
+      createdAt: now.toISOString(),
+      scheduledDate: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+      category: 'Healthcare'
+    }
+    // Total upcoming payments: $2620.75, which exceeds the current balance of $2549.23
+  );
+  
   return transactions.sort((a, b) => {
     return new Date(b.createdAt).getTime() - new Date(a.createdAt
     ).getTime();

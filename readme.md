@@ -9,6 +9,15 @@
 - size dropdown on left?
 
 # TODO
+- maybe we can show different insights on the accounts, depending on the type of account, these insights needs to respond to the size limits
+  - savings account
+    - show the interest rate
+    - show the amount of interest earned
+    - show the amount of interest paid
+  - loan account
+    - show the interest rate
+    - show the amount of interest paid
+    - show the amount of interest left
 - add a "chaos" layer for repositoryService
   - when the feature is on, when requesting the repository, it will sometimes return a chaos layer on top of the requested repository
   - when asking for data, it will sometimes return an error

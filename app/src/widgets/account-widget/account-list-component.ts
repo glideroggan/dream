@@ -33,9 +33,12 @@ const template = html<AccountListComponent>/*html*/ `
               
               <!-- Show upcoming transactions summary if any exist -->
               ${when((x, c) => c.parent.accountHasUpcoming(x.id), html<Account, AccountListComponent>/*html*/`
-                <div class="upcoming-summary">
+                <div class="upcoming-summary ${(x, c) => c.parent.hasInsufficientFunds(x) ? 'warning' : ''}">
                   <div class="upcoming-dot"></div>
                   ${(x, c) => c.parent.getUpcomingSummary(x.id)}
+                  ${when((x, c) => c.parent.hasInsufficientFunds(x), html<Account, AccountListComponent>/*html*/`
+                    <span class="warning-icon" title="Insufficient funds for upcoming transactions">⚠️</span>
+                  `)}
                 </div>
               `)}
             </div>
@@ -218,6 +221,12 @@ const styles = css`
     width: fit-content;
   }
   
+  .upcoming-summary.warning {
+    color: var(--warning-color, #e67e22);
+    background-color: var(--warning-bg-light, rgba(255, 248, 240, 0.7));
+    border: 1px solid var(--warning-border-color, rgba(230, 126, 34, 0.2));
+  }
+  
   .upcoming-dot {
     width: 6px;
     height: 6px;
@@ -225,6 +234,15 @@ const styles = css`
     background-color: var(--upcoming-color, #9b59b6);
     margin-right: 6px;
     flex-shrink: 0;
+  }
+  
+  .upcoming-summary.warning .upcoming-dot {
+    background-color: var(--warning-color, #e67e22);
+  }
+  
+  .warning-icon {
+    margin-left: 6px;
+    font-size: 11px;
   }
 `;
 
@@ -243,6 +261,7 @@ export class AccountListComponent extends FASTElement {
   // Maps for caching transaction data
   private upcomingTransactionsByAccount: Map<string, TransactionViewModel[]> = new Map();
   private upcomingSummaryCache: Map<string, string> = new Map();
+  private outgoingTotalsByAccount: Map<string, number> = new Map();
 
   constructor() {
     super();
@@ -339,10 +358,17 @@ export class AccountListComponent extends FASTElement {
    * Pre-calculate all account summaries for better performance
    */
   private preCalculateSummaries(): void {
+    this.outgoingTotalsByAccount.clear();
+    
     for (const accountId of this.upcomingTransactionsByAccount.keys()) {
       const transactions = this.upcomingTransactionsByAccount.get(accountId)!;
       if (transactions.length > 0) {
         this.upcomingSummaryCache.set(accountId, this.calculateUpcomingSummary(transactions));
+        
+        // Calculate and store total outgoing amount
+        const outgoing = transactions.filter(t => !t.isIncoming);
+        const outgoingTotal = outgoing.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+        this.outgoingTotalsByAccount.set(accountId, outgoingTotal);
       }
     }
   }
@@ -431,6 +457,14 @@ export class AccountListComponent extends FASTElement {
     } else {
       return 'soon';
     }
+  }
+
+  /**
+   * Check if the account has insufficient funds for upcoming payments
+   */
+  hasInsufficientFunds(account: Account): boolean {
+    const outgoingTotal = this.outgoingTotalsByAccount.get(account.id) || 0;
+    return outgoingTotal > account.balance;
   }
 
   /**
