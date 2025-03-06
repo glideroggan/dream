@@ -266,24 +266,24 @@ export class GridLayout extends FASTElement {
     console.debug(`GridLayout: Updating layout with ${items.length} items, container width: ${containerWidth}px, columns: ${possibleColumns}`);
     
     // Distribute item sizes based on available space
-    this.distributeItemSizes(items, possibleColumns, containerWidth);
+    // this.distributeItemSizes(items, possibleColumns, containerWidth);
     
     // Mark items that need extra space
-    items.forEach(item => {
-      const id = item.getAttribute('data-grid-item-id') || '';
-      const metadata = this.itemMetadata.get(id);
-      if (!metadata) return;
+    // items.forEach(item => {
+    //   const id = item.getAttribute('data-grid-item-id') || '';
+    //   const metadata = this.itemMetadata.get(id);
+    //   if (!metadata) return;
       
-      const minWidth = metadata.minWidth || this.minColumnWidth;
+    //   const minWidth = metadata.minWidth || this.minColumnWidth;
       
-      // If an item's minimum width is more than half the container width,
-      // and we have multiple columns, make it span the full width
-      if (minWidth > containerWidth / 2 && possibleColumns > 1) {
-        item.classList.add('grid-item-needs-space');
-      } else {
-        item.classList.remove('grid-item-needs-space');
-      }
-    });
+    //   // If an item's minimum width is more than half the container width,
+    //   // and we have multiple columns, make it span the full width
+    //   if (minWidth > containerWidth / 2 && possibleColumns > 1) {
+    //     item.classList.add('grid-item-needs-space');
+    //   } else {
+    //     item.classList.remove('grid-item-needs-space');
+    //   }
+    // });
   }
   
   /**
@@ -387,6 +387,7 @@ export class GridLayout extends FASTElement {
     item.classList.add(`span-${span}`);
     
     const id = item.getAttribute('data-grid-item-id') || 'unknown';
+    item.setAttribute('currentSize', size);
     console.debug(`GridLayout: Set item ${id} to size ${size} (span-${span})`);
   }
 }

@@ -47,15 +47,6 @@ export class InvestmentsPage extends BasePage {
     super();
     this.pageTitle = 'Investments';
     this.pageType = 'investments';
-    
-    // Set preferred widget sizes for investment widgets (for future use)
-    this.widgetSizeMap = {
-      ...this.widgetSizeMap,
-      'portfolio-summary': 'lg',
-      'investment-performance': 'lg',
-      'market-news': 'md',
-      'stock-monitor': 'sm'
-    };
   }
   
   async loadWidgets(): Promise<void> {
