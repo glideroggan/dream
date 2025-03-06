@@ -6,18 +6,20 @@ import { ProductRepository } from '../repositories/product-repository';
 import { SettingsRepository } from '../repositories/settings-repository';
 
 export enum TransactionStatus {
-  UPCOMING = 'upcoming',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-  CANCELLED = 'cancelled'
+  COMPLETED = 'COMPLETED',
+  PENDING = 'PENDING',
+  CANCELED = 'CANCELED',
+  FAILED = 'FAILED',
+  UPCOMING = 'UPCOMING'
 }
 
 export enum TransactionType {
-  TRANSFER = 'transfer',
-  DEPOSIT = 'deposit',
-  WITHDRAWAL = 'withdrawal',
-  PAYMENT = 'payment',
-  FEE = 'fee'
+  TRANSFER = 'TRANSFER',
+  PAYMENT = 'PAYMENT',
+  DEPOSIT = 'DEPOSIT',
+  WITHDRAWAL = 'WITHDRAWAL',
+  FEE = 'FEE',
+  INTEREST = 'INTEREST'
 }
 
 // Repository service implementation

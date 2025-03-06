@@ -8,6 +8,7 @@
 - size dropdown on left?
 
 # TODO
+- rename function of the account, in account details
 - should we change the name? widgets are the MFE equivalent, while same component, but with -at-a-glance, is the widget?
   or should each widget have two states, one full-size, and one at-a-glance? so that you can always minimize each section, and if you minimize all, you get the at-a-glance view?
 - account info workflow, needs an empty/default state when no account is selected

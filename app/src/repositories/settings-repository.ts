@@ -4,6 +4,7 @@ import { WidgetSize } from '../widgets/widget-registry';
 import { Entity } from './base-repository';
 import { PaymentContact } from './models/payment-contact';
 import { PageWidgetSettings, WidgetsLayout } from './models/widget-settings';
+import { defaultSettings } from './mock/settings-mock';
 
 export interface UserSettings extends Entity {
   // General preferences
@@ -24,22 +25,6 @@ export interface UserSettings extends Entity {
 
 export class SettingsRepository {
   
-  // Default settings used when no settings exist for a user
-  private defaultSettings: UserSettings = {
-    id: 'user-settings',
-    theme: 'system',
-    language: 'en',
-    enableNotifications: true,
-    // TODO: make these more dynamic, I might add more pages later, and I don't want to update this every time
-    dashboardLayout: [],
-    savingsWidgets: [],
-    investmentsWidgets: [],
-    // Initialize with empty KYC data
-    kycData: undefined,
-    paymentContacts: [],
-    widgetLayout: {},
-  };
-
   constructor(
     private storage: StorageService,
     private userService: UserService
@@ -158,14 +143,14 @@ export class SettingsRepository {
     if (storedSettings) {
       // Return stored settings with defaults for any missing properties
       return {
-        ...this.defaultSettings,
+        ...defaultSettings,
         ...storedSettings
       };
     } else {
       // No settings found, save defaults but don't call getCurrentSettings again
       // Instead, just save and return the defaults directly
-      this.storage.setItem(key, this.defaultSettings);
-      return { ...this.defaultSettings };
+      this.storage.setItem(key, defaultSettings);
+      return { ...defaultSettings };
     }
   }
 
@@ -181,7 +166,7 @@ export class SettingsRepository {
     
     // If no settings exist yet, use defaults
     if (!currentSettings) {
-      currentSettings = { ...this.defaultSettings };
+      currentSettings = { ...defaultSettings };
     }
     
     // Merge updated settings
@@ -204,7 +189,7 @@ export class SettingsRepository {
     const key = `${userId}:settings`;
     
     // Save default settings
-    this.storage.setItem(key, this.defaultSettings);
+    this.storage.setItem(key, defaultSettings);
     
     console.debug('Settings reset to defaults');
   }

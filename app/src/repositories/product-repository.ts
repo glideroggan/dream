@@ -2,6 +2,7 @@ import { Entity, LocalStorageRepository } from './base-repository';
 import { StorageService } from '../services/storage-service';
 import { UserService } from '../services/user-service';
 import { Product } from '../services/product-service';
+import { generateMockProducts } from './mock/product-mock';
 
 /**
  * Product entity for storage that extends the Product interface
@@ -25,26 +26,7 @@ export class ProductRepository extends LocalStorageRepository<ProductEntity> {
    * Initialize with mock data
    */
   protected initializeMockData(): void {
-    const now = new Date().toISOString();
-    
-    const mockProducts: ProductEntity[] = [
-      {
-        id: 'checking-account',
-        name: 'Checking Account',
-        type: 'account',
-        active: true,
-        addedDate: now,
-        lastUpdated: now
-      },
-      {
-        id: 'savings-account',
-        name: 'Savings Account',
-        type: 'account',
-        active: true,
-        addedDate: now,
-        lastUpdated: now
-      }
-    ];
+    const mockProducts = generateMockProducts();
     
     mockProducts.forEach(product => {
       this.entities.set(product.id, product);
