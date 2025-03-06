@@ -63,14 +63,14 @@ const template = html<TransactionListComponent>/*html*/ `
                 <div class="transaction-item">
                   <div class="transaction-date">
                     <div>${x => new Date(x.createdAt).toLocaleDateString()}</div>
-                    <div class="transaction-time">${x => new Date(x.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                    <div class="transaction-time">${x => new Date(x.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                   </div>
                   <div class="transaction-details">
                     <div class="transaction-description">${x => x.description || 'Transaction'}</div>
                     <div class="transaction-type">${x => x.type}</div>
                   </div>
                   <div class="transaction-amount ${x => x.amountClass}">
-                    <div>${x => x.isIncoming ? '+' : '-'} ${x => x.formattedAmount}</div>
+                    <div>${x => x.isIncoming ? '' : ''} ${x => x.formattedAmount}</div>
                     ${when(x => x.formattedBalance, html<TransactionViewModel>/*html*/`
                       <div class="transaction-balance">${x => x.formattedBalance}</div>
                     `)}
@@ -80,8 +80,8 @@ const template = html<TransactionListComponent>/*html*/ `
             </div>
             
             ${when(x => x.hasMoreRegularTransactions, html<TransactionListComponent>/*html*/`
-              <button class="view-all-button" @click="${x => x.showAllTransactions()}">
-                View all transactions
+              <button class="view-all-button" @click="${x => x.loadMoreTransactions()}">
+                Load more transactions
               </button>
             `)}
           `)}
@@ -112,7 +112,7 @@ const template = html<TransactionListComponent>/*html*/ `
                           <div class="transaction-type">${x => x.type}</div>
                         </div>
                         <div class="transaction-amount ${x => x.amountClass}">
-                          <div>${x => x.isIncoming ? '+' : '-'} ${x => x.formattedAmount}</div>
+                          <div>${x => x.isIncoming ? '+' : ''} ${x => x.formattedAmount}</div>
                         </div>
                       </div>
                     `)}
@@ -388,19 +388,27 @@ export class TransactionListComponent extends FASTElement {
   @observable accountId: string = '';
   @observable isLoading: boolean = false;
   @observable hasError: boolean = false;
-  @observable transactions: TransactionViewModel[] = [];
   @observable maxToShow: number = 3;
   @observable activeTab: 'completed' | 'upcoming' = 'completed';
-  
+
   @observable regularTransactions: TransactionViewModel[] = [];
   @observable upcomingTransactions: TransactionViewModel[] = [];
   @observable upcomingGroups: TransactionGroup[] = [];
   @observable visibleRegularTransactions: TransactionViewModel[] = [];
-  
+
+  // Direct iterators for transaction data
+  private regularTransactionIterator: AsyncIterableIterator<Transaction> | null = null;
+  private upcomingTransactionIterator: AsyncIterableIterator<Transaction> | null = null;
+  private batchSize: number = 5;
+
+  // Keep track of whether we've loaded all transactions
+  @observable hasMoreRegularTransactions: boolean = true;
+  @observable hasMoreUpcomingTransactions: boolean = true;
+
   constructor() {
     super();
   }
-  
+
   accountIdChanged() {
     if (this.accountId) {
       this.loadTransactions();
@@ -409,40 +417,56 @@ export class TransactionListComponent extends FASTElement {
 
   async connectedCallback(): Promise<void> {
     super.connectedCallback();
-    
+
     if (this.accountId) {
       await this.loadTransactions();
     }
   }
-  
+
   /**
    * Set the active tab
    */
   setActiveTab(tab: 'completed' | 'upcoming'): void {
     this.activeTab = tab;
   }
-  
+
   /**
    * Load transactions for the current account
    */
   async loadTransactions(): Promise<void> {
     if (!this.accountId) return;
-    
+
+    if (this.regularTransactions.length > 0) {
+      this.maxToShow = this.regularTransactions.length;
+      this.updateVisibleTransactions();
+      return;
+    }
+
     this.isLoading = true;
     this.hasError = false;
-    
+
     try {
       const transactionRepo = repositoryService.getTransactionRepository();
-      const transactions = await transactionRepo.getByAccountId(this.accountId);
-      
-      // Process transactions into view models
-      this.transactions = transactions.map(t => 
-        TransactionViewModelHelper.processTransaction(t, this.accountId)
-      );
-      
-      // Split transactions into regular and upcoming
-      this.processTransactions();
-      
+
+      // Reset state
+      this.regularTransactions = [];
+      this.upcomingTransactions = [];
+      this.hasMoreRegularTransactions = true;
+      this.hasMoreUpcomingTransactions = true;
+
+      // Get fresh iterators for both types of transactions
+      this.regularTransactionIterator = transactionRepo.getByAccountIdIterator(this.accountId);
+      this.upcomingTransactionIterator = transactionRepo.getByAccountIdIterator(this.accountId);
+
+      // Load initial batches
+      await this.loadMoreRegularTransactions();
+      await this.loadMoreUpcomingTransactions();
+
+      // Set initial active tab based on data availability
+      if (this.regularTransactions.length === 0 && this.upcomingTransactions.length > 0) {
+        this.activeTab = 'upcoming';
+      }
+
       this.isLoading = false;
     } catch (error) {
       console.error('Error loading transactions:', error);
@@ -450,37 +474,105 @@ export class TransactionListComponent extends FASTElement {
       this.isLoading = false;
     }
   }
-  
+
   /**
-   * Process transactions into regular and upcoming categories
+   * Load more regular transactions using the iterator
    */
-  private processTransactions(): void {
-    // Split transactions
-    this.regularTransactions = this.transactions.filter(t => 
-      !t.scheduledDate || t.completedDate
-    );
-    
-    this.upcomingTransactions = this.transactions.filter(t => 
-      t.scheduledDate && !t.completedDate
-    );
-    
-    // Sort regular transactions by date (newest first)
-    this.regularTransactions.sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-    
-    // Update visible transactions based on maxToShow
-    this.updateVisibleTransactions();
-    
-    // Group upcoming transactions by date
-    this.upcomingGroups = this.groupUpcomingByDate(this.upcomingTransactions);
-    
-    // Set initial active tab based on data availability
-    if (this.regularTransactions.length === 0 && this.upcomingTransactions.length > 0) {
-      this.activeTab = 'upcoming';
+  async loadMoreRegularTransactions(): Promise<void> {
+    if (!this.regularTransactionIterator || !this.hasMoreRegularTransactions) {
+      return;
+    }
+
+    if (this.regularTransactions.length !== 0 && this.regularTransactions.length < this.maxToShow) {
+      this.maxToShow = this.regularTransactions.length;
+      console.log('maxToShow', this.maxToShow);
+      this.updateVisibleTransactions();
+      return
+    }
+
+    try {
+      this.isLoading = true;
+
+      // Get the next batch using the iterator
+      for (let i = 0; i < this.batchSize; i++) {
+        const result = await this.regularTransactionIterator.next();
+        if (result.done) {
+          this.hasMoreRegularTransactions = false;
+          break;
+        }
+
+        // Process transactions into view models
+        const viewModels = TransactionViewModelHelper.processTransaction(result.value, this.accountId)
+
+        // Add to existing transactions
+        this.regularTransactions = [...this.regularTransactions, viewModels]
+        this.maxToShow = this.regularTransactions.length;
+
+      }
+      // Sort regular transactions by date (newest first)
+      this.regularTransactions.sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+
+
+      // Update visible transactions
+      this.updateVisibleTransactions();
+      console.log('regularTransactions', this.regularTransactions.length, this.hasMoreRegularTransactions);
+
+    }
+    catch (error) {
+      console.error('Error loading more transactions:', error);
+    } finally {
+      this.isLoading = false;
     }
   }
-  
+
+  /**
+   * Load more upcoming transactions using the iterator
+   */
+  async loadMoreUpcomingTransactions(): Promise<void> {
+    if (!this.upcomingTransactionIterator || !this.hasMoreUpcomingTransactions) {
+      return;
+    }
+
+    try {
+      this.isLoading = true;
+
+      // Get the next batch using the iterator
+      for (let i = 0; i < this.batchSize; i++) {
+        const result = await this.upcomingTransactionIterator.next();
+        if (result.done) {
+          this.hasMoreUpcomingTransactions = false;
+          break;
+        }
+        if (result.value.status !== 'UPCOMING') {
+          i--
+          continue;
+        }
+
+        // Process transactions into view models
+        const viewModels = TransactionViewModelHelper.processTransaction(result.value, this.accountId)
+
+        // Add to existing transactions
+        this.upcomingTransactions = [...this.upcomingTransactions, viewModels]
+
+      }
+      // Sort regular transactions by date (newest first)
+      this.upcomingTransactions.sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      this.upcomingGroups = this.groupUpcomingByDate(this.upcomingTransactions);
+
+      // Update visible transactions
+      this.updateVisibleTransactions();
+      console.log('upcomingTransactions', this.upcomingTransactions.length, this.hasMoreUpcomingTransactions);
+    } catch (error) {
+      console.error('Error loading more upcoming transactions:', error);
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
   /**
    * Update which regular transactions are visible based on maxToShow
    */
@@ -493,50 +585,50 @@ export class TransactionListComponent extends FASTElement {
    */
   private groupUpcomingByDate(transactions: TransactionViewModel[]): TransactionGroup[] {
     const groups = new Map<string, TransactionViewModel[]>();
-    
+
     // Sort transactions by scheduled date
     const sortedTransactions = [...transactions].sort((a, b) => {
       return new Date(a.scheduledDate!).getTime() - new Date(b.scheduledDate!).getTime();
     });
-    
+
     // Group by date
     sortedTransactions.forEach(transaction => {
       if (!transaction.scheduledDate) return;
-      
+
       const date = new Date(transaction.scheduledDate);
       const dateKey = date.toISOString().split('T')[0];
-      
+
       if (!groups.has(dateKey)) {
         groups.set(dateKey, []);
       }
-      
+
       groups.get(dateKey)!.push(transaction);
     });
-    
+
     // Convert map to array of groups with display dates
     return Array.from(groups.entries()).map(([dateKey, txns]) => {
       const date = new Date(dateKey);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
-      
+
       // Format the date for display
       let displayDate = '';
-      
+
       if (dateKey === today.toISOString().split('T')[0]) {
         displayDate = 'Today';
       } else if (dateKey === tomorrow.toISOString().split('T')[0]) {
         displayDate = 'Tomorrow';
       } else {
-        displayDate = date.toLocaleDateString(undefined, { 
-          weekday: 'short', 
-          month: 'short', 
+        displayDate = date.toLocaleDateString(undefined, {
+          weekday: 'short',
+          month: 'short',
           day: 'numeric'
         });
       }
-      
+
       return {
         date: dateKey,
         displayDate,
@@ -544,33 +636,51 @@ export class TransactionListComponent extends FASTElement {
       };
     });
   }
-  
+
   /**
    * Check if there are any regular transactions
    */
   get hasRegularTransactions(): boolean {
     return this.regularTransactions.length > 0;
   }
-  
+
   /**
    * Check if there are any upcoming transactions
    */
   get hasUpcomingTransactions(): boolean {
     return this.upcomingTransactions.length > 0;
   }
-  
-  /**
-   * Check if there are more transactions than currently shown
-   */
-  get hasMoreRegularTransactions(): boolean {
-    return this.regularTransactions.length > this.maxToShow;
-  }
 
   /**
-   * Show all transactions
+   * Show all transactions - loads all remaining transactions
    */
-  showAllTransactions(): void {
+  async loadMoreTransactions(): Promise<void> {
+    // First, show all currently loaded transactions
     this.maxToShow = this.regularTransactions.length;
     this.updateVisibleTransactions();
+
+    // If there are more to fetch, load them
+    this.isLoading = true;
+
+    try {
+      // Load the next batch of transactions
+      if (this.regularTransactionIterator) {
+        // Get another batch using the existing iterator
+        await this.loadMoreRegularTransactions();
+
+        // Increase the max to show all transactions we've loaded so far
+        // this.maxToShow += this.batchSize;
+        this.updateVisibleTransactions();
+
+        // // If we've loaded all transactions, update the UI accordingly
+        // if (this.hasLoadedAllRegular) {
+        //   this.maxToShow = this.regularTransactions.length;
+        // }
+      }
+    } catch (error) {
+      console.error('Error loading all transactions:', error);
+    } finally {
+      this.isLoading = false;
+    }
   }
 }

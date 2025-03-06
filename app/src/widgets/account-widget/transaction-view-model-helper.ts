@@ -50,14 +50,33 @@ export class TransactionViewModelHelper {
     
     const relevantBalance = isIncoming ? transaction.toAccountBalance : transaction.fromAccountBalance;
     
+    // Format the amount for display
+    const formatter = new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: transaction.currency || 'USD',
+    });
+    
+    const formattedAmount = formatter.format(amount);
+    
+    // Determine the appropriate CSS class
+    const amountClass = isIncoming ? 'incoming' : 'outgoing';
+    
+    // Format account balance if available
+    let formattedBalance: string | undefined;
+    if (isIncoming && transaction.toAccountBalance !== undefined) {
+      formattedBalance = formatter.format(transaction.toAccountBalance);
+    } else if (!isIncoming && transaction.fromAccountBalance !== undefined) {
+      formattedBalance = formatter.format(transaction.fromAccountBalance);
+    }
+    
     // Create view model with display properties
     return {
       ...transaction,
       amount,
       isIncoming,
-      amountClass: isIncoming ? 'incoming' : 'outgoing',
-      formattedAmount: `${Math.abs(amount).toFixed(2)} ${transaction.currency}`,
-      formattedBalance: relevantBalance ? `${relevantBalance.toFixed(2)} ${transaction.currency}` : undefined
+      amountClass,
+      formattedAmount,
+      formattedBalance
     };
   }
   

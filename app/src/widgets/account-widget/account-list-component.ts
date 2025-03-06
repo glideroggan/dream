@@ -52,8 +52,7 @@ const template = html<AccountListComponent>/*html*/ `
           
           ${when((x, c) => x.id === c.parent.expandedAccountId, html<Account, AccountListComponent>/*html*/`
             <transaction-list
-              :accountId="${x => x.id}"
-              :maxToShow="3">
+              :accountId="${x => x.id}">
             </transaction-list>
           `)}
         </div>
@@ -438,14 +437,14 @@ export class AccountListComponent extends FASTElement {
    * Handle account click to expand/collapse
    */
   handleAccountClick(account: Account) {
-    console.debug('Account clicked:', account);
+    console.log('Account clicked:', account);
     
     // Toggle expanded state
     this.expandedAccountId = this.expandedAccountId === account.id ? null : account.id;
     
-    this.dispatchEvent(new CustomEvent('account-toggle', {
-      detail: { accountId: account.id, expanded: this.expandedAccountId === account.id }
-    }));
+    // this.dispatchEvent(new CustomEvent('account-toggle', {
+    //   detail: { accountId: account.id, expanded: this.expandedAccountId === account.id }
+    // }));
   }
   
   /**

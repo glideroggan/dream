@@ -7,7 +7,6 @@ import {
 } from '../services/repository-service';
 import { generateMockTransactions } from './mock/transaction-mock';
 
-
 export interface Transaction extends Entity {
   fromAccountId: string;
   toAccountId?: string;  // Optional for withdrawals, fees
@@ -40,6 +39,77 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
     
     // Save to storage
     this.saveToStorage();
+  }
+  
+  /**
+   * Create an async generator that yields batches of transactions
+   * @param transactions The transactions to iterate over
+   * @param batchSize The number of transactions to include in each batch
+   */
+  private async *createBatchIterator(
+    transactions: Transaction[], 
+    batchSize: number
+  ): AsyncGenerator<Transaction[]> {
+    for (let i = 0; i < transactions.length; i += batchSize) {
+      const batch = transactions.slice(i, i + batchSize);
+      // Simulate network delay for more realistic behavior in development
+      // In production, this would be a real API call that takes time
+      // await new Promise(resolve => setTimeout(resolve, 100));
+      yield batch;
+    }
+  }
+  
+  /**
+   * Get all transactions as an async iterator
+   * @param batchSize Number of transactions per batch
+   */
+  public async *getAllIterator(): AsyncGenerator<Transaction> {
+    for (const txn of this.entities.values()) {
+      yield txn;
+    }
+  }
+  
+  /**
+   * Get transactions by status as an async iterator
+   * @param status The transaction status to filter by
+   * @param batchSize Number of transactions per batch
+   */
+  public async *getByStatusIterator(status: TransactionStatus): AsyncGenerator<Transaction> {
+    for (const txn of this.entities.values()) {
+      if (txn.status === status) {
+        yield txn;
+      }
+    }
+  }
+  
+  // /**
+  //  * Get upcoming transactions as an async iterator
+  //  * @param batchSize Number of transactions per batch
+  //  */
+  // public async *getUpcomingIterator(): AsyncGenerator<Transaction> {
+  //   yield* this.getByStatusIterator(TransactionStatus.UPCOMING);
+  //   // return this.getByStatusIterator(TransactionStatus.UPCOMING, batchSize);
+  // }
+  
+  // /**
+  //  * Get completed transactions as an async iterator
+  //  * @param batchSize Number of transactions per batch
+  //  */
+  // getCompletedIterator(batchSize = 10): TransactionAsyncIterator {
+  //   return this.getByStatusIterator(TransactionStatus.COMPLETED, batchSize);
+  // }
+  
+  /**
+   * Get account transactions as an async iterator
+   * @param accountId The account ID to filter by
+   * @param batchSize Number of transactions per batch
+   */
+  public async *getByAccountIdIterator(accountId: string): AsyncGenerator<Transaction> {
+    for (const txn of this.entities.values()) {
+      if (txn.fromAccountId === accountId || txn.toAccountId === accountId) {
+        yield txn;
+      }
+    }
   }
   
   /**

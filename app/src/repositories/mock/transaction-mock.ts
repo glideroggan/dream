@@ -454,5 +454,8 @@ export function generateMockTransactions(): Transaction[] {
     }
   );
   
-  return transactions;
+  return transactions.sort((a, b) => {
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt
+    ).getTime();
+  });
 }

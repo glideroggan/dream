@@ -1,6 +1,7 @@
 # BUGS
 - when you add the swish widget, you can't remove it until you reload, or switch page
 - dismiss the search result with esc
+- all the amounts, should be positive, and instead the type of the transaction should be the one that decides if it is showing as a negative value or not
 
 # widget rework
 - title in wrapper can be centered
