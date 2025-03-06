@@ -10,10 +10,10 @@ import {
 import { WorkflowBase, WorkflowResult } from '../workflow-base'
 import { kycService, KycLevel } from '../../services/kyc-service'
 import { repositoryService } from '../../services/repository-service'
+import { Account } from '../../repositories/account-repository'
 
 // Define account types
-export interface AccountType {
-  id: string
+export interface CreateAccountType extends Omit<Account, 'balance'| 'currency'| 'accountNumber'|'isActive'|'createdAt'> {
   name: string
   description: string
   iconEmoji: string
@@ -27,7 +27,7 @@ const template = html<CreateAccountWorkflow>/*html*/ `
     <div class="account-types">
       ${repeat(
         (x) => x.accountTypes,
-        html<AccountType, CreateAccountWorkflow>/*html*/ `
+        html<CreateAccountType, CreateAccountWorkflow>/*html*/ `
           <div
             class="account-type-card ${(x, c) =>
               c.parent.selectedTypeId == x.id ? 'selected' : ''}"
@@ -328,9 +328,10 @@ const styles = css`
 export class CreateAccountWorkflow extends WorkflowBase {
   @attr({ mode: 'boolean' }) autoFocus: boolean = true
 
-  @observable accountTypes: AccountType[] = [
+  @observable accountTypes: CreateAccountType[] = [
     {
       id: 'isk',
+      type: 'investment',
       name: 'ISK Account',
       description: 'Investment Savings Account with tax benefits',
       iconEmoji: '📈',
@@ -340,12 +341,14 @@ export class CreateAccountWorkflow extends WorkflowBase {
     },
     {
       id: 'savings',
+      type: 'savings',
       name: 'Savings Account',
       description: 'Regular savings account with interest',
       iconEmoji: '💰',
     },
     {
       id: 'pension',
+      type: 'pension',
       name: 'Pension Account',
       description: 'Long-term retirement savings',
       iconEmoji: '🏖️',
@@ -606,7 +609,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
         name: this.accountName.trim(),
         balance: 0,
         currency: this.currency,
-        type: selectedType.id,
+        type: selectedType.type,
       })
 
       // Complete the workflow with success

@@ -32,7 +32,7 @@ import { GridLayout } from '../components/grid-layout';
 export const baseContentTemplate = html<BasePage>/*html*/ `
   <div class="content-container">
     <div class="content-header">
-      <h1>${(x) => x.pageTitle}</h1>
+      <h2>${(x) => x.pageTitle}</h2>
     </div>
     ${when<BasePage>(x => !x.ready, html<BasePage>/*html*/ `
       <div class="empty-message">Loading...</div>`

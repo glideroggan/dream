@@ -4,6 +4,7 @@ import { Account } from "../../repositories/account-repository";
 import { repositoryService, TransactionStatus } from "../../services/repository-service";
 import { TransactionViewModelHelper } from "./transaction-view-model-helper";
 import { Transaction } from "../../repositories/transaction-repository";
+import { AccountInsightsHelper, AccountInsight } from "../../helpers/account-insights-helper";
 
 const template = html<AccountListComponent>/*html*/ `
   <div class="accounts-list">
@@ -31,16 +32,29 @@ const template = html<AccountListComponent>/*html*/ `
               <div class="account-name">${x => x.name}</div>
               <div class="account-type">${x => x.type}</div>
               
-              <!-- Show upcoming transactions summary if any exist -->
-              ${when((x, c) => c.parent.accountHasUpcoming(x.id), html<Account, AccountListComponent>/*html*/`
-                <div class="upcoming-summary ${(x, c) => c.parent.hasInsufficientFunds(x) ? 'warning' : ''}">
-                  <div class="upcoming-dot"></div>
-                  ${(x, c) => c.parent.getUpcomingSummary(x.id)}
-                  ${when((x, c) => c.parent.hasInsufficientFunds(x), html<Account, AccountListComponent>/*html*/`
-                    <span class="warning-icon" title="Insufficient funds for upcoming transactions">⚠️</span>
-                  `)}
-                </div>
-              `)}
+              <div class="account-insights">
+                <!-- Account type-specific insights -->
+                ${repeat((x, c) => c.parent.getInsightsForAccount(x), html<AccountInsight>/*html*/`
+                  <div class="insight-item ${x => x.colorClass || 'neutral'}">
+                    ${when(x => x.icon, html<AccountInsight>/*html*/`
+                      <span class="insight-icon">${x => x.icon}</span>
+                    `)}
+                    <span class="insight-label">${x => x.label}:</span>
+                    <span class="insight-value">${x => x.value}</span>
+                  </div>
+                `)}
+                
+                <!-- Show upcoming transactions summary if any exist -->
+                ${when((x, c) => c.parent.accountHasUpcoming(x.id), html<Account, AccountListComponent>/*html*/`
+                  <div class="upcoming-summary ${(x, c) => c.parent.hasInsufficientFunds(x) ? 'warning' : ''}">
+                    <div class="upcoming-dot"></div>
+                    ${(x, c) => c.parent.getUpcomingSummary(x.id)}
+                    ${when((x, c) => c.parent.hasInsufficientFunds(x), html<Account, AccountListComponent>/*html*/`
+                      <span class="warning-icon" title="Insufficient funds for upcoming transactions">⚠️</span>
+                    `)}
+                  </div>
+                `)}
+              </div>
             </div>
             <div class="account-balance">
               <div class="balance-amount">${x => x.balance.toFixed(2)}</div>
@@ -167,6 +181,58 @@ const styles = css`
     color: var(--tertiary-text, #999);
   }
   
+  /* Account insights styling */
+  .account-insights {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .insight-item {
+    display: flex;
+    align-items: center;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    background-color: var(--insights-bg, rgba(247, 247, 247, 0.7));
+    border: 1px solid var(--insights-border, rgba(230, 230, 230, 0.5));
+    max-width: fit-content;
+  }
+  
+  .insight-icon {
+    margin-right: 3px;
+    font-size: 10px;
+  }
+  
+  .insight-label {
+    margin-right: 3px;
+    color: var(--tertiary-text, #999);
+  }
+  
+  .insight-value {
+    font-weight: 500;
+  }
+  
+  /* Insight color classes */
+  .insight-item.success {
+    background-color: var(--success-bg-light, rgba(240, 255, 240, 0.7));
+    border-color: var(--success-border, rgba(46, 204, 113, 0.3));
+    color: var(--success-color, #27ae60);
+  }
+  
+  .insight-item.warning {
+    background-color: var(--warning-bg-light, rgba(255, 248, 240, 0.7));
+    border-color: var(--warning-border, rgba(230, 126, 34, 0.3));
+    color: var(--warning-color, #e67e22);
+  }
+  
+  .insight-item.danger {
+    background-color: var(--danger-bg-light, rgba(255, 235, 235, 0.7));
+    border-color: var(--danger-border, rgba(231, 76, 60, 0.3));
+    color: var(--danger-color, #e74c3c);
+  }
+  
   .account-balance {
     text-align: right;
     margin: 0 16px;
@@ -212,7 +278,6 @@ const styles = css`
   .upcoming-summary {
     display: flex;
     align-items: center;
-    margin-top: 6px;
     font-size: 12px;
     color: var(--upcoming-color, #9b59b6);
     background-color: var(--upcoming-bg-light, rgba(247, 247, 255, 0.5));
@@ -262,6 +327,9 @@ export class AccountListComponent extends FASTElement {
   private upcomingTransactionsByAccount: Map<string, TransactionViewModel[]> = new Map();
   private upcomingSummaryCache: Map<string, string> = new Map();
   private outgoingTotalsByAccount: Map<string, number> = new Map();
+  
+  // Cache for account insights
+  private accountInsightsCache: Map<string, AccountInsight[]> = new Map();
 
   constructor() {
     super();
@@ -308,6 +376,12 @@ export class AccountListComponent extends FASTElement {
       // Clear caches
       this.upcomingTransactionsByAccount.clear();
       this.upcomingSummaryCache.clear();
+      this.accountInsightsCache.clear();
+      
+      // Pre-calculate insights for each account
+      this.accounts.forEach(account => {
+        this.accountInsightsCache.set(account.id, AccountInsightsHelper.getAccountInsights(account));
+      });
       
       // Load upcoming transactions
       const upcomingTransactions = await transactionRepo.getUpcoming();
@@ -465,6 +539,22 @@ export class AccountListComponent extends FASTElement {
   hasInsufficientFunds(account: Account): boolean {
     const outgoingTotal = this.outgoingTotalsByAccount.get(account.id) || 0;
     return outgoingTotal > account.balance;
+  }
+
+  /**
+   * Get insights for a specific account
+   */
+  getInsightsForAccount(account: Account): AccountInsight[] {
+    // First check the cache
+    const cachedInsights = this.accountInsightsCache.get(account.id);
+    if (cachedInsights) {
+      return cachedInsights;
+    }
+    
+    // If not cached (shouldn't happen), generate on the fly
+    const insights = AccountInsightsHelper.getAccountInsights(account);
+    this.accountInsightsCache.set(account.id, insights);
+    return insights;
   }
 
   /**

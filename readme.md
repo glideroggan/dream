@@ -1,14 +1,12 @@
 # BUGS
+- need to update net worth after account and transaction changes
 - when you add the swish widget, you can't remove it until you reload, or switch page
 - dismiss the search result with esc
 - all the amounts, should be positive, and instead the type of the transaction should be the one that decides if it is showing as a negative value or not
+- the button in the bottom in financial health widget is unstyled
 
-# widget rework
-- title in wrapper can be centered
-- close button on right
-- size dropdown on left?
-
-# TODO
+# account widget
+- the upcoming insights could look better, like the others
 - maybe we can show different insights on the accounts, depending on the type of account, these insights needs to respond to the size limits
   - savings account
     - show the interest rate
@@ -18,6 +16,29 @@
     - show the interest rate
     - show the amount of interest paid
     - show the amount of interest left
+
+# account info
+- account info workflow, needs an empty/default state when no account is selected
+- rename function of the account, in account details
+
+# new workflows
+- edit payment contacts
+  Doesn't need to be a "page", can just be a workflow, showing different buttons for doing things
+    - edit
+    - add
+    - remove
+  Once done, it goes away
+  
+
+# workflow
+- maybe pinnable?
+  - Do they become widgets? 
+    - they would need the wrapper?
+- being able to save workflows
+  I might be on page 3, and want to pause/save to do something else
+  and have the ability to continue later
+
+# TODO
 - add a "chaos" layer for repositoryService
   - when the feature is on, when requesting the repository, it will sometimes return a chaos layer on top of the requested repository
   - when asking for data, it will sometimes return an error
@@ -27,13 +48,6 @@
   - when asking for data, it will sometimes return a 200, but with an empty array
   - when asking for data, it will sometimes return a 200, but with a different array
   - when asking for data, it will sometimes return a 200, but with a different object
-- rename function of the account, in account details
-- should we change the name? widgets are the MFE equivalent, while same component, but with -at-a-glance, is the widget?
-  or should each widget have two states, one full-size, and one at-a-glance? so that you can always minimize each section, and if you minimize all, you get the at-a-glance view?
-- account info workflow, needs an empty/default state when no account is selected
-- being able to save workflows
-  I might be on page 3, and want to pause/save to do something else
-  and have the ability to continue later
 - add tests to already built
   - components
   - services
@@ -43,23 +57,8 @@
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules#importing_modules_using_import_maps
 
 ## workflows
-- edit payment contacts
-  Doesn't need to be a "page", can just be a workflow, showing different buttons for doing things
-    - edit
-    - add
-    - remove
-  Once done, it goes away
-  - maybe pinnable?
 ## mfes/widgets
 ### Financial-Health-widget
-- We should make each section into a widget
-- all widgets should have different layouts depending on the size
-  - at a glance
-  - full size
-  - squarish
-  - tall
-  - wide
-- a widget can be inside another widget
   - make this work with slots
   This means that the Financial Health widget are supposed to have these widgets, but these widgets can also be found through search, and added to the home page, or any other page, and resized to fit the layout
 - be able to resize widgets

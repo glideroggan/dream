@@ -19,7 +19,8 @@ export enum TransactionType {
   DEPOSIT = 'DEPOSIT',
   WITHDRAWAL = 'WITHDRAWAL',
   FEE = 'FEE',
-  INTEREST = 'INTEREST'
+  INTEREST = 'INTEREST',
+  ADJUSTMENT = 'ADJUSTMENT',
 }
 
 // Repository service implementation

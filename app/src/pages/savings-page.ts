@@ -16,7 +16,7 @@ const styles = css`
   /* Savings-specific styles */
   .content-header {
     background-color: var(--neutral-layer-1);
-    padding: 16px 20px;
+    padding: 0 20px;
     border-radius: 8px;
     margin-bottom: 24px;
   }
