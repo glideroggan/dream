@@ -26,6 +26,7 @@ import '../components/widget-wrapper/widget-wrapper';
 import { workflowManager } from '../services/workflow-manager-service';
 import { repositoryService } from '../services/repository-service';
 import { UserSettings } from '../repositories/settings-repository';
+import { GridLayout } from '../components/grid-layout';
 
 // Shared template parts that can be composed by child classes
 export const baseContentTemplate = html<BasePage>/*html*/ `
@@ -42,7 +43,7 @@ export const baseContentTemplate = html<BasePage>/*html*/ `
         <p>Check back soon for updates!</p>
       </div>`
     )}
-    <grid-layout class="widgets-container"></grid-layout>
+    <grid-layout class="widgets-container" data-page="${x => x.pageTitle}"></grid-layout>
     
     <!-- Modal for workflows -->
     <dream-modal 
@@ -130,6 +131,7 @@ export class BasePage extends FASTElement {
   protected initialWidgets: string = '';
   protected _initialWidgetsLoaded = false;
   protected productService: ProductService | null = null;
+  protected settingsRepository = repositoryService.getSettingsRepository();
   protected widgetLoadAttempts: Map<string, number> = new Map();
   protected maxLoadAttempts = 2;
   protected pageType: string = 'base';
@@ -403,7 +405,7 @@ export class BasePage extends FASTElement {
     }
   }
 
-  protected async createWidgetElement(widget: WidgetDefinition, wrapperElement: HTMLElement) {
+  protected async createWidgetElement(widget: WidgetDefinition, wrapperElement: HTMLElement): Promise<void> {
     try {
       this.widgetLoadAttempts.set(widget.id, (this.widgetLoadAttempts.get(widget.id) || 0) + 1);
       console.debug(`Creating widget element: ${widget.id} (${widget.elementName})`);
@@ -412,6 +414,7 @@ export class BasePage extends FASTElement {
       // We don't need to add widget-full-width class here anymore
 
       const widgetElement = await widgetService.createWidgetElement(widget.id);
+      console.debug(`Widget element created for ${widget.id}`, widgetElement);
       if (!widgetElement) {
         throw new Error(`Failed to create widget element for ${widget.id}`);
       }
@@ -428,6 +431,12 @@ export class BasePage extends FASTElement {
       widgetElement.addEventListener('initialized', onLoaded);
 
       console.debug(`Adding widget ${widget.id} to wrapper`);
+
+      // load any user settings in regards to this page and widget
+      // const size = await this.settingsRepository.getWidgetSize(this.pageTitle, widget.id)
+      // wrapperElement.setAttribute('currentsize', size);
+      // console.log(`Widget ${widget.id} size: ${size}`);
+
       wrapperElement.appendChild(widgetElement);
 
     } catch (error) {
@@ -439,15 +448,23 @@ export class BasePage extends FASTElement {
     }
   }
 
-  protected addWidgetsToDOM() {
+  protected async addWidgetsToDOM(): Promise<void> {
     console.debug('Adding widgets to DOM...');
     const widgetContainer = this.shadowRoot?.querySelector('.widgets-container') as HTMLElement;
     if (!widgetContainer) return;
     
     // Get the GridLayout component
-    const gridLayout = widgetContainer as any; // Cast to any to access the addItem method
+    const gridLayout = widgetContainer as GridLayout; // Cast to any to access the addItem method
 
-    this.activeWidgets.forEach((widget) => {
+    // TODO: continue here
+    const getSize = async (page: string, widgetId: string) => {
+      const size = await this.settingsRepository.getWidgetSize(page, widgetId);
+      console.log(`Widget ${widgetId} size: ${size}`);
+      return size;
+    }
+
+    this.activeWidgets.forEach(async (widget) => {
+      
       const wrapperElement = createWidgetWrapper({
         widgetId: widget.id,
         initialState: 'loading',
@@ -459,27 +476,25 @@ export class BasePage extends FASTElement {
         }
       });
 
+
       // Add wrapper to DOM
       widgetContainer.appendChild(wrapperElement);
       
+      const userSize = await getSize(this.pageTitle, widget.id);
       // If grid-layout component has the addItem method, use it to properly set up the item
-      if (gridLayout.addItem && typeof gridLayout.addItem === 'function') {
-        gridLayout.addItem(wrapperElement, {
-          id: widget.id,
-          preferredSize: getWidgetPreferredSize(widget.id),
-          minWidth: getWidgetMinWidth(widget.id),
-          fullWidth: shouldWidgetBeFullWidth(widget.id)
-        });
-      }
+      gridLayout.addItem(wrapperElement, {
+        id: widget.id,
+        preferredSize: userSize || getWidgetPreferredSize(widget.id),
+        minWidth: getWidgetMinWidth(widget.id),
+        fullWidth: shouldWidgetBeFullWidth(widget.id)
+      });
       
       this.createWidgetElement(widget, wrapperElement);
     });
 
     // Let the grid layout optimize itself
     setTimeout(() => {
-      if (gridLayout.updateLayout && typeof gridLayout.updateLayout === 'function') {
-        gridLayout.updateLayout();
-      }
+      gridLayout.updateLayout();
     }, 50);
   }
 

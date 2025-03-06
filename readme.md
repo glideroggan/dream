@@ -145,3 +145,42 @@ Which one should we use? and why are there different ones?
 ## smartness
 
 
+Here are key widgets a bank user might want on their dashboard:
+
+# Financial Overview
+- Total balance across all accounts
+- Net worth summary
+- Spending vs. income trend
+
+# Quick Actions
+- Transfer money
+- Pay bills
+- Send instant payment
+- Deposit check
+
+# Account Insights
+- Recent transactions
+- Unusual spending alerts
+- Credit score snapshot
+
+# Goal Tracking
+- Savings progress
+- Investment performance
+- Debt reduction tracker
+
+# Personalized Recommendations
+- Potential savings opportunities
+- Investment suggestions
+- Credit card or loan offers
+
+# Bill and Subscription Management
+- Upcoming bill due dates
+- Subscription cost summary
+- Recurring payment tracker
+
+# Security Corner
+- Account security status
+- Recent login activities
+- Fraud protection updates
+
+Each widget aims to provide immediate, actionable financial information that helps users manage their money effectively.

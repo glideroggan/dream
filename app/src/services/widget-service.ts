@@ -1,5 +1,6 @@
 import { getSingletonManager } from './singleton-manager';
 import { getWidgetById } from '../widgets/widget-registry';
+import { repositoryService, RepositoryService } from './repository-service';
 
 // Widget size options
 export type WidgetSize = 'sm' | 'md' | 'lg' | 'xl';
@@ -40,14 +41,11 @@ export class WidgetService {
     return WidgetService.instance;
   }
 
-  public async signal(): Promise<void> {
-    // Implementation omitted
-  }
-
   async registerWidget(widget: WidgetDefinition): Promise<void> {
     if (this.registeredWidgets.has(widget.id)) {
       console.warn(`Widget with ID ${widget.id} is already registered. Overwriting.`);
     }
+
     this.registeredWidgets.set(widget.id, widget);
     console.debug(`Registered widget: ${widget.id}`);
   }

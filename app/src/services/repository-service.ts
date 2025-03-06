@@ -4,9 +4,6 @@ import { AccountRepository } from '../repositories/account-repository';
 import { TransactionRepository } from '../repositories/transaction-repository';
 import { ProductRepository } from '../repositories/product-repository';
 import { SettingsRepository } from '../repositories/settings-repository';
-import { PaymentContact } from '../repositories/models/payment-contact';
-
-
 
 export enum TransactionStatus {
   UPCOMING = 'upcoming',
@@ -22,13 +19,6 @@ export enum TransactionType {
   PAYMENT = 'payment',
   FEE = 'fee'
 }
-
-
-
-
-
-// Define types for user settings
-
 
 // Repository service implementation
 export class RepositoryService {

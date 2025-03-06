@@ -1,7 +1,9 @@
 import { StorageService } from '../services/storage-service';
 import { UserService } from '../services/user-service';
+import { WidgetSize } from '../widgets/widget-registry';
 import { Entity } from './base-repository';
 import { PaymentContact } from './models/payment-contact';
+import { PageWidgetSettings, WidgetsLayout } from './models/widget-settings';
 
 export interface UserSettings extends Entity {
   // General preferences
@@ -9,6 +11,9 @@ export interface UserSettings extends Entity {
   language?: string;
   enableNotifications?: boolean;
   paymentContacts: PaymentContact[]
+  
+  // Widget preferences by page
+  widgetLayout: WidgetsLayout;
   
   // Allow for additional dynamic properties
   [key: string]: any;
@@ -18,6 +23,7 @@ export interface UserSettings extends Entity {
 }
 
 export class SettingsRepository {
+  
   // Default settings used when no settings exist for a user
   private defaultSettings: UserSettings = {
     id: 'user-settings',
@@ -31,12 +37,115 @@ export class SettingsRepository {
     // Initialize with empty KYC data
     kycData: undefined,
     paymentContacts: [],
+    widgetLayout: {},
   };
 
   constructor(
     private storage: StorageService,
     private userService: UserService
   ) {}
+
+  /**
+   * Update the size of a specific widget on a page
+   * @param pageKey - The unique key/identifier for the page
+   * @param widgetId - The ID of the widget to update
+   * @param newSize - The new size to set for the widget
+   */
+  async updateWidgetSize(pageKey: string, widgetId: string, newSize: WidgetSize): Promise<void> {
+    const settings = await this.getCurrentSettings();
+    
+    // Initialize widgetLayout if it doesn't exist
+    if (!settings.widgetLayout) {
+      settings.widgetLayout = {};
+    }
+    
+    // Initialize page widgets array if it doesn't exist
+    if (!settings.widgetLayout[pageKey]) {
+      settings.widgetLayout[pageKey] = [];
+    }
+    
+    // Find the widget in the page's widget settings
+    const widgetIndex = settings.widgetLayout[pageKey].findIndex(widget => widget.id === widgetId);
+    
+    if (widgetIndex >= 0) {
+      // Update existing widget settings
+      settings.widgetLayout[pageKey][widgetIndex].size = newSize;
+    } else {
+      // Add new widget settings
+      settings.widgetLayout[pageKey].push({
+        id: widgetId,
+        size: newSize
+      });
+    }
+    
+    // Save updated settings
+    await this.updateSettings({ widgetLayout: settings.widgetLayout });
+    
+    console.debug(`Updated widget ${widgetId} on page ${pageKey} to size ${newSize}`);
+  }
+
+  /**
+   * Get the preferred size for a widget on a specific page
+   * @param pageKey - The unique key/identifier for the page
+   * @param widgetId - The ID of the widget
+   * @param defaultSize - Default size to return if no preference is stored
+   */
+  async getWidgetSize(pageKey: string, widgetId: string, defaultSize: WidgetSize = 'md'): Promise<WidgetSize> {
+    const settings = await this.getCurrentSettings();
+    console.log('current settings', settings)
+    
+    // Check if we have widget settings for this page and widget
+    if (settings.widgetLayout && 
+        settings.widgetLayout[pageKey] &&
+        Array.isArray(settings.widgetLayout[pageKey])) {
+      
+      // Find the widget in the page's widget settings
+      const widgetSettings = settings.widgetLayout[pageKey].find(widget => widget.id === widgetId);
+      console.log('widget settings', widgetSettings)
+      
+      if (widgetSettings && widgetSettings.size) {
+        return widgetSettings.size;
+      }
+    }
+    
+    return defaultSize;
+  }
+
+  /**
+   * Get all widget settings for a specific page
+   * @param pageKey - The unique key/identifier for the page
+   */
+  async getPageWidgetSettings(pageKey: string): Promise<PageWidgetSettings[]> {
+    const settings = await this.getCurrentSettings();
+    
+    if (settings.widgetLayout && settings.widgetLayout[pageKey]) {
+      return settings.widgetLayout[pageKey];
+    }
+    
+    return [];
+  }
+
+  /**
+   * Save the complete widget layout for a page
+   * @param pageKey - The unique key/identifier for the page
+   * @param pageWidgets - The array of widget settings
+   */
+  async savePageWidgetLayout(pageKey: string, pageWidgets: PageWidgetSettings[]): Promise<void> {
+    const settings = await this.getCurrentSettings();
+    
+    // Initialize widgetLayout if it doesn't exist
+    if (!settings.widgetLayout) {
+      settings.widgetLayout = {};
+    }
+    
+    // Update the page's widget layout
+    settings.widgetLayout[pageKey] = pageWidgets;
+    
+    // Save updated settings
+    await this.updateSettings({ widgetLayout: settings.widgetLayout });
+    
+    console.debug(`Saved widget layout for page ${pageKey}:`, pageWidgets);
+  }
 
   /**
    * Get current user settings
@@ -188,5 +297,3 @@ export class SettingsRepository {
     await this.updatePaymentContact(contactId, { lastUsed: new Date() });
   }
 }
-
-// export const settingsRepository = repositoryService.getSettingsRepository();

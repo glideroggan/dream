@@ -1,4 +1,6 @@
 import { FASTElement, customElement, html, css, attr, observable } from "@microsoft/fast-element";
+import { repositoryService } from "../services/repository-service";
+import { SettingsRepository } from "../repositories/settings-repository";
 
 /**
  * A responsive grid layout component that automatically arranges items in a grid
@@ -87,11 +89,19 @@ export interface GridItemMetadata {
 export class GridLayout extends FASTElement {
   @attr({ attribute: "min-column-width" }) minColumnWidth = 350;
   @attr({ attribute: "grid-gap" }) gridGap = 24;
+  @attr({ attribute: "data-page" }) dataPage = '';
   @observable gridStyle = '';
-  
+
+  private settingsRepository: SettingsRepository;
+
   // Maps item IDs to their metadata
   private itemMetadata = new Map<string, GridItemMetadata>();
   private resizeObserver: ResizeObserver | null = null;
+
+  constructor() {
+    super();
+    this.settingsRepository = repositoryService.getSettingsRepository();
+  }
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -138,6 +148,9 @@ export class GridLayout extends FASTElement {
     const metadata = this.itemMetadata.get(widgetId);
     if (metadata) {
       metadata.preferredSize = newSize;
+
+      // save new preferred size to settings
+      this.settingsRepository.updateWidgetSize(this.dataPage, widgetId, newSize);
       
       // Find the element and update its size class
       const element = this.querySelector(`[data-grid-item-id="${widgetId}"]`) as HTMLElement;
