@@ -4,11 +4,14 @@ import { WidgetWrapper } from "./widget-wrapper";
 export const template = html<WidgetWrapper>/*html*/ `
   <div class="widget-wrapper ${x => x.state}" data-widget-id="${x => x.widgetId}">
     <!-- Close button shown only for loaded widgets -->
-    ${(x) => x.state === 'loaded' && !x.hideCloseButton ? html<WidgetWrapper>/*html*/`
-      <button class="close-button" title="Remove widget" @click="${x => x.closeWidget()}">
-        <span aria-hidden="true">&times;</span>
+    ${when(x => x.state === 'loaded' && !x.hideCloseButton, html<WidgetWrapper>/*html*/`
+      <div class="widget-header">
+        <h3>${x => x.displayName}</h3>
+        <button class="close-button" title="Remove widget" @click="${x => x.closeWidget()}">
       </button>
-    ` : ''}
+      </div>
+      
+    `)}
 
     <!-- Loading state -->
     ${when(x => x.state === 'loading',html<WidgetWrapper>/*html*/`

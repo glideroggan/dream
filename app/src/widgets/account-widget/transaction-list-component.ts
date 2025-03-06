@@ -196,7 +196,7 @@ export class TransactionListComponent extends FASTElement {
   @observable maxToShow: number = 3;
   
   handleShowMore() {
-    this.dispatchEvent(new CustomEvent('show-more'));
+    this.maxToShow += 3;
   }
   
   /**

@@ -6,8 +6,10 @@ const template = html<AccountListComponent>/*html*/ `
   <div class="accounts-list">
     ${repeat(x => x.accounts, html<Account, AccountListComponent>/*html*/`
       <div class="account-item ${(x, c) => x.id === c.parent.expandedAccountId ? 'expanded' : ''}" 
+           
            id="account-${x => x.id}">
-        <div class="account-header" @click="${(x, c) => c.parent.handleAccountClick(x)}">
+        <div class="account-header" 
+          @click="${(x, c) => c.parent.handleAccountClick(x)}">
           <div class="account-info">
             <div class="account-name">${x => x.name}</div>
             <div class="account-type">${x => x.type}</div>
@@ -28,8 +30,7 @@ const template = html<AccountListComponent>/*html*/ `
             :accountId="${x => x.id}"
             :isLoading="${(x, c) => c.parent.isLoadingTransactions}"
             :transactions="${(x, c) => c.parent.accountTransactions}"
-            :maxToShow="${(x, c) => c.parent.maxTransactionsToShow}"
-            @show-more="${(x, c) => c.parent.handleShowMore()}">
+            :maxToShow="${(x, c) => c.parent.maxTransactionsToShow}">
           </transaction-list>
         `)}
       </div>
@@ -142,6 +143,8 @@ export class AccountListComponent extends FASTElement {
   @observable maxTransactionsToShow: number = 3;
 
   handleAccountClick(account: Account) {
+    console.debug('Account clicked:', account);
+    
     this.dispatchEvent(new CustomEvent('account-toggle', {
       detail: { accountId: account.id }
     }));
@@ -154,9 +157,5 @@ export class AccountListComponent extends FASTElement {
     this.dispatchEvent(new CustomEvent('account-actions', {
       detail: { account }
     }));
-  }
-  
-  handleShowMore() {
-    this.dispatchEvent(new CustomEvent('show-more-transactions'));
   }
 }

@@ -76,66 +76,14 @@ export const baseStyles = css`
     margin-bottom: 2rem;
   }
 
+  /* Grid layout component now handles the widget positioning and sizing */
   .widgets-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 1.5rem;
+    width: 100%;
   }
 
-  /* Widget size classes - based on span factor */
-  .widget-sm {
-    grid-column: span 1;
-  }
-
-  .widget-md {
-    grid-column: span 1;
-  }
-
-  .widget-lg {
-    grid-column: span 2;
-  }
-
-  .widget-xl {
-    grid-column: span 3;
-  }
-  
-  /* New class for full-width widgets */
-  .widget-full-width {
-    grid-column: 1 / -1 !important; /* Use '1 / -1' to span all columns */
-  }
-
-  /* Responsive adjustments with better breakpoints */
-  @media (min-width: 1200px) {
-    .widgets-container {
-      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    }
-  }
-
-  @media (min-width: 1600px) {
-    .widgets-container {
-      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-    }
-  }
-
-  @media (max-width: 800px) {
-    .widgets-container {
-      grid-template-columns: 1fr;
-    }
-    
-    .widget-sm, .widget-md, .widget-lg, .widget-xl, .widget-full-width {
-      grid-column: span 1;
-    }
-  }
-
-  /* Special rule for very large screens */
-  @media (min-width: 2200px) {
-    .widgets-container {
-      grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
-    }
-  }
+  /* Remove redundant widget size classes as they're now handled by grid-layout */
 
   .empty-message {
-    grid-column: 1 / -1;
     text-align: center;
     padding: 3rem;
     color: var(--neutral-foreground-hint);
@@ -165,10 +113,6 @@ export const baseStyles = css`
     100% { box-shadow: 0 0 0 2px var(--accent-color, #0078d4); }
   }
 
-  .widget-needs-space {
-    min-width: 100%;
-  }
-
   /* Widget removal animation */
   .widget-removing {
     transition: opacity 0.3s ease, transform 0.3s ease;
@@ -188,11 +132,6 @@ export class BasePage extends FASTElement {
   protected productService: ProductService | null = null;
   protected widgetLoadAttempts: Map<string, number> = new Map();
   protected maxLoadAttempts = 2;
-  protected widgetSizeMap: Record<string, 'sm' | 'md' | 'lg' | 'xl'> = {
-    'account': 'lg',    // Account widget is naturally larger
-    'welcome': 'md',    // Welcome widget is medium sized
-    'swish-widget': 'md' // Swish widget
-  };
   protected pageType: string = 'base';
 
   private boundHandleResize: EventListener;
@@ -299,7 +238,6 @@ export class BasePage extends FASTElement {
       console.debug(`Loaded ${widgets.length} widgets:`, widgets);
       this.activeWidgets.push(...widgets);
       this.addWidgetsToDOM();
-      this.optimizeLayout();
       this.ready = true;
       this.saveWidgetPreferences(widgetIds);
     } catch (error) {
@@ -427,19 +365,36 @@ export class BasePage extends FASTElement {
         const wrapperElement = createWidgetWrapper({
           widgetId: widget.id,
           initialState: 'loading',
-          additionalClasses: [`widget-${getWidgetPreferredSize(widget.id) || 'md'}`],
           additionalAttributes: {
-            'widget-name': widget.name || widget.id 
+            'widget-name': widget.name || widget.id,
+            'page-type': this.pageType
           }
         });
+        
         widgetContainer.appendChild(wrapperElement);
+        
+        // Use grid-layout's addItem method if available
+        const gridLayout = widgetContainer as any;
+        if (gridLayout.addItem && typeof gridLayout.addItem === 'function') {
+          gridLayout.addItem(wrapperElement, {
+            id: widget.id,
+            preferredSize: getWidgetPreferredSize(widget.id),
+            minWidth: getWidgetMinWidth(widget.id),
+            fullWidth: shouldWidgetBeFullWidth(widget.id)
+          });
+        }
+        
         this.createWidgetElement(widget, wrapperElement);
         wrapperElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
         wrapperElement.classList.add('widget-highlight');
         setTimeout(() => {
           wrapperElement.classList.remove('widget-highlight');
         }, 2000);
-        this.optimizeLayout();
+        
+        // Let grid handle layout optimization
+        if (gridLayout.updateLayout && typeof gridLayout.updateLayout === 'function') {
+          gridLayout.updateLayout();
+        }
       } else {
         console.error(`Widget with ID ${widgetId} could not be loaded`);
       }
@@ -453,9 +408,8 @@ export class BasePage extends FASTElement {
       this.widgetLoadAttempts.set(widget.id, (this.widgetLoadAttempts.get(widget.id) || 0) + 1);
       console.debug(`Creating widget element: ${widget.id} (${widget.elementName})`);
 
-      if (shouldWidgetBeFullWidth(widget.id)) {
-        wrapperElement.classList.add('widget-full-width');
-      }
+      // Let grid-layout handle full-width behavior
+      // We don't need to add widget-full-width class here anymore
 
       const widgetElement = await widgetService.createWidgetElement(widget.id);
       if (!widgetElement) {
@@ -488,6 +442,10 @@ export class BasePage extends FASTElement {
   protected addWidgetsToDOM() {
     console.debug('Adding widgets to DOM...');
     const widgetContainer = this.shadowRoot?.querySelector('.widgets-container') as HTMLElement;
+    if (!widgetContainer) return;
+    
+    // Get the GridLayout component
+    const gridLayout = widgetContainer as any; // Cast to any to access the addItem method
 
     this.activeWidgets.forEach((widget) => {
       const wrapperElement = createWidgetWrapper({
@@ -495,142 +453,41 @@ export class BasePage extends FASTElement {
         initialState: 'loading',
         warningTimeout: 5000,
         failureTimeout: 10000,
-        additionalClasses: [
-          `widget-${getWidgetPreferredSize(widget.id) || 'md'}`,
-          shouldWidgetBeFullWidth(widget.id) ? 'widget-full-width' : ''
-        ].filter(c => c),
         additionalAttributes: {
           'widget-name': widget.name || widget.id,
           'page-type': this.pageType
         }
       });
 
+      // Add wrapper to DOM
       widgetContainer.appendChild(wrapperElement);
+      
+      // If grid-layout component has the addItem method, use it to properly set up the item
+      if (gridLayout.addItem && typeof gridLayout.addItem === 'function') {
+        gridLayout.addItem(wrapperElement, {
+          id: widget.id,
+          preferredSize: getWidgetPreferredSize(widget.id),
+          minWidth: getWidgetMinWidth(widget.id),
+          fullWidth: shouldWidgetBeFullWidth(widget.id)
+        });
+      }
+      
       this.createWidgetElement(widget, wrapperElement);
     });
 
-    setTimeout(() => this.optimizeLayout(), 50);
+    // Let the grid layout optimize itself
+    setTimeout(() => {
+      if (gridLayout.updateLayout && typeof gridLayout.updateLayout === 'function') {
+        gridLayout.updateLayout();
+      }
+    }, 50);
   }
 
   protected handleResize() {
-    this.optimizeLayout();
-  }
-
-  protected optimizeLayout() {
-    if (!this.shadowRoot) return;
-    const container = this.shadowRoot.querySelector('.widgets-container') as HTMLElement;
-    if (!container) return;
-
-    const widgets = Array.from(container.children);
-    if (widgets.length === 0) return;
-
-    const containerWidth = container.offsetWidth;
-    this.updateGridLayout(container, widgets as HTMLElement[]);
-    this.distributeWidgetSizes(widgets as HTMLElement[], containerWidth);
-  }
-
-  protected updateGridLayout(container: HTMLElement, widgets: HTMLElement[]) {
-    const containerWidth = container.offsetWidth;
-    let maxMinWidth = 300;
-    widgets.forEach(widget => {
-      const widgetId = widget.getAttribute('data-widget-id') || '';
-      const minWidth = getWidgetMinWidth(widgetId);
-      maxMinWidth = Math.max(maxMinWidth, minWidth);
-    });
-
-    const possibleColumns = Math.floor(containerWidth / maxMinWidth);
-    const columnsToUse = Math.max(1, possibleColumns);
-    let columnWidth = maxMinWidth;
-    if (columnsToUse === 1) {
-      container.style.gridTemplateColumns = '1fr';
-    } else {
-      columnWidth = Math.max(maxMinWidth, Math.floor(containerWidth / columnsToUse) - 24);
-      container.style.gridTemplateColumns = `repeat(${columnsToUse}, minmax(${columnWidth}px, 1fr))`;
-    }
-
-    widgets.forEach(widget => {
-      const widgetId = widget.getAttribute('data-widget-id') || '';
-      const minWidth = getWidgetMinWidth(widgetId);
-      if (minWidth > containerWidth / 2 && columnsToUse > 1) {
-        widget.classList.add('widget-needs-space');
-      } else {
-        widget.classList.remove('widget-needs-space');
-      }
-    });
-
-    console.debug(`Grid layout: ${columnsToUse} columns of ${columnWidth}px (container: ${containerWidth}px)`);
-  }
-
-  protected distributeWidgetSizes(widgets: HTMLElement[], containerWidth: number) {
-    const reasonableColumnCount = Math.floor(containerWidth / 350);
-
-    if (reasonableColumnCount <= 1) {
-      widgets.forEach(widget => {
-        this.setWidgetSize(widget, 'xl');
-      });
-      return;
-    }
-
-    widgets.forEach(widget => {
-      const widgetId = widget.getAttribute('data-widget-id') || '';
-      if (shouldWidgetBeFullWidth(widgetId)) {
-        widget.classList.add('widget-full-width');
-        return;
-      }
-      
-      const preferredSize = getWidgetPreferredSize(widgetId);
-      const minWidth = getWidgetMinWidth(widgetId);
-      let size = preferredSize || this.widgetSizeMap[widgetId] || 'md';
-
-      if (minWidth > containerWidth / 2) {
-        size = reasonableColumnCount >= 3 ? 'lg' : 'xl';
-      } else if (reasonableColumnCount <= 2 && size === 'lg') {
-        size = 'md';
-      }
-
-      this.setWidgetSize(widget, size as 'sm' | 'md' | 'lg' | 'xl');
-    });
-
-    if (reasonableColumnCount >= 3 && widgets.length >= 3) {
-      this.setWidgetSize(widgets[0] as HTMLElement, 'lg');
-    }
-
-    if (reasonableColumnCount === 2 && widgets.length % 2 === 1) {
-      this.setWidgetSize(widgets[widgets.length - 1] as HTMLElement, 'lg');
-    }
-  }
-
-  protected setWidgetSize(widget: HTMLElement, size: 'sm' | 'md' | 'lg' | 'xl') {
-    widget.classList.remove('widget-sm', 'widget-md', 'widget-lg', 'widget-xl');
-    widget.classList.add(`widget-${size}`);
-  }
-
-  protected async saveWidgetPreferences(widgetIds: string[]): Promise<void> {
-    try {
-      const settingsRepo = repositoryService.getSettingsRepository();
-      const pageKey = `${this.pageType}Widgets`;
-      await settingsRepo.updateSettings({
-        [pageKey]: widgetIds
-      });
-      console.debug(`Saved widget preferences for ${this.pageType}:`, widgetIds);
-    } catch (error) {
-      console.error('Error saving widget preferences:', error);
-    }
-  }
-
-  protected async loadUserWidgetPreferences(): Promise<void> {
-    try {
-      const settingsRepo = repositoryService.getSettingsRepository();
-      const userSettings = await settingsRepo.getCurrentSettings();
-      const pageKey = `${this.pageType}Widgets`;
-      const pageWidgets = userSettings[pageKey] as string[] | undefined;
-      
-      if (pageWidgets && pageWidgets.length > 0) {
-        console.debug(`Using widgets from user settings for ${this.pageType}:`, pageWidgets);
-        this.initialWidgets = pageWidgets.join(',');
-      }
-    } catch (error) {
-      console.error('Error loading user widget preferences:', error);
+    // Update to call grid layout's updateLayout instead of the removed optimizeLayout
+    const gridLayout = this.shadowRoot?.querySelector('.widgets-container') as any;
+    if (gridLayout && typeof gridLayout.updateLayout === 'function') {
+      gridLayout.updateLayout();
     }
   }
 
@@ -768,7 +625,12 @@ export class BasePage extends FASTElement {
           if (wrapperElement.parentElement) {
             wrapperElement.parentElement.removeChild(wrapperElement);
           }
-          this.optimizeLayout();
+          
+          // Update to use grid layout's updateLayout method
+          const gridLayout = this.shadowRoot?.querySelector('.widgets-container') as any;
+          if (gridLayout && typeof gridLayout.updateLayout === 'function') {
+            gridLayout.updateLayout();
+          }
         }, 300);
       }
     }
@@ -784,6 +646,46 @@ export class BasePage extends FASTElement {
     if (wrapper) {
       wrapper.setAttribute('state', 'error');
       wrapper.setAttribute('errorMessage', 'Widget load cancelled due to timeout');
+    }
+  }
+
+  // Add a simple optimizeLayout method that delegates to grid-layout
+  // for backward compatibility with any code that might still call it
+  protected optimizeLayout(): void {
+    const gridLayout = this.shadowRoot?.querySelector('.widgets-container') as any;
+    if (gridLayout && typeof gridLayout.updateLayout === 'function') {
+      gridLayout.updateLayout();
+    }
+  }
+
+  protected async loadUserWidgetPreferences(): Promise<void> {
+    try {
+      const settingsRepo = repositoryService.getSettingsRepository();
+      const userSettings = await settingsRepo.getCurrentSettings();
+      const pageKey = `${this.pageType}Widgets`;
+      const pageWidgets = userSettings[pageKey] as string[] | undefined;
+      
+      if (pageWidgets && pageWidgets.length > 0) {
+        console.debug(`Using widgets from user settings for ${this.pageType}:`, pageWidgets);
+        this.initialWidgets = pageWidgets.join(',');
+      } else {
+        console.debug(`No saved widget preferences found for ${this.pageType} page`);
+      }
+    } catch (error) {
+      console.error('Error loading user widget preferences:', error);
+    }
+  }
+
+  protected async saveWidgetPreferences(widgetIds: string[]): Promise<void> {
+    try {
+      const settingsRepo = repositoryService.getSettingsRepository();
+      const pageKey = `${this.pageType}Widgets`;
+      await settingsRepo.updateSettings({
+        [pageKey]: widgetIds
+      });
+      console.debug(`Saved widget preferences for ${this.pageType}:`, widgetIds);
+    } catch (error) {
+      console.error('Error saving widget preferences:', error);
     }
   }
 }

@@ -51,7 +51,7 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     elementName: 'account-widget',
     module: '@widgets/account',
     defaultConfig: {},
-    preferredSize: 'lg', // Account widget works best with more space
+    preferredSize: 'xl', // Account widget works best with more space
     minWidth: 380, // Account widget needs more space for balance details
     searchable: true,
     keywords: ['accounts', 'checking account', 'savings account', 'bank accounts', 'money', 'balance'],

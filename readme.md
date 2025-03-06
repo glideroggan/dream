@@ -1,12 +1,13 @@
 # BUGS
 - when you add the swish widget, you can't remove it until you reload, or switch page
 - dismiss the search result with esc
-- ✔️dismiss a workflow with esc
-  - ✔️we don't have the correct focus
-  - ✔️we 'had' several modals, we should only have one
+
+# widget rework
+- title in wrapper can be centered
+- close button on right
+- size dropdown on left?
 
 # TODO
-
 - should we change the name? widgets are the MFE equivalent, while same component, but with -at-a-glance, is the widget?
   or should each widget have two states, one full-size, and one at-a-glance? so that you can always minimize each section, and if you minimize all, you get the at-a-glance view?
 - account info workflow, needs an empty/default state when no account is selected

@@ -1,19 +1,22 @@
-import { customElement, FASTElement, html, css, observable } from "@microsoft/fast-element";
+import { customElement, FASTElement, html, css, observable, when } from "@microsoft/fast-element";
 import { getProductService } from "../services/product-service";
 import { SwishProduct } from "../workflows/swish-workflow";
+import { BaseWidget } from "../components/base-widget";
 
 const template = html<SwishWidget>/*html*/`
   <div class="swish-widget">
-    <div class="widget-header">
-      <h3>Swish</h3>
-      <div class="subscription-badge">Premium</div>
-    </div>
-
     <div class="widget-content">
-      ${(x) => x.isLoading ? html`
-        <div class="loading">Loading...</div>
-      ` : html`
+      ${when(x => x.isLoading, html`
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Loading Swish...</p>
+        </div>
+      `, html`
         <div class="swish-info">
+          <div class="subscription-info">
+            <div class="subscription-badge">Premium</div>
+          </div>
+          
           <div class="swish-actions">
             <button class="transfer-button" @click="${x => x.startSwishTransfer()}">
               <span class="button-icon">↗</span>
@@ -39,7 +42,7 @@ const template = html<SwishWidget>/*html*/`
             Manage Subscription
           </button>
         </div>
-      `}
+      `)}
     </div>
   </div>
 `;
@@ -47,54 +50,63 @@ const template = html<SwishWidget>/*html*/`
 const styles = css`
   :host {
     display: block;
-    border-radius: 8px;
+    border-radius: inherit;
     overflow: hidden;
-    background: white;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    --widget-accent-color: #4a90e2;
+    --widget-accent-hover: #3a80d2;
   }
 
   .swish-widget {
     height: 100%;
     display: flex;
     flex-direction: column;
+    background: var(--widget-background, #ffffff);
+    color: var(--widget-text-color, #333333);
   }
 
-  .widget-header {
-    background: linear-gradient(135deg, #3498db, #2980b9);
-    color: white;
-    padding: 16px;
+  .widget-content {
+    flex: 1;
+    padding: var(--widget-content-padding, 16px);
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
   }
-
-  h3 {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 600;
+  
+  .subscription-info {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
   }
 
   .subscription-badge {
-    background-color: rgba(255,255,255,0.2);
+    background-color: var(--widget-accent-color, #4a90e2);
+    color: white;
     padding: 4px 8px;
     border-radius: 12px;
     font-size: 12px;
     font-weight: 500;
   }
 
-  .widget-content {
-    flex: 1;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-  }
-
   .loading {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     height: 100px;
-    color: #666;
+    color: var(--widget-subtle-text, #666);
+  }
+  
+  .spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: var(--widget-accent-color, #4a90e2);
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 16px;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 
   .swish-info {
@@ -120,23 +132,23 @@ const styles = css`
   }
 
   .transfer-button {
-    background-color: #3498db;
+    background-color: var(--widget-accent-color, #4a90e2);
     color: white;
     flex: 1;
   }
 
   .transfer-button:hover {
-    background-color: #2980b9;
+    background-color: var(--widget-accent-hover, #3a80d2);
   }
 
   .history-button {
-    background-color: #f0f0f0;
-    color: #333;
+    background-color: var(--widget-secondary-color, #f0f0f0);
+    color: var(--widget-secondary-text, #333);
     flex: 1;
   }
 
   .history-button:hover {
-    background-color: #e0e0e0;
+    background-color: var(--widget-secondary-hover, #e0e0e0);
   }
 
   .button-icon {
@@ -144,7 +156,7 @@ const styles = css`
   }
 
   .quick-stats {
-    background-color: #f9f9f9;
+    background-color: rgba(0, 0, 0, 0.03);
     border-radius: 6px;
     padding: 12px;
     margin-top: 12px;
@@ -157,7 +169,7 @@ const styles = css`
 
   .stat-label {
     font-size: 12px;
-    color: #666;
+    color: var(--widget-subtle-text, #666);
   }
 
   .stat-value {
@@ -168,26 +180,26 @@ const styles = css`
 
   .stat-date {
     font-size: 12px;
-    color: #666;
+    color: var(--widget-subtle-text, #666);
   }
 
   .widget-footer {
     margin-top: 16px;
     padding-top: 12px;
-    border-top: 1px solid #eee;
+    border-top: 1px solid var(--widget-divider-color, #eee);
     text-align: center;
   }
 
   .manage-button {
     background: transparent;
-    color: #3498db;
-    border: 1px solid #3498db;
+    color: var(--widget-accent-color, #4a90e2);
+    border: 1px solid var(--widget-accent-color, #4a90e2);
     width: 100%;
     justify-content: center;
   }
 
   .manage-button:hover {
-    background-color: rgba(52, 152, 219, 0.05);
+    background-color: rgba(74, 144, 226, 0.05);
   }
 `;
 
@@ -196,9 +208,8 @@ const styles = css`
   template,
   styles
 })
-export class SwishWidget extends FASTElement {
+export class SwishWidget extends BaseWidget {
   @observable swishProduct: SwishProduct | null = null;
-  @observable isLoading: boolean = true;
   @observable lastTransferAmount: string = "$0.00";
   @observable lastTransferDate: string = "No transfers yet";
 
@@ -209,51 +220,33 @@ export class SwishWidget extends FASTElement {
     this.lastTransferAmount = "$25.00";
     this.lastTransferDate = "Yesterday";
 
-    // Simulate loading with a small delay
-    // setTimeout(() => {
-    //   this.isLoading = false;
-    //   // Set some demo data
-    //   this.lastTransferAmount = "$25.00";
-    //   this.lastTransferDate = "Yesterday";
-    // }, 800);
-    // Signal that the widget is initialized
-    this.isLoading = false;
-    this.dispatchEvent(new CustomEvent('initialized', {
-      bubbles: true,
-      composed: true
-    }));
-
+    this.notifyInitialized()
   }
 
   private async loadProductData(): Promise<void> {
-    const productService = getProductService();
-    // Use the typed getProduct<T> method to get the SwishProduct
-    const swishProduct = await productService.getProduct<SwishProduct>("swish-standard");
+    try {
+      const productService = getProductService();
+      // Use the typed getProduct<T> method to get the SwishProduct
+      const swishProduct = await productService.getProduct<SwishProduct>("swish-standard");
 
-    if (swishProduct) {
-      this.swishProduct = swishProduct;
-    } else {
-      console.warn("Swish product not found in user's products");
+      if (swishProduct) {
+        this.swishProduct = swishProduct;
+      } else {
+        console.warn("Swish product not found in user's products");
+      }
+    } catch (error) {
+      this.handleError("Failed to load Swish product data");
     }
   }
 
   startSwishTransfer(): void {
     console.debug("Starting Swish transfer workflow");
 
-    // Dispatch event to start the workflow
-    const event = new CustomEvent("start-workflow", {
-      bubbles: true,
-      composed: true,
-      detail: {
-        workflowId: "transfer",
-        params: {
-          service: "swish",
-          source: "widget"
-        }
-      }
+    // Use the BaseWidget method
+    this.startWorkflow("transfer", {
+      service: "swish",
+      source: "widget"
     });
-
-    this.dispatchEvent(event);
   }
 
   viewTransactionHistory(): void {
@@ -265,19 +258,10 @@ export class SwishWidget extends FASTElement {
   manageSubscription(): void {
     console.debug("Managing Swish subscription");
 
-    // This would open a workflow to manage the subscription
-    const event = new CustomEvent("start-workflow", {
-      bubbles: true,
-      composed: true,
-      detail: {
-        workflowId: "manage-subscription",
-        params: {
-          productId: "swish-standard",
-          source: "widget"
-        }
-      }
+    // Use the BaseWidget method
+    this.startWorkflow("manage-subscription", {
+      productId: "swish-standard",
+      source: "widget"
     });
-
-    this.dispatchEvent(event);
   }
 }

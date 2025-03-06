@@ -22,21 +22,21 @@ const styles = css`
     width: 100%;
   }
   
-  /* These classes are applied to slotted elements */
-  ::slotted(.grid-item-sm) {
+  /* Size classes directly map to column spans */
+  ::slotted(.span-1) {
     grid-column: span 1;
   }
   
-  ::slotted(.grid-item-md) {
-    grid-column: span 1;
-  }
-  
-  ::slotted(.grid-item-lg) {
+  ::slotted(.span-2) {
     grid-column: span 2;
   }
   
-  ::slotted(.grid-item-xl) {
+  ::slotted(.span-3) {
     grid-column: span 3;
+  }
+  
+  ::slotted(.span-4) {
+    grid-column: span 4;
   }
   
   ::slotted(.grid-item-needs-space) {
@@ -49,24 +49,34 @@ const styles = css`
   }
   
   @media (max-width: 800px) {
-    ::slotted(.grid-item-sm),
-    ::slotted(.grid-item-md),
-    ::slotted(.grid-item-lg),
-    ::slotted(.grid-item-xl) {
+    ::slotted(.span-1),
+    ::slotted(.span-2),
+    ::slotted(.span-3),
+    ::slotted(.span-4) {
       grid-column: span 1;
     }
   }
 `;
 
-// Define size types
+// Define size types - these names represent user-facing sizes
+// but will be mapped to specific column spans internally
 export type GridItemSize = 'sm' | 'md' | 'lg' | 'xl';
+
+// Map of size names to their column spans
+// Updated to properly map xl to 3 columns
+const sizeToSpanMap: Record<GridItemSize, number> = {
+  'sm': 1,
+  'md': 2,
+  'lg': 3,
+  'xl': 3  // Set xl to 3 columns (was 4 before which is too wide for most layouts)
+};
 
 // Define grid item metadata
 export interface GridItemMetadata {
   id: string;
   minWidth?: number;
   preferredSize?: GridItemSize;
-  fullWidth?: boolean; // Add this property
+  fullWidth?: boolean; 
 }
 
 @customElement({
@@ -88,11 +98,7 @@ export class GridLayout extends FASTElement {
     
     // Create a ResizeObserver to handle container resize events
     this.resizeObserver = new ResizeObserver(entries => {
-      for (const entry of entries) {
-        if (entry.target === this) {
-          this.updateLayout();
-        }
-      }
+      this.updateLayout();
     });
     
     // Start observing the container
@@ -100,6 +106,8 @@ export class GridLayout extends FASTElement {
     
     // Initialize grid style with default settings
     this.updateGridStyle();
+    
+    console.debug("GridLayout connected, metadata size:", this.itemMetadata.size);
   }
   
   disconnectedCallback(): void {
@@ -115,19 +123,27 @@ export class GridLayout extends FASTElement {
    * Add an item to the grid with its metadata
    */
   addItem(element: HTMLElement, metadata: GridItemMetadata): void {
+    console.debug(`GridLayout: Adding item ${metadata.id} with size ${metadata.preferredSize}`, metadata);
+    
     // Store metadata
     this.itemMetadata.set(metadata.id, metadata);
     
-    // Apply appropriate CSS class based on preferred size
+    // Apply appropriate span class based on preferred size
     if (metadata.preferredSize) {
-      element.classList.add(`grid-item-${metadata.preferredSize}`);
+      this.setItemSize(element, metadata.preferredSize);
     } else {
-      element.classList.add('grid-item-md');
+      this.setItemSize(element, 'md');
     }
     
     // Add full-width class if specified
     if (metadata.fullWidth) {
       element.classList.add('widget-full-width');
+    }
+    
+    // Check if the element already has the widget-full-width class
+    // and update metadata accordingly to ensure consistency
+    if (element.classList.contains('widget-full-width') && !metadata.fullWidth) {
+      metadata.fullWidth = true;
     }
     
     // Add data attributes for size calculation
@@ -163,15 +179,12 @@ export class GridLayout extends FASTElement {
     metadata.preferredSize = size;
     
     // Find the element and update its class
-    if (this.shadowRoot) {
-      const element = this.querySelector(`[data-grid-item-id="${id}"]`) as HTMLElement;
-      if (element) {
-        // Remove all size classes
-        element.classList.remove('grid-item-sm', 'grid-item-md', 'grid-item-lg', 'grid-item-xl');
-        // Add the new size class
-        element.classList.add(`grid-item-${size}`);
-      }
+    const element = this.querySelector(`[data-grid-item-id="${id}"]`) as HTMLElement;
+    if (element) {
+      this.setItemSize(element, size);
     }
+    
+    console.debug(`GridLayout: Updated size for ${id} to ${size}`);
   }
   
   /**
@@ -212,6 +225,8 @@ export class GridLayout extends FASTElement {
     // Calculate how many columns we can fit
     const possibleColumns = Math.max(1, Math.floor(containerWidth / maxMinWidth));
     
+    console.debug(`GridLayout: Updating layout with ${items.length} items, container width: ${containerWidth}px, columns: ${possibleColumns}`);
+    
     // Distribute item sizes based on available space
     this.distributeItemSizes(items, possibleColumns, containerWidth);
     
@@ -250,15 +265,19 @@ export class GridLayout extends FASTElement {
       const columnWidth = Math.max(maxMinWidth, Math.floor(containerWidth / possibleColumns) - this.gridGap);
       this.gridStyle = `grid-template-columns: repeat(${possibleColumns}, minmax(${columnWidth}px, 1fr)); gap: ${this.gridGap}px;`;
     }
+    
+    console.debug(`GridLayout: Updated grid style for ${possibleColumns} columns`);
   }
   
   /**
    * Distribute item sizes based on container width and column count
    */
   private distributeItemSizes(items: HTMLElement[], columnCount: number, containerWidth: number): void {
-    // If we can only fit one column, make everything full width
+    console.debug(`GridLayout: Distributing sizes for ${items.length} items with ${columnCount} columns`);
+    
+    // If we can only fit one column, make everything small (one column span)
     if (columnCount <= 1) {
-      items.forEach(item => this.setItemSize(item, 'xl'));
+      items.forEach(item => this.setItemSize(item, 'sm'));
       return;
     }
     
@@ -266,19 +285,34 @@ export class GridLayout extends FASTElement {
     items.forEach(item => {
       const id = item.getAttribute('data-grid-item-id') || '';
       const metadata = this.itemMetadata.get(id);
-      if (!metadata) return;
+      if (!metadata) {
+        console.warn(`GridLayout: No metadata found for item ${id}`);
+        return;
+      }
       
       // Skip items that should be full width - they already have the appropriate class
-      if (metadata.fullWidth) return;
+      if (metadata.fullWidth) {
+        item.classList.add('widget-full-width');
+        console.debug(`GridLayout: Item ${id} set to full width`);
+        return;
+      }
       
       const minWidth = metadata.minWidth || this.minColumnWidth;
       let size = metadata.preferredSize || 'md';
       
-      // Adjust size for very wide items or narrow containers
-      if (minWidth > containerWidth / 2) {
-        size = columnCount >= 3 ? 'lg' : 'xl';
-      } else if (columnCount <= 2 && size === 'lg') {
-        size = 'md'; // In 2-column layout, limit large items to medium
+      console.debug(`GridLayout: Setting size for ${id}, preferred: ${size}, min width: ${minWidth}px`);
+      
+      // Ensure we don't try to span more columns than are available
+      const preferredSpan = sizeToSpanMap[size];
+      if (preferredSpan > columnCount) {
+        // Find a size that fits within available columns
+        for (const [sizeKey, span] of Object.entries(sizeToSpanMap)) {
+          if (span <= columnCount) {
+            size = sizeKey as GridItemSize;
+            break;
+          }
+        }
+        console.debug(`GridLayout: Adjusted size for ${id} to ${size} to fit columns`);
       }
       
       this.setItemSize(item, size);
@@ -287,24 +321,34 @@ export class GridLayout extends FASTElement {
     // Special layout cases
     if (columnCount >= 3 && items.length >= 3) {
       // In 3+ column layouts with several items, make first item larger for emphasis
-      this.setItemSize(items[0], 'lg');
+      const firstItem = items[0];
+      const firstId = firstItem.getAttribute('data-grid-item-id') || '';
+      console.debug(`GridLayout: Making first item ${firstId} larger for emphasis`);
+      this.setItemSize(firstItem, 'lg');
     }
     
     // If we have an odd number of items in a 2-column layout, 
     // make the last item span full width for a clean look
     if (columnCount === 2 && items.length % 2 === 1) {
-      this.setItemSize(items[items.length - 1], 'lg');
+      const lastItem = items[items.length - 1];
+      const lastId = lastItem.getAttribute('data-grid-item-id') || '';
+      console.debug(`GridLayout: Making last item ${lastId} larger to balance layout`);
+      this.setItemSize(lastItem, 'lg');
     }
   }
   
   /**
-   * Set an item's size class
+   * Set an item's size class based on the desired column span
    */
   private setItemSize(item: HTMLElement, size: GridItemSize): void {
-    // Remove existing size classes
-    item.classList.remove('grid-item-sm', 'grid-item-md', 'grid-item-lg', 'grid-item-xl');
+    // Remove existing span classes
+    item.classList.remove('span-1', 'span-2', 'span-3', 'span-4');
     
-    // Add the new size class
-    item.classList.add(`grid-item-${size}`);
+    // Add the new span class that corresponds to the size
+    const span = sizeToSpanMap[size];
+    item.classList.add(`span-${span}`);
+    
+    const id = item.getAttribute('data-grid-item-id') || 'unknown';
+    console.debug(`GridLayout: Set item ${id} to size ${size} (span-${span})`);
   }
 }

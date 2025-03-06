@@ -6,6 +6,11 @@ import { styles } from "./widget-wrapper-styles";
 import { createWidgetEvents, createBoundEventHandlers, isModuleError } from "./widget-wrapper-events";
 import { WidgetTimeoutHandler } from "./widget-wrapper-timeout";
 
+/**
+ * Widget loading states
+ */
+export type WidgetWrapperState = 'loading' | 'loaded' | 'error' | 'import-error' | 'timeout-warning';
+
 @customElement({
   name: "widget-wrapper",
   template,
@@ -15,12 +20,13 @@ export class WidgetWrapper extends FASTElement {
   // Widget attributes
   @attr widgetTitle: string = "";
   @attr widgetId: string = "";
-  @attr state: 'loading' | 'loaded' | 'error' | 'import-error' | 'timeout-warning' = 'loading';
+  @attr state: WidgetWrapperState = 'loading';
   @attr errorMessage: string = '';
   @attr({attribute: 'page-type'}) pageType: string = '';
   @attr moduleImportPath: string = '';
   @attr({ mode: "boolean" }) hideCloseButton: boolean = false;
   @attr widgetName: string = '';
+  @attr({ attribute: 'seamless-integration', mode: 'boolean' }) seamlessIntegration: boolean = false;
 
   // Timeout configuration
   @attr({ mode: "fromView" }) warningTimeout: number = 5000; // 5 seconds for warning
@@ -120,17 +126,6 @@ export class WidgetWrapper extends FASTElement {
     this.initializeWidgetModule();
 
     console.debug(`Widget wrapper connected: ${this.displayName}, timeouts: warning=${this.warningTimeout}ms, failure=${this.failureTimeout}ms`);
-
-    // Important: Dispatch connected-to-dom event to notify child elements
-    // We do this on next tick to ensure all initialization is complete
-    setTimeout(() => {
-      if (!this.connectedEventDispatched) {
-        Array.from(this.children).forEach(child => {
-          child.dispatchEvent(this.events.connectedToDomEvent);
-        });
-        this.connectedEventDispatched = true;
-      }
-    }, 0);
   }
 
   disconnectedCallback() {

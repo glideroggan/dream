@@ -1,16 +1,16 @@
-import { FASTElement, customElement, html, css, observable, when, attr } from "@microsoft/fast-element";
+import { customElement, html, css, observable, when, attr } from "@microsoft/fast-element";
 import { repositoryService } from "../../services/repository-service";
 import { WorkflowIds } from "../../workflows/workflow-registry";
 import "./account-list-component";
 import { TransactionListComponent, TransactionViewModel } from "./transaction-list-component";
 import { workflowManager } from "../../services/workflow-manager-service";
 import { Account } from "../../repositories/account-repository";
+import { BaseWidget } from "../../components/base-widget";
 // import { AccountInfoComponent } from "./account-info-component";
 
 const template = html<AccountWidget>/*html*/ `
   <div class="account-widget">
-    <div class="widget-header">
-      <h3>Account Balances</h3>
+    <div class="widget-action-bar">
       <button class="transfer-button" @click="${x => x.openTransferWorkflow()}" title="Transfer Money">
         Transfer
       </button>
@@ -31,16 +31,17 @@ const template = html<AccountWidget>/*html*/ `
     `)}
     
     ${when(x => !x.loading && !x.error, html<AccountWidget>/*html*/`
-      <account-list
-        :accounts="${x => x.accounts}"
-        :expandedAccountId="${x => x.expandedAccountId}"
-        :isLoadingTransactions="${x => x.isLoadingTransactions}"
-        :accountTransactions="${x => x.accountTransactions}"
-        :maxTransactionsToShow="${x => x.maxTransactionsToShow}"
-        @account-toggle="${(x, c) => x.handleAccountToggle(c.event)}"
-        @account-actions="${(x, c) => x.handleAccountActions(c.event)}"
-        @show-more-transactions="${x => x.showAllTransactions()}">
-      </account-list>
+      <div class="content-area">
+        <account-list
+          :accounts="${x => x.accounts}"
+          :expandedAccountId="${x => x.expandedAccountId}"
+          :isLoadingTransactions="${x => x.isLoadingTransactions}"
+          :accountTransactions="${x => x.accountTransactions}"
+          :maxTransactionsToShow="${x => x.maxTransactionsToShow}"
+          @account-toggle="${(x, c) => x.handleAccountToggle(c.event)}"
+          @account-actions="${(x, c) => x.handleAccountActions(c.event)}">
+        </account-list>
+      </div>
       
       <div class="widget-footer">
         <button class="primary-button" @click="${x => x.addAccount()}">Add Account</button>
@@ -51,33 +52,33 @@ const template = html<AccountWidget>/*html*/ `
 
 const styles = css`
   .account-widget {
-    background: var(--background-color, #ffffff);
-    color: var(--text-color, #333333);
-    border-radius: 8px;
+    background: var(--widget-background, #ffffff);
+    color: var(--widget-text-color, #333333);
+    border-radius: inherit;
     padding: 0;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    position: relative;
-    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  
+  .widget-action-bar {
+    padding: 12px 16px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    border-bottom: 1px solid var(--widget-divider-color, #eaeaea);
+  }
+  
+  .content-area {
+    flex: 1;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
   }
   
-  .widget-header {
-    padding: 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--divider-color, #eaeaea);
-  }
-  
-  h3 {
-    margin: 0;
-    font-size: 18px;
-  }
-  
   .transfer-button {
-    background-color: var(--primary-color, #3498db);
-    color: white;
+    background-color: var(--widget-primary-color, #3498db);
+    color: var(--widget-primary-text, white);
     border: none;
     padding: 6px 12px;
     border-radius: 4px;
@@ -88,7 +89,7 @@ const styles = css`
   }
   
   .transfer-button:hover {
-    background-color: var(--primary-color-hover, #2980b9);
+    background-color: var(--widget-primary-hover, #2980b9);
   }
   
   .action-button {
@@ -105,18 +106,21 @@ const styles = css`
   }
   
   .action-button:hover {
-    background-color: var(--hover-bg, rgba(0, 0, 0, 0.05));
+    background-color: var(--widget-secondary-hover, rgba(0, 0, 0, 0.05));
   }
   
   .widget-footer {
     padding: 12px 16px;
-    border-top: 1px solid var(--divider-color, #eaeaea);
+    border-top: 1px solid var(--widget-divider-color, #eaeaea);
     text-align: right;
+    margin-top: auto;
+    flex-shrink: 0;
+    background-color: var(--widget-background, #ffffff);
   }
   
   .primary-button {
-    background-color: var(--primary-color, #3498db);
-    color: white;
+    background-color: var(--widget-primary-color, #3498db);
+    color: var(--widget-primary-text, white);
     border: none;
     padding: 8px 16px;
     border-radius: 4px;
@@ -126,7 +130,7 @@ const styles = css`
   }
   
   .primary-button:hover {
-    background-color: var(--primary-color-hover, #2980b9);
+    background-color: var(--widget-primary-hover, #2980b9);
   }
   
   .loading-state {
@@ -143,7 +147,7 @@ const styles = css`
     height: 40px;
     border: 3px solid rgba(0, 0, 0, 0.1);
     border-radius: 50%;
-    border-top-color: var(--primary-color, #3498db);
+    border-top-color: var(--widget-primary-color, #3498db);
     animation: spin 1s ease-in-out infinite;
     margin-bottom: 16px;
   }
@@ -162,13 +166,13 @@ const styles = css`
   }
   
   .error-message {
-    color: var(--error-color, #e74c3c);
+    color: var(--widget-error-color, #e74c3c);
     text-align: center;
     margin-bottom: 16px;
   }
   
   .retry-button {
-    background-color: var(--error-color, #e74c3c);
+    background-color: var(--widget-error-color, #e74c3c);
     color: white;
     border: none;
     padding: 8px 16px;
@@ -182,6 +186,7 @@ const styles = css`
     background-color: #c0392b;
   }
   
+  /* Account action button styles */
   .account-action-buttons {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -197,29 +202,50 @@ const styles = css`
     font-weight: 500;
     font-size: 14px;
     text-align: center;
-    background-color: var(--button-bg, #f0f0f0);
-    color: var(--text-primary, #333);
+    background-color: var(--widget-secondary-color, #f0f0f0);
+    color: var(--widget-text-color, #333);
     display: block;
   }
   
   .action-button.edit {
-    background-color: var(--primary-light, #d6eaf8);
-    color: var(--primary-color, #2980b9);
+    background-color: var(--widget-success-light, #d6eaf8);
+    color: var(--widget-primary-color, #2980b9);
   }
   
   .action-button.deposit {
-    background-color: var(--success-light, #d5f5e3);
-    color: var(--success-color, #27ae60);
+    background-color: var (--widget-success-light, #d5f5e3);
+    color: var(--widget-success-color, #27ae60);
   }
   
   .action-button.withdraw {
-    background-color: var(--warning-light, #fef9e7);
-    color: var(--warning-color, #f39c12);
+    background-color: var(--widget-warning-light, #fef9e7);
+    color: var(--widget-warning-color, #f39c12);
   }
   
   .action-button.delete {
-    background-color: var(--error-light, #fadbd8);
-    color: var(--error-color, #e74c3c);
+    background-color: var(--widget-error-light, #fadbd8);
+    color: var(--widget-error-color, #e74c3c);
+  }
+  
+  /* Add scrolling to the account list area */
+  account-list {
+    flex: 1;
+  }
+  
+  /* Improve button spacing in smaller viewports */
+  @media (max-width: 400px) {
+    .widget-action-bar {
+      padding: 8px 12px;
+    }
+    
+    .widget-footer {
+      padding: 8px 12px;
+    }
+    
+    .transfer-button, .primary-button {
+      padding: 6px 10px;
+      font-size: 13px;
+    }
   }
 `;
 
@@ -228,13 +254,12 @@ const styles = css`
   template,
   styles
 })
-export class AccountWidget extends FASTElement {
+export class AccountWidget extends BaseWidget {
   @observable accounts: Account[] = [];
   @observable loading: boolean = true;
   @observable error: boolean = false;
   @observable errorMessage: string = '';
   
-  // @observable workflowTitle: string = "Account Actions";
   @observable selectedAccount: Account | null = null;
   @observable showWorkflow: boolean = false;
   @observable showWorkflowActions: boolean = true;
@@ -247,11 +272,6 @@ export class AccountWidget extends FASTElement {
 
   @attr accountId: string;
   @observable transactions: TransactionViewModel[] = [];
-  @observable isLoading: boolean = false;
-  
-  // private get modal(): ModalComponent | null {
-  //   return this.shadowRoot?.getElementById('accountModal') as ModalComponent | null;
-  // }
 
   async connectedCallback() {
     super.connectedCallback();
@@ -267,15 +287,12 @@ export class AccountWidget extends FASTElement {
       // Listen for storage events from other tabs
       window.addEventListener('storage', this.handleStorageChange.bind(this));
       
-      // Signal that the widget is initialized
-      this.dispatchEvent(new CustomEvent('initialized', {
-        bubbles: true,
-        composed: true
-      }));
+      // Use the BaseWidget method instead of directly dispatching event
+      this.notifyInitialized();
     } catch (error) {
       console.error('Error initializing account widget:', error);
-      // Re-throw to let error handling work
-      throw error;
+      // Use the BaseWidget error handling method
+      this.handleError(error instanceof Error ? error : String(error));
     }
   }
   
@@ -303,11 +320,9 @@ export class AccountWidget extends FASTElement {
     this.errorMessage = '';
     
     try {
-      // Get the repository service
-      // const repositoryService = repositoryService;
       const accountRepo = repositoryService.getAccountRepository();
       
-      // Fetch accounts with a slight delay to show loading state
+      // Fetch accounts
       const accounts = await accountRepo.getAll();
       
       // Update the accounts property
@@ -329,10 +344,10 @@ export class AccountWidget extends FASTElement {
       return;
     }
     
-    // this.workflowTitle = "Transfer Money";
     this.selectedAccount = null;
     console.debug(`Opening transfer workflow with ${this.accounts.length} accounts:`, this.accounts);
-    this.openWorkflow(WorkflowIds.TRANSFER, { accounts: this.accounts });
+    // Use the BaseWidget method
+    this.startWorkflow(WorkflowIds.TRANSFER, { accounts: this.accounts });
   }
   
   /**
@@ -441,7 +456,6 @@ export class AccountWidget extends FASTElement {
         // If workflow was successful, refresh data
         this.fetchAccounts();
         
-        // TODO: workflow-complete
         // Dispatch event about workflow completion
         this.dispatchEvent(new CustomEvent('workflow-complete', {
           bubbles: true,
@@ -449,12 +463,14 @@ export class AccountWidget extends FASTElement {
           detail: result
         }));
       }
+      
+      return result;
     } catch (error) {
       console.error(`Error running workflow ${workflowId}:`, error);
       this.showWorkflow = false;
+      throw error;
     }
   }
-  
   
   handleModalClose() {
     console.debug("Modal closed");
@@ -463,11 +479,9 @@ export class AccountWidget extends FASTElement {
   }
   
   async addAccount() {
-    // this.workflowTitle = "Create New Account";
     this.selectedAccount = null;
-    
-    // Use the create account workflow instead of directly creating an account
-    this.openWorkflow(WorkflowIds.CREATE_ACCOUNT);
+    // Use the BaseWidget method
+    this.startWorkflow(WorkflowIds.CREATE_ACCOUNT);
   }
   
   /**
