@@ -32,17 +32,32 @@ const template = html<TransactionListComponent>/*html*/ `
       </div>
     `)}
     
-    ${when(x => !x.isLoading && !x.hasError && x.transactions.length === 0, html<TransactionListComponent>/*html*/`
-      <div class="transactions-empty">
-        <p>No transactions found for this account.</p>
+    ${when(x => !x.isLoading && !x.hasError, html<TransactionListComponent>/*html*/`
+      <!-- Tab Navigation -->
+      <div class="transaction-tabs">
+        <button class="tab-button ${x => x.activeTab === 'completed' ? 'active' : ''}" 
+                @click="${x => x.setActiveTab('completed')}">
+          Completed
+          <span class="tab-count">${x => x.regularTransactions.length || 0}</span>
+        </button>
+        <button class="tab-button ${x => x.activeTab === 'upcoming' ? 'active' : ''}" 
+                @click="${x => x.setActiveTab('upcoming')}">
+          Upcoming
+          <span class="tab-count">${x => x.upcomingTransactions.length || 0}</span>
+        </button>
       </div>
-    `)}
-    
-    ${when(x => !x.isLoading && !x.hasError && x.transactions.length > 0, html<TransactionListComponent>/*html*/`
-      <div class="transactions-content">
-        <!-- Regular Transactions -->
-        <div class="transaction-section">
-          ${when(x => x.hasRegularTransactions, html<TransactionListComponent>/*html*/`
+      
+      <!-- Tab Content -->
+      <div class="tab-content">
+        <!-- Completed Transactions Tab -->
+        ${when(x => x.activeTab === 'completed', html<TransactionListComponent>/*html*/`
+          ${when(x => x.regularTransactions.length === 0, html<TransactionListComponent>/*html*/`
+            <div class="transactions-empty">
+              <p>No completed transactions found for this account.</p>
+            </div>
+          `)}
+          
+          ${when(x => x.regularTransactions.length > 0, html<TransactionListComponent>/*html*/`
             <div class="transaction-list">
               ${repeat(x => x.visibleRegularTransactions, html<TransactionViewModel>/*html*/`
                 <div class="transaction-item">
@@ -70,13 +85,17 @@ const template = html<TransactionListComponent>/*html*/ `
               </button>
             `)}
           `)}
-        </div>
-
-        <!-- Upcoming Transactions -->
-        ${when(x => x.hasUpcomingTransactions, html<TransactionListComponent>/*html*/`
-          <div class="transaction-section upcoming-section">
-            <h4 class="upcoming-header">Upcoming</h4>
-            
+        `)}
+        
+        <!-- Upcoming Transactions Tab -->
+        ${when(x => x.activeTab === 'upcoming', html<TransactionListComponent>/*html*/`
+          ${when(x => x.upcomingTransactions.length === 0, html<TransactionListComponent>/*html*/`
+            <div class="transactions-empty">
+              <p>No upcoming transactions found for this account.</p>
+            </div>
+          `)}
+          
+          ${when(x => x.upcomingTransactions.length > 0, html<TransactionListComponent>/*html*/`
             <div class="transaction-groups">
               ${repeat(x => x.upcomingGroups, html<TransactionGroup, TransactionListComponent>/*html*/`
                 <div class="transaction-group">
@@ -101,7 +120,7 @@ const template = html<TransactionListComponent>/*html*/ `
                 </div>
               `)}
             </div>
-          </div>
+          `)}
         `)}
       </div>
     `)}
@@ -110,7 +129,9 @@ const template = html<TransactionListComponent>/*html*/ `
 
 const styles = css`
   .transaction-list-container {
-    padding: 8px 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
   }
   
   .transactions-loading, .transactions-empty {
@@ -140,21 +161,65 @@ const styles = css`
     to { transform: rotate(360deg); }
   }
   
-  .transaction-section {
-    margin-bottom: 16px;
+  /* Tab Navigation */
+  .transaction-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--divider-color, #eaeaea);
+    background-color: var(--background-light, #f9f9f9);
   }
   
-  .upcoming-section {
-    border-top: 1px solid var(--divider-color, #eaeaea);
-    padding-top: 12px;
-  }
-  
-  .upcoming-header {
-    margin: 0 0 8px 0;
+  .tab-button {
+    flex: 1;
+    padding: 12px 16px;
+    background: transparent;
+    border: none;
     font-size: 14px;
     font-weight: 500;
     color: var(--text-secondary, #666);
-    padding: 0 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  
+  .tab-button:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+  }
+  
+  .tab-button.active {
+    color: var(--primary-color, #3498db);
+  }
+  
+  .tab-button.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: var(--primary-color, #3498db);
+  }
+  
+  .tab-count {
+    font-size: 12px;
+    background-color: rgba(0, 0, 0, 0.07);
+    color: var(--text-secondary, #666);
+    border-radius: 12px;
+    padding: 2px 8px;
+    min-width: 24px;
+    text-align: center;
+  }
+  
+  .tab-content {
+    flex: 1;
+    overflow-y: auto;
+  }
+  
+  .transaction-section {
+    margin-bottom: 16px;
   }
   
   .group-date-header {
@@ -325,6 +390,7 @@ export class TransactionListComponent extends FASTElement {
   @observable hasError: boolean = false;
   @observable transactions: TransactionViewModel[] = [];
   @observable maxToShow: number = 3;
+  @observable activeTab: 'completed' | 'upcoming' = 'completed';
   
   @observable regularTransactions: TransactionViewModel[] = [];
   @observable upcomingTransactions: TransactionViewModel[] = [];
@@ -347,6 +413,13 @@ export class TransactionListComponent extends FASTElement {
     if (this.accountId) {
       await this.loadTransactions();
     }
+  }
+  
+  /**
+   * Set the active tab
+   */
+  setActiveTab(tab: 'completed' | 'upcoming'): void {
+    this.activeTab = tab;
   }
   
   /**
@@ -401,6 +474,11 @@ export class TransactionListComponent extends FASTElement {
     
     // Group upcoming transactions by date
     this.upcomingGroups = this.groupUpcomingByDate(this.upcomingTransactions);
+    
+    // Set initial active tab based on data availability
+    if (this.regularTransactions.length === 0 && this.upcomingTransactions.length > 0) {
+      this.activeTab = 'upcoming';
+    }
   }
   
   /**

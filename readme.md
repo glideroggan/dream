@@ -8,6 +8,15 @@
 - size dropdown on left?
 
 # TODO
+- add a "chaos" layer for repositoryService
+  - when the feature is on, when requesting the repository, it will sometimes return a chaos layer on top of the requested repository
+  - when asking for data, it will sometimes return an error
+  - when asking for data, it will sometimes return a timeout
+  - when asking for data, it will sometimes return a 500
+  - when asking for data, it will sometimes return a 404
+  - when asking for data, it will sometimes return a 200, but with an empty array
+  - when asking for data, it will sometimes return a 200, but with a different array
+  - when asking for data, it will sometimes return a 200, but with a different object
 - rename function of the account, in account details
 - should we change the name? widgets are the MFE equivalent, while same component, but with -at-a-glance, is the widget?
   or should each widget have two states, one full-size, and one at-a-glance? so that you can always minimize each section, and if you minimize all, you get the at-a-glance view?
