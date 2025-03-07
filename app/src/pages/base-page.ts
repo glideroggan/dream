@@ -432,11 +432,6 @@ export class BasePage extends FASTElement {
 
       console.debug(`Adding widget ${widget.id} to wrapper`);
 
-      // load any user settings in regards to this page and widget
-      // const size = await this.settingsRepository.getWidgetSize(this.pageTitle, widget.id)
-      // wrapperElement.setAttribute('currentsize', size);
-      // console.log(`Widget ${widget.id} size: ${size}`);
-
       wrapperElement.appendChild(widgetElement);
 
     } catch (error) {
@@ -459,7 +454,7 @@ export class BasePage extends FASTElement {
     // TODO: continue here
     const getSize = async (page: string, widgetId: string) => {
       const size = await this.settingsRepository.getWidgetSize(page, widgetId);
-      console.log(`Widget ${widgetId} size: ${size}`);
+      console.debug(`Widget ${widgetId} size: ${size}`);
       return size;
     }
 

@@ -319,7 +319,7 @@ export class AccountWidget extends BaseWidget {
    * Open account actions dialog
    */
   async openAccountActions(account: Account): Promise<void> {
-    console.log('Opening account actions for:', account);
+    console.debug('Opening account actions for:', account);
     this.selectedAccount = account;
     
     const result = await this.openWorkflow(WorkflowIds.ACCOUNT_INFO, { account: this.selectedAccount });
@@ -336,7 +336,7 @@ export class AccountWidget extends BaseWidget {
    */
   async openWorkflow(workflowId: string, params?: Record<string, any>) {
     try {
-      console.log(`Starting workflow ${workflowId} with params:`, params);
+      console.debug(`Starting workflow ${workflowId} with params:`, params);
       
       // Use the workflow manager directly
       const result = await workflowManager.startWorkflow(workflowId, params);

@@ -4,7 +4,7 @@ initSingletonManager()
 import { repositoryService, RepositoryService } from './services/repository-service';
 // Initialize repository service
 window.repositoryService = repositoryService;
-console.log('Repository service initialized');
+console.debug('Repository service initialized');
 // Import workflow components
 import './services/product-service';
 import './workflows/swish-workflow';

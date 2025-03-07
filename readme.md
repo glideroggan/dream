@@ -1,4 +1,6 @@
 # BUGS
+- the transaction signing is not so nice, the style of it should improve
+- need toast error when failing to start a workflow
 - ✔️Transaction list doesn't update after adding a new transaction
 - transfers should be able to be scheduled
 - when there is only one choice from the search inputs, enter key should select it
@@ -18,6 +20,8 @@
 - arch? bun, deno, node?
 - document should be cached and static as much as possible
 - we can serve the document from an api, and dynamically fill in importmaps
+
+# bankid workflow
 
 # account widget
 - should there be a single insight/recommendation in the header of the account widget?

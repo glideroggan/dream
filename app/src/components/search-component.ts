@@ -104,51 +104,14 @@ export class SearchComponent extends FASTElement {
   handleKeydown(event: Event) {
     const keyboardEvent = event as KeyboardEvent;
 
-    // console.log('Key pressed:', event);
-    // if (keyboardEvent.key === 'Tab') {
-    //   console.log('Tab pressed');
-    // }
-
     this.handleSearch(event);
-    
-    // if (keyboardEvent.key === 'Tab' && !keyboardEvent.shiftKey && this.showSuggestions) {
-    //   // Prevent default tab behavior
-    //   keyboardEvent.preventDefault();
-      
-    //   // Get available result items
-    //   const items = this.getResultElements();
-      
-    //   if (items.length > 0) {
-    //     // Focus the first result
-    //     this.focusResult(0);
-    //     return;
-    //   }
-    // } else if (keyboardEvent.key === 'Enter') {
-    //   if (this.searchResults.length > 0) {
-    //     this.selectResult(this.searchResults[0]);
-    //   } else {
-    //     this.performSearch();
-    //   }
-    // } else if (keyboardEvent.key === 'Escape') {
-    //   this.showSuggestions = false;
-    //   this.inputElement.blur();
-    // } else if (keyboardEvent.key === 'ArrowDown' && this.showSuggestions) {
-    //   keyboardEvent.preventDefault();
-      
-    //   const items = this.getResultElements();
-      
-    //   if (items.length > 0) {
-    //     this.focusResult(0);
-    //   }
-    // }
   }
   
   handleResultKeydown(item: SearchResultItem, event: Event) {
     const keyboardEvent = event as KeyboardEvent;
-    // TODO: good enough
     const currentIndex = event.target ? parseInt((event.target as HTMLElement).getAttribute('data-result-index') || '-1', 10) - 2 : -1;
 
-    console.log('Key pressed:', keyboardEvent.key, currentIndex);
+    console.debug('Key pressed:', keyboardEvent.key, currentIndex);
     
     switch (keyboardEvent.key) {
       case 'ArrowDown':
@@ -191,7 +154,7 @@ export class SearchComponent extends FASTElement {
 
   handleSearchFocus() {
     this.resultJustSelected = this.showSuggestions
-    console.log('Search focused', this.resultJustSelected, this.showSuggestions)
+    console.debug('Search focused', this.resultJustSelected, this.showSuggestions)
   }
   
   handleFocus() {
@@ -227,7 +190,7 @@ export class SearchComponent extends FASTElement {
   
   private focusResult(index: number): void {
     const items = this.getResultElements();
-    console.log('Focus result:', index, items.length);
+    console.debug('Focus result:', index, items.length);
     
     if (items.length === 0 || index < 0) return;
     
@@ -252,7 +215,7 @@ export class SearchComponent extends FASTElement {
   
   private getCurrentFocusedIndex(): number {
     const items = this.getResultElements();
-    console.log('Current focused index:', this.currentFocusedIndex, items.length);
+    console.debug('Current focused index:', this.currentFocusedIndex, items.length);
     
     for (let i = 0; i < items.length; i++) {
       if (items[i] === document.activeElement) {

@@ -139,17 +139,17 @@ export class TransferWorkflow extends WorkflowBase {
    * Override focusFirstElement to specifically focus the fromAccount dropdown
    */
   public focusFirstElement(): void {
-    console.log('[transfer-workflow] focusFirstElement called');
+    console.debug('[transfer-workflow] focusFirstElement called');
     
     // Try to focus the fromAccount dropdown
     setTimeout(() => {
       const fromSelect = this.shadowRoot?.getElementById('fromAccount') as HTMLSelectElement;
       if (fromSelect) {
-        console.log('[transfer-workflow] focusing fromAccount select');
+        console.debug('[transfer-workflow] focusing fromAccount select');
         fromSelect.focus();
       } else {
         // Fall back to base class behavior
-        console.log('[transfer-workflow] fromAccount not found, using default focus behavior');
+        console.debug('[transfer-workflow] fromAccount not found, using default focus behavior');
         super.focusFirstElement();
       }
     }, 50);
@@ -311,7 +311,7 @@ export class TransferWorkflow extends WorkflowBase {
       description: this.description
     };
 
-    console.log("Executing transfer:", transferDetails);
+    console.debug("Executing transfer:", transferDetails);
 
     // Determine if this is an external transfer (to a contact) or internal transfer
     if (this.toContactId) {

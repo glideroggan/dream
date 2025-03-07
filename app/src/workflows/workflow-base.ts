@@ -25,16 +25,16 @@ export abstract class WorkflowBase extends FASTElement {
 
   constructor() {
     super()
-    console.log('[workflow-base] adding listener to ', this)
+    console.debug('[workflow-base] adding listener to ', this)
     const shadowRoot = this.shadowRoot!
     this.focus()
     // const child = this.firstChild as HTMLElement
     // child.focus()
     // setInterval(() => {
-    //   console.log('[workflow-base] ', shadowRoot.activeElement)
+    //   console.debug('[workflow-base] ', shadowRoot.activeElement)
     // }, 1000)
     this.addEventListener('keydown', (e) => {
-      console.log('[workflow-base] keydown event', e)
+      console.debug('[workflow-base] keydown event', e)
     })
   }
 
@@ -43,7 +43,7 @@ export abstract class WorkflowBase extends FASTElement {
    * This is called by the modal container after the workflow is loaded
    */
   public focusFirstElement(): void {
-    console.log('[workflow-base] focusFirstElement called');
+    console.debug('[workflow-base] focusFirstElement called');
     const focusableElements = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
     
     // Wait for the component to be fully rendered
@@ -52,11 +52,11 @@ export abstract class WorkflowBase extends FASTElement {
       const firstFocusable = this.shadowRoot?.querySelector(focusableElements) as HTMLElement;
       
       if (firstFocusable) {
-        console.log('[workflow-base] focusing element:', firstFocusable);
+        console.debug('[workflow-base] focusing element:', firstFocusable);
         firstFocusable.focus();
       } else {
         // If no focusable element found, focus the workflow itself
-        console.log('[workflow-base] no focusable elements, focusing workflow itself');
+        console.debug('[workflow-base] no focusable elements, focusing workflow itself');
         this.focus();
       }
     }, 50); // Small delay to ensure DOM is ready
@@ -99,13 +99,13 @@ export abstract class WorkflowBase extends FASTElement {
     data?: Record<string, any>,
     message?: string
   ): void {
-    console.log(`base workflow complete: ${success}, ${message}`)
+    console.debug(`base workflow complete: ${success}, ${message}`)
     if (this.host) {
       this.host.closeWorkflow({ success, data, message })
     }
 
     // Dispatch event for workflow completion
-    console.log('[base workflow] dispatching workflow-complete event')
+    console.debug('[base workflow] dispatching workflow-complete event')
     // TODO: nobody listens to this? who is it for?
     this.dispatchEvent(
       new CustomEvent('workflow-complete', {

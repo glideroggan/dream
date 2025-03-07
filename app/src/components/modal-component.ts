@@ -215,7 +215,7 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
       return activeDocument
     }
     // setInterval(() => {
-    //   console.log('[Modal] ', getActive())
+    //   console.debug('[Modal] ', getActive())
     // }, 1000)
   }
   
@@ -224,7 +224,7 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
    */
   private handleKeyDown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
-      console.log('[modal] Escape key pressed, closing modal');
+      console.debug('[modal] Escape key pressed, closing modal');
       this.close();
     }
   }
@@ -265,16 +265,16 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
    */
   private setInitialFocus(): void {
     if (this.activeWorkflow && typeof (this.activeWorkflow as any).focusFirstElement === 'function') {
-      console.log('[modal] Setting focus to workflow first element');
+      console.debug('[modal] Setting focus to workflow first element');
       (this.activeWorkflow as any).focusFirstElement();
     } else if (this.activeWorkflow) {
-      console.log('[modal] Focusing workflow itself');
+      console.debug('[modal] Focusing workflow itself');
       this.activeWorkflow.focus();
     } else {
       // For non-workflow modals, focus the container
       const container = this.shadowRoot?.querySelector('.modal-container');
       if (container) {
-        console.log('[modal] Focusing modal container');
+        console.debug('[modal] Focusing modal container');
         (container as HTMLElement).setAttribute('tabindex', '-1');
         (container as HTMLElement).focus();
       }
@@ -289,7 +289,7 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
   public close(): void {
     console.debug("Modal close requested");
     if (workflowManager.hasActiveWorkflow()) {
-      console.log("Active workflow detected, delegating close to workflow manager");
+      console.debug("Active workflow detected, delegating close to workflow manager");
       // Let the workflow manager handle the cancel logic
       workflowManager.handleCancel();
     } else {
@@ -303,7 +303,7 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
    * Standard close operation without workflow handling
    */
   private performStandardClose(): void {
-    console.log("[modal] standard Closing modal");
+    console.debug("[modal] standard Closing modal");
     this.isOpen = false;
     document.body.style.overflow = ""; // Restore body scrolling
     
@@ -321,10 +321,10 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
    * Implementation of WorkflowHost interface
    */
   public closeWorkflow(result?: WorkflowResult): void {
-    console.log("[modal] closeWorkflow called with result:", result);
+    console.debug("[modal] closeWorkflow called with result:", result);
     if (result) {
       // Emit event for workflow completion
-      console.log("[modal] Emitting workflowComplete event with result:", result);
+      console.debug("[modal] Emitting workflowComplete event with result:", result);
       this.$emit("workflowComplete", { detail: result });
     } else {
       console.warn("No result provided when closing workflow");
@@ -406,7 +406,7 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
    */
   public async loadWorkflow(workflowIdOrElement: string | HTMLElement, params?: Record<string, any>): Promise<boolean> {
     // Prevent loading if already loading or opening
-    console.log("Loading workflow:", workflowIdOrElement);
+    console.debug("Loading workflow:", workflowIdOrElement);
     if (this.isOpeningModal || this.activeWorkflow) {
       console.debug("Modal is busy, cannot load workflow now");
       return false;
@@ -434,7 +434,7 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
    */
   private loadWorkflowElement(workflowElement: HTMLElement): boolean {
     try {
-      console.log('[modal] Loading workflow element:', workflowElement);
+      console.debug('[modal] Loading workflow element:', workflowElement);
 
       // Clear any existing workflow
       this.clearWorkflow(this.activeWorkflow !== null);
@@ -482,7 +482,7 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
    */
   private clearWorkflow(startingNew: boolean = false): void {
     if (this.activeWorkflow) {
-      console.log("Clearing active workflow");
+      console.debug("Clearing active workflow");
       // Remove event listeners
       this.activeWorkflow.removeEventListener('workflowValidation', this.boundHandleWorkflowValidation);
 

@@ -22,6 +22,7 @@ const context = await build.context({
         'src/workflows/swish-workflow.ts',
         'src/workflows/payments/add-contact-workflow.ts',
         'src/workflows/account-info-workflow.ts',
+        'src/workflows/signing/signing-workflow.ts',
         // pages
         'src/pages/dashboard-page.ts',
         'src/pages/investments-page.ts',
@@ -48,12 +49,7 @@ const context = await build.context({
         "@widgets/financial-health",
         "@widgets/swish",
         // workflows
-        "@workflows/transfer",
-        "@workflows/create-account",
-        "@workflows/swish-workflow",
-        "@workflows/account-info",
-        "@workflows/add-contact-workflow",
-        "@workflows/kyc",
+        "@workflows/*",
         // pages
         "@pages/dashboard", "@pages/investments", "@pages/savings",
         "@widgets/error", "@widgets/fast", "@widgets/slow",

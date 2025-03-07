@@ -759,7 +759,7 @@ export class FinancialHealthWidget extends FASTElement {
     const totalBalance = Array.from(accountBalances.values())
       .reduce((sum, balance) => sum + balance, 0);
 
-      console.log('accountBalances', accountBalances.entries());
+      console.debug('accountBalances', accountBalances.entries());
     
     // Generate account type data for visualization
     this.accountTypeData = Array.from(accountBalances.entries())
@@ -770,7 +770,7 @@ export class FinancialHealthWidget extends FASTElement {
         percentage: totalBalance > 0 ? (balance / totalBalance) * 100 : 0
       }))
       .sort((a, b) => b.balance - a.balance); // Sort by balance descending
-    console.log('accountTypeData', this.accountTypeData);
+    console.debug('accountTypeData', this.accountTypeData);
     
     // Generate legend items based on what account types are actually present
     this.accountTypeLegendItems = Array.from(accountBalances.keys()).map(type => ({

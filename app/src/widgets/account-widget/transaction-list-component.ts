@@ -525,9 +525,9 @@ export class TransactionListComponent extends FASTElement {
     super.connectedCallback();
 
     this.unsubscribe = this.transactionRepo.subscribe(event => {
-      console.log('update transaction', event);
+      console.debug('update transaction', event);
       if (event.type === 'create' || event.type === 'update' || event.type === 'delete') {
-        console.log('loading transactions');
+        console.debug('loading transactions');
         this.loadTransactions();
       }
     });
@@ -596,7 +596,7 @@ export class TransactionListComponent extends FASTElement {
 
     if (this.regularTransactions.length !== 0 && this.regularTransactions.length < this.maxToShow) {
       this.maxToShow = this.regularTransactions.length;
-      // console.log('maxToShow', this.maxToShow);
+      // console.debug('maxToShow', this.maxToShow);
       this.updateVisibleTransactions();
       return
     }
@@ -608,7 +608,7 @@ export class TransactionListComponent extends FASTElement {
       // Get the next batch using the iterator
       for (let i = 0; i < this.batchSize; i++) {
         const result = await this.regularTransactionIterator.next();
-        // console.log('result', result);
+        // console.debug('result', result);
         if (result.done) {
           this.hasMoreRegularTransactions = false;
           break;
@@ -622,7 +622,7 @@ export class TransactionListComponent extends FASTElement {
 
         // Process transaction into view model
         const viewModel = TransactionViewModelHelper.processTransaction(result.value, this.accountId);
-        // console.log('viewModel', viewModel);
+        // console.debug('viewModel', viewModel);
 
         // Only add if not already present
         if (!this.regularTransactions.some(existing => existing.id === viewModel.id)) {
@@ -641,7 +641,7 @@ export class TransactionListComponent extends FASTElement {
         this.regularTransactions = allTransactions;
         this.maxToShow = Math.max(this.maxToShow, this.regularTransactions.length);
         this.updateVisibleTransactions();
-        // console.log('regularTransactions', this.regularTransactions.length, this.hasMoreRegularTransactions);
+        // console.debug('regularTransactions', this.regularTransactions.length, this.hasMoreRegularTransactions);
       }
 
     }
@@ -715,8 +715,8 @@ export class TransactionListComponent extends FASTElement {
    * Update which regular transactions are visible based on maxToShow
    */
   private updateVisibleTransactions(): void {
-    console.log('first trans1', this.regularTransactions[0]);
-    console.log('first trans2', this.regularTransactions[1]);
+    console.debug('first trans1', this.regularTransactions[0]);
+    console.debug('first trans2', this.regularTransactions[1]);
     // BUG: not sure why I need to start from 1, but otherwise it doesn't work
     this.visibleRegularTransactions = this.regularTransactions.slice(0, this.maxToShow);
   }

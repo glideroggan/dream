@@ -25,6 +25,7 @@ export const WorkflowIds = {
   ADD_CONTACT: "add-contact", 
   ACCOUNT_INFO: "account-info",
   FINANCIAL_DETAILS: "financial-details", // TODO: implement this workflow
+  SIGNING: "signing", // Add signing workflow ID
 };
 
 // Define all available workflows
@@ -112,6 +113,17 @@ const workflowDefinitions: WorkflowDefinition[] = [
     icon: "👤",
     searchable: true,
     keywords: ['contact', 'add contact', 'payment contact', 'recipient', 'payee'],
+  },
+  {
+    id: WorkflowIds.SIGNING,
+    name: "Sign Document",
+    description: "Sign documents or transactions using BankID",
+    elementName: "signing-workflow",
+    module: "@workflows/signing",
+    icon: "✍️",
+    searchable: true,
+    popular: true,
+    keywords: ['sign', 'signature', 'bankid', 'document', 'signing', 'verify', 'authorization'],
   },
 ];
 

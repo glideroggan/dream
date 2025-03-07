@@ -64,22 +64,6 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
     }
   }
 
-  // /**
-  //  * Get upcoming transactions as an async iterator
-  //  * @param batchSize Number of transactions per batch
-  //  */
-  // public async *getUpcomingIterator(): AsyncGenerator<Transaction> {
-  //   yield* this.getByStatusIterator(TransactionStatus.UPCOMING);
-  //   // return this.getByStatusIterator(TransactionStatus.UPCOMING, batchSize);
-  // }
-
-  // /**
-  //  * Get completed transactions as an async iterator
-  //  * @param batchSize Number of transactions per batch
-  //  */
-  // getCompletedIterator(batchSize = 10): TransactionAsyncIterator {
-  //   return this.getByStatusIterator(TransactionStatus.COMPLETED, batchSize);
-  // }
 
   /**
    * Get account transactions as an async iterator
@@ -94,11 +78,11 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
     // log out the two most recent transactions
-    // console.log('trans1', transactions[0]);
-    // console.log('trans2', transactions[1]);
+    // console.debug('trans1', transactions[0]);
+    // console.debug('trans2', transactions[1]);
     for (const txn of transactions) {
       if (txn.fromAccountId === accountId || txn.toAccountId === accountId) {
-        // console.log('txn', txn);
+        // console.debug('txn', txn);
         yield txn
       }
     }

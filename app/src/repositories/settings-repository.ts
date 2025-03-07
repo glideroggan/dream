@@ -77,7 +77,7 @@ export class SettingsRepository {
    */
   async getWidgetSize(pageKey: string, widgetId: string, defaultSize: WidgetSize = 'md'): Promise<WidgetSize> {
     const settings = await this.getCurrentSettings();
-    console.log('current settings', settings)
+    console.debug('current settings', settings)
     
     // Check if we have widget settings for this page and widget
     if (settings.widgetLayout && 
@@ -86,7 +86,7 @@ export class SettingsRepository {
       
       // Find the widget in the page's widget settings
       const widgetSettings = settings.widgetLayout[pageKey].find(widget => widget.id === widgetId);
-      console.log('widget settings', widgetSettings)
+      console.debug('widget settings', widgetSettings)
       
       if (widgetSettings && widgetSettings.size) {
         return widgetSettings.size;

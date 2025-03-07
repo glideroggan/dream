@@ -37,7 +37,7 @@ export class WorkflowManagerService {
     
     // Listen for workflow completion events from the modal
     modal.addEventListener('workflowComplete', ((event: CustomEvent) => {
-      console.log('[workflowManager] workflowComplete event received:', event.detail);
+      console.debug('[workflowManager] workflowComplete event received:', event.detail);
       const result = event.detail as WorkflowResult;
       this.workflowComplete(result);
     }) as EventListener);
@@ -55,7 +55,7 @@ export class WorkflowManagerService {
     params?: Record<string, any>, 
     pauseCurrentWorkflow: boolean = false
   ): Promise<WorkflowResult> {
-    console.log(`Starting workflow: ${workflowId} (pauseCurrent: ${pauseCurrentWorkflow})`, params);
+    console.debug(`Starting workflow: ${workflowId} (pauseCurrent: ${pauseCurrentWorkflow})`, params);
 
     // Prevent multiple simultaneous workflow starts
     if (this.isStartingWorkflow) {
@@ -73,7 +73,7 @@ export class WorkflowManagerService {
 
     // TODO: is it a good idea to set an event listener in the modal here for dismissal of the workflow?
     // this.modalComponent.addEventListener('keydown', (event: KeyboardEvent) => {
-    //   console.log('keydown event', event);
+    //   console.debug('keydown event', event);
     //   event.preventDefault();
     //   event.stopPropagation();
     // })
@@ -126,7 +126,7 @@ export class WorkflowManagerService {
         paused: false
       };
       this.workflowStack.push(workflowState);
-      console.log(`workflowStack:`, this.workflowStack.map(w => w.id));
+      console.debug(`workflowStack:`, this.workflowStack.map(w => w.id));
 
       // Return promise that resolves when workflow completes
       return new Promise<WorkflowResult>((resolve) => {
@@ -171,7 +171,7 @@ export class WorkflowManagerService {
     currentWorkflow.paused = true;
     
     // The current workflow is now paused but still in our stack
-    console.log(`Workflow ${currentWorkflow.id} paused`);
+    console.debug(`Workflow ${currentWorkflow.id} paused`);
   }
 
   /**
@@ -294,7 +294,7 @@ export class WorkflowManagerService {
       console.debug("No parent workflow, closing modal");
       if (this.modalComponent) {
         // Use forceClose to avoid the loop
-        console.log('[workflowManager] - calling forceClose');
+        console.debug('[workflowManager] - calling forceClose');
         this.modalComponent.forceClose();
         // (this.modalComponent as any).forceClose();
       }
@@ -329,7 +329,7 @@ export class WorkflowManagerService {
    * Handle workflow completion
    */
   private workflowComplete(result: WorkflowResult): void {
-    console.log("Workflow completion handler called with result:", result);
+    console.debug("Workflow completion handler called with result:", result);
     
     if (!this.hasActiveWorkflow()) {
       console.warn("workflowComplete called but no active workflow");
