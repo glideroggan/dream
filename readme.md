@@ -1,10 +1,12 @@
 # BUGS
+- changing account name doesn't update account-widget
 - do new transfers not update the account-widget?
 - need to update net worth after account and transaction changes
 - when you add the swish widget, you can't remove it until you reload, or switch page
 - dismiss the search result with esc
 - all the amounts, should be positive, and instead the type of the transaction should be the one that decides if it is showing as a negative value or not
 - the button in the bottom in financial health widget is unstyled
+- can't use keyboard in transfer workflow
 
 # account widget
 - should there be a single insight/recommendation in the header of the account widget?
@@ -13,6 +15,15 @@
 - ✔️maybe we can show different insights on the accounts, depending on the type of account, these insights needs to respond to the size limits
 
 # account info
+- make account details show more information about the account
+  specific account for that type
+  - credit card account could show the image of the card
+  - savings account could show the interest rate
+  - pension account could show the projected pension
+  - loan account could show the interest rate
+  - mortgage account could show next payment
+    - how much is interest, how much is amortization
+  - investment account could show the risk level
 - account info workflow, needs an empty/default state when no account is selected
 - rename function of the account, in account details
 
