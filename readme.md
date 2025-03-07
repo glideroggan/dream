@@ -1,4 +1,5 @@
 # BUGS
+- Enter key doesn't work in account info, rename account input
 - changing account name doesn't update account-widget
 - do new transfers not update the account-widget?
 - need to update net worth after account and transaction changes

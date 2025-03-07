@@ -41,8 +41,9 @@ const template = html<AccountInfoWorkflow>/*html*/ `
                     <input 
                       type="text" 
                       ${ref('nameInput')}
-                      value="${(x) => x.account?.name || ''}" 
+                      :value="${(x) => x.account?.name || ''}" 
                       class="rename-input"
+                      @keyup="${(x, c) => x.accountNameChanged(c.event)}"
                     />
                     <div class="rename-actions">
                       <button @click="${(x) => x.saveRename()}" class="rename-btn save">Save</button>
@@ -694,12 +695,22 @@ export class AccountInfoWorkflow extends WorkflowBase {
   @observable account: Account | null = null
   @observable isRenaming: boolean = false
   nameInput: HTMLInputElement;
+  // nameInput: string = ''
 
   @attr({ attribute: 'hide-actions', mode: 'boolean' })
   hideActions: boolean = false
 
   get hasInterestRate(): boolean {
     return ['savings', 'loan', 'mortgage'].includes(this.account?.type || '');
+  }
+
+  accountNameChanged(event: Event): void {
+    const keyboardEvent = event as KeyboardEvent;
+    if (keyboardEvent.key === 'Enter') {
+      this.saveRename();
+    } else if (keyboardEvent.key === 'Escape') {
+      this.cancelRename();
+    } 
   }
 
   async initialize(params?: Record<string, any>): Promise<void> {

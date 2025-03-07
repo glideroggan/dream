@@ -6,6 +6,18 @@ export interface Entity {
   id: string;
 }
 
+export type RepositoryEventType = 'create' | 'update' | 'delete' | 'refresh';
+
+export interface RepositoryEvent<T> {
+  type: RepositoryEventType;
+  entity?: T;
+  entityId?: string;
+}
+
+export interface RepositorySubscriber<T> {
+  (event: RepositoryEvent<T>): void;
+}
+
 // Repository interface
 export interface Repository<T extends Entity> {
   getAll(): Promise<T[]>;
@@ -18,6 +30,7 @@ export interface Repository<T extends Entity> {
 // Base repository implementation using local storage
 export abstract class LocalStorageRepository<T extends Entity> implements Repository<T> {
   protected entities: Map<string, T> = new Map();
+  private subscribers: Set<RepositorySubscriber<T>> = new Set();
   
   constructor(
     private storageKey: string,
@@ -30,6 +43,48 @@ export abstract class LocalStorageRepository<T extends Entity> implements Reposi
     if (this.entities.size === 0) {
       this.initializeMockData();
     }
+  }
+
+  /**
+   * Subscribe to repository changes
+   */
+  subscribe(subscriber: RepositorySubscriber<T>): () => void {
+    this.subscribers.add(subscriber);
+    
+    // Return unsubscribe function
+    return () => {
+      this.subscribers.delete(subscriber);
+    };
+  }
+
+  /**
+   * Notify subscribers of changes
+   */
+  protected notifySubscribers(event: RepositoryEvent<T>): void {
+    this.subscribers.forEach(subscriber => subscriber(event));
+  }
+
+  // Override existing methods to notify subscribers
+  async create(data: Omit<T, 'id'>): Promise<T> {
+    const entity = await this._create(data);
+    this.notifySubscribers({ type: 'create', entity });
+    return entity;
+  }
+
+  async update(id: string, data: Partial<T>): Promise<T | undefined> {
+    const entity = await this._update(id, data);
+    if (entity) {
+      this.notifySubscribers({ type: 'update', entity });
+    }
+    return entity;
+  }
+
+  async delete(id: string): Promise<boolean> {
+    const success = await this._delete(id);
+    if (success) {
+      this.notifySubscribers({ type: 'delete', entityId: id });
+    }
+    return success;
   }
   
   /**
@@ -87,7 +142,7 @@ export abstract class LocalStorageRepository<T extends Entity> implements Reposi
     return this.entities.get(id);
   }
   
-  async create(data: Omit<T, 'id'>): Promise<T> {
+  private async _create(data: Omit<T, 'id'>): Promise<T> {
     const id = this.generateId();
     // const accountNumber = Math.floor(Math.random() * 1000000000).toString()
     // const isActive = true
@@ -100,7 +155,7 @@ export abstract class LocalStorageRepository<T extends Entity> implements Reposi
     return entity;
   }
   
-  async update(id: string, data: Partial<T>): Promise<T | undefined> {
+  private async _update(id: string, data: Partial<T>): Promise<T | undefined> {
     const entity = this.entities.get(id);
     
     if (!entity) {
@@ -114,7 +169,7 @@ export abstract class LocalStorageRepository<T extends Entity> implements Reposi
     return updated;
   }
   
-  async delete(id: string): Promise<boolean> {
+  private async _delete(id: string): Promise<boolean> {
     const result = this.entities.delete(id);
     if (result) {
       this.saveToStorage();

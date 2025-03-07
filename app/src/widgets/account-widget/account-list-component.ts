@@ -311,14 +311,16 @@ export class AccountListComponent extends FASTElement {
   @observable isLoading: boolean = true;
   @observable hasError: boolean = false;
   @observable errorMessage: string = '';
-  
+
   // Maps for caching transaction data
   private upcomingTransactionsByAccount: Map<string, TransactionViewModel[]> = new Map();
   private upcomingSummaryCache: Map<string, string> = new Map();
   private outgoingTotalsByAccount: Map<string, number> = new Map();
-  
+
   // Cache for account insights
   private accountInsightsCache: Map<string, AccountInsight[]> = new Map();
+
+  private unsubscribe?: () => void;
 
   constructor() {
     super();
@@ -327,16 +329,20 @@ export class AccountListComponent extends FASTElement {
   async connectedCallback(): Promise<void> {
     super.connectedCallback();
     await this.loadData();
-    
+
     // Listen for storage events to refresh data when needed
     window.addEventListener('storage', this.handleStorageChange.bind(this));
   }
-  
+
   disconnectedCallback(): void {
     super.disconnectedCallback();
     window.removeEventListener('storage', this.handleStorageChange.bind(this));
+    // Clean up subscription
+    if (this.unsubscribe) {
+      this.unsubscribe();
+    }
   }
-  
+
   /**
    * Handle storage changes from other tabs/windows
    */
@@ -353,45 +359,64 @@ export class AccountListComponent extends FASTElement {
   async loadData(): Promise<void> {
     this.isLoading = true;
     this.hasError = false;
-    
+
     try {
       // Get repositories
       const accountRepo = repositoryService.getAccountRepository();
       const transactionRepo = repositoryService.getTransactionRepository();
-      
+
       // Load accounts
       this.accounts = await accountRepo.getAll();
-      
+
+      // Subscribe to account changes
+      this.unsubscribe = accountRepo.subscribe((event) => {
+        switch (event.type) {
+          case 'create':
+            this.handleAccountCreated(event.entity!);
+            break;
+          case 'update':
+            this.handleAccountUpdated(event.entity!);
+            break;
+          case 'delete':
+            this.handleAccountDeleted(event.entityId!);
+            break;
+          case 'refresh':
+            this.loadData(); // Reload all data
+            break;
+        }
+      });
+
+
       // Clear caches
       this.upcomingTransactionsByAccount.clear();
       this.upcomingSummaryCache.clear();
       this.accountInsightsCache.clear();
-      
+
       // Pre-calculate insights for each account
       this.accounts.forEach(account => {
         this.accountInsightsCache.set(account.id, AccountInsightsHelper.getAccountInsights(account));
       });
-      
+
       // Load upcoming transactions
       const upcomingTransactions = await transactionRepo.getUpcoming();
-      
+
       // Process and cache upcoming transactions by account
       for (const transaction of upcomingTransactions) {
         // Handle both incoming and outgoing transactions
         if (transaction.fromAccountId) {
           this.addTransactionToAccount(transaction, transaction.fromAccountId);
         }
-        
+
         if (transaction.toAccountId) {
           this.addTransactionToAccount(transaction, transaction.toAccountId);
         }
       }
-      
+
       // Pre-calculate summaries for better performance
       this.preCalculateSummaries();
-      
+
       this.isLoading = false;
-      
+
       // Let parent know we're ready
       this.dispatchEvent(new CustomEvent('ready'));
     } catch (error) {
@@ -401,28 +426,42 @@ export class AccountListComponent extends FASTElement {
       this.isLoading = false;
     }
   }
-  
+
+  private handleAccountCreated(account: Account): void {
+    this.accounts = [...this.accounts, account];
+  }
+
+  private handleAccountUpdated(account: Account): void {
+    this.accounts = this.accounts.map(a => 
+      a.id === account.id ? account : a
+    );
+  }
+
+  private handleAccountDeleted(accountId: string): void {
+    this.accounts = this.accounts.filter(a => a.id !== accountId);
+  }
+
   /**
    * Add a transaction to the account's cache
    */
   private addTransactionToAccount(transaction: Transaction, accountId: string): void {
     // Skip accounts we don't know about
     if (!this.accounts.some(a => a.id === accountId)) return;
-    
+
     if (!this.upcomingTransactionsByAccount.has(accountId)) {
       this.upcomingTransactionsByAccount.set(accountId, []);
     }
-    
+
     const viewModel = TransactionViewModelHelper.processTransaction(transaction, accountId);
     this.upcomingTransactionsByAccount.get(accountId)!.push(viewModel);
   }
-  
+
   /**
    * Pre-calculate all account summaries for better performance
    */
   private preCalculateSummaries(): void {
     this.outgoingTotalsByAccount.clear();
-    
+
     for (const accountId of this.upcomingTransactionsByAccount.keys()) {
       const transactions = this.upcomingTransactionsByAccount.get(accountId)!;
       if (transactions.length > 0) {
@@ -430,7 +469,7 @@ export class AccountListComponent extends FASTElement {
         const outgoing = transactions.filter(t => !t.isIncoming);
         const outgoingTotal = outgoing.reduce((sum, t) => sum + Math.abs(t.amount), 0);
         this.outgoingTotalsByAccount.set(accountId, outgoingTotal);
-        
+
         // For each account that has transactions, invalidate the insights cache
         // so that it will be recalculated with transaction data
         this.accountInsightsCache.delete(accountId);
@@ -442,8 +481,8 @@ export class AccountListComponent extends FASTElement {
    * Check if an account has upcoming transactions
    */
   accountHasUpcoming(accountId: string): boolean {
-    return this.upcomingTransactionsByAccount.has(accountId) && 
-           this.upcomingTransactionsByAccount.get(accountId)!.length > 0;
+    return this.upcomingTransactionsByAccount.has(accountId) &&
+      this.upcomingTransactionsByAccount.get(accountId)!.length > 0;
   }
 
   /**
@@ -452,7 +491,7 @@ export class AccountListComponent extends FASTElement {
   getUpcomingSummary(accountId: string): string {
     return this.upcomingSummaryCache.get(accountId) || '';
   }
-  
+
   /**
    * Calculate a human-readable summary of upcoming transactions
    */
@@ -460,28 +499,28 @@ export class AccountListComponent extends FASTElement {
     // Calculate total incoming and outgoing amounts
     const incoming = transactions.filter(t => t.isIncoming);
     const outgoing = transactions.filter(t => !t.isIncoming);
-    
+
     const incomingTotal = incoming.reduce((sum, t) => sum + Math.abs(t.amount), 0);
     const outgoingTotal = outgoing.reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    
+
     // Create a summary message
     const parts = [];
-    
+
     if (outgoing.length > 0) {
       const closest = this.getClosestTransaction(outgoing);
       const timeframe = this.getTimeframeText(closest.scheduledDate!);
       parts.push(`${outgoing.length} out (-${outgoingTotal.toFixed(0)}) ${timeframe}`);
     }
-    
+
     if (incoming.length > 0) {
       const closest = this.getClosestTransaction(incoming);
       const timeframe = this.getTimeframeText(closest.scheduledDate!);
       parts.push(`${incoming.length} in (+${incomingTotal.toFixed(0)}) ${timeframe}`);
     }
-    
+
     return parts.join(' · ');
   }
-  
+
   /**
    * Get the closest (soonest) transaction from a list
    */
@@ -489,14 +528,14 @@ export class AccountListComponent extends FASTElement {
     return transactions.reduce((closest, current) => {
       if (!closest.scheduledDate) return current;
       if (!current.scheduledDate) return closest;
-      
+
       const closestDate = new Date(closest.scheduledDate).getTime();
       const currentDate = new Date(current.scheduledDate).getTime();
-      
+
       return currentDate < closestDate ? current : closest;
     });
   }
-  
+
   /**
    * Get a human-readable timeframe description
    */
@@ -504,12 +543,12 @@ export class AccountListComponent extends FASTElement {
     const date = new Date(dateString);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    
+
     const daysDiff = Math.floor((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     if (date.toDateString() === today.toDateString()) {
       return 'today';
     } else if (date.toDateString() === tomorrow.toDateString()) {
@@ -541,16 +580,16 @@ export class AccountListComponent extends FASTElement {
     if (cachedInsights) {
       return cachedInsights;
     }
-    
+
     // If not cached (shouldn't happen), generate on the fly
     const insights = AccountInsightsHelper.getAccountInsights(account);
-    
+
     // Add transaction-based insights
     if (this.accountHasUpcoming(account.id)) {
       const transactionInsights = this.getTransactionBasedInsights(account.id);
       insights.push(...transactionInsights);
     }
-    
+
     this.accountInsightsCache.set(account.id, insights);
     return insights;
   }
@@ -561,23 +600,23 @@ export class AccountListComponent extends FASTElement {
   private getTransactionBasedInsights(accountId: string): AccountInsight[] {
     const insights: AccountInsight[] = [];
     const transactions = this.upcomingTransactionsByAccount.get(accountId) || [];
-    
+
     if (transactions.length === 0) return insights;
-    
+
     // Group by incoming/outgoing
     const incoming = transactions.filter(t => t.isIncoming);
     const outgoing = transactions.filter(t => !t.isIncoming);
-    
+
     // Add outgoing transactions insight
     if (outgoing.length > 0) {
       const outgoingTotal = outgoing.reduce((sum, t) => sum + Math.abs(t.amount), 0);
       const closest = this.getClosestTransaction(outgoing);
       const timeframe = this.getTimeframeText(closest.scheduledDate!);
-      
+
       // Check for insufficient funds
       const account = this.accounts.find(a => a.id === accountId);
       const hasInsufficientFunds = account && outgoingTotal > account.balance;
-      
+
       insights.push({
         type: 'upcoming-out',
         label: 'Out',
@@ -586,13 +625,13 @@ export class AccountListComponent extends FASTElement {
         icon: hasInsufficientFunds ? '⚠️' : '📅'
       });
     }
-    
+
     // Add incoming transactions insight
     if (incoming.length > 0) {
       const incomingTotal = incoming.reduce((sum, t) => sum + Math.abs(t.amount), 0);
       const closest = this.getClosestTransaction(incoming);
       const timeframe = this.getTimeframeText(closest.scheduledDate!);
-      
+
       insights.push({
         type: 'upcoming-in',
         label: 'In',
@@ -601,7 +640,7 @@ export class AccountListComponent extends FASTElement {
         icon: '💰'
       });
     }
-    
+
     return insights;
   }
 
@@ -610,21 +649,21 @@ export class AccountListComponent extends FASTElement {
    */
   handleAccountClick(account: Account) {
     console.log('Account clicked:', account);
-    
+
     // Toggle expanded state
     this.expandedAccountId = this.expandedAccountId === account.id ? null : account.id;
-    
+
     // this.dispatchEvent(new CustomEvent('account-toggle', {
     //   detail: { accountId: account.id, expanded: this.expandedAccountId === account.id }
     // }));
   }
-  
+
   /**
    * Handle more/options button click
    */
   handleMoreClick(account: Account, event: Event) {
     event.stopPropagation();
-    
+
     this.dispatchEvent(new CustomEvent('account-actions', {
       detail: { account }
     }));
