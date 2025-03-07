@@ -1,9 +1,11 @@
-import { customElement, html, css, observable, attr, repeat, when } from "@microsoft/fast-element";
+import { customElement, observable, attr } from "@microsoft/fast-element";
 import { WorkflowBase } from "../workflow-base";
 import { repositoryService } from "../../services/repository-service";
 import { PaymentContact } from "../../repositories/models/payment-contact";
 import './transfer-toaccount-component';
 import { paymentContactsService } from "../../services/payment-contacts-service";
+import { template } from "./transfer-workflow.template";
+import { styles } from "./transfer-workflow.css";
 
 export interface Account {
   id: string;
@@ -21,144 +23,6 @@ export interface TransferDetails {
   currency: string;
   description?: string;
 }
-
-const template = html<TransferWorkflow>/*html*/`
-  <div class="transfer-workflow">
-    <div class="transfer-form">
-      <div class="form-group">
-        <label for="fromAccount">From Account</label>
-        <select id="fromAccount" @change="${(x, c) => x.handleFromAccountChange(c.event)}">
-          <option value="">-- Select Account --</option>
-          ${repeat(x => x.accounts, html`
-            <option value="${x => x.id}" ?selected="${(x, c) => x.id === c.parent.fromAccountId}">
-              ${x => x.name} (${x => x.balance.toFixed(2)} ${x => x.currency})
-            </option>
-          `)}
-        </select>
-      </div>
-      
-      <to-account-field
-        :accounts="${x => x.accounts}"
-        :paymentContacts="${x => x.paymentContacts}"
-        :fromAccountId="${x => x.fromAccountId}"
-        :toAccountId="${x => x.toAccountId}"
-        required="true"
-        @valueChanged="${(x, c) => x.handleToAccountValueChanged(c.event)}"
-        @validationError="${(x, c) => x.handleToAccountValidationError(c.event)}"
-      ></to-account-field>
-      
-      <div class="form-group">
-        <label for="amount">Amount</label>
-        <div class="amount-input-group">
-          <input type="number" id="amount" placeholder="0.00" step="0.01" min="0.01"
-                 value="${x => x.amount}" 
-                 @input="${(x, c) => x.handleAmountChange(c.event)}" />
-          <span class="currency">${x => x.currency}</span>
-        </div>
-      </div>
-      
-      <div class="form-group">
-        <label for="description">Description (Optional)</label>
-        <input type="text" id="description" placeholder="Enter a description" 
-               value="${x => x.description}"
-               @input="${(x, c) => x.handleDescriptionChange(c.event)}" />
-      </div>
-      
-      ${when(x => x.errorMessage, html`
-        <div class="error-message">${x => x.errorMessage}</div>
-      `)}
-    </div>
-  </div>
-`;
-
-const styles = css`
-  .transfer-workflow {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-  }
-  
-  .transfer-form {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-  
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  
-  label {
-    font-weight: 500;
-    font-size: 14px;
-    color: var(--text-secondary, #666);
-  }
-  
-  select, input {
-    padding: 10px 12px;
-    border: 1px solid var(--border-color, #e0e0e0);
-    border-radius: 4px;
-    font-size: 16px;
-    transition: border-color 0.2s;
-  }
-  
-  select:focus, input:focus {
-    border-color: var(--primary-color, #3498db);
-    outline: none;
-  }
-  
-  /* Only show validation styles after user interaction */
-  select:user-invalid, input:user-invalid {
-    border-color: var(--error-color, #e74c3c);
-    background-color: var(--error-bg, rgba(231, 76, 60, 0.05));
-  }
-  
-  .amount-input-group {
-    position: relative;
-    display: flex;
-  }
-  
-  .amount-input-group input {
-    flex: 1;
-  }
-  
-  .amount-input-group .currency {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-secondary, #666);
-    font-weight: 500;
-  }
-  
-  .error-message {
-    color: var(--error-color, #e74c3c);
-    font-size: 14px;
-    margin-top: 4px;
-  }
-  
-  /* Add a transition for the error message */
-  .error-message {
-    max-height: 0;
-    opacity: 0;
-    transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease;
-    overflow: hidden;
-    margin-top: 0;
-  }
-  
-  .error-message:not(:empty) {
-    max-height: 60px;
-    opacity: 1;
-    margin-top: 4px;
-  }
-  
-  /* Remove the custom buttons as they're now in the modal */
-  .transfer-actions {
-    display: none;
-  }
-`;
 
 @customElement({
   name: "transfer-workflow",
@@ -446,6 +310,8 @@ export class TransferWorkflow extends WorkflowBase {
       currency: this.currency,
       description: this.description
     };
+
+    console.log("Executing transfer:", transferDetails);
 
     // Determine if this is an external transfer (to a contact) or internal transfer
     if (this.toContactId) {

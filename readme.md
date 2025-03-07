@@ -1,6 +1,10 @@
 # BUGS
-- Enter key doesn't work in account info, rename account input
-- changing account name doesn't update account-widget
+- transfers should be able to be scheduled
+- when there is only one choice from the search inputs, enter key should select it
+- payment contact search doesn't tab through the results
+- favorite checkbox doesn't work on add payment contact
+- ✔️Enter key doesn't work in account info, rename account input
+- ✔️changing account name doesn't update account-widget
 - do new transfers not update the account-widget?
 - need to update net worth after account and transaction changes
 - when you add the swish widget, you can't remove it until you reload, or switch page

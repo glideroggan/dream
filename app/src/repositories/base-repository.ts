@@ -76,6 +76,7 @@ export abstract class LocalStorageRepository<T extends Entity> implements Reposi
     if (entity) {
       this.notifySubscribers({ type: 'update', entity });
     }
+
     return entity;
   }
 
