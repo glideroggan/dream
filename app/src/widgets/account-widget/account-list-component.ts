@@ -33,7 +33,7 @@ const template = html<AccountListComponent>/*html*/ `
               <div class="account-type">${x => x.type}</div>
               
               <div class="account-insights">
-                <!-- Account type-specific insights -->
+                <!-- Account insights including transaction insights -->
                 ${repeat((x, c) => c.parent.getInsightsForAccount(x), html<AccountInsight>/*html*/`
                   <div class="insight-item ${x => x.colorClass || 'neutral'}">
                     ${when(x => x.icon, html<AccountInsight>/*html*/`
@@ -41,17 +41,6 @@ const template = html<AccountListComponent>/*html*/ `
                     `)}
                     <span class="insight-label">${x => x.label}:</span>
                     <span class="insight-value">${x => x.value}</span>
-                  </div>
-                `)}
-                
-                <!-- Show upcoming transactions summary if any exist -->
-                ${when((x, c) => c.parent.accountHasUpcoming(x.id), html<Account, AccountListComponent>/*html*/`
-                  <div class="upcoming-summary ${(x, c) => c.parent.hasInsufficientFunds(x) ? 'warning' : ''}">
-                    <div class="upcoming-dot"></div>
-                    ${(x, c) => c.parent.getUpcomingSummary(x.id)}
-                    ${when((x, c) => c.parent.hasInsufficientFunds(x), html<Account, AccountListComponent>/*html*/`
-                      <span class="warning-icon" title="Insufficient funds for upcoming transactions">⚠️</span>
-                    `)}
                   </div>
                 `)}
               </div>
@@ -437,12 +426,14 @@ export class AccountListComponent extends FASTElement {
     for (const accountId of this.upcomingTransactionsByAccount.keys()) {
       const transactions = this.upcomingTransactionsByAccount.get(accountId)!;
       if (transactions.length > 0) {
-        this.upcomingSummaryCache.set(accountId, this.calculateUpcomingSummary(transactions));
-        
         // Calculate and store total outgoing amount
         const outgoing = transactions.filter(t => !t.isIncoming);
         const outgoingTotal = outgoing.reduce((sum, t) => sum + Math.abs(t.amount), 0);
         this.outgoingTotalsByAccount.set(accountId, outgoingTotal);
+        
+        // For each account that has transactions, invalidate the insights cache
+        // so that it will be recalculated with transaction data
+        this.accountInsightsCache.delete(accountId);
       }
     }
   }
@@ -553,7 +544,64 @@ export class AccountListComponent extends FASTElement {
     
     // If not cached (shouldn't happen), generate on the fly
     const insights = AccountInsightsHelper.getAccountInsights(account);
+    
+    // Add transaction-based insights
+    if (this.accountHasUpcoming(account.id)) {
+      const transactionInsights = this.getTransactionBasedInsights(account.id);
+      insights.push(...transactionInsights);
+    }
+    
     this.accountInsightsCache.set(account.id, insights);
+    return insights;
+  }
+
+  /**
+   * Create insights from upcoming transactions
+   */
+  private getTransactionBasedInsights(accountId: string): AccountInsight[] {
+    const insights: AccountInsight[] = [];
+    const transactions = this.upcomingTransactionsByAccount.get(accountId) || [];
+    
+    if (transactions.length === 0) return insights;
+    
+    // Group by incoming/outgoing
+    const incoming = transactions.filter(t => t.isIncoming);
+    const outgoing = transactions.filter(t => !t.isIncoming);
+    
+    // Add outgoing transactions insight
+    if (outgoing.length > 0) {
+      const outgoingTotal = outgoing.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+      const closest = this.getClosestTransaction(outgoing);
+      const timeframe = this.getTimeframeText(closest.scheduledDate!);
+      
+      // Check for insufficient funds
+      const account = this.accounts.find(a => a.id === accountId);
+      const hasInsufficientFunds = account && outgoingTotal > account.balance;
+      
+      insights.push({
+        type: 'upcoming-out',
+        label: 'Out',
+        value: `${outgoing.length} (-${outgoingTotal.toFixed(0)}) ${timeframe}`,
+        colorClass: hasInsufficientFunds ? 'warning' : 'neutral',
+        icon: hasInsufficientFunds ? '⚠️' : '📅'
+      });
+    }
+    
+    // Add incoming transactions insight
+    if (incoming.length > 0) {
+      const incomingTotal = incoming.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+      const closest = this.getClosestTransaction(incoming);
+      const timeframe = this.getTimeframeText(closest.scheduledDate!);
+      
+      insights.push({
+        type: 'upcoming-in',
+        label: 'In',
+        value: `${incoming.length} (+${incomingTotal.toFixed(0)}) ${timeframe}`,
+        colorClass: 'success',
+        icon: '💰'
+      });
+    }
+    
     return insights;
   }
 

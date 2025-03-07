@@ -61,13 +61,16 @@ const template = html<TransactionListComponent>/*html*/ `
             <div class="transaction-list">
               ${repeat(x => x.visibleRegularTransactions, html<TransactionViewModel>/*html*/`
                 <div class="transaction-item">
-                  <div class="transaction-date">
-                    <div>${x => new Date(x.createdAt).toLocaleDateString()}</div>
-                    <div class="transaction-time">${x => new Date(x.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                  <div class="transaction-icon">
+                    <div class="category-icon ${x => x.type.toLowerCase()}"></div>
                   </div>
                   <div class="transaction-details">
                     <div class="transaction-description">${x => x.description || 'Transaction'}</div>
-                    <div class="transaction-type">${x => x.type}</div>
+                    <div class="transaction-meta">
+                      <span class="transaction-type">${x => x.type}</span>
+                      <span class="transaction-time">${x => new Date(x.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      <span class="transaction-date">${x => new Date(x.createdAt).toLocaleDateString()}</span>
+                    </div>
                   </div>
                   <div class="transaction-amount ${x => x.amountClass}">
                     <div>${x => x.isIncoming ? '' : ''} ${x => x.formattedAmount}</div>
@@ -105,7 +108,7 @@ const template = html<TransactionListComponent>/*html*/ `
                     ${repeat(x => x.transactions, html<TransactionViewModel>/*html*/`
                       <div class="transaction-item upcoming">
                         <div class="transaction-icon">
-                          <div class="scheduled-icon"></div>
+                          <div class="category-icon ${x => x.type.toLowerCase()} scheduled"></div>
                         </div>
                         <div class="transaction-details">
                           <div class="transaction-description">${x => x.description || 'Scheduled Transaction'}</div>
@@ -250,12 +253,15 @@ const styles = css`
     background-color: var(--upcoming-bg, rgba(247, 247, 255, 0.5));
   }
   
-  .transaction-date {
-    min-width: 80px;
-    font-size: 13px;
+  .transaction-date,
+  .transaction-time {
+    font-size: 12px;
+    color: var(--text-tertiary, #999);
   }
   
-  .transaction-time {
+  .transaction-meta {
+    display: flex;
+    gap: 12px;
     font-size: 12px;
     color: var(--text-tertiary, #999);
   }
@@ -265,7 +271,104 @@ const styles = css`
     align-items: center;
     justify-content: center;
     width: 32px;
+    min-width: 32px;
     height: 32px;
+    margin-right: 8px;
+  }
+  
+  /* Category Icons */
+  .category-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--icon-bg, #f0f0f0);
+    color: white;
+  }
+  
+  /* Icons for different transaction types */
+  .category-icon.deposit {
+    background-color: var(--deposit-color, #27ae60);
+  }
+  .category-icon.deposit::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border: solid 2px white;
+    border-top: none;
+    border-left: none;
+    transform: rotate(45deg) translateY(-2px);
+  }
+  
+  .category-icon.withdrawal {
+    background-color: var(--withdrawal-color, #e67e22);
+  }
+  .category-icon.withdrawal::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border: solid 2px white;
+    border-bottom: none;
+    border-right: none;
+    transform: rotate(45deg) translateY(2px);
+  }
+  
+  .category-icon.payment {
+    background-color: var(--payment-color, #3498db);
+  }
+  .category-icon.payment::before {
+    content: '$';
+    font-size: 14px;
+    font-weight: bold;
+  }
+  
+  .category-icon.transfer {
+    background-color: var(--transfer-color, #9b59b6);
+  }
+  .category-icon.transfer::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border: solid 2px white;
+    border-radius: 50%;
+    position: absolute;
+    left: 4px;
+  }
+  .category-icon.transfer::after {
+    content: '';
+    width: 8px;
+    height: 2px;
+    background: white;
+    position: absolute;
+    right: 6px;
+    transform: rotate(-45deg);
+  }
+  
+  .category-icon.fee {
+    background-color: var(--fee-color, #e74c3c);
+  }
+  .category-icon.fee::before {
+    content: '%';
+    font-size: 14px;
+    font-weight: bold;
+  }
+  
+  .category-icon.interest {
+    background-color: var(--interest-color, #2ecc71);
+  }
+  .category-icon.interest::before {
+    content: '+';
+    font-size: 16px;
+    font-weight: bold;
+  }
+  
+  /* Scheduled icon style */
+  .category-icon.scheduled {
+    border: 2px dashed var(--upcoming-color, #9b59b6);
+    background-color: rgba(155, 89, 182, 0.2);
   }
   
   .scheduled-icon {
@@ -300,7 +403,6 @@ const styles = css`
   
   .transaction-details {
     flex: 1;
-    padding: 0 16px;
     min-width: 0;
   }
   

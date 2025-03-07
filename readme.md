@@ -1,4 +1,5 @@
 # BUGS
+- do new transfers not update the account-widget?
 - need to update net worth after account and transaction changes
 - when you add the swish widget, you can't remove it until you reload, or switch page
 - dismiss the search result with esc
@@ -6,20 +7,17 @@
 - the button in the bottom in financial health widget is unstyled
 
 # account widget
-- the upcoming insights could look better, like the others
-- maybe we can show different insights on the accounts, depending on the type of account, these insights needs to respond to the size limits
-  - savings account
-    - show the interest rate
-    - show the amount of interest earned
-    - show the amount of interest paid
-  - loan account
-    - show the interest rate
-    - show the amount of interest paid
-    - show the amount of interest left
+- should there be a single insight/recommendation in the header of the account widget?
+  that can sum the entire thing up?
+- ✔️the upcoming insights could look better, like the others
+- ✔️maybe we can show different insights on the accounts, depending on the type of account, these insights needs to respond to the size limits
 
 # account info
 - account info workflow, needs an empty/default state when no account is selected
 - rename function of the account, in account details
+
+# financial health widget
+- score should be nicer
 
 # new workflows
 - edit payment contacts
@@ -28,7 +26,6 @@
     - add
     - remove
   Once done, it goes away
-  
 
 # workflow
 - maybe pinnable?
@@ -37,6 +34,8 @@
 - being able to save workflows
   I might be on page 3, and want to pause/save to do something else
   and have the ability to continue later
+
+
 
 # TODO
 - add a "chaos" layer for repositoryService
