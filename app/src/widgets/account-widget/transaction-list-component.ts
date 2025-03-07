@@ -536,7 +536,7 @@ export class TransactionListComponent extends FASTElement {
    * Load transactions for the current account
    */
   async loadTransactions(): Promise<void> {
-    if (!this.accountId) return;
+    if (!this.accountId || this.isLoading) return;
 
     if (this.regularTransactions.length > 0) {
       this.maxToShow = this.regularTransactions.length;
@@ -587,39 +587,53 @@ export class TransactionListComponent extends FASTElement {
 
     if (this.regularTransactions.length !== 0 && this.regularTransactions.length < this.maxToShow) {
       this.maxToShow = this.regularTransactions.length;
-      console.log('maxToShow', this.maxToShow);
+      // console.log('maxToShow', this.maxToShow);
       this.updateVisibleTransactions();
       return
     }
 
     try {
       this.isLoading = true;
+      const newTransactions: TransactionViewModel[] = [];
 
       // Get the next batch using the iterator
       for (let i = 0; i < this.batchSize; i++) {
         const result = await this.regularTransactionIterator.next();
+        // console.log('result', result);
         if (result.done) {
           this.hasMoreRegularTransactions = false;
           break;
         }
 
-        // Process transactions into view models
-        const viewModels = TransactionViewModelHelper.processTransaction(result.value, this.accountId)
+        // Skip upcoming transactions in regular list
+        if (result.value.status === 'UPCOMING') {
+          i--; // Don't count this iteration
+          continue;
+        }
 
-        // Add to existing transactions
-        this.regularTransactions = [...this.regularTransactions, viewModels]
-        this.maxToShow = this.regularTransactions.length;
+        // Process transaction into view model
+        const viewModel = TransactionViewModelHelper.processTransaction(result.value, this.accountId);
+        // console.log('viewModel', viewModel);
 
+        // Only add if not already present
+        if (!this.regularTransactions.some(existing => existing.id === viewModel.id)) {
+          newTransactions.push(viewModel);
+        }
       }
-      // Sort regular transactions by date (newest first)
-      this.regularTransactions.sort((a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
+      if (newTransactions.length > 0) {
+        // Combine and sort all transactions
+        const allTransactions = [...this.regularTransactions, ...newTransactions];
 
-
-      // Update visible transactions
-      this.updateVisibleTransactions();
-      console.log('regularTransactions', this.regularTransactions.length, this.hasMoreRegularTransactions);
+        // Sort by date (newest first)
+        allTransactions.sort((a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        // Update state in one go
+        this.regularTransactions = allTransactions;
+        this.maxToShow = Math.max(this.maxToShow, this.regularTransactions.length);
+        this.updateVisibleTransactions();
+        // console.log('regularTransactions', this.regularTransactions.length, this.hasMoreRegularTransactions);
+      }
 
     }
     catch (error) {
@@ -639,6 +653,7 @@ export class TransactionListComponent extends FASTElement {
 
     try {
       this.isLoading = true;
+      const newTransactions: TransactionViewModel[] = [];
 
       // Get the next batch using the iterator
       for (let i = 0; i < this.batchSize; i++) {
@@ -647,29 +662,41 @@ export class TransactionListComponent extends FASTElement {
           this.hasMoreUpcomingTransactions = false;
           break;
         }
+
+        // Only process upcoming transactions
         if (result.value.status !== 'UPCOMING') {
-          i--
+          i--; // Don't count this iteration
           continue;
         }
 
-        // Process transactions into view models
-        const viewModels = TransactionViewModelHelper.processTransaction(result.value, this.accountId)
+        // Process transaction into view model
+        const viewModel = TransactionViewModelHelper.processTransaction(result.value, this.accountId);
 
-        // Add to existing transactions
-        this.upcomingTransactions = [...this.upcomingTransactions, viewModels]
-
+        // Only add if not already present
+        if (!this.upcomingTransactions.some(existing => existing.id === viewModel.id)) {
+          newTransactions.push(viewModel);
+        }
       }
-      // Sort regular transactions by date (newest first)
-      this.upcomingTransactions.sort((a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-      this.upcomingGroups = this.groupUpcomingByDate(this.upcomingTransactions);
 
-      // Update visible transactions
-      this.updateVisibleTransactions();
-      console.log('upcomingTransactions', this.upcomingTransactions.length, this.hasMoreUpcomingTransactions);
+      if (newTransactions.length > 0) {
+        // Combine and sort all transactions
+        const allTransactions = [...this.upcomingTransactions, ...newTransactions];
+
+        // Sort by scheduled date (soonest first)
+        allTransactions.sort((a, b) => {
+          const dateA = a.scheduledDate ? new Date(a.scheduledDate) : new Date(a.createdAt);
+          const dateB = b.scheduledDate ? new Date(b.scheduledDate) : new Date(b.createdAt);
+          return dateA.getTime() - dateB.getTime();
+        });
+
+        // Update state in one go
+        this.upcomingTransactions = allTransactions;
+        this.upcomingGroups = this.groupUpcomingByDate(this.upcomingTransactions);
+      }
+
     } catch (error) {
       console.error('Error loading more upcoming transactions:', error);
+      this.hasError = true;
     } finally {
       this.isLoading = false;
     }
@@ -679,6 +706,9 @@ export class TransactionListComponent extends FASTElement {
    * Update which regular transactions are visible based on maxToShow
    */
   private updateVisibleTransactions(): void {
+    console.log('first trans1', this.regularTransactions[0]);
+    console.log('first trans2', this.regularTransactions[1]);
+    // BUG: not sure why I need to start from 1, but otherwise it doesn't work
     this.visibleRegularTransactions = this.regularTransactions.slice(0, this.maxToShow);
   }
 

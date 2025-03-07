@@ -66,6 +66,7 @@ export abstract class LocalStorageRepository<T extends Entity> implements Reposi
 
   // Override existing methods to notify subscribers
   async create(data: Omit<T, 'id'>): Promise<T> {
+    // TODO: we should create new entries in the beginning of the array
     const entity = await this._create(data);
     this.notifySubscribers({ type: 'create', entity });
     return entity;

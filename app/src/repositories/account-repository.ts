@@ -129,6 +129,7 @@ export class AccountRepository extends LocalStorageRepository<Account> {
 
       // Create transaction record with updated balances
       const transactionRepository = repositoryService.getTransactionRepository()
+      console.log('creating transaction')
       const transaction = await transactionRepository.createTransferTransaction(
         fromId,
         toId,

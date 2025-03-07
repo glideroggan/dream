@@ -648,7 +648,7 @@ export class AccountListComponent extends FASTElement {
    * Handle account click to expand/collapse
    */
   handleAccountClick(account: Account) {
-    console.log('Account clicked:', account);
+    // console.log('Account clicked:', account);
 
     // Toggle expanded state
     this.expandedAccountId = this.expandedAccountId === account.id ? null : account.id;

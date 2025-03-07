@@ -20,10 +20,20 @@ export function generateMockTransactions(): Transaction[] {
     secondaryCreditCard: 'acc-10'
   };
   
-  // Helper to create date objects relative to current date
+  // Helper to create date objects relative to current date, ensuring completed transactions are in the past
   const getRelativeDate = (dayOffset: number): Date => {
     const date = new Date(now);
     date.setDate(now.getDate() + dayOffset);
+    return date;
+  };
+  
+  // Helper to ensure completed transactions are always in the past
+  const getCompletedDate = (dayOffset: number): Date => {
+    const date = getRelativeDate(dayOffset);
+    // If somehow the date is in the future, force it to yesterday
+    if (date > now) {
+      return getRelativeDate(-1);
+    }
     return date;
   };
   
@@ -46,8 +56,8 @@ export function generateMockTransactions(): Transaction[] {
         description: 'Payroll Deposit',
         status: TransactionStatus.COMPLETED,
         type: TransactionType.DEPOSIT,
-        createdAt: getRelativeDate(-i).toISOString(),
-        completedDate: getRelativeDate(-i).toISOString(),
+        createdAt: getCompletedDate(-i).toISOString(),
+        completedDate: getCompletedDate(-i).toISOString(),
         toAccountBalance: 2500 + Math.random() * 1500, // Simulate varying balance
         category: 'Income'
       });
@@ -64,8 +74,8 @@ export function generateMockTransactions(): Transaction[] {
         description: 'Monthly savings transfer',
         status: TransactionStatus.COMPLETED,
         type: TransactionType.TRANSFER,
-        createdAt: getRelativeDate(-i + 1).toISOString(),
-        completedDate: getRelativeDate(-i + 1).toISOString(),
+        createdAt: getCompletedDate(-i + 1).toISOString(),
+        completedDate: getCompletedDate(-i + 1).toISOString(),
         fromAccountBalance: 2000 + Math.random() * 1000,
         toAccountBalance: 15000 + (6 - Math.floor(i / 30)) * 500 + Math.random() * 300,
         category: 'Savings'
@@ -82,8 +92,8 @@ export function generateMockTransactions(): Transaction[] {
           description: 'Vacation fund contribution',
           status: TransactionStatus.COMPLETED,
           type: TransactionType.TRANSFER,
-          createdAt: getRelativeDate(-i + 1).toISOString(),
-          completedDate: getRelativeDate(-i + 1).toISOString(),
+          createdAt: getCompletedDate(-i + 1).toISOString(),
+          completedDate: getCompletedDate(-i + 1).toISOString(),
           fromAccountBalance: 1700 + Math.random() * 1000,
           toAccountBalance: 3000 + (6 - Math.floor(i / 30)) * 200 + Math.random() * 100,
           category: 'Savings'
@@ -101,8 +111,8 @@ export function generateMockTransactions(): Transaction[] {
           description: 'Home down payment savings',
           status: TransactionStatus.COMPLETED,
           type: TransactionType.TRANSFER,
-          createdAt: getRelativeDate(-i + 2).toISOString(),
-          completedDate: getRelativeDate(-i + 2).toISOString(),
+          createdAt: getCompletedDate(-i + 2).toISOString(),
+          completedDate: getCompletedDate(-i + 2).toISOString(),
           fromAccountBalance: 1000 + Math.random() * 800,
           toAccountBalance: 23000 + (6 - Math.floor(i / 30)) * 1000 + Math.random() * 200,
           category: 'Savings'
@@ -121,8 +131,8 @@ export function generateMockTransactions(): Transaction[] {
         description: 'Rent payment',
         status: TransactionStatus.COMPLETED,
         type: TransactionType.PAYMENT,
-        createdAt: getRelativeDate(-i + 3).toISOString(),
-        completedDate: getRelativeDate(-i + 3).toISOString(),
+        createdAt: getCompletedDate(-i + 3).toISOString(),
+        completedDate: getCompletedDate(-i + 3).toISOString(),
         fromAccountBalance: 3300 + Math.random() * 800 - 1200,
         category: 'Housing'
       });
@@ -138,8 +148,8 @@ export function generateMockTransactions(): Transaction[] {
         description: 'Utilities payment',
         status: TransactionStatus.COMPLETED,
         type: TransactionType.PAYMENT,
-        createdAt: getRelativeDate(-i + 5).toISOString(),
-        completedDate: getRelativeDate(-i + 5).toISOString(),
+        createdAt: getCompletedDate(-i + 5).toISOString(),
+        completedDate: getCompletedDate(-i + 5).toISOString(),
         fromAccountBalance: 2000 + Math.random() * 800,
         category: 'Utilities'
       });
@@ -155,8 +165,8 @@ export function generateMockTransactions(): Transaction[] {
         description: 'Grocery shopping',
         status: TransactionStatus.COMPLETED,
         type: TransactionType.PAYMENT,
-        createdAt: getRelativeDate(-i).toISOString(),
-        completedDate: getRelativeDate(-i).toISOString(),
+        createdAt: getCompletedDate(-i).toISOString(),
+        completedDate: getCompletedDate(-i).toISOString(),
         fromAccountBalance: 1900 + Math.random() * 700,
         category: 'Groceries'
       });
@@ -172,8 +182,8 @@ export function generateMockTransactions(): Transaction[] {
         description: 'Dining out',
         status: TransactionStatus.COMPLETED,
         type: TransactionType.PAYMENT,
-        createdAt: getRelativeDate(-i).toISOString(),
-        completedDate: getRelativeDate(-i).toISOString(),
+        createdAt: getCompletedDate(-i).toISOString(),
+        completedDate: getCompletedDate(-i).toISOString(),
         fromAccountBalance: 1850 + Math.random() * 650,
         category: 'Dining'
       });
@@ -191,8 +201,8 @@ export function generateMockTransactions(): Transaction[] {
         description: 'Credit card payment',
         status: TransactionStatus.COMPLETED,
         type: TransactionType.PAYMENT,
-        createdAt: getRelativeDate(-i + 10).toISOString(),
-        completedDate: getRelativeDate(-i + 10).toISOString(),
+        createdAt: getCompletedDate(-i + 10).toISOString(),
+        completedDate: getCompletedDate(-i + 10).toISOString(),
         fromAccountBalance: 1800 - paymentAmount + Math.random() * 600,
         toAccountBalance: -3500 + paymentAmount + Math.random() * 200,
         category: 'Debt Payment'
@@ -210,8 +220,8 @@ export function generateMockTransactions(): Transaction[] {
         description: 'Car loan payment',
         status: TransactionStatus.COMPLETED,
         type: TransactionType.PAYMENT,
-        createdAt: getRelativeDate(-i + 15).toISOString(),
-        completedDate: getRelativeDate(-i + 15).toISOString(),
+        createdAt: getCompletedDate(-i + 15).toISOString(),
+        completedDate: getCompletedDate(-i + 15).toISOString(),
         fromAccountBalance: 1450 + Math.random() * 550,
         toAccountBalance: -16000 + (6 - Math.floor(i / 30)) * 350 + Math.random() * 100,
         category: 'Debt Payment'
@@ -228,8 +238,8 @@ export function generateMockTransactions(): Transaction[] {
         description: 'Entertainment expense',
         status: TransactionStatus.COMPLETED,
         type: TransactionType.PAYMENT,
-        createdAt: getRelativeDate(-i).toISOString(),
-        completedDate: getRelativeDate(-i).toISOString(),
+        createdAt: getCompletedDate(-i).toISOString(),
+        completedDate: getCompletedDate(-i).toISOString(),
         fromAccountBalance: 1400 + Math.random() * 500,
         category: 'Entertainment'
       });
@@ -245,8 +255,8 @@ export function generateMockTransactions(): Transaction[] {
         description: 'Streaming service subscription',
         status: TransactionStatus.COMPLETED,
         type: TransactionType.PAYMENT,
-        createdAt: getRelativeDate(-i + 7).toISOString(),
-        completedDate: getRelativeDate(-i + 7).toISOString(),
+        createdAt: getCompletedDate(-i + 7).toISOString(),
+        completedDate: getCompletedDate(-i + 7).toISOString(),
         fromAccountBalance: 1385 + Math.random() * 480,
         category: 'Subscriptions'
       });
@@ -262,8 +272,8 @@ export function generateMockTransactions(): Transaction[] {
         description: 'Phone and Internet bill',
         status: TransactionStatus.COMPLETED,
         type: TransactionType.PAYMENT,
-        createdAt: getRelativeDate(-i + 8).toISOString(),
-        completedDate: getRelativeDate(-i + 8).toISOString(),
+        createdAt: getCompletedDate(-i + 8).toISOString(),
+        completedDate: getCompletedDate(-i + 8).toISOString(),
         fromAccountBalance: 1270 + Math.random() * 450,
         category: 'Utilities'
       });
@@ -279,8 +289,8 @@ export function generateMockTransactions(): Transaction[] {
         description: 'Electronics purchase',
         status: TransactionStatus.COMPLETED,
         type: TransactionType.PAYMENT,
-        createdAt: getRelativeDate(-i).toISOString(),
-        completedDate: getRelativeDate(-i).toISOString(),
+        createdAt: getCompletedDate(-i).toISOString(),
+        completedDate: getCompletedDate(-i).toISOString(),
         fromAccountBalance: 1000 + Math.random() * 400,
         category: 'Shopping'
       });
@@ -328,8 +338,8 @@ export function generateMockTransactions(): Transaction[] {
       description: "Monthly Rent Payment",
       status: TransactionStatus.COMPLETED,
       type: TransactionType.PAYMENT,
-      createdAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
-      completedDate: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      createdAt: getCompletedDate(-2).toISOString(), // 2 days ago
+      completedDate: getCompletedDate(-2).toISOString(),
       fromAccountBalance: 3750.00,
       category: "Housing"
     },
@@ -342,8 +352,8 @@ export function generateMockTransactions(): Transaction[] {
       description: "Salary Deposit",
       status: TransactionStatus.COMPLETED,
       type: TransactionType.DEPOSIT,
-      createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
-      completedDate: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      createdAt: getCompletedDate(-5).toISOString(), // 5 days ago
+      completedDate: getCompletedDate(-5).toISOString(),
       toAccountBalance: 4000.00,
       category: "Income"
     },
@@ -358,8 +368,8 @@ export function generateMockTransactions(): Transaction[] {
       description: "Grocery Shopping",
       status: TransactionStatus.COMPLETED,
       type: TransactionType.PAYMENT,
-      createdAt: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-      completedDate: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      createdAt: getCompletedDate(-1).toISOString(), // 1 day ago
+      completedDate: getCompletedDate(-1).toISOString(),
       fromAccountBalance: 914.25,
       category: "Groceries"
     },
@@ -372,8 +382,8 @@ export function generateMockTransactions(): Transaction[] {
       description: "Transfer to Savings",
       status: TransactionStatus.COMPLETED,
       type: TransactionType.TRANSFER,
-      createdAt: new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000).toISOString(), // 8 days ago
-      completedDate: new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000).toISOString(),
+      createdAt: getCompletedDate(-8).toISOString(), // 8 days ago
+      completedDate: getCompletedDate(-8).toISOString(),
       fromAccountBalance: 3550.00,
       toAccountBalance: 1000.00,
       category: "Transfer"
@@ -538,8 +548,8 @@ export function generateMockTransactions(): Transaction[] {
       description: `${merchant} Purchase`,
       status: TransactionStatus.COMPLETED,
       type: TransactionType.PAYMENT,
-      createdAt: getRelativeDate(dayOffset).toISOString(),
-      completedDate: getRelativeDate(dayOffset).toISOString(),
+      createdAt: getCompletedDate(dayOffset).toISOString(),
+      completedDate: getCompletedDate(dayOffset).toISOString(),
       fromAccountBalance: 3450.75 - (i * 100) + randomAmount(-200, 200), // Simulate varying balance
       category: category
     });
@@ -555,8 +565,8 @@ export function generateMockTransactions(): Transaction[] {
     description: 'Credit Card Payment',
     status: TransactionStatus.COMPLETED,
     type: TransactionType.PAYMENT,
-    createdAt: getRelativeDate(-15).toISOString(),
-    completedDate: getRelativeDate(-15).toISOString(),
+    createdAt: getCompletedDate(-15).toISOString(),
+    completedDate: getCompletedDate(-15).toISOString(),
     fromAccountBalance: 2200.00,
     toAccountBalance: 3100.00,
     category: 'Debt Payment'
@@ -572,7 +582,7 @@ export function generateMockTransactions(): Transaction[] {
     description: 'Credit Card Minimum Payment',
     status: TransactionStatus.UPCOMING,
     type: TransactionType.PAYMENT,
-    createdAt: getRelativeDate(-5).toISOString(),
+    createdAt: getCompletedDate(-5).toISOString(),
     scheduledDate: getRelativeDate(10).toISOString(), // 10 days from now
     category: 'Debt Payment'
   });
@@ -598,8 +608,8 @@ export function generateMockTransactions(): Transaction[] {
       description: `${merchant} Purchase`,
       status: TransactionStatus.COMPLETED,
       type: TransactionType.PAYMENT,
-      createdAt: getRelativeDate(dayOffset).toISOString(),
-      completedDate: getRelativeDate(dayOffset).toISOString(),
+      createdAt: getCompletedDate(dayOffset).toISOString(),
+      completedDate: getCompletedDate(dayOffset).toISOString(),
       fromAccountBalance: 820.32 - (i * 50) + randomAmount(-100, 100), // Simulate varying balance
       category: category
     });
@@ -615,8 +625,8 @@ export function generateMockTransactions(): Transaction[] {
     description: 'Credit Card Minimum Payment (Overdue)',
     status: TransactionStatus.UPCOMING,
     type: TransactionType.PAYMENT,
-    createdAt: getRelativeDate(-10).toISOString(),
-    scheduledDate: getRelativeDate(-2).toISOString(), // 2 days ago (overdue)
+    createdAt: getCompletedDate(-10).toISOString(),
+    scheduledDate: getCompletedDate(-2).toISOString(), // 2 days ago (overdue)
     category: 'Debt Payment'
   });
   
@@ -634,8 +644,8 @@ export function generateMockTransactions(): Transaction[] {
       description: 'Car Loan Monthly Payment',
       status: TransactionStatus.COMPLETED,
       type: TransactionType.PAYMENT,
-      createdAt: getRelativeDate(-30 * i).toISOString(),
-      completedDate: getRelativeDate(-30 * i).toISOString(),
+      createdAt: getCompletedDate(-30 * i).toISOString(),
+      completedDate: getCompletedDate(-30 * i).toISOString(),
       fromAccountBalance: 2500.00 + randomAmount(-500, 500),
       toAccountBalance: 15600.00 + (450.00 * i), // Increasing loan balance for past payments
       category: 'Debt Payment'
@@ -652,7 +662,7 @@ export function generateMockTransactions(): Transaction[] {
     description: 'Car Loan Monthly Payment',
     status: TransactionStatus.UPCOMING,
     type: TransactionType.PAYMENT,
-    createdAt: getRelativeDate(-10).toISOString(),
+    createdAt: getCompletedDate(-10).toISOString(),
     scheduledDate: getRelativeDate(5).toISOString(), // 5 days from now
     category: 'Debt Payment'
   });
@@ -669,8 +679,8 @@ export function generateMockTransactions(): Transaction[] {
       description: 'Mortgage Monthly Payment',
       status: TransactionStatus.COMPLETED,
       type: TransactionType.PAYMENT,
-      createdAt: getRelativeDate(-30 * i).toISOString(),
-      completedDate: getRelativeDate(-30 * i).toISOString(),
+      createdAt: getCompletedDate(-30 * i).toISOString(),
+      completedDate: getCompletedDate(-30 * i).toISOString(),
       fromAccountBalance: 3500.00 + randomAmount(-700, 700),
       toAccountBalance: 320000.00 + (1850.00 * i), // Increasing loan balance for past payments
       category: 'Housing'
@@ -687,7 +697,7 @@ export function generateMockTransactions(): Transaction[] {
     description: 'Mortgage Monthly Payment',
     status: TransactionStatus.UPCOMING,
     type: TransactionType.PAYMENT,
-    createdAt: getRelativeDate(-5).toISOString(),
+    createdAt: getCompletedDate(-5).toISOString(),
     scheduledDate: getRelativeDate(15).toISOString(), // 15 days from now
     category: 'Housing'
   });
@@ -705,8 +715,8 @@ export function generateMockTransactions(): Transaction[] {
       description: 'Emergency Fund Contribution',
       status: TransactionStatus.COMPLETED,
       type: TransactionType.TRANSFER,
-      createdAt: getRelativeDate(-30 * i).toISOString(),
-      completedDate: getRelativeDate(-30 * i).toISOString(),
+      createdAt: getCompletedDate(-30 * i).toISOString(),
+      completedDate: getCompletedDate(-30 * i).toISOString(),
       fromAccountBalance: 3000.00 + randomAmount(-500, 500),
       toAccountBalance: 15720.50 - (500.00 * i), // Decreasing for past deposits
       category: 'Savings'
@@ -724,8 +734,8 @@ export function generateMockTransactions(): Transaction[] {
       description: 'Vacation Fund Contribution',
       status: TransactionStatus.COMPLETED,
       type: TransactionType.TRANSFER,
-      createdAt: getRelativeDate(-45 * i).toISOString(),
-      completedDate: getRelativeDate(-45 * i).toISOString(),
+      createdAt: getCompletedDate(-45 * i).toISOString(),
+      completedDate: getCompletedDate(-45 * i).toISOString(),
       fromAccountBalance: 2800.00 + randomAmount(-500, 500),
       toAccountBalance: 3250.00 - (300.00 * i), // Decreasing for past deposits
       category: 'Savings'
@@ -743,8 +753,8 @@ export function generateMockTransactions(): Transaction[] {
       description: 'Home Down Payment Contribution',
       status: TransactionStatus.COMPLETED,
       type: TransactionType.TRANSFER,
-      createdAt: getRelativeDate(-30 * i).toISOString(),
-      completedDate: getRelativeDate(-30 * i).toISOString(),
+      createdAt: getCompletedDate(-30 * i).toISOString(),
+      completedDate: getCompletedDate(-30 * i).toISOString(),
       fromAccountBalance: 3500.00 + randomAmount(-700, 700),
       toAccountBalance: 28750.50 - (1000.00 * i), // Decreasing for past deposits
       category: 'Savings'
@@ -765,8 +775,8 @@ export function generateMockTransactions(): Transaction[] {
       description: '401(k) Contribution',
       status: TransactionStatus.COMPLETED,
       type: TransactionType.TRANSFER,
-      createdAt: getRelativeDate(-30 * i).toISOString(),
-      completedDate: getRelativeDate(-30 * i).toISOString(),
+      createdAt: getCompletedDate(-30 * i).toISOString(),
+      completedDate: getCompletedDate(-30 * i).toISOString(),
       fromAccountBalance: 2700.00 + randomAmount(-500, 500),
       toAccountBalance: 42680.75 - (400.00 * i) - randomAmount(100, 800), // Decreasing + some growth
       category: 'Investment'
@@ -783,8 +793,8 @@ export function generateMockTransactions(): Transaction[] {
     description: 'Portfolio Appreciation',
     status: TransactionStatus.COMPLETED,
     type: TransactionType.INTEREST,
-    createdAt: getRelativeDate(-15).toISOString(),
-    completedDate: getRelativeDate(-15).toISOString(),
+    createdAt: getCompletedDate(-15).toISOString(),
+    completedDate: getCompletedDate(-15).toISOString(),
     toAccountBalance: 42680.75,
     category: 'Investment'
   });
@@ -805,8 +815,8 @@ export function generateMockTransactions(): Transaction[] {
       description: `Buy ${stock} Stock`,
       status: TransactionStatus.COMPLETED,
       type: TransactionType.TRANSFER,
-      createdAt: getRelativeDate(-20 * i).toISOString(),
-      completedDate: getRelativeDate(-20 * i).toISOString(),
+      createdAt: getCompletedDate(-20 * i).toISOString(),
+      completedDate: getCompletedDate(-20 * i).toISOString(),
       fromAccountBalance: 3000.00 + randomAmount(-700, 700),
       toAccountBalance: 56250.80 - amount - randomAmount(1000, 5000), // Simulating varying balance
       category: 'Investment'
@@ -823,8 +833,8 @@ export function generateMockTransactions(): Transaction[] {
     description: 'Sell AAPL Stock (Gain)',
     status: TransactionStatus.COMPLETED,
     type: TransactionType.TRANSFER,
-    createdAt: getRelativeDate(-8).toISOString(),
-    completedDate: getRelativeDate(-8).toISOString(),
+    createdAt: getCompletedDate(-8).toISOString(),
+    completedDate: getCompletedDate(-8).toISOString(),
     fromAccountBalance: 55010.30,
     toAccountBalance: 3789.73,
     category: 'Investment'
@@ -840,8 +850,8 @@ export function generateMockTransactions(): Transaction[] {
     description: 'Sell TSLA Stock (Loss)',
     status: TransactionStatus.COMPLETED,
     type: TransactionType.TRANSFER,
-    createdAt: getRelativeDate(-3).toISOString(),
-    completedDate: getRelativeDate(-3).toISOString(),
+    createdAt: getCompletedDate(-3).toISOString(),
+    completedDate: getCompletedDate(-3).toISOString(),
     fromAccountBalance: 56250.80,
     toAccountBalance: 3329.48,
     category: 'Investment'
@@ -856,8 +866,8 @@ export function generateMockTransactions(): Transaction[] {
     description: 'Market Adjustment',
     status: TransactionStatus.COMPLETED,
     type: TransactionType.ADJUSTMENT,
-    createdAt: getRelativeDate(-1).toISOString(),
-    completedDate: getRelativeDate(-1).toISOString(),
+    createdAt: getCompletedDate(-1).toISOString(),
+    completedDate: getCompletedDate(-1).toISOString(),
     fromAccountBalance: 56250.80,
     category: 'Investment'
   });
@@ -874,7 +884,7 @@ export function generateMockTransactions(): Transaction[] {
     description: 'Vacation Fund Contribution',
     status: TransactionStatus.UPCOMING,
     type: TransactionType.TRANSFER,
-    createdAt: getRelativeDate(-2).toISOString(),
+    createdAt: getCompletedDate(-2).toISOString(),
     scheduledDate: getRelativeDate(4).toISOString(), // 4 days from now
     category: 'Savings'
   });
@@ -889,7 +899,7 @@ export function generateMockTransactions(): Transaction[] {
     description: 'Monthly Investment',
     status: TransactionStatus.UPCOMING,
     type: TransactionType.TRANSFER,
-    createdAt: getRelativeDate(-3).toISOString(),
+    createdAt: getCompletedDate(-3).toISOString(),
     scheduledDate: getRelativeDate(8).toISOString(), // 8 days from now
     category: 'Investment'
   });

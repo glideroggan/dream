@@ -1,9 +1,9 @@
 import { Entity, LocalStorageRepository } from './base-repository';
 import { StorageService } from '../services/storage-service';
 import { UserService } from '../services/user-service';
-import { 
-  TransactionStatus, 
-  TransactionType 
+import {
+  TransactionStatus,
+  TransactionType
 } from '../services/repository-service';
 import { generateMockTransactions } from './mock/transaction-mock';
 
@@ -28,26 +28,26 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
   constructor(storage: StorageService, userService: UserService) {
     super('transactions', storage, userService);
   }
-  
+
   protected initializeMockData(): void {
     const transactions = generateMockTransactions();
-    
+
     // Add mock transactions
     transactions.forEach(transaction => {
       this.entities.set(transaction.id, transaction);
     });
-    
+
     // Save to storage
     this.saveToStorage();
   }
-  
+
   /**
    * Create an async generator that yields batches of transactions
    * @param transactions The transactions to iterate over
    * @param batchSize The number of transactions to include in each batch
    */
   private async *createBatchIterator(
-    transactions: Transaction[], 
+    transactions: Transaction[],
     batchSize: number
   ): AsyncGenerator<Transaction[]> {
     for (let i = 0; i < transactions.length; i += batchSize) {
@@ -58,7 +58,7 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
       yield batch;
     }
   }
-  
+
   /**
    * Get all transactions as an async iterator
    * @param batchSize Number of transactions per batch
@@ -68,7 +68,7 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
       yield txn;
     }
   }
-  
+
   /**
    * Get transactions by status as an async iterator
    * @param status The transaction status to filter by
@@ -81,7 +81,7 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
       }
     }
   }
-  
+
   // /**
   //  * Get upcoming transactions as an async iterator
   //  * @param batchSize Number of transactions per batch
@@ -90,7 +90,7 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
   //   yield* this.getByStatusIterator(TransactionStatus.UPCOMING);
   //   // return this.getByStatusIterator(TransactionStatus.UPCOMING, batchSize);
   // }
-  
+
   // /**
   //  * Get completed transactions as an async iterator
   //  * @param batchSize Number of transactions per batch
@@ -98,20 +98,30 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
   // getCompletedIterator(batchSize = 10): TransactionAsyncIterator {
   //   return this.getByStatusIterator(TransactionStatus.COMPLETED, batchSize);
   // }
-  
+
   /**
    * Get account transactions as an async iterator
    * @param accountId The account ID to filter by
    * @param batchSize Number of transactions per batch
    */
   public async *getByAccountIdIterator(accountId: string): AsyncGenerator<Transaction> {
-    for (const txn of this.entities.values()) {
+    const transactions = await this.getAll();
+
+    // sort transactions by date in descending order
+    transactions.sort((a, b) => {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+    // log out the two most recent transactions
+    // console.log('trans1', transactions[0]);
+    // console.log('trans2', transactions[1]);
+    for (const txn of transactions) {
       if (txn.fromAccountId === accountId || txn.toAccountId === accountId) {
-        yield txn;
+        // console.log('txn', txn);
+        yield txn
       }
     }
   }
-  
+
   /**
    * Get all transactions with a specific status
    */
@@ -119,46 +129,46 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
     const transactions = await this.getAll();
     return transactions.filter(txn => txn.status === status);
   }
-  
+
   /**
    * Get upcoming transactions
    */
   async getUpcoming(): Promise<Transaction[]> {
     return this.getByStatus(TransactionStatus.UPCOMING);
   }
-  
+
   /**
    * Get completed transactions
    */
   async getCompleted(): Promise<Transaction[]> {
     return this.getByStatus(TransactionStatus.COMPLETED);
   }
-  
+
   /**
    * Get transactions for a specific account
    */
   async getByAccountId(accountId: string): Promise<Transaction[]> {
     const transactions = await this.getAll();
-    return transactions.filter(txn => 
+    return transactions.filter(txn =>
       txn.fromAccountId === accountId || txn.toAccountId === accountId
     );
   }
-  
+
   /**
    * Create a new transfer transaction
    */
   async createTransferTransaction(
-    fromAccountId: string, 
-    toAccountId: string, 
-    amount: number, 
-    currency: string, 
+    fromAccountId: string,
+    toAccountId: string,
+    amount: number,
+    currency: string,
     fromAccountBalance: number,
     toAccountBalance?: number,
-    description?: string, 
+    description?: string,
     isCompleted: boolean = true
   ): Promise<Transaction> {
     const now = new Date();
-    
+
     const transaction: Omit<Transaction, 'id'> = {
       fromAccountId,
       toAccountId,
@@ -171,14 +181,14 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
       fromAccountBalance: fromAccountBalance,
       toAccountBalance: toAccountBalance
     };
-    
+
     // Add the appropriate date based on status
     if (isCompleted) {
       transaction.completedDate = now.toISOString();
     } else {
       transaction.scheduledDate = now.toISOString();
     }
-    
+
     return this.create(transaction);
   }
 }
