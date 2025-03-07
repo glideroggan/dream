@@ -80,92 +80,98 @@ const step2Template = html<LoanWorkflow>/*html*/`
     
     ${when(x => !x.isLoading && x.eligibilityResult !== null && x.eligibilityResult.eligible, html<LoanWorkflow>/*html*/`
       <div class="eligibility-result">
-        <div class="success-icon">✅</div>
-        <h3>You're pre-approved!</h3>
-        <p>Based on your profile, you're eligible for a ${x => LoanWorkflow.getLoanTypeLabel(x.selectedLoanType)}</p>
+        <!-- Pre-approval header section (top left) -->
+        <div class="approval-header">
+          <div class="approval-content">
+            <div class="success-icon">✅</div>
+            <h3>You're pre-approved!</h3>
+            <p>Based on your profile, you're eligible for a ${x => LoanWorkflow.getLoanTypeLabel(x.selectedLoanType)}</p>
+          </div>
+        </div>
         
-        <div class="columns-container">
-          <div class="column">
-            <div class="loan-amount-section">
-              <label for="loanAmount">Loan Amount</label>
-              <div class="loan-amount-container">
-                <div class="currency-symbol">$</div>
-                <input id="loanAmount" type="number" 
-                      min="${x => x.eligibilityResult?.minAmount}" 
-                      max="${x => x.eligibilityResult?.maxAmount}" 
-                      value="${x => x.loanAmount}"
-                      @input="${(x, c) => x.updateLoanAmountAndCalculate(c.event)}"/>
+        <!-- Loan summary (right side, full height) -->
+        <div class="loan-summary-container">
+          <div class="live-summary">
+            <h3>Loan Summary</h3>
+            <div class="summary-card">
+              <div class="summary-row">
+                <div class="summary-label">Estimated Interest Rate</div>
+                <div class="summary-value">${x => x.estimatedDetails?.interestRate?.toFixed(2) || '—'}% APR</div>
               </div>
-              <div class="range-limits">
-                <span>Min: $${x => x.formatNumber(x.eligibilityResult?.minAmount || 0)}</span>
-                <span>Max: $${x => x.formatNumber(x.eligibilityResult?.maxAmount || 0)}</span>
+              
+              <div class="summary-row highlight">
+                <div class="summary-label">Est. Monthly Payment</div>
+                <div class="summary-value">$${x => x.formatNumber(x.estimatedDetails?.monthlyPayment || 0)}</div>
+              </div>
+              
+              <div class="summary-row">
+                <div class="summary-label">Total Principal</div>
+                <div class="summary-value">$${x => x.formatNumber(x.loanAmount)}</div>
+              </div>
+              
+              <div class="summary-row">
+                <div class="summary-label">Total Interest</div>
+                <div class="summary-value">$${x => x.formatNumber(x.estimatedDetails?.totalInterest || 0)}</div>
+              </div>
+              
+              <div class="summary-row total">
+                <div class="summary-label">Total to Repay</div>
+                <div class="summary-value">$${x => x.formatNumber((x.estimatedDetails?.totalInterest || 0) + x.loanAmount)}</div>
               </div>
             </div>
             
-            <div class="loan-term-section">
-              <label for="loanTerm">Loan Term (months)</label>
-              <div class="term-options">
-                <div class="term-option ${x => x.loanTerm === 12 ? 'selected' : ''}" @click="${x => x.updateLoanTermAndCalculate(12)}">12</div>
-                <div class="term-option ${x => x.loanTerm === 24 ? 'selected' : ''}" @click="${x => x.updateLoanTermAndCalculate(24)}">24</div>
-                <div class="term-option ${x => x.loanTerm === 36 ? 'selected' : ''}" @click="${x => x.updateLoanTermAndCalculate(36)}">36</div>
-                <div class="term-option ${x => x.loanTerm === 48 ? 'selected' : ''}" @click="${x => x.updateLoanTermAndCalculate(48)}">48</div>
-                <div class="term-option ${x => x.loanTerm === 60 ? 'selected' : ''}" @click="${x => x.updateLoanTermAndCalculate(60)}">60</div>
-                <div class="term-option ${x => x.loanTerm === 72 ? 'selected' : ''}" @click="${x => x.updateLoanTermAndCalculate(72)}">72</div>
-                <div class="term-option ${x => x.loanTerm === 84 ? 'selected' : ''}" @click="${x => x.updateLoanTermAndCalculate(84)}">84</div>
-              </div>
-            </div>
-
-            <div class="loan-purpose-section">
-              <label for="loanPurpose">Loan Purpose</label>
-              <select id="loanPurpose" @change="${(x, c) => x.updateLoanPurpose(c.event)}">
-                ${x => x.getLoanPurposeOptions().map(purpose => html<LoanWorkflow>`
-                  <option value="${purpose}" ?selected="${purpose === x.loanPurpose}">${purpose}</option>
-                `)}
-              </select>
-              <div class="field-hint">Please select the primary purpose for this loan</div>
-            </div>
-          </div>
-          
-          <div class="column summary-column">
-            <div class="live-summary">
-              <h3>Loan Summary</h3>
-              <div class="summary-card">
-                <div class="summary-row">
-                  <div class="summary-label">Estimated Interest Rate</div>
-                  <div class="summary-value">${x => x.estimatedDetails?.interestRate?.toFixed(2) || '—'}% APR</div>
-                </div>
-                
-                <div class="summary-row highlight">
-                  <div class="summary-label">Est. Monthly Payment</div>
-                  <div class="summary-value">$${x => x.formatNumber(x.estimatedDetails?.monthlyPayment || 0)}</div>
-                </div>
-                
-                <div class="summary-row">
-                  <div class="summary-label">Total Principal</div>
-                  <div class="summary-value">$${x => x.formatNumber(x.loanAmount)}</div>
-                </div>
-                
-                <div class="summary-row">
-                  <div class="summary-label">Total Interest</div>
-                  <div class="summary-value">$${x => x.formatNumber(x.estimatedDetails?.totalInterest || 0)}</div>
-                </div>
-                
-                <div class="summary-row total">
-                  <div class="summary-label">Total to Repay</div>
-                  <div class="summary-value">$${x => x.formatNumber((x.estimatedDetails?.totalInterest || 0) + x.loanAmount)}</div>
-                </div>
-              </div>
-              
-              <div class="note">
-                <p>These are estimated values. Final terms may vary based on approval.</p>
-              </div>
+            <div class="note">
+              <p>These are estimated values. Final terms may vary based on approval.</p>
             </div>
           </div>
         </div>
         
+        <!-- Loan form (bottom left) -->
+        <div class="loan-form">
+          <div class="loan-amount-section">
+            <label for="loanAmount">Loan Amount</label>
+            <div class="loan-amount-container">
+              <div class="currency-symbol">$</div>
+              <input id="loanAmount" type="number" 
+                    min="${x => x.eligibilityResult?.minAmount}" 
+                    max="${x => x.eligibilityResult?.maxAmount}" 
+                    value="${x => x.loanAmount}"
+                    @input="${(x, c) => x.updateLoanAmountAndCalculate(c.event)}"/>
+            </div>
+            <div class="range-limits">
+              <span>Min: $${x => x.formatNumber(x.eligibilityResult?.minAmount || 0)}</span>
+              <span>Max: $${x => x.formatNumber(x.eligibilityResult?.maxAmount || 0)}</span>
+            </div>
+          </div>
+          
+          <div class="loan-term-section">
+            <label for="loanTerm">Loan Term (months)</label>
+            <div class="term-options">
+              <div class="term-option ${x => x.loanTerm === 12 ? 'selected' : ''}" @click="${x => x.updateLoanTermAndCalculate(12)}">12</div>
+              <div class="term-option ${x => x.loanTerm === 24 ? 'selected' : ''}" @click="${x => x.updateLoanTermAndCalculate(24)}">24</div>
+              <div class="term-option ${x => x.loanTerm === 36 ? 'selected' : ''}" @click="${x => x.updateLoanTermAndCalculate(36)}">36</div>
+              <div class="term-option ${x => x.loanTerm === 48 ? 'selected' : ''}" @click="${x => x.updateLoanTermAndCalculate(48)}">48</div>
+              <div class="term-option ${x => x.loanTerm === 60 ? 'selected' : ''}" @click="${x => x.updateLoanTermAndCalculate(60)}">60</div>
+              <div class="term-option ${x => x.loanTerm === 72 ? 'selected' : ''}" @click="${x => x.updateLoanTermAndCalculate(72)}">72</div>
+              <div class="term-option ${x => x.loanTerm === 84 ? 'selected' : ''}" @click="${x => x.updateLoanTermAndCalculate(84)}">84</div>
+            </div>
+          </div>
+
+          <div class="loan-purpose-section">
+            <label for="loanPurpose">Loan Purpose</label>
+            <select id="loanPurpose" @change="${(x, c) => x.updateLoanPurpose(c.event)}">
+              ${x => x.getLoanPurposeOptions().map(purpose => html<LoanWorkflow>`
+                <option value="${purpose}" ?selected="${purpose === x.loanPurpose}">${purpose}</option>
+              `)}
+            </select>
+            <div class="field-hint">Please select the primary purpose for this loan</div>
+          </div>
+        </div>
+        
+        <!-- Footer navigation -->
         <div class="loan-navigation">
           <button @click="${x => x.goToStep('select-type')}" class="secondary-button">Back</button>
-          <button @click="${x => x.createDraftLoan(x.estimatedDetails!)}" class="primary-button">Continue</button>
+          <button @click="${x => x.createDraftLoan(x.estimatedDetails)}" class="primary-button">Continue</button>
         </div>
       </div>
     `)}

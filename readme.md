@@ -1,4 +1,6 @@
 # BUGS
+- the loan workflow purpose dropdown doesn't show any options
+- the loan workflow doesn't show any of my accounts to deposit the loan into
 - the transaction signing is not so nice, the style of it should improve
 - need toast error when failing to start a workflow
 - ✔️Transaction list doesn't update after adding a new transaction

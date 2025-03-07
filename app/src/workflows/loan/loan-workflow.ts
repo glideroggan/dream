@@ -59,6 +59,7 @@ export class LoanWorkflow extends WorkflowBase {
     // Set a wider modal width for this workflow to accommodate the two-column layout
     this.setModalWidth("800px");
     
+    // Don't use the modal's primary button, we'll handle navigation in our template
     this.updateFooter(false);
     
     // Load accounts
@@ -269,37 +270,14 @@ export class LoanWorkflow extends WorkflowBase {
   }
   
   /**
-   * Calculate loan details based on selected amount and term
-   */
-  calculateLoanDetails(): void {
-    if (!this.selectedLoanType) return;
-    this.errorMessage = ""; // Clear any previous errors
-    
-    try {
-      // Calculate loan details
-      const calculatedDetails = loanService.calculateLoanDetails(
-        this.loanAmount,
-        this.loanTerm,
-        this.selectedLoanType
-      );
-      
-      // Create draft loan
-      this.createDraftLoan(calculatedDetails);
-    } catch (error) {
-      console.error("Error calculating loan details:", error);
-      this.errorMessage = "Failed to calculate loan details. Please try again.";
-    }
-  }
-  
-  /**
    * Create draft loan and move to next step
    */
   async createDraftLoan(calculatedDetails: {
     monthlyPayment: number;
     totalInterest: number;
     interestRate: number;
-  }): Promise<void> {
-    if (!this.selectedLoanType) return;
+  } | null): Promise<void> {
+    if (!this.selectedLoanType || !calculatedDetails) return;
     
     try {
       this.isLoading = true;
