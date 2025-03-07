@@ -1,4 +1,5 @@
 # BUGS
+- ✔️Transaction list doesn't update after adding a new transaction
 - transfers should be able to be scheduled
 - when there is only one choice from the search inputs, enter key should select it
 - payment contact search doesn't tab through the results
@@ -13,29 +14,27 @@
 - the button in the bottom in financial health widget is unstyled
 - can't use keyboard in transfer workflow
 
+# BE
+- arch? bun, deno, node?
+- document should be cached and static as much as possible
+- we can serve the document from an api, and dynamically fill in importmaps
+
 # account widget
 - should there be a single insight/recommendation in the header of the account widget?
   that can sum the entire thing up?
-- ✔️the upcoming insights could look better, like the others
-- ✔️maybe we can show different insights on the accounts, depending on the type of account, these insights needs to respond to the size limits
 
 # account info
-- make account details show more information about the account
-  specific account for that type
-  - credit card account could show the image of the card
-  - savings account could show the interest rate
-  - pension account could show the projected pension
-  - loan account could show the interest rate
-  - mortgage account could show next payment
-    - how much is interest, how much is amortization
-  - investment account could show the risk level
+- ✔️make account details show more information about the account
 - account info workflow, needs an empty/default state when no account is selected
-- rename function of the account, in account details
+- ✔️rename function of the account, in account details
 
 # financial health widget
 - score should be nicer
 
 # new workflows
+- a signing workflow
+  - make it look like mobile bankid
+  - make use of it in the "take a loan" workflow
 - edit payment contacts
   Doesn't need to be a "page", can just be a workflow, showing different buttons for doing things
     - edit
@@ -54,6 +53,8 @@
 
 
 # TODO
+- Start looking at the Signals API and see if we can do something with that instead of the way it is now
+  - looks like this is more just for aborting certain actions, so if anything, we could use it to abort fetches
 - add a "chaos" layer for repositoryService
   - when the feature is on, when requesting the repository, it will sometimes return a chaos layer on top of the requested repository
   - when asking for data, it will sometimes return an error
@@ -67,7 +68,7 @@
   - components
   - services
   - repositories
-- importmaps
+- ✔️importmaps
   - it doesn't look like we can "download" a json acting as an importmap, but nothing is stopping us from hitting an api that creates the document for us, and at that time we can create the JSON file for the importmap
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules#importing_modules_using_import_maps
 
@@ -77,15 +78,6 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules#importing_
   - make this work with slots
   This means that the Financial Health widget are supposed to have these widgets, but these widgets can also be found through search, and added to the home page, or any other page, and resized to fit the layout
 - be able to resize widgets
-
-yeah, not happy with this. 
-- The net worth summary is too big
-- should we break out some of the insights into their own widgets?
-  
-- one full widget
-- collapsable to at-a-glance
-- collapsable sections inside the widget
-  
   
 # Features
 - Toast
@@ -99,13 +91,6 @@ yeah, not happy with this.
   This is a big change. But it should be just the grid-layout and the widget-wrapper
   
 
-
-# Worksflows (explain how the work with the modal, base and manager)
-Looks like there are different events
-workflow-complete: emitted by workflow-base, no one seems to listen to this
-workflow-completed
-workflowComplete: emitted by modal, catched by workflow-manager, to be used when multiple workflows are in the same modal
-Which one should we use? and why are there different ones?
 
 # menu
 ## theme pages
@@ -128,17 +113,9 @@ Which one should we use? and why are there different ones?
 ## Savings
 ### smartness
 ## accounts✔️
-- ✔️more details on a specific account, implement the three dots
-- show a total of the upcoming payments on each account
-- accounts needs to look into upcoming transactions, so that we can show the total amount of upcoming payments
-### account details
-- Where should we show this?
-  it opens today in a modal, which is fine, but that means we should add another type, not a workflow, but an info?
+- ✔️accounts needs to look into upcoming transactions, so that we can show the total amount of upcoming payments
 ### smartness
-- check if there is any upcoming payment that will make the account go negative
-## expenses
-- Should show some insights about the expenses
-- Should show a list of expenses
+- ✔️check if there is any upcoming payment that will make the account go negative
 ## loan widget
 - show the total amount of the loan
   - a nice bar showing how much you have paid off

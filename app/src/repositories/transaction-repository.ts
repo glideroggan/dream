@@ -42,24 +42,6 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
   }
 
   /**
-   * Create an async generator that yields batches of transactions
-   * @param transactions The transactions to iterate over
-   * @param batchSize The number of transactions to include in each batch
-   */
-  private async *createBatchIterator(
-    transactions: Transaction[],
-    batchSize: number
-  ): AsyncGenerator<Transaction[]> {
-    for (let i = 0; i < transactions.length; i += batchSize) {
-      const batch = transactions.slice(i, i + batchSize);
-      // Simulate network delay for more realistic behavior in development
-      // In production, this would be a real API call that takes time
-      // await new Promise(resolve => setTimeout(resolve, 100));
-      yield batch;
-    }
-  }
-
-  /**
    * Get all transactions as an async iterator
    * @param batchSize Number of transactions per batch
    */

@@ -507,8 +507,12 @@ export class TransactionListComponent extends FASTElement {
   @observable hasMoreRegularTransactions: boolean = true;
   @observable hasMoreUpcomingTransactions: boolean = true;
 
+  private transactionRepo = repositoryService.getTransactionRepository();
+  private unsubscribe: () => void;
+
   constructor() {
     super();
+    
   }
 
   accountIdChanged() {
@@ -520,9 +524,22 @@ export class TransactionListComponent extends FASTElement {
   async connectedCallback(): Promise<void> {
     super.connectedCallback();
 
+    this.unsubscribe = this.transactionRepo.subscribe(event => {
+      console.log('update transaction', event);
+      if (event.type === 'create' || event.type === 'update' || event.type === 'delete') {
+        console.log('loading transactions');
+        this.loadTransactions();
+      }
+    });
+
     if (this.accountId) {
       await this.loadTransactions();
     }
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.unsubscribe();
   }
 
   /**
@@ -538,18 +555,10 @@ export class TransactionListComponent extends FASTElement {
   async loadTransactions(): Promise<void> {
     if (!this.accountId || this.isLoading) return;
 
-    if (this.regularTransactions.length > 0) {
-      this.maxToShow = this.regularTransactions.length;
-      this.updateVisibleTransactions();
-      return;
-    }
-
     this.isLoading = true;
     this.hasError = false;
 
     try {
-      const transactionRepo = repositoryService.getTransactionRepository();
-
       // Reset state
       this.regularTransactions = [];
       this.upcomingTransactions = [];
@@ -557,8 +566,8 @@ export class TransactionListComponent extends FASTElement {
       this.hasMoreUpcomingTransactions = true;
 
       // Get fresh iterators for both types of transactions
-      this.regularTransactionIterator = transactionRepo.getByAccountIdIterator(this.accountId);
-      this.upcomingTransactionIterator = transactionRepo.getByAccountIdIterator(this.accountId);
+      this.regularTransactionIterator = this.transactionRepo.getByAccountIdIterator(this.accountId);
+      this.upcomingTransactionIterator = this.transactionRepo.getByAccountIdIterator(this.accountId);
 
       // Load initial batches
       await this.loadMoreRegularTransactions();
