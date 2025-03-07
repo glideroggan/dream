@@ -11,7 +11,6 @@ const context = await build.context({
         'src/main.ts',
         // Widget entry points
         'src/widgets/welcome/welcome-widget.ts',
-        'src/widgets/dashboard/dashboard-widget.ts',
         'src/widgets/account-widget/account-widget.ts',
         'src/widgets/swish-widget.ts',
         'src/widgets/financial-health-widget/financial-health-widget.ts',
@@ -23,6 +22,7 @@ const context = await build.context({
         'src/workflows/payments/add-contact-workflow.ts',
         'src/workflows/account-info-workflow.ts',
         'src/workflows/signing/signing-workflow.ts',
+        'src/workflows/loan/loan-workflow.ts',
         // pages
         'src/pages/dashboard-page.ts',
         'src/pages/investments-page.ts',

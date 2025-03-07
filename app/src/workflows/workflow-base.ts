@@ -17,6 +17,7 @@ export interface WorkflowHost {
   closeWorkflow(result?: WorkflowResult): void
   updateTitle?(title: string): void
   updateFooter?(showFooter: boolean, primaryButtonText?: string): void
+  setWidth?(width: string): void  // Add setWidth to the interface
 }
 
 export abstract class WorkflowBase extends FASTElement {
@@ -141,6 +142,15 @@ export abstract class WorkflowBase extends FASTElement {
   ): void {
     if (this.host && this.host.updateFooter) {
       this.host.updateFooter(showFooter, primaryButtonText)
+    }
+  }
+
+  /**
+   * Set the modal width
+   */
+  protected setModalWidth(width: string): void {
+    if (this.host && this.host.setWidth) {
+      this.host.setWidth(width);
     }
   }
 

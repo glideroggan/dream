@@ -16,6 +16,19 @@
 - the button in the bottom in financial health widget is unstyled
 - can't use keyboard in transfer workflow
 
+# TODO
+- can we include some colors?
+#384959: Primary text, headers, footers
+#6A89A7: Secondary elements, inactive states, dividers
+#88BDF2: Interactive elements (buttons, links), highlights, accent
+#BDDDFC: Backgrounds, cards, hover states
+- search should be smart enough to show "new" documents
+  - when a document have been created, the search should have it under "new"
+- we need a document widget
+  - how big will this be?
+  - will it have a search?
+  - or will the global search be able to search for documents?
+
 # BE
 - arch? bun, deno, node?
 - document should be cached and static as much as possible

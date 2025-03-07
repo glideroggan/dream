@@ -4,6 +4,7 @@ import { AccountRepository } from '../repositories/account-repository';
 import { TransactionRepository } from '../repositories/transaction-repository';
 import { ProductRepository } from '../repositories/product-repository';
 import { SettingsRepository } from '../repositories/settings-repository';
+import { LoanRepository } from '../repositories/loan-repository';
 
 export enum TransactionStatus {
   COMPLETED = 'COMPLETED',
@@ -30,6 +31,7 @@ export class RepositoryService {
   private settingsRepo: SettingsRepository;
   private transactionRepo: TransactionRepository;
   private productRepo: ProductRepository;
+  private loanRepo: LoanRepository;
   
   private constructor(
     private storage: StorageService,
@@ -39,6 +41,7 @@ export class RepositoryService {
     this.accountRepo = new AccountRepository(storage, userService, this.transactionRepo);
     this.settingsRepo = new SettingsRepository(storage, userService);
     this.productRepo = new ProductRepository(storage, userService);
+    this.loanRepo = new LoanRepository(storage, userService);
   }
   
   /**
@@ -80,6 +83,13 @@ export class RepositoryService {
    */
   getProductRepository(): ProductRepository {
     return this.productRepo;
+  }
+  
+  /**
+   * Get the loan repository
+   */
+  getLoanRepository(): LoanRepository {
+    return this.loanRepo;
   }
   
   /**

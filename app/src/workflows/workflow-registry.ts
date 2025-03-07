@@ -26,6 +26,7 @@ export const WorkflowIds = {
   ACCOUNT_INFO: "account-info",
   FINANCIAL_DETAILS: "financial-details", // TODO: implement this workflow
   SIGNING: "signing", // Add signing workflow ID
+  LOAN: "loan", // Add loan workflow ID
 };
 
 // Define all available workflows
@@ -124,6 +125,17 @@ const workflowDefinitions: WorkflowDefinition[] = [
     searchable: true,
     popular: true,
     keywords: ['sign', 'signature', 'bankid', 'document', 'signing', 'verify', 'authorization'],
+  },
+  {
+    id: WorkflowIds.LOAN,
+    name: "Apply for Loan",
+    description: "Apply for a personal, home, or vehicle loan",
+    elementName: "loan-workflow",
+    module: "@workflows/loan",
+    icon: "💰",
+    searchable: true,
+    popular: true,
+    keywords: ['loan', 'borrow', 'mortgage', 'credit', 'financing', 'personal loan', 'home loan', 'car loan'],
   },
 ];
 
