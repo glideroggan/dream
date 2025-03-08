@@ -2,10 +2,8 @@ import { repositoryService } from '../services/repository-service'
 import { StorageService } from '../services/storage-service'
 import { UserService } from '../services/user-service'
 import { Entity, LocalStorageRepository } from './base-repository'
-import {
-  TransactionRepository,
-} from './transaction-repository'
-import { mockAccounts } from './mock/account-mock'
+import { TransactionRepository } from './transaction-repository'
+import { getMockAccountsByUserType } from './mock/account-mock'
 
 // Interface for transfer results
 export interface TransferResult {
@@ -63,13 +61,27 @@ export class AccountRepository extends LocalStorageRepository<Account> {
   }
 
   protected initializeMockData(): void {
+    // Get user type to determine which mock accounts to use
+    const userType = this.userService.getUserType();
+    console.debug(`Initializing mock accounts for user type: ${userType}`);
+    
+    // Get appropriate mock accounts based on user type
+    const accounts = getMockAccountsByUserType(userType);
+    
+    if (accounts.length === 0 && userType === 'new') {
+      console.debug('New user detected, starting with empty account list');
+      return; // Return without saving anything to storage
+    }
+    
     // Add mock accounts
-    mockAccounts.forEach((account) => {
-      this.entities.set(account.id, account)
-    })
-
+    accounts.forEach((account) => {
+      this.entities.set(account.id, account);
+    });
+    
     // Save to storage
-    this.saveToStorage()
+    this.saveToStorage();
+    
+    console.debug(`Initialized ${accounts.length} mock accounts for ${userType} user`);
   }
 
   async create(

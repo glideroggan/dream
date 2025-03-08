@@ -31,6 +31,14 @@ import { userService } from './services/user-service';
 // Initialize storage and user services early
 window.storageService = storageService;
 window.userService = userService;
+
+// Check if this is the first time running the app (no currentUserId in storage)
+if (!storageService.getItem('currentUserId')) {
+  console.debug('First-time run detected, setting initial user to new-user');
+  // Default to new-user for first-time users
+  storageService.setItem('currentUserId', 'new-user');
+}
+
 console.debug('Storage and user services initialized');
 
 // Initialize widget service after storage services

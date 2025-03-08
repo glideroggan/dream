@@ -1,5 +1,8 @@
 import { Account } from '../account-repository';
 
+/**
+ * Mock accounts for the demo user (full featured)
+ */
 export const mockAccounts: Account[] = [
   {
     id: 'acc-1',
@@ -143,3 +146,78 @@ export const mockAccounts: Account[] = [
     minimumPaymentDue: 30.00
   }
 ];
+
+/**
+ * Mock accounts for a new user - empty by design
+ * New users should start with no accounts until they go through onboarding
+ */
+export const newUserAccounts: Account[] = [];
+
+/**
+ * Mock accounts for an established user
+ * More accounts and higher balances than new users
+ */
+export const establishedUserAccounts: Account[] = [
+  // Checking with moderate balance
+  {
+    id: 'est-checking',
+    name: 'Everyday Checking',
+    balance: 3750.42,
+    currency: 'USD',
+    type: 'checking',
+    accountNumber: '**** **** **** 6543',
+    isActive: true,
+    createdAt: new Date('2022-06-15').toISOString(),
+    hasOverdraftProtection: true,
+    averageBalance: 3250.15
+  },
+  
+  // Savings with decent balance
+  {
+    id: 'est-savings',
+    name: 'Emergency Fund',
+    balance: 8500.00,
+    currency: 'USD',
+    type: 'savings',
+    accountNumber: '**** **** **** 6544',
+    isActive: true,
+    createdAt: new Date('2022-06-15').toISOString(),
+    interestRate: 0.65,
+    savingsGoal: 15000.00,
+    targetDate: new Date('2023-12-31').toISOString()
+  },
+  
+  // Credit card
+  {
+    id: 'est-credit',
+    name: 'Rewards Credit Card',
+    balance: 1250.75,
+    currency: 'USD',
+    type: 'credit',
+    accountNumber: '**** **** **** 6545',
+    isActive: true,
+    createdAt: new Date('2022-08-10').toISOString(),
+    creditLimit: 5000,
+    availableCredit: 3749.25,
+    paymentDueDate: new Date(Date.now() + 86400000 * 7).toISOString(), // 7 days from now
+    minimumPaymentDue: 35.00
+  }
+];
+
+/**
+ * Get the appropriate mock accounts based on user type
+ * @param userType The type of user to get accounts for
+ * @returns Array of accounts appropriate for the user type
+ */
+export function getMockAccountsByUserType(userType: string): Account[] {
+  switch(userType) {
+    case 'new':
+      return newUserAccounts; // Empty array for new users
+    case 'established':
+      return establishedUserAccounts;
+    case 'premium':
+    case 'demo':
+    default:
+      return mockAccounts;
+  }
+}

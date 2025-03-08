@@ -1,5 +1,6 @@
 import { StorageService } from './storage-service';
 import { UserProfile, UserRepository, UserType, UserTypes } from '../repositories/user-repository';
+import { repositoryService } from './repository-service';
 
 export class UserService {
   private static instance: UserService;
@@ -19,6 +20,13 @@ export class UserService {
       UserService.instance = new UserService(storage);
     }
     return UserService.instance;
+  }
+  
+  /**
+   * Switch to a different user
+   */
+  public switchToUser(userId: string): UserProfile | undefined {
+    return this.login(userId);
   }
   
   /**
@@ -63,8 +71,8 @@ export class UserService {
    * Get current user ID
    */
   public getCurrentUserId(): string {
-    // Always return a user ID, defaulting to demo if none is set
-    return this.currentUserId || 'demo-user';
+    // If no user is set, default to 'new-user' instead of 'demo-user'
+    return this.currentUserId || 'new-user';
   }
   
   /**
@@ -138,6 +146,31 @@ export class UserService {
   public getUserResidency(): string {
     const user = this.getCurrentUser();
     return user?.address?.country || 'Unknown';
+  }
+
+  /**
+   * Check if the current user has any accounts
+   * Used to determine if a new user needs to go through onboarding
+   */
+  public async hasAccounts(): Promise<boolean> {
+    try {
+      const accountRepo = repositoryService.getAccountRepository();
+      const accounts = await accountRepo.getAll();
+      
+      return accounts.length > 0;
+    } catch (error) {
+      console.error('Error checking user accounts:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Check if the current user needs account setup
+   * Used to determine if onboarding should be shown
+   */
+  public async needsAccountSetup(): Promise<boolean> {
+    // Only new users without accounts need account setup
+    return this.isNewUser() && !(await this.hasAccounts());
   }
 }
 

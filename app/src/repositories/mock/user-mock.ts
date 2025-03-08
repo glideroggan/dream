@@ -107,3 +107,50 @@ export function generateMockUsers(): UserProfile[] {
   
   return mockUsers;
 }
+
+/**
+ * Create a template for a new user with minimal initial data
+ * This is used when creating or initializing a new user
+ * 
+ * @param userData Basic user information to include
+ * @returns A minimal new user profile
+ */
+export function createNewUserTemplate(userData: {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+}): UserProfile {
+  const now = new Date().toISOString();
+  
+  return {
+    id: userData.id,
+    username: userData.email.split('@')[0], // Generate a username from email
+    email: userData.email,
+    firstName: userData.firstName,
+    lastName: userData.lastName,
+    type: 'new',
+    verified: false, // New users start unverified
+    createdAt: now,
+    lastLogin: now,
+    // Minimal preferences with defaults
+    preferences: {
+      theme: 'system',
+      language: 'en',
+      notifications: true
+    }
+  };
+}
+
+/**
+ * Get initial products recommended for a new user
+ * Returns array of product IDs that should be highlighted for new users
+ */
+export function getNewUserRecommendedProducts(): string[] {
+  // Return IDs of basic products appropriate for new users
+  return [
+    'checking-account',
+    'savings-account',
+    'credit-card'
+  ];
+}

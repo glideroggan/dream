@@ -36,7 +36,7 @@ export abstract class LocalStorageRepository<T extends Entity> implements Reposi
   constructor(
     private storageKey: string,
     private storage: StorageService,
-    private userService: UserService
+    protected userService: UserService
   ) {
     this.loadFromStorage();
     

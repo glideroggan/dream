@@ -1,6 +1,6 @@
 import { StorageService } from '../services/storage-service';
 import { Entity } from './base-repository';
-import { generateMockUsers } from './mock/user-mock';
+import { createNewUserTemplate, generateMockUsers } from './mock/user-mock';
 
 // Convert from enum to union type
 export type UserType = 'new' | 'established' | 'premium' | 'demo';
@@ -138,6 +138,29 @@ export class UserRepository {
     this.users.set(id, newUser);
     this.saveUsers();
     
+    return newUser;
+  }
+  
+  /**
+   * Create a new user with default settings
+   */
+  public createNewUser(userData: {
+    firstName: string;
+    lastName: string;
+    email: string;
+  }): UserProfile {
+    const id = `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Use the template to create a consistent new user
+    const newUser = createNewUserTemplate({
+      id,
+      ...userData
+    });
+    
+    this.users.set(id, newUser);
+    this.saveUsers();
+    
+    console.debug(`Created new user: ${id}`);
     return newUser;
   }
   
