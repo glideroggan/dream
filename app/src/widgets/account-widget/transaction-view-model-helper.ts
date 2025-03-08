@@ -1,6 +1,5 @@
 import { Transaction } from "../../repositories/transaction-repository";
 import { TransactionViewModel } from "./transaction-list-component";
-import { TransactionStatus, TransactionType } from "../../services/repository-service";
 
 /**
  * Helper class for processing transactions into view models
@@ -19,23 +18,23 @@ export class TransactionViewModelHelper {
     
     // Handle different transaction types
     switch(transaction.type) {
-      case TransactionType.DEPOSIT:
+      case 'deposit':
         isIncoming = true;
         break;
-      case TransactionType.WITHDRAWAL:
+      case 'withdrawal':
         isIncoming = false;
         break;
-      case TransactionType.PAYMENT:
+      case 'payment':
         isIncoming = false;
         break;
-      case TransactionType.TRANSFER:
+      case 'transfer':
         // For transfers, it depends on whether we're the source or destination
         isIncoming = transaction.toAccountId === accountId;
         break;
-      case TransactionType.FEE:
+      case 'fee':
         isIncoming = false;
         break;
-      case TransactionType.INTEREST:
+      case 'interest':
         isIncoming = true;
         break;
       default:
@@ -44,7 +43,7 @@ export class TransactionViewModelHelper {
     }
     
     // For upcoming transactions, we'll show the absolute amount with sign
-    const amount = transaction.status === TransactionStatus.UPCOMING 
+    const amount = transaction.status === 'upcoming' 
       ? Math.abs(transaction.amount) 
       : transaction.amount;
     

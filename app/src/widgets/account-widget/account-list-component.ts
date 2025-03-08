@@ -1,7 +1,7 @@
 import { FASTElement, customElement, html, css, observable, repeat, when } from "@microsoft/fast-element";
 import { TransactionViewModel } from "./transaction-list-component";
 import { Account } from "../../repositories/account-repository";
-import { repositoryService, TransactionStatus } from "../../services/repository-service";
+import { repositoryService } from "../../services/repository-service";
 import { TransactionViewModelHelper } from "./transaction-view-model-helper";
 import { Transaction } from "../../repositories/transaction-repository";
 import { AccountInsightsHelper, AccountInsight } from "../../helpers/account-insights-helper";

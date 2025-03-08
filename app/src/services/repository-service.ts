@@ -1,28 +1,10 @@
 import { storageService } from './storage-service';
 import { userService } from './user-service';
 import { AccountRepository } from '../repositories/account-repository';
-import { TransactionRepository } from '../repositories/transaction-repository';
+import { TransactionRepository, TransactionStatuses, TransactionTypes } from '../repositories/transaction-repository';
 import { ProductRepository } from '../repositories/product-repository';
 import { SettingsRepository } from '../repositories/settings-repository';
 import { LoanRepository } from '../repositories/loan-repository';
-
-export enum TransactionStatus {
-  COMPLETED = 'completed',
-  PENDING = 'pending',
-  FAILED = 'failed',
-  UPCOMING = 'upcoming', // For scheduled transfers
-  CANCELLED = 'cancelled'
-}
-
-export enum TransactionType {
-  TRANSFER = 'transfer',
-  DEPOSIT = 'deposit',
-  WITHDRAWAL = 'withdrawal',
-  PAYMENT = 'payment',
-  REFUND = 'refund',
-  FEE = 'fee',
-  INTEREST = 'interest'
-}
 
 // Lazy-loaded repositories
 class RepositoryService {
@@ -104,3 +86,6 @@ class RepositoryService {
 
 // Export singleton instance
 export const repositoryService = new RepositoryService();
+
+// Re-export the constants for backwards compatibility
+export { TransactionStatuses, TransactionTypes };

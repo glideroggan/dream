@@ -8,7 +8,7 @@ export enum LoanType {
   PERSONAL = 'personal',
   MORTGAGE = 'mortgage',
   AUTO = 'auto',
-  STUDENT = 'student',
+  EDUCATION = 'education',
   BUSINESS = 'business',
   LINE_OF_CREDIT = 'line_of_credit',
   VEHICLE = 'vehicle',  // For backward compatibility with mock data
@@ -129,7 +129,7 @@ export class LoanService {
             recommendedTerm: 60
           };
           
-        case LoanType.STUDENT:
+        case LoanType.EDUCATION:
           return {
             eligible: true,
             minAmount: 5000,
@@ -229,7 +229,7 @@ export class LoanService {
       case LoanType.HOME: return 3.49;
       case LoanType.AUTO:
       case LoanType.VEHICLE: return 4.25;
-      case LoanType.STUDENT: return 3.99;
+      case LoanType.EDUCATION: return 3.99;
       case LoanType.BUSINESS: return 6.75;
       case LoanType.LINE_OF_CREDIT: return 6.75;
       default: return 5.99;
@@ -496,6 +496,44 @@ export class LoanService {
   async getTotalLoanBalance(): Promise<number> {
     const activeLoans = await this.getActiveLoans();
     return activeLoans.reduce((total, loan) => total + loan.amount, 0);
+  }
+
+  /**
+   * Update loan application details
+   * Added to support workflow
+   */
+  async updateLoanApplication(loanId: string, updates: Record<string, any>): Promise<Loan | undefined> {
+    try {
+      const loanRepo = repositoryService.getLoanRepository();
+      const loan = await loanRepo.getById(loanId);
+      
+      if (!loan) {
+        throw new Error(`Loan with ID ${loanId} not found`);
+      }
+      
+      return loanRepo.update(loanId, updates);
+    } catch (error) {
+      console.error("Error updating loan application:", error);
+      throw new Error("Failed to update loan application");
+    }
+  }
+  
+  /**
+   * Update loan account
+   * Renamed to better match the repository method
+   */
+  async updateLoanAccount(loanId: string, accountId: string): Promise<Loan | undefined> {
+    const loanRepo = repositoryService.getLoanRepository();
+    return loanRepo.updateLoanAccount(loanId, accountId);
+  }
+  
+  /**
+   * Update loan with signature
+   * Added to support workflow
+   */
+  async updateWithSignature(loanId: string, signatureId: string): Promise<Loan | undefined> {
+    const loanRepo = repositoryService.getLoanRepository();
+    return loanRepo.updateWithSignature(loanId, signatureId);
   }
 }
 

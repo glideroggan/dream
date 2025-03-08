@@ -1,0 +1,156 @@
+import { StorageService } from '../services/storage-service';
+import { Entity } from './base-repository';
+import { generateMockUsers } from './mock/user-mock';
+
+// Convert from enum to union type
+export type UserType = 'new' | 'established' | 'premium' | 'demo';
+
+// Constants for UserType values (for backwards compatibility with enum usage)
+export const UserTypes = {
+  NEW: 'new' as UserType,
+  ESTABLISHED: 'established' as UserType,
+  PREMIUM: 'premium' as UserType,
+  DEMO: 'demo' as UserType
+};
+
+export interface UserProfile extends Entity {
+  id: string;
+  username: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber?: string;
+  dateOfBirth?: string;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    postalCode?: string;
+    country?: string;
+  };
+  type: UserType;
+  preferences?: {
+    theme?: string;
+    language?: string;
+    notifications?: boolean;
+  };
+  kycLevel?: string;
+  verified: boolean;
+  createdAt: string;
+  lastLogin?: string;
+}
+
+export class UserRepository {
+  private users: Map<string, UserProfile> = new Map();
+  private storageKey: string = 'users';
+  
+  constructor(private storage: StorageService) {
+    this.loadUsers();
+    
+    // Initialize with default users if none exist
+    if (this.users.size === 0) {
+      this.initializeDefaultUsers();
+    }
+  }
+  
+  /**
+   * Load users from storage
+   */
+  private loadUsers(): void {
+    const storedUsers = this.storage.getItem<UserProfile[]>(this.storageKey);
+    
+    if (storedUsers) {
+      this.users = new Map(storedUsers.map(user => [user.id, user]));
+      console.debug(`Loaded ${this.users.size} users from storage`);
+    }
+  }
+  
+  /**
+   * Save users to storage
+   */
+  private saveUsers(): void {
+    const users = Array.from(this.users.values());
+    this.storage.setItem(this.storageKey, users);
+    console.debug(`Saved ${users.length} users to storage`);
+  }
+  
+  /**
+   * Initialize with default users
+   */
+  private initializeDefaultUsers(): void {
+    const mockUsers = generateMockUsers();
+    
+    // Add users to map
+    mockUsers.forEach(user => {
+      this.users.set(user.id, user);
+    });
+    
+    // Save to storage
+    this.saveUsers();
+    
+    console.debug('Initialized default users');
+  }
+  
+  /**
+   * Get a user by ID
+   */
+  public getUserById(id: string): UserProfile | undefined {
+    return this.users.get(id);
+  }
+  
+  /**
+   * Get all users
+   */
+  public getAllUsers(): UserProfile[] {
+    return Array.from(this.users.values());
+  }
+  
+  /**
+   * Update a user
+   */
+  public updateUser(id: string, updates: Partial<UserProfile>): UserProfile | undefined {
+    const user = this.users.get(id);
+    
+    if (!user) {
+      return undefined;
+    }
+    
+    const updatedUser = { ...user, ...updates };
+    this.users.set(id, updatedUser);
+    this.saveUsers();
+    
+    return updatedUser;
+  }
+  
+  /**
+   * Create a new user
+   */
+  public createUser(userData: Omit<UserProfile, 'id' | 'createdAt'>): UserProfile {
+    const id = `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const now = new Date().toISOString();
+    
+    const newUser: UserProfile = {
+      ...userData,
+      id,
+      createdAt: now
+    };
+    
+    this.users.set(id, newUser);
+    this.saveUsers();
+    
+    return newUser;
+  }
+  
+  /**
+   * Update last login time for a user
+   */
+  public updateLastLogin(id: string): void {
+    const user = this.users.get(id);
+    
+    if (user) {
+      user.lastLogin = new Date().toISOString();
+      this.users.set(id, user);
+      this.saveUsers();
+    }
+  }
+}

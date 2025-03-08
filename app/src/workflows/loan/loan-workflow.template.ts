@@ -1,58 +1,43 @@
-import { html } from "@microsoft/fast-element";
+import { html, repeat } from "@microsoft/fast-element";
 import { LoanWorkflow } from "./loan-workflow";
 import { LoanType } from "../../services/loan-service";
 import { when } from "@microsoft/fast-element";
+import { ProductEntity } from "../../repositories/product-repository";
+import { getProductIcon, getInterestRateDisplay } from "./loan-workflow.helper";
 
-// Step 1: Choose loan type
+// Step 1: Choose loan product
 const step1Template = html<LoanWorkflow>/*html*/`
   <div class="loan-content">
     <p>What type of loan are you interested in?</p>
     
     <div class="loan-options">
-      <div class="loan-option ${x => x.selectedLoanType === LoanType.PERSONAL ? 'selected' : ''}"
-           @click="${x => x.selectLoanType(LoanType.PERSONAL)}">
-        <div class="loan-option-icon">👤</div>
-        <div class="loan-option-content">
-          <h3>Personal Loan</h3>
-          <p>For personal expenses, debt consolidation, etc.</p>
-          <div class="loan-option-details">5.99% - 15.99% APR</div>
+      ${when(x => x.availableLoanProducts.length === 0, html<LoanWorkflow>/*html*/`
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+          <p>Loading loan products...</p>
         </div>
-      </div>
+      `)}
       
-      <div class="loan-option ${x => x.selectedLoanType === LoanType.HOME ? 'selected' : ''}"
-           @click="${x => x.selectLoanType(LoanType.HOME)}">
-        <div class="loan-option-icon">🏠</div>
-        <div class="loan-option-content">
-          <h3>Home Loan</h3>
-          <p>For purchasing or refinancing your home</p>
-          <div class="loan-option-details">3.49% - 5.99% APR</div>
-        </div>
-      </div>
-      
-      <div class="loan-option ${x => x.selectedLoanType === LoanType.VEHICLE ? 'selected' : ''}"
-           @click="${x => x.selectLoanType(LoanType.VEHICLE)}">
-        <div class="loan-option-icon">🚗</div>
-        <div class="loan-option-content">
-          <h3>Vehicle Loan</h3>
-          <p>For purchasing a new or used vehicle</p>
-          <div class="loan-option-details">4.25% - 8.99% APR</div>
-        </div>
-      </div>
-      
-      <div class="loan-option ${x => x.selectedLoanType === LoanType.EDUCATION ? 'selected' : ''}"
-           @click="${x => x.selectLoanType(LoanType.EDUCATION)}">
-        <div class="loan-option-icon">🎓</div>
-        <div class="loan-option-content">
-          <h3>Education Loan</h3>
-          <p>For education and tuition expenses</p>
-          <div class="loan-option-details">3.99% - 7.99% APR</div>
-        </div>
-      </div>
+      ${when(x => x.availableLoanProducts.length > 0, html<LoanWorkflow>/*html*/`
+        ${repeat(x => x.availableLoanProducts, html<ProductEntity, LoanWorkflow>/*html*/`
+          <div class="loan-option ${(product, c) => c.parent.selectedProduct?.id === product.id ? 'selected' : ''}"
+              @click="${(product,c) => c.parent.selectProduct(product)}">
+            <div class="loan-option-icon">${product => getProductIcon(product)}</div>
+            <div class="loan-option-content">
+              <h3>${product => product.name}</h3>
+              <p>${product => product.description || 'Apply now for competitive rates'}</p>
+              <div class="loan-option-details">
+                ${product => getInterestRateDisplay(product)}
+              </div>
+            </div>
+          </div>
+        `)}
+      `)}
     </div>
     
     <div class="loan-navigation">
       <button @click="${x => x.cancel('Loan application cancelled')}" class="secondary-button">Cancel</button>
-      <button ?disabled="${x => !x.selectedLoanType}" @click="${x => x.checkEligibility()}" class="primary-button">
+      <button ?disabled="${x => !x.selectedProduct}" @click="${x => x.checkEligibility()}" class="primary-button">
         Continue
       </button>
     </div>
@@ -74,7 +59,7 @@ const step2Template = html<LoanWorkflow>/*html*/`
         <div class="error-icon">❌</div>
         <h3>Not Eligible</h3>
         <p>${x => x.eligibilityResult?.reason || 'You are not eligible for this loan type at this time.'}</p>
-        <button @click="${x => x.goToStep('select-type')}" class="primary-button">Choose Another Loan</button>
+        <button @click="${x => x.goToStep('select-product')}" class="primary-button">Choose Another Loan</button>
       </div>
     `)}
     
@@ -170,7 +155,7 @@ const step2Template = html<LoanWorkflow>/*html*/`
         
         <!-- Footer navigation -->
         <div class="loan-navigation">
-          <button @click="${x => x.goToStep('select-type')}" class="secondary-button">Back</button>
+          <button @click="${x => x.goToStep('select-product')}" class="secondary-button">Back</button>
           <button @click="${x => x.createDraftLoan(x.estimatedDetails)}" class="primary-button">Continue</button>
         </div>
       </div>
@@ -340,23 +325,22 @@ export const template = html<LoanWorkflow>/*html*/`
   <div class="loan-workflow">
     <!-- Header -->
     <div class="loan-header">
-      <div class="loan-icon">💰</div>
+      <div class="loan-icon">
+        ${when(x => !x.selectedProduct, html<LoanWorkflow>/*html*/`💰`)}
+        ${when(x => !!x.selectedProduct, html<LoanWorkflow>/*html*/`
+          ${x => getProductIcon(x.selectedProduct)}
+        `)}  
+      </div>
       <h2>${x => x.headerTitle}</h2>
     </div>
 
-    <!-- Step 1: Choose loan type -->
-    ${when(x => x.step === 'select-type', step1Template)}
+    <!-- Step 1: Choose loan product -->
+    ${when(x => x.step === 'select-product', step1Template)}
     
-    <!-- Step 2: Eligibility and loan amount -->
+    <!-- Other steps -->
     ${when(x => x.step === 'eligibility', step2Template)}
-    
-    <!-- Step 3: Loan details review -->
     ${when(x => x.step === 'loan-details', step3Template)}
-    
-    <!-- Step 4: Terms and Conditions -->
     ${when(x => x.step === 'terms', step4Template)}
-    
-    <!-- Step 5: Success or Failure -->
     ${when(x => x.step === 'result', step5Template)}
   </div>
 `;

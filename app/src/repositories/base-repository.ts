@@ -1,5 +1,6 @@
 import { StorageService } from '../services/storage-service';
 import { UserService } from '../services/user-service';
+import { UserType } from './user-repository';
 
 // Type definitions
 export interface Entity {
@@ -109,6 +110,15 @@ export abstract class LocalStorageRepository<T extends Entity> implements Reposi
       console.debug(`Loaded ${this.entities.size} items from ${key}`);
     } else {
       console.debug(`No data found for ${key}, will initialize with mock data`);
+      
+      // Check if this is a new user - if so, don't initialize with mock data
+      const userType = this.userService.getUserType();
+      if (userType === 'new') {
+        console.debug(`New user detected, skipping mock data initialization`);
+        this.entities = new Map(); // Empty map for new users
+      } else {
+        this.initializeMockData();
+      }
     }
   }
   

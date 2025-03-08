@@ -1,9 +1,8 @@
-import { getSingletonManager } from './singleton-manager';
-
 /**
  * Service for dynamically loading modules
  */
 export class ModuleLoaderService {
+  private static instance: ModuleLoaderService;
   private loadedModules: Set<string> = new Set();
   private moduleLoadPromises: Map<string, Promise<unknown>> = new Map();
   
@@ -14,11 +13,10 @@ export class ModuleLoaderService {
   
   // Singleton accessor
   public static getInstance(): ModuleLoaderService {
-    const singletonManager = getSingletonManager();
-    return singletonManager.getOrCreate<ModuleLoaderService>(
-      'ModuleLoaderService', 
-      () => new ModuleLoaderService()
-    );
+    if (!ModuleLoaderService.instance) {
+      ModuleLoaderService.instance = new ModuleLoaderService();
+    }
+    return ModuleLoaderService.instance;
   }
   
   /**

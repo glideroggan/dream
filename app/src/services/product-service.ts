@@ -1,4 +1,3 @@
-import { getSingletonManager } from './singleton-manager';
 import { ProductRepository } from '../repositories/product-repository';
 import { repositoryService } from './repository-service';
 import { 
@@ -35,7 +34,9 @@ export interface ProductChangeEvent {
 export type ProductChangeListener = (event: ProductChangeEvent) => void;
 
 export class ProductService {
+  // Static instance for singleton pattern
   private static instance: ProductService;
+  
   private products: Product[] = [];
   private initialized = false;
   private changeListeners: Set<ProductChangeListener> = new Set();
@@ -362,7 +363,7 @@ export class ProductService {
   /**
    * Get product by ID
    */
-  async getProductById(id: string): Promise<ProductEntity | null> {
+  async getProductById(id: string): Promise<ProductEntity | undefined> {
     const repo = repositoryService.getProductRepository();
     return await repo.getById(id);
   }

@@ -1,5 +1,4 @@
 import { WorkflowBase } from '../workflows/workflow-base';
-import { getSingletonManager } from './singleton-manager';
 
 // Registry of available workflows
 interface WorkflowRegistry {
@@ -19,6 +18,7 @@ export interface WorkflowDefinition {
 }
 
 export class WorkflowService {
+  private static instance: WorkflowService;
   private workflows: WorkflowRegistry = {};
 
   // Private constructor for singleton pattern
@@ -29,8 +29,10 @@ export class WorkflowService {
 
   // Singleton accessor
   public static getInstance(): WorkflowService {
-    const singletonManager = getSingletonManager();
-    return singletonManager.getOrCreate<WorkflowService>('WorkflowService', () => new WorkflowService());
+    if (!WorkflowService.instance) {
+      WorkflowService.instance = new WorkflowService();
+    }
+    return WorkflowService.instance;
   }
 
   /**

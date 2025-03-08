@@ -1,4 +1,3 @@
-import { getSingletonManager } from './singleton-manager';
 import { workflowService } from './workflow-service';
 import { WorkflowResult } from '../workflows/workflow-base';
 import { ModalComponent } from '../components/modal-component';
@@ -12,6 +11,7 @@ interface WorkflowState {
 }
 
 export class WorkflowManagerService {
+  private static instance: WorkflowManagerService;
   private workflowStack: WorkflowState[] = [];
   private modalComponent: ModalComponent | null = null;
   private isStartingWorkflow: boolean = false; // Add flag to prevent duplicate starts
@@ -23,10 +23,11 @@ export class WorkflowManagerService {
 
   // Singleton accessor
   public static getInstance(): WorkflowManagerService {
-    const singletonManager = getSingletonManager();
-    const instance = singletonManager.getOrCreate<WorkflowManagerService>('WorkflowManagerService', () => new WorkflowManagerService());
-    console.debug('WorkflowManagerService instance retrieved:', instance);
-    return instance;
+    if (!WorkflowManagerService.instance) {
+      WorkflowManagerService.instance = new WorkflowManagerService();
+      console.debug('WorkflowManagerService instance created');
+    }
+    return WorkflowManagerService.instance;
   }
 
   /**

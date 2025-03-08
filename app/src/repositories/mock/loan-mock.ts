@@ -69,7 +69,7 @@ export function generateMockLoans(): Loan[] {
   mockLoans.push({
     id: 'loan-4',
     productId: 'student-loan',
-    type: LoanType.STUDENT,
+    type: LoanType.EDUCATION,
     amount: 15000,
     term: 120, // 10 years in months
     interestRate: 3.2,

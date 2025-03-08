@@ -2,6 +2,7 @@ import { customElement, html, css, observable, when } from "@microsoft/fast-elem
 import { WorkflowBase, WorkflowResult } from "../workflow-base";
 import { loanService, LoanType, LoanDetails, EligibilityResult, LoanStatus } from "../../services/loan-service";
 import { repositoryService } from "../../services/repository-service";
+import { ProductEntity, ProductEntityType } from "../../repositories/product-repository";
 import { WorkflowIds } from "../workflow-registry";
 import { Account } from "../../repositories/account-repository";
 
@@ -16,10 +17,14 @@ import { styles } from "./loan-workflow.styles";
 })
 export class LoanWorkflow extends WorkflowBase {
   // Step tracking
-  @observable step: 'select-type' | 'eligibility' | 'loan-details' | 'terms' | 'result' = 'select-type';
+  @observable step: 'select-product' | 'eligibility' | 'loan-details' | 'terms' | 'result' = 'select-product';
   @observable headerTitle: string = "Apply for a Loan";
   
-  // Loan type selection
+  // Available loan products
+  @observable availableLoanProducts: ProductEntity[] = [];
+  @observable selectedProduct: ProductEntity | null = null;
+  
+  // Loan type selection (for backward compatibility)
   @observable selectedLoanType: LoanType | null = null;
   
   // Loan amount and term
@@ -55,25 +60,128 @@ export class LoanWorkflow extends WorkflowBase {
   /**
    * Initialize workflow
    */
-  initialize(params?: Record<string, any>): void {
+  async initialize(params?: Record<string, any>): Promise<void> {
     // Set a wider modal width for this workflow to accommodate the two-column layout
     this.setModalWidth("800px");
     
     // Don't use the modal's primary button, we'll handle navigation in our template
     this.updateFooter(false);
     
-    // Load accounts
-    this.loadAccounts();
+    // Load accounts and loan products
+    await Promise.all([
+      this.loadAccounts(),
+      this.loadLoanProducts()
+    ]);
     
-    // Pre-select loan type if provided
-    if (params?.loanType && Object.values(LoanType).includes(params.loanType)) {
-      this.selectedLoanType = params.loanType;
-      
-      // If we have a loan type, go directly to eligibility check
-      if (this.selectedLoanType) {
-        this.checkEligibility();
-      }
+    // Pre-select product if provided
+    if (params?.productId) {
+      this.selectProductById(params.productId);
     }
+    // Fallback to loan type for backward compatibility
+    else if (params?.loanType) {
+      this.selectProductByLoanType(params.loanType);
+    }
+    
+    // If we have a product selected, go directly to eligibility check
+    if (this.selectedProduct) {
+      await this.checkEligibility();
+    }
+  }
+  
+  /**
+   * Load available loan products
+   */
+  async loadLoanProducts(): Promise<void> {
+    try {
+      this.isLoading = true;
+      const productRepo = repositoryService.getProductRepository();
+      this.availableLoanProducts = await productRepo.getByEntityType(ProductEntityType.LOAN);
+      console.debug('Available loan products loaded:', this.availableLoanProducts);
+    } catch (error) {
+      console.error("Error loading loan products:", error);
+      this.errorMessage = "Could not load loan products. Please try again.";
+    } finally {
+      this.isLoading = false;
+    }
+  }
+  
+  /**
+   * Select product by ID
+   */
+  selectProductById(productId: string): void {
+    const product = this.availableLoanProducts.find(p => p.id === productId);
+    if (product) {
+      this.selectedProduct = product;
+      // Map to loan type for backward compatibility
+      this.mapProductToLoanType(product);
+      this.updateHeaderTitle();
+    } else {
+      console.warn(`Product with ID ${productId} not found`);
+    }
+  }
+  
+  /**
+   * Select product by loan type (for backward compatibility)
+   */
+  selectProductByLoanType(loanType: LoanType): void {
+    // Find first product that matches the loan type
+    const product = this.availableLoanProducts.find(p => {
+      const type = p.metadata?.loanType || this.inferLoanTypeFromProduct(p);
+      return type === loanType;
+    });
+    
+    if (product) {
+      this.selectedProduct = product;
+      this.selectedLoanType = loanType;
+      this.updateHeaderTitle();
+    } else {
+      console.warn(`No product found for loan type ${loanType}`);
+    }
+  }
+  
+  /**
+   * Map selected product to loan type
+   */
+  private mapProductToLoanType(product: ProductEntity): void {
+    // First try to get loan type from metadata
+    if (product.metadata?.loanType) {
+      this.selectedLoanType = product.metadata.loanType as LoanType;
+      return;
+    }
+    
+    // Otherwise infer from product ID or name
+    this.selectedLoanType = this.inferLoanTypeFromProduct(product);
+  }
+  
+  /**
+   * Infer loan type from product ID or name
+   */
+  private inferLoanTypeFromProduct(product: ProductEntity): LoanType {
+    const id = product.id.toLowerCase();
+    const name = product.name.toLowerCase();
+    
+    if (id.includes('personal') || name.includes('personal')) {
+      return LoanType.PERSONAL;
+    }
+    if (id.includes('mortgage') || name.includes('mortgage') || 
+        id.includes('home') || name.includes('home')) {
+      return LoanType.HOME;
+    }
+    if (id.includes('auto') || name.includes('auto') ||
+        id.includes('vehicle') || name.includes('vehicle') ||
+        id.includes('car') || name.includes('car')) {
+      return LoanType.VEHICLE;
+    }
+    if (id.includes('student') || name.includes('student') ||
+        id.includes('education') || name.includes('education')) {
+      return LoanType.EDUCATION;
+    }
+    if (id.includes('business') || name.includes('business')) {
+      return LoanType.BUSINESS;
+    }
+    
+    // Default
+    return LoanType.PERSONAL;
   }
   
   /**
@@ -113,10 +221,11 @@ export class LoanWorkflow extends WorkflowBase {
   }
   
   /**
-   * Select a loan type
+   * Select a loan product
    */
-  selectLoanType(type: LoanType): void {
-    this.selectedLoanType = type;
+  selectProduct(product: ProductEntity): void {
+    this.selectedProduct = product;
+    this.mapProductToLoanType(product);
     this.updateHeaderTitle();
   }
   
@@ -124,30 +233,30 @@ export class LoanWorkflow extends WorkflowBase {
    * Update header title based on current step
    */
   updateHeaderTitle(): void {
-    if (!this.selectedLoanType) {
+    if (!this.selectedProduct) {
       this.headerTitle = "Apply for a Loan";
       return;
     }
     
-    const loanTypeLabel = LoanWorkflow.getLoanTypeLabel(this.selectedLoanType);
+    const productName = this.selectedProduct.name;
     
     switch (this.step) {
-      case 'select-type':
-        this.headerTitle = `Apply for a ${loanTypeLabel}`;
+      case 'select-product':
+        this.headerTitle = `Apply for a ${productName}`;
         break;
       case 'eligibility':
-        this.headerTitle = `${loanTypeLabel} Eligibility`;
+        this.headerTitle = `${productName} Eligibility`;
         break;
       case 'loan-details':
-        this.headerTitle = `${loanTypeLabel} Details`;
+        this.headerTitle = `${productName} Details`;
         break;
       case 'terms':
-        this.headerTitle = `${loanTypeLabel} Terms`;
+        this.headerTitle = `${productName} Terms`;
         break;
       case 'result':
         this.headerTitle = this.applicationSuccess 
-          ? `${loanTypeLabel} Application Submitted` 
-          : `${loanTypeLabel} Application Failed`;
+          ? `${productName} Application Submitted` 
+          : `${productName} Application Failed`;
         break;
     }
   }
@@ -156,7 +265,7 @@ export class LoanWorkflow extends WorkflowBase {
    * Start eligibility check
    */
   async checkEligibility(): Promise<void> {
-    if (!this.selectedLoanType) return;
+    if (!this.selectedProduct || !this.selectedLoanType) return;
     
     this.step = 'eligibility';
     this.isLoading = true;
@@ -164,19 +273,26 @@ export class LoanWorkflow extends WorkflowBase {
     this.errorMessage = ""; // Clear any previous error messages
     
     try {
-      // Check eligibility with loan service
+      // Check eligibility with loan service using the loan type (for now)
       this.eligibilityResult = await loanService.checkEligibility(this.selectedLoanType);
       
       if (this.eligibilityResult && this.eligibilityResult.eligible) {
-        // Set initial values based on recommended values
-        this.loanAmount = this.eligibilityResult.minAmount + 
-          ((this.eligibilityResult.maxAmount - this.eligibilityResult.minAmount) / 2);
+        // Set initial loan amount based on product metadata or eligibility result
+        if (this.selectedProduct.metadata?.defaultAmount) {
+          this.loanAmount = this.selectedProduct.metadata.defaultAmount;
+        } else {
+          this.loanAmount = this.eligibilityResult.minAmount + 
+            ((this.eligibilityResult.maxAmount - this.eligibilityResult.minAmount) / 2);
+        }
         
-        if (this.eligibilityResult.recommendedTerm) {
+        // Set loan term based on product metadata, eligibility result, or default
+        if (this.selectedProduct.metadata?.defaultTerm) {
+          this.loanTerm = this.selectedProduct.metadata.defaultTerm;
+        } else if (this.eligibilityResult.recommendedTerm) {
           this.loanTerm = this.eligibilityResult.recommendedTerm;
         }
         
-        // Set default loan purpose based on loan type
+        // Set default loan purpose based on purposes from product or loan type
         this.setDefaultLoanPurpose();
         
         // Calculate estimated payment details
@@ -192,9 +308,18 @@ export class LoanWorkflow extends WorkflowBase {
   }
   
   /**
-   * Set a default loan purpose based on loan type
+   * Set a default loan purpose based on product or loan type
    */
   private setDefaultLoanPurpose(): void {
+    // First try to get purposes from product metadata
+    if (this.selectedProduct?.metadata?.purposes && 
+        Array.isArray(this.selectedProduct.metadata.purposes) &&
+        this.selectedProduct.metadata.purposes.length > 0) {
+      this.loanPurpose = this.selectedProduct.metadata.purposes[0];
+      return;
+    }
+    
+    // Fall back to purposes based on loan type
     const purposes = this.getLoanPurposeOptions();
     if (purposes.length > 0) {
       this.loanPurpose = purposes[0];
@@ -263,7 +388,7 @@ export class LoanWorkflow extends WorkflowBase {
   /**
    * Go to a specific step
    */
-  goToStep(step: 'select-type' | 'eligibility' | 'loan-details' | 'terms' | 'result'): void {
+  goToStep(step: 'select-product' | 'eligibility' | 'loan-details' | 'terms' | 'result'): void {
     this.step = step;
     this.updateHeaderTitle();
     this.errorMessage = ""; // Clear any error messages when changing steps
@@ -277,7 +402,7 @@ export class LoanWorkflow extends WorkflowBase {
     totalInterest: number;
     interestRate: number;
   } | null): Promise<void> {
-    if (!this.selectedLoanType || !calculatedDetails) return;
+    if (!this.selectedProduct || !this.selectedLoanType || !calculatedDetails) return;
     
     try {
       this.isLoading = true;
@@ -287,7 +412,8 @@ export class LoanWorkflow extends WorkflowBase {
         this.selectedLoanType,
         this.loanAmount,
         this.loanTerm,
-        this.loanPurpose
+        this.loanPurpose,
+        this.selectedProduct.id // Pass the product ID to link it
       );
       
       this.loanDetails = loan;
@@ -368,7 +494,7 @@ export class LoanWorkflow extends WorkflowBase {
         WorkflowIds.SIGNING,
         {
           message: "Please sign the loan agreement to complete your application.",
-          documentName: `${LoanWorkflow.getLoanTypeLabel(this.selectedLoanType)} Agreement`,
+          documentName: `${this.selectedProduct?.name || LoanWorkflow.getLoanTypeLabel(this.selectedLoanType)} Agreement`,
           documentContent: documentContent
         }
       );
@@ -401,15 +527,15 @@ export class LoanWorkflow extends WorkflowBase {
    * Format loan agreement document
    */
   private formatLoanDocument(): string {
-    if (!this.loanDetails || !this.selectedLoanType) return "";
+    if (!this.loanDetails || !this.selectedProduct) return "";
     
-    const loanTypeLabel = LoanWorkflow.getLoanTypeLabel(this.selectedLoanType);
+    const productName = this.selectedProduct.name;
     const formattedAmount = this.formatNumber(this.loanAmount);
     const formattedMonthly = this.formatNumber(this.loanDetails.monthlyPayment);
     const formattedTotal = this.formatNumber(this.loanAmount + this.loanDetails.totalInterest);
     
     return `
-      ${loanTypeLabel.toUpperCase()} AGREEMENT
+      ${productName.toUpperCase()} AGREEMENT
       
       Principal Amount: $${formattedAmount}
       Interest Rate: ${this.loanDetails.interestRate.toFixed(2)}% APR
@@ -434,9 +560,16 @@ export class LoanWorkflow extends WorkflowBase {
   }
   
   /**
-   * Get purpose options based on selected loan type
+   * Get purpose options based on selected product or loan type
    */
   getLoanPurposeOptions(): string[] {
+    // First try to get purposes from product metadata
+    if (this.selectedProduct?.metadata?.purposes && 
+        Array.isArray(this.selectedProduct.metadata.purposes)) {
+      return this.selectedProduct.metadata.purposes;
+    }
+    
+    // Fall back to purposes based on loan type
     if (!this.selectedLoanType) return [];
     
     switch (this.selectedLoanType) {
@@ -451,6 +584,7 @@ export class LoanWorkflow extends WorkflowBase {
           "Other Personal Expense"
         ];
       case LoanType.HOME:
+      case LoanType.MORTGAGE:
         return [
           "Home Purchase", 
           "Refinance", 
@@ -459,6 +593,7 @@ export class LoanWorkflow extends WorkflowBase {
           "Renovation"
         ];
       case LoanType.VEHICLE:
+      case LoanType.AUTO:
         return [
           "New Car Purchase", 
           "Used Car Purchase", 

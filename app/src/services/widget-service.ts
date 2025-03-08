@@ -1,7 +1,3 @@
-import { getSingletonManager } from './singleton-manager';
-import { getWidgetById } from '../widgets/widget-registry';
-import { repositoryService, RepositoryService } from './repository-service';
-
 // Widget size options
 export type WidgetSize = 'sm' | 'md' | 'lg' | 'xl';
 

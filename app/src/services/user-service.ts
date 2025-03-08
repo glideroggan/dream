@@ -1,166 +1,145 @@
-import { StorageService, storageService } from './storage-service';
+import { StorageService } from './storage-service';
+import { UserProfile, UserRepository, UserType, UserTypes } from '../repositories/user-repository';
 
-export interface User {
-  id: string;
-  username: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  isLoggedIn: boolean;
-  age?: number;
-  residency?: string;
-}
-
-/**
- * Service for managing current user
- */
 export class UserService {
   private static instance: UserService;
-  private currentUser: User | null = null;
-  private readonly USER_STORAGE_KEY = 'dream_current_user';
+  private currentUserId: string | null = null;
+  private userRepository: UserRepository;
   
   private constructor(private storage: StorageService) {
-    this.loadUser();
-    console.debug('User service initialized');
+    this.userRepository = new UserRepository(storage);
+    
+    // Try to load current user from storage
+    this.currentUserId = this.storage.getItem<string>('currentUserId');
+    console.debug("UserService initialized, current user ID:", this.currentUserId);
   }
   
-  /**
-   * Get the singleton instance
-   */
-  public static getInstance(): UserService {
+  public static getInstance(storage: StorageService): UserService {
     if (!UserService.instance) {
-      UserService.instance = new UserService(storageService);
+      UserService.instance = new UserService(storage);
     }
     return UserService.instance;
   }
   
   /**
-   * Get the current user
+   * Login a user by ID, updating their last login time
    */
-  getCurrentUser(): User | null {
-    return this.currentUser;
-  }
-  
-  /**
-   * Get the current user ID, or use a default for demo
-   */
-  getCurrentUserId(): string {
-    return this.currentUser?.id || 'demo-user';
-  }
-  
-  /**
-   * Check if a user is logged in
-   */
-  isLoggedIn(): boolean {
-    return !!this.currentUser?.isLoggedIn;
-  }
-  
-  /**
-   * Get the user's age
-   * @returns The user's age or 0 if not available
-   */
-  getUserAge(): number {
-    return this.currentUser?.age || 0;
-  }
-  
-  /**
-   * Get the user's country of residency
-   * @returns The user's residency or empty string if not available
-   */
-  getUserResidency(): string {
-    return this.currentUser?.residency || '';
-  }
-  
-  /**
-   * Load user from storage
-   */
-  private loadUser(): void {
-    this.currentUser = this.storage.getItem<User>(this.USER_STORAGE_KEY);
+  public login(userId: string): UserProfile | undefined {
+    const user = this.userRepository.getUserById(userId);
     
-    // If no user in storage, create a demo user for convenience
-    if (!this.currentUser) {
-      this.currentUser = this.createDemoUser();
-      this.saveUser();
+    if (user) {
+      this.currentUserId = userId;
+      this.storage.setItem('currentUserId', userId);
+      this.userRepository.updateLastLogin(userId);
+      console.debug(`User logged in: ${userId}`);
+      
+      // Dispatch event for other components to react to login
+      document.dispatchEvent(new CustomEvent('user-login', {
+        bubbles: true,
+        detail: { userId }
+      }));
+      
+      return user;
     }
     
-    console.debug('Loaded user:', this.currentUser?.username);
-  }
-  
-  /**
-   * Create a demo user
-   */
-  private createDemoUser(): User {
-    return {
-      id: 'demo-user',
-      username: 'demo',
-      email: 'demo@example.com',
-      firstName: 'Demo',
-      lastName: 'User',
-      isLoggedIn: true, // Auto-login for demo
-      age: 30,
-      residency: 'Sweden'
-    };
-  }
-  
-  /**
-   * Save the current user to storage
-   */
-  private saveUser(): void {
-    if (this.currentUser) {
-      this.storage.setItem(this.USER_STORAGE_KEY, this.currentUser);
-    }
-  }
-  
-  /**
-   * Login a user
-   */
-  login(username: string, password: string): boolean {
-    // Demo login - just accept any credentials for now
-    this.currentUser = {
-      id: 'user-' + Date.now(),
-      username,
-      email: `${username}@example.com`,
-      firstName: username,
-      lastName: 'User',
-      isLoggedIn: true,
-      age: 30,
-      residency: 'Sweden'
-    };
-    
-    this.saveUser();
-    return true;
+    return undefined;
   }
   
   /**
    * Logout the current user
    */
-  logout(): void {
-    if (this.currentUser) {
-      this.currentUser.isLoggedIn = false;
-      this.saveUser();
-    }
+  public logout(): void {
+    this.currentUserId = null;
+    this.storage.removeItem('currentUserId');
+    console.debug('User logged out');
     
-    // Reset to demo user
-    this.currentUser = this.createDemoUser();
-    this.saveUser();
+    // Dispatch event for other components to react to logout
+    document.dispatchEvent(new CustomEvent('user-logout', {
+      bubbles: true
+    }));
   }
   
   /**
-   * Update user information
+   * Get current user ID
    */
-  updateUser(updates: Partial<User>): User {
-    if (!this.currentUser) {
-      throw new Error('No user is currently logged in');
+  public getCurrentUserId(): string {
+    // Always return a user ID, defaulting to demo if none is set
+    return this.currentUserId || 'demo-user';
+  }
+  
+  /**
+   * Get current user profile
+   */
+  public getCurrentUser(): UserProfile | undefined {
+    const userId = this.getCurrentUserId();
+    return this.userRepository.getUserById(userId);
+  }
+  
+  /**
+   * Get user type of current user
+   */
+  public getUserType(): UserType {
+    const user = this.getCurrentUser();
+    return user?.type || UserTypes.DEMO;
+  }
+  
+  /**
+   * Check if current user is new
+   */
+  public isNewUser(): boolean {
+    return this.getUserType() === UserTypes.NEW;
+  }
+  
+  /**
+   * Update user profile
+   */
+  public updateProfile(updates: Partial<UserProfile>): UserProfile | undefined {
+    const userId = this.getCurrentUserId();
+    return this.userRepository.updateUser(userId, updates);
+  }
+  
+  /**
+   * Get user by ID
+   */
+  public getUserById(id: string): UserProfile | undefined {
+    return this.userRepository.getUserById(id);
+  }
+  
+  /**
+   * Get all available users (for demo purposes)
+   */
+  public getAllUsers(): UserProfile[] {
+    return this.userRepository.getAllUsers();
+  }
+  
+  /**
+   * Get the user's age based on their date of birth (if available)
+   */
+  public getUserAge(): number {
+    const user = this.getCurrentUser();
+    if (!user?.dateOfBirth) return 0;
+    
+    const birthDate = new Date(user.dateOfBirth);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    
+    // Adjust age if birthday hasn't occurred yet this year
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
     }
     
-    this.currentUser = {
-      ...this.currentUser,
-      ...updates
-    };
-    
-    this.saveUser();
-    return this.currentUser;
+    return age;
+  }
+  
+  /**
+   * Get user's country of residence
+   */
+  public getUserResidency(): string {
+    const user = this.getCurrentUser();
+    return user?.address?.country || 'Unknown';
   }
 }
 
-export const userService = UserService.getInstance();
+// Export singleton instance
+export const userService = UserService.getInstance(StorageService.getInstance());

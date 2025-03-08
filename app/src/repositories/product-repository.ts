@@ -91,6 +91,7 @@ export class ProductRepository extends LocalStorageRepository<ProductEntity> {
       const updatedProduct = {
         ...existingProduct,
         ...product,
+        type: (product as any).type as ProductEntityType,
         lastUpdated: now
       };
       
@@ -147,9 +148,8 @@ export class ProductRepository extends LocalStorageRepository<ProductEntity> {
   /**
    * Get a product by ID
    */
-  async getById(id: string): Promise<ProductEntity | null> {
-    const product = await super.getById(id);
-    return product || null;
+  async getById(id: string): Promise<ProductEntity | undefined> {
+    return await super.getById(id);
   }
 
   /**

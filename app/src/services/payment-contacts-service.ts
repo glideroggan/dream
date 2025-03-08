@@ -1,4 +1,3 @@
-import { getSingletonManager } from "./singleton-manager";
 import { PaymentContact } from "../repositories/models/payment-contact";
 import { repositoryService } from "./repository-service";
 
@@ -6,6 +5,9 @@ import { repositoryService } from "./repository-service";
  * Service for managing payment contacts
  */
 export class PaymentContactsService {
+  // Static instance for singleton pattern
+  private static instance: PaymentContactsService;
+  
   private contacts: PaymentContact[] = [];
   private initialized: boolean = false;
   
@@ -21,11 +23,10 @@ export class PaymentContactsService {
 
   // Singleton accessor
   public static getInstance(): PaymentContactsService {
-    const singletonManager = getSingletonManager();
-    return singletonManager.getOrCreate<PaymentContactsService>(
-      'PaymentContactsService', 
-      () => new PaymentContactsService()
-    );
+    if (!PaymentContactsService.instance) {
+      PaymentContactsService.instance = new PaymentContactsService();
+    }
+    return PaymentContactsService.instance;
   }
   
   /**

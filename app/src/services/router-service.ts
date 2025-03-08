@@ -1,4 +1,3 @@
-import { getSingletonManager } from './singleton-manager';
 import { moduleLoaderService } from './module-loader-service';
 import { observable } from '@microsoft/fast-element';
 
@@ -16,6 +15,7 @@ export interface NavigationOptions {
 }
 
 export class RouterService {
+  private static instance: RouterService;
   private routes: Map<string, Route> = new Map();
   @observable currentRoute: Route | null = null;
   @observable currentParams: Record<string, unknown> = {};
@@ -28,11 +28,10 @@ export class RouterService {
   
   // Singleton accessor
   public static getInstance(): RouterService {
-    const singletonManager = getSingletonManager();
-    return singletonManager.getOrCreate<RouterService>(
-      'RouterService', 
-      () => new RouterService()
-    );
+    if (!RouterService.instance) {
+      RouterService.instance = new RouterService();
+    }
+    return RouterService.instance;
   }
   
   /**

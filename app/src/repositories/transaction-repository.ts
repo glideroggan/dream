@@ -1,11 +1,32 @@
 import { Entity, LocalStorageRepository } from './base-repository';
 import { StorageService } from '../services/storage-service';
 import { UserService } from '../services/user-service';
-import {
-  TransactionStatus,
-  TransactionType
-} from '../services/repository-service';
 import { generateMockTransactions } from './mock/transaction-mock';
+
+// Change enum to union type
+export type TransactionStatus = 'completed' | 'pending' | 'failed' | 'upcoming' | 'cancelled';
+export type TransactionType = 'transfer' | 'deposit' | 'withdrawal' | 'payment' | 'refund' | 'fee' | 'interest' | 'adjustment';
+
+// Constants for status values (for backwards compatibility with enum usage)
+export const TransactionStatuses = {
+  COMPLETED: 'completed' as TransactionStatus,
+  PENDING: 'pending' as TransactionStatus,
+  FAILED: 'failed' as TransactionStatus,
+  UPCOMING: 'upcoming' as TransactionStatus,
+  CANCELLED: 'cancelled' as TransactionStatus
+};
+
+// Constants for type values (for backwards compatibility with enum usage)
+export const TransactionTypes = {
+  TRANSFER: 'transfer' as TransactionType,
+  DEPOSIT: 'deposit' as TransactionType,
+  WITHDRAWAL: 'withdrawal' as TransactionType,
+  PAYMENT: 'payment' as TransactionType,
+  REFUND: 'refund' as TransactionType,
+  FEE: 'fee' as TransactionType,
+  INTEREST: 'interest' as TransactionType,
+  ADJUSTMENT: 'adjustment' as TransactionType
+};
 
 export interface Transaction extends Entity {
   fromAccountId: string;
@@ -100,14 +121,14 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
    * Get upcoming transactions
    */
   async getUpcoming(): Promise<Transaction[]> {
-    return this.getByStatus(TransactionStatus.UPCOMING);
+    return this.getByStatus(TransactionStatuses.UPCOMING);
   }
 
   /**
    * Get completed transactions
    */
   async getCompleted(): Promise<Transaction[]> {
-    return this.getByStatus(TransactionStatus.COMPLETED);
+    return this.getByStatus(TransactionStatuses.COMPLETED);
   }
 
   /**
@@ -141,8 +162,8 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
       amount,
       currency,
       description,
-      status: isCompleted ? TransactionStatus.COMPLETED : TransactionStatus.UPCOMING,
-      type: TransactionType.TRANSFER,
+      status: isCompleted ? TransactionStatuses.COMPLETED : TransactionStatuses.UPCOMING,
+      type: TransactionTypes.TRANSFER,
       createdAt: now.toISOString(),
       fromAccountBalance: fromAccountBalance,
       toAccountBalance: toAccountBalance

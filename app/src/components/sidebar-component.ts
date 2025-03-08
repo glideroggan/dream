@@ -3,6 +3,7 @@ import { userService } from '../services/user-service';
 import { getSearchService, SearchResultItem, SearchService } from '../services/search-service';
 import { routerService } from '../services/router-service';
 import { appRoutes, routeIcons, routeMetadata } from '../routes/routes-registry';
+import { UserTypes } from '../repositories/user-repository';
 
 interface MenuItem {
   id: string;
@@ -214,8 +215,9 @@ export class SidebarComponent extends FASTElement {
     // Register theme pages with search service
     this.registerThemePagesForSearch();
     
-    // Add a listener for user changes
-    window.addEventListener('user-updated', this.loadUserData.bind(this));
+    // Add listeners for user login/logout events
+    document.addEventListener('user-login', this.loadUserData.bind(this));
+    document.addEventListener('user-logout', this.loadUserData.bind(this));
     
     // Subscribe to route changes to update active state
     Observable.getNotifier(routerService).subscribe({
@@ -256,7 +258,8 @@ export class SidebarComponent extends FASTElement {
   
   disconnectedCallback(): void {
     super.disconnectedCallback();
-    window.removeEventListener('user-updated', this.loadUserData.bind(this));
+    document.removeEventListener('user-login', this.loadUserData.bind(this));
+    document.removeEventListener('user-logout', this.loadUserData.bind(this));
     
     // Clean up search registrations
     this.menuItems.forEach(item => {
@@ -310,8 +313,29 @@ export class SidebarComponent extends FASTElement {
     const user = userService.getCurrentUser();
     if (user) {
       this.userName = `${user.firstName} ${user.lastName}`;
-      this.userRole = user.isLoggedIn ? 'Member' : 'Guest'; 
+      
+      // Map user type to a display-friendly role
+      switch (user.type) {
+        case UserTypes.PREMIUM:
+          this.userRole = 'Premium Member';
+          break;
+        case UserTypes.ESTABLISHED:
+          this.userRole = 'Member';
+          break;
+        case UserTypes.NEW:
+          this.userRole = 'New User';
+          break;
+        case UserTypes.DEMO:
+        default:
+          this.userRole = 'Demo User';
+      }
+      
       this.userInitials = user.firstName.charAt(0) + user.lastName.charAt(0);
+    } else {
+      // Default values if user is not found
+      this.userName = 'Guest User';
+      this.userRole = 'Visitor';
+      this.userInitials = 'GU';
     }
   }
 

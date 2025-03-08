@@ -1,9 +1,5 @@
 import { WorkflowService } from './services/workflow-service';
-import { getSingletonManager, initSingletonManager } from './services/singleton-manager'
-initSingletonManager()
-import { repositoryService, RepositoryService } from './services/repository-service';
 // Initialize repository service
-window.repositoryService = repositoryService;
 console.debug('Repository service initialized');
 // Import workflow components
 import './services/product-service';
@@ -15,7 +11,6 @@ declare global {
     widgetRegistry?: WidgetDefinition[]
     widgetService?: any
     workflowService?: WorkflowService | any
-    repositoryService?: RepositoryService
     userService?: any
     storageService?: any
     registerWidget?: (widget: WidgetDefinition) => void
@@ -56,9 +51,6 @@ await registerAllWidgets(widgetService);
 console.debug('Widgets registered');
 
 // Initialize workflow service
-const workflowService = getSingletonManager().get('WorkflowService')
-window.workflowService = workflowService
-console.debug('Workflow service initialized');
 
 // Register workflows - only call once
 registerAllWorkflows().then(() => {

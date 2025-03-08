@@ -615,7 +615,7 @@ export class TransactionListComponent extends FASTElement {
         }
 
         // Skip upcoming transactions in regular list
-        if (result.value.status === 'UPCOMING') {
+        if (result.value.status === 'upcoming') {
           i--; // Don't count this iteration
           continue;
         }
@@ -673,7 +673,7 @@ export class TransactionListComponent extends FASTElement {
         }
 
         // Only process upcoming transactions
-        if (result.value.status !== 'UPCOMING') {
+        if (result.value.status !== 'upcoming') {
           i--; // Don't count this iteration
           continue;
         }
