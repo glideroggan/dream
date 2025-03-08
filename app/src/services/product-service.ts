@@ -179,24 +179,8 @@ export class ProductService {
    * @returns Promise resolving to true if the user has the product
    */
   public async hasProduct(productId: string): Promise<boolean> {
-    await this.ensureRepositoryInitialized();
-    
-    // Force refresh from repository to ensure we have the latest data
-    // Use direct repository method instead of refreshProducts to avoid circular refreshing
-    if (this.productRepository) {
-      try {
-        const hasProduct = await this.productRepository.hasActiveProduct(productId);
-        console.debug(`Direct repository check: User has product ${productId} = ${hasProduct}`);
-        return hasProduct;
-      } catch (error) {
-        console.error(`Error checking if user has product ${productId}:`, error);
-      }
-    }
-    
-    // Fallback to in-memory check if repository check failed
-    const hasProductInMemory = this.products.some(p => p.id === productId && p.active);
-    console.debug(`In-memory check: User has product ${productId} = ${hasProductInMemory}`);
-    return hasProductInMemory;
+    // Use user repository to check if user has the product
+    return userService.hasProduct(productId);
   }
   
   /**
@@ -233,7 +217,7 @@ export class ProductService {
     
     // First, check if the user already has the product
     // This prevents duplicate activation
-    const alreadyHasProduct = await this.hasProduct(product.id);
+    const alreadyHasProduct = userService.hasProduct(product.id);
     if (alreadyHasProduct) {
       console.debug(`User already has product ${product.id}, won't add again`);
       return Promise.resolve();
@@ -249,7 +233,11 @@ export class ProductService {
     // Add to repository
     if (this.productRepository) {
       await this.productRepository.addOrUpdateProduct(normalizedProduct);
+      console.log(`Added product to repository: ${normalizedProduct.id}`);
     }
+    
+    // Add to user profile
+    userService.addProduct(product.id);
     
     // Check if product already exists in memory
     const existingIndex = this.products.findIndex(p => p.id === normalizedProduct.id);
@@ -258,8 +246,7 @@ export class ProductService {
       // Update existing product
       this.products[existingIndex] = { 
         ...this.products[existingIndex],
-        ...normalizedProduct,
-        active: true
+        ...normalizedProduct
       };
       console.debug(`Updated existing product: ${normalizedProduct.id}`);
       
@@ -275,7 +262,7 @@ export class ProductService {
     }
     
     // Also dispatch DOM event for backward compatibility
-    this.dispatchProductChangeEvent();
+    // this.dispatchProductChangeEvent();
     
     return Promise.resolve();
   }
@@ -286,33 +273,28 @@ export class ProductService {
   public async removeProduct(productId: string): Promise<void> {
     await this.ensureRepositoryInitialized();
     
+    // Remove from user profile
+    userService.removeProduct(productId);
+    
     // Find product index
     const existingIndex = this.products.findIndex(p => p.id === productId);
     
     if (existingIndex >= 0) {
       // Store product before removing for notification
-      const removedProduct = this.products[existingIndex];
-      
-      // Mark as inactive
-      this.products[existingIndex].active = false;
-      
-      // Update repository
-      if (this.productRepository) {
-        await this.productRepository.deactivateProduct(productId);
-      }
-      
-      console.debug(`Removed product: ${productId}`);
+        const removedProduct = this.products[existingIndex];
       
       // Notify listeners
       this.notifyProductChange('remove', productId, removedProduct);
       
       // Also dispatch DOM event for backward compatibility
-      this.dispatchProductChangeEvent();
+      // this.dispatchProductChangeEvent();
     }
     
     return Promise.resolve();
   }
   
+
+  // TODO: not so sure about this, we already have observer pattern in the base repository
   /**
    * Notify subscribers about product changes
    */
@@ -330,21 +312,21 @@ export class ProductService {
     console.debug(`Notified ${this.changeListeners.size} listeners about ${type} event for product ${productId}`);
   }
   
-  /**
-   * Dispatch DOM event for backward compatibility
-   * This will be removed in a future version
-   */
-  private dispatchProductChangeEvent(): void {
-    // Dispatch a custom event that can be listened to by other components
-    const event = new CustomEvent('user-products-changed', {
-      bubbles: true,
-      composed: true, // Cross shadow DOM boundaries
-      detail: { products: this.getProducts() }
-    });
+  // /**
+  //  * Dispatch DOM event for backward compatibility
+  //  * This will be removed in a future version
+  //  */
+  // private dispatchProductChangeEvent(): void {
+  //   // Dispatch a custom event that can be listened to by other components
+  //   const event = new CustomEvent('user-products-changed', {
+  //     bubbles: true,
+  //     composed: true, // Cross shadow DOM boundaries
+  //     detail: { products: this.getProducts() }
+  //   });
     
-    document.dispatchEvent(event);
-    console.debug('Product change DOM event dispatched for backward compatibility');
-  }
+  //   document.dispatchEvent(event);
+  //   console.debug('Product change DOM event dispatched for backward compatibility');
+  // }
 
   /**
    * Get all available products
@@ -453,12 +435,33 @@ export class ProductService {
       case "residency":
         return userService.getUserResidency() === requirement.value;
       
+      case "hasAccount":
+        // Check if user has any compatible accounts
+        // For now, we'll implement a simple check
+        return await this.userHasCompatibleAccount();
+      
       case "custom":
         // Custom requirements would need specific logic
         return true;
       
       default:
         return false;
+    }
+  }
+  
+  /**
+   * Check if user has any accounts that are compatible with debit cards
+   * This is a simplified implementation - in a real system, we would check
+   * account types more carefully
+   */
+  private async userHasCompatibleAccount(): Promise<boolean> {
+    try {
+      // Get all user's banking accounts
+      const accounts = await this.getProductsByType('account');
+      return accounts.length > 0;
+    } catch (error) {
+      console.error("Error checking if user has compatible account:", error);
+      return false;
     }
   }
 
@@ -468,6 +471,25 @@ export class ProductService {
   async getRelatedProducts(productId: string): Promise<ProductEntity[]> {
     const repo = repositoryService.getProductRepository();
     return await repo.getRelatedProducts(productId);
+  }
+
+  /**
+   * Get all products for the current user
+   */
+  public async getUserProducts(): Promise<Product[]> {
+    await this.ensureRepositoryInitialized();
+    
+    const productIds = userService.getUserProducts();
+    const products: Product[] = [];
+    
+    for (const id of productIds) {
+      const product = await this.getProduct(id);
+      if (product) {
+        products.push(product);
+      }
+    }
+    
+    return products;
   }
 }
 

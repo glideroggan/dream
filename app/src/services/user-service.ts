@@ -172,6 +172,38 @@ export class UserService {
     // Only new users without accounts need account setup
     return this.isNewUser() && !(await this.hasAccounts());
   }
+
+  /**
+   * Add a product to the current user
+   */
+  public addProduct(productId: string): UserProfile | undefined {
+    const userId = this.getCurrentUserId();
+    return this.userRepository.addProductToUser(userId, productId);
+  }
+  
+  /**
+   * Remove a product from the current user
+   */
+  public removeProduct(productId: string): UserProfile | undefined {
+    const userId = this.getCurrentUserId();
+    return this.userRepository.removeProductFromUser(userId, productId);
+  }
+  
+  /**
+   * Check if current user has a specific product
+   */
+  public hasProduct(productId: string): boolean {
+    const userId = this.getCurrentUserId();
+    return this.userRepository.userHasProduct(userId, productId);
+  }
+  
+  /**
+   * Get all products for the current user
+   */
+  public getUserProducts(): string[] {
+    const userId = this.getCurrentUserId();
+    return this.userRepository.getUserProducts(userId);
+  }
 }
 
 // Export singleton instance

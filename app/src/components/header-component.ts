@@ -50,7 +50,17 @@ const styles = css`
   
   .logo-icon {
     font-size: 1.8rem;
-    animation: sparkle 2s infinite alternate;
+    position: relative;
+  }
+  .logo-icon::after {
+    content: "✨";
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 1;
+    filter: blur(8px);
+    // will-change: opacity, filter;
+    // animation: sparkle-gpu 2s steps(10) infinite alternate;
   }
   
   .logo-text {
@@ -81,9 +91,15 @@ const styles = css`
     gap: 1rem;
   }
   
-  @keyframes sparkle {
-    0% { text-shadow: 0 0 5px rgba(255,255,255,0.3); }
-    100% { text-shadow: 0 0 15px rgba(255,255,255,0.7), 0 0 25px rgba(255,223,186,0.5); }
+  @keyframes sparkle-gpu {
+    0% { 
+      opacity: 0.2;
+      filter: blur(2px);
+    }
+    100% { 
+      opacity: 0.8;
+      filter: blur(4px);
+    }
   }
 `;
 

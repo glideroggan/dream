@@ -51,7 +51,7 @@ export interface ProductEntity extends Entity, Product {
  * Product requirement interface for eligibility checks
  */
 export interface ProductRequirement {
-  type: "kyc" | "income" | "age" | "creditScore" | "residency" | "custom";
+  type: "kyc" | "income" | "age" | "creditScore" | "residency" | "hasAccount" | "custom";
   value: string | number | boolean;
   description: string;
 }
@@ -71,7 +71,7 @@ export class ProductRepository extends LocalStorageRepository<ProductEntity> {
     const mockProducts = generateMockProducts();
     
     mockProducts.forEach(product => {
-      this.entities.set(product.id, product);
+      this.createForMocks(product);
     });
     
     this.saveToStorage();

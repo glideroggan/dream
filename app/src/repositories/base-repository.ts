@@ -1,5 +1,6 @@
 import { StorageService } from '../services/storage-service';
 import { UserService } from '../services/user-service';
+import { generateUniqueId } from '../utilities/id-generator';
 import { UserType } from './user-repository';
 
 // Type definitions
@@ -30,7 +31,7 @@ export interface Repository<T extends Entity> {
 
 // Base repository implementation using local storage
 export abstract class LocalStorageRepository<T extends Entity> implements Repository<T> {
-  protected entities: Map<string, T> = new Map();
+  private entities: Map<string, T> = new Map();
   private subscribers: Set<RepositorySubscriber<T>> = new Set();
   
   constructor(
@@ -44,6 +45,9 @@ export abstract class LocalStorageRepository<T extends Entity> implements Reposi
     if (this.entities.size === 0) {
       this.initializeMockData();
     }
+    // create a unique id for the this repo and print it
+    const id = generateUniqueId()
+    console.log('created repo with id:', storageKey, id)
   }
 
   /**
@@ -65,10 +69,14 @@ export abstract class LocalStorageRepository<T extends Entity> implements Reposi
     this.subscribers.forEach(subscriber => subscriber(event));
   }
 
-  // Override existing methods to notify subscribers
+  protected createForMocks(data: T): T {
+    this.entities.set(data.id, data);
+    return data
+  }
+
   async create(data: Omit<T, 'id'>): Promise<T> {
-    // TODO: we should create new entries in the beginning of the array
     const entity = await this._create(data);
+    console.log('[base-repository] create', entity);
     this.notifySubscribers({ type: 'create', entity });
     return entity;
   }
@@ -151,14 +159,13 @@ export abstract class LocalStorageRepository<T extends Entity> implements Reposi
   }
   
   async getById(id: string): Promise<T | undefined> {
+    // log content of entntities
+    console.log('entities:', this.entities)
     return this.entities.get(id);
   }
   
   private async _create(data: Omit<T, 'id'>): Promise<T> {
     const id = this.generateId();
-    // const accountNumber = Math.floor(Math.random() * 1000000000).toString()
-    // const isActive = true
-    // const createdAt = new Date().toISOString()
     const entity = { id,  ...data } as unknown as T;
     
     this.entities.set(id, entity);

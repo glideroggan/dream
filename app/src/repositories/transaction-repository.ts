@@ -57,7 +57,7 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
 
     // Add mock transactions
     transactions.forEach(transaction => {
-      this.entities.set(transaction.id, transaction);
+      this.createForMocks(transaction);
     });
 
     // Save to storage
@@ -69,7 +69,8 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
    * @param batchSize Number of transactions per batch
    */
   public async *getAllIterator(): AsyncGenerator<Transaction> {
-    for (const txn of this.entities.values()) {
+    const transactions = await this.getAll();
+    for (const txn of transactions) {
       yield txn;
     }
   }
@@ -80,7 +81,8 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
    * @param batchSize Number of transactions per batch
    */
   public async *getByStatusIterator(status: TransactionStatus): AsyncGenerator<Transaction> {
-    for (const txn of this.entities.values()) {
+    const transactions = await this.getAll();
+    for (const txn of transactions) {
       if (txn.status === status) {
         yield txn;
       }

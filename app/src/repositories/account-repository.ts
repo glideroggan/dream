@@ -75,7 +75,7 @@ export class AccountRepository extends LocalStorageRepository<Account> {
     
     // Add mock accounts
     accounts.forEach((account) => {
-      this.entities.set(account.id, account);
+      this.createForMocks(account);
     });
     
     // Save to storage
@@ -84,23 +84,21 @@ export class AccountRepository extends LocalStorageRepository<Account> {
     console.debug(`Initialized ${accounts.length} mock accounts for ${userType} user`);
   }
 
-  async create(
+  async createAccount(
     data: Omit<Account, 'id' | 'accountNumber' | 'isActive' | 'createdAt'>
   ): Promise<Account> {
-    const id = this.generateId()
     const accountNumber = Math.floor(Math.random() * 1000000000).toString()
     const isActive = true
     const createdAt = new Date().toISOString()
     const entity = {
-      id,
       accountNumber,
       isActive,
       createdAt,
       ...data,
     } as Account
 
-    this.entities.set(id, entity)
-    this.saveToStorage()
+    await super.create(entity)
+    // this.saveToStorage()
 
     return entity
   }
@@ -275,5 +273,16 @@ export class AccountRepository extends LocalStorageRepository<Account> {
             : 'Scheduling transfer failed due to an unexpected error',
       }
     }
+  }
+
+  /**
+   * Get accounts that are compatible with debit cards
+   */
+  async getCompatibleAccounts(): Promise<Account[]> {
+    const accounts = await this.getAll();
+    return accounts.filter(account => 
+      account.isActive && 
+      (account.type === 'checking' || account.type === 'savings')
+    );
   }
 }

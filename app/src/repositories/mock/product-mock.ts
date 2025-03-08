@@ -314,13 +314,42 @@ export function generateMockProducts(): ProductEntity[] {
       requirements: [
         {
           type: 'kyc',
-          value: 'basic-customer',
-          description: 'Basic identity verification'
+          value: 'enhanced-customer',
+          description: 'Enhanced identity verification'
         },
         {
           type: 'creditScore',
           value: 670,
           description: 'Minimum credit score of 670'
+        }
+      ],
+      active: true,
+      addedDate: now,
+      lastUpdated: now
+    },
+    {
+      id: 'debit-card',
+      name: 'Standard Debit Card',
+      category: ProductCategory.PAYMENTS, 
+      type: ProductEntityType.CARD,
+      description: 'Convenient access to your funds with our standard debit card',
+      features: [
+        'Direct access to your account funds',
+        'Contactless payments',
+        'Online purchase capability',
+        'ATM withdrawals worldwide',
+        'Real-time transaction alerts'
+      ],
+      requirements: [
+        {
+          type: 'kyc',
+          value: 'basic-customer',
+          description: 'Basic identity verification'
+        },
+        {
+          type: 'hasAccount',
+          value: true,
+          description: 'Must have a compatible account'
         }
       ],
       active: true,

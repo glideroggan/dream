@@ -72,23 +72,6 @@ export class WorkflowManagerService {
     // Set flag to prevent multiple starts
     this.isStartingWorkflow = true;
 
-    // TODO: is it a good idea to set an event listener in the modal here for dismissal of the workflow?
-    // this.modalComponent.addEventListener('keydown', (event: KeyboardEvent) => {
-    //   console.debug('keydown event', event);
-    //   event.preventDefault();
-    //   event.stopPropagation();
-    // })
-
-    // Dispatch transition start event (no one is listening)
-    // document.dispatchEvent(new CustomEvent('workflow-transition-start', {
-    //   bubbles: true,
-    //   composed: true,
-    //   detail: { 
-    //     workflowId,
-    //     message: `Loading ${workflowId} workflow...`
-    //   }
-    // }));
-
     try {
       // Check if we already have an active workflow with the same ID
       const hasActiveWithSameId = this.workflowStack.some(w => w.id === workflowId && !w.paused);
@@ -180,11 +163,11 @@ export class WorkflowManagerService {
    */
   public async resumeWorkflow(result?: WorkflowResult): Promise<void> {
     // Dispatch transition start event
-    document.dispatchEvent(new CustomEvent('workflow-transition-start', {
-      bubbles: true,
-      composed: true,
-      detail: { message: 'Resuming workflow...' }
-    }));
+    // document.dispatchEvent(new CustomEvent('workflow-transition-start', {
+    //   bubbles: true,
+    //   composed: true,
+    //   detail: { message: 'Resuming workflow...' }
+    // }));
 
     try {
       // Find the last paused workflow

@@ -34,7 +34,7 @@ export class LoanRepository extends LocalStorageRepository<Loan> {
     const mockLoans = generateMockLoans();
     
     mockLoans.forEach(loan => {
-      this.entities.set(loan.id, loan);
+      this.createForMocks(loan);
     });
     
     this.saveToStorage();
@@ -43,7 +43,7 @@ export class LoanRepository extends LocalStorageRepository<Loan> {
   /**
    * Create a new loan with proper timestamps
    */
-  async create(loan: Omit<Loan, "id" | "createdAt" | "updatedAt">): Promise<Loan> {
+  async createAccount(loan: Omit<Loan, "id" | "createdAt" | "updatedAt">): Promise<Loan> {
     const now = new Date().toISOString();
     const loanData = {
       ...loan,
@@ -96,7 +96,7 @@ export class LoanRepository extends LocalStorageRepository<Loan> {
       accountId: 'pending' // Will be assigned when approved
     };
     
-    return this.create(loan);
+    return this.createAccount(loan);
   }
 
   /**

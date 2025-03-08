@@ -32,7 +32,14 @@ export function generateMockUsers(): UserProfile[] {
     kycLevel: 'standard',
     verified: true,
     createdAt: '2020-01-01T00:00:00Z',
-    lastLogin: now
+    lastLogin: now,
+    products: [
+      'checking-account',
+      'savings-account', 
+      'credit-card',
+      'debit-card',
+      'overdraft-protection'
+    ]
   });
   
   // New user - no accounts or products yet
@@ -46,7 +53,8 @@ export function generateMockUsers(): UserProfile[] {
     type: 'new',
     verified: true,
     createdAt: now,
-    lastLogin: now
+    lastLogin: now,
+    products: [] // Empty array to indicate no products yet
   });
   
   // Established user - has some accounts and products
@@ -74,7 +82,12 @@ export function generateMockUsers(): UserProfile[] {
     kycLevel: 'basic',
     verified: true,
     createdAt: '2022-06-15T00:00:00Z',
-    lastLogin: now
+    lastLogin: now,
+    products: [
+      'checking-account',
+      'savings-account',
+      'debit-card'
+    ]
   });
   
   // Premium user - has many products and large balances
@@ -102,7 +115,16 @@ export function generateMockUsers(): UserProfile[] {
     kycLevel: 'enhanced',
     verified: true,
     createdAt: '2015-03-10T00:00:00Z',
-    lastLogin: now
+    lastLogin: now,
+    products: [
+      'checking-account',
+      'savings-account',
+      'isk-account',
+      'pension-account',
+      'credit-card',
+      'debit-card',
+      'overdraft-protection'
+    ]
   });
   
   return mockUsers;
@@ -138,7 +160,8 @@ export function createNewUserTemplate(userData: {
       theme: 'system',
       language: 'en',
       notifications: true
-    }
+    },
+    products: [] // Initialize with empty products array
   };
 }
 

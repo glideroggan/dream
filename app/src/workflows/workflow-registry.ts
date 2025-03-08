@@ -27,10 +27,22 @@ export const WorkflowIds = {
   FINANCIAL_DETAILS: "financial-details", // TODO: implement this workflow
   SIGNING: "signing", // Add signing workflow ID
   LOAN: "loan", // Add loan workflow ID
+  CARD: "card", // Add card workflow ID
 };
 
 // Define all available workflows
 const workflowDefinitions: WorkflowDefinition[] = [
+  {
+    id: WorkflowIds.CARD,
+    name: "Apply for Card",
+    description: "Apply for a new credit or debit card",
+    elementName: "card-workflow",
+    module: "@workflows/card",
+    icon: "💳",
+    searchable: true,
+    popular: true, 
+    keywords: ['card', 'credit card', 'debit card', 'apply card', 'new card', 'card application'],
+  },
   {
     id: WorkflowIds.ACCOUNT_INFO,
     name: "Account Information",

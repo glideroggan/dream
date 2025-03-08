@@ -1,6 +1,6 @@
 import { WorkflowService } from './services/workflow-service';
+import "./services/user-service"
 // Initialize repository service
-console.debug('Repository service initialized');
 // Import workflow components
 import './services/product-service';
 import './workflows/swish-workflow';

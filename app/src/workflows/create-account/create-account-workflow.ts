@@ -860,7 +860,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
       )!;
 
       // Create the account (with zero balance by default)
-      const newAccount = await accountRepo.create({
+      const newAccount = await accountRepo.createAccount({
         name: this.accountName.trim(),
         balance: 0,
         currency: this.currency,

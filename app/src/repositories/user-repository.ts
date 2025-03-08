@@ -38,6 +38,7 @@ export interface UserProfile extends Entity {
   verified: boolean;
   createdAt: string;
   lastLogin?: string;
+  products?: string[]; // Array of product IDs that the user has
 }
 
 export class UserRepository {
@@ -175,5 +176,74 @@ export class UserRepository {
       this.users.set(id, user);
       this.saveUsers();
     }
+  }
+
+  /**
+   * Add a product to a user's profile
+   */
+  public addProductToUser(userId: string, productId: string): UserProfile | undefined {
+    const user = this.users.get(userId);
+    
+    if (!user) {
+      return undefined;
+    }
+    
+    // Initialize products array if it doesn't exist
+    if (!user.products) {
+      user.products = [];
+    }
+    
+    // Add product if it's not already in the list
+    if (!user.products.includes(productId)) {
+      user.products.push(productId);
+      this.saveUsers();
+      console.debug(`Added product ${productId} to user ${userId}`);
+    }
+    
+    return user;
+  }
+  
+  /**
+   * Remove a product from a user's profile
+   */
+  public removeProductFromUser(userId: string, productId: string): UserProfile | undefined {
+    const user = this.users.get(userId);
+    
+    if (!user || !user.products) {
+      return undefined;
+    }
+    
+    // Remove product from list
+    user.products = user.products.filter(id => id !== productId);
+    this.saveUsers();
+    console.debug(`Removed product ${productId} from user ${userId}`);
+    
+    return user;
+  }
+  
+  /**
+   * Check if a user has a specific product
+   */
+  public userHasProduct(userId: string, productId: string): boolean {
+    const user = this.users.get(userId);
+    
+    if (!user || !user.products) {
+      return false;
+    }
+    
+    return user.products.includes(productId);
+  }
+  
+  /**
+   * Get all products for a user
+   */
+  public getUserProducts(userId: string): string[] {
+    const user = this.users.get(userId);
+    
+    if (!user || !user.products) {
+      return [];
+    }
+    
+    return [...user.products]; // Return a copy of the array
   }
 }
