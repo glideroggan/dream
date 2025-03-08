@@ -1,7 +1,7 @@
 import { Entity, LocalStorageRepository } from './base-repository';
 import { StorageService } from '../services/storage-service';
 import { UserService } from '../services/user-service';
-import { generateMockTransactions } from './mock/transaction-mock';
+import { generateMockTransactions, getMockTransactionsByUserType } from './mock/transaction-mock';
 
 // Change enum to union type
 export type TransactionStatus = 'completed' | 'pending' | 'failed' | 'upcoming' | 'cancelled';
@@ -51,7 +51,9 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
   }
 
   protected initializeMockData(): void {
-    const transactions = generateMockTransactions();
+    // Check user type before initializing with mock data
+    const userType = this.userService.getUserType();
+    const transactions = getMockTransactionsByUserType(userType);
 
     // Add mock transactions
     transactions.forEach(transaction => {
@@ -85,7 +87,6 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
     }
   }
 
-
   /**
    * Get account transactions as an async iterator
    * @param accountId The account ID to filter by
@@ -93,7 +94,6 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
    */
   public async *getByAccountIdIterator(accountId: string): AsyncGenerator<Transaction> {
     const transactions = await this.getAll();
-
     // sort transactions by date in descending order
     transactions.sort((a, b) => {
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -104,7 +104,7 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
     for (const txn of transactions) {
       if (txn.fromAccountId === accountId || txn.toAccountId === accountId) {
         // console.debug('txn', txn);
-        yield txn
+        yield txn;
       }
     }
   }
@@ -155,7 +155,6 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
     isCompleted: boolean = true
   ): Promise<Transaction> {
     const now = new Date();
-
     const transaction: Omit<Transaction, 'id'> = {
       fromAccountId,
       toAccountId,

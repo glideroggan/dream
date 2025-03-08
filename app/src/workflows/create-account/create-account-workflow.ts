@@ -697,6 +697,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
   handleNameChange(event: Event) {
     const input = event.target as HTMLInputElement
     this.accountName = input.value
+    console.log('Account name:', this.accountName)
     this.validateForm()
   }
 
@@ -707,6 +708,8 @@ export class CreateAccountWorkflow extends WorkflowBase {
 
   validateForm(): boolean {
     this.errorMessage = ''
+    // Reset invalid states
+    this.resetInvalidStates()
 
     // Check if an account type is selected
     if (this.selectedTypeId === '') {
@@ -717,6 +720,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
 
     // Check if account name is provided
     if (!this.accountName || this.accountName.trim().length < 3) {
+      console.log('Account name is invalid:', this.accountName)
       this.errorMessage = 'Please enter an account name (minimum 3 characters)'
       this.notifyValidation(false, this.errorMessage)
       this.markInvalid('accountName')
@@ -744,8 +748,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
       return false
     }
 
-    // Reset invalid states
-    this.resetInvalidStates()
+    
 
     // If we got here, form is valid
     this.notifyValidation(true)

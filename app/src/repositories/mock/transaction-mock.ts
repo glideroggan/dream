@@ -908,3 +908,22 @@ export function generateMockTransactions(): Transaction[] {
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 }
+
+/**
+ * Get the appropriate mock transactions based on user type
+ * @param userType The type of user to get transactions for
+ * @returns Array of transactions appropriate for the user type
+ */
+export function getMockTransactionsByUserType(userType: string): Transaction[] {
+  switch(userType) {
+    case 'new':
+      return []; // Empty array for new users
+    case 'established':
+      // Could create a subset of transactions for established users
+      return generateMockTransactions().slice(0, 20);
+    case 'premium':
+    case 'demo':
+    default:
+      return generateMockTransactions();
+  }
+}

@@ -1,4 +1,13 @@
 # BUGS
+- KYC
+  - probably should sign that kyc with the signing workflow
+- new user
+  - we need a debug button for adding money to a new account
+    Maybe it can just a a function we can call from debug window
+- search
+  - pressing esc should remove text from search, and remove the search results
+- account widget
+  - not subscribing to accounts, so no updates without reload
 - the loan workflow
   - home loan
     - shouldn't have the length of the loan in months, should already be set over a specific time

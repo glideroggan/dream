@@ -19,14 +19,14 @@ const template = html<AccountWidget>/*html*/ `
     </div>
     
     <div class="content-area">
-      ${when(x => x.isLoading, html<AccountWidget>`
+      ${when(x => x.isLoading, html<AccountWidget>/*html*/`
         <div class="loading-state">
           <div class="spinner"></div>
           <div>Loading accounts...</div>
         </div>
       `)}
       
-      ${when(x => !x.isLoading && x.accountsLoaded && x.accounts.length === 0, html<AccountWidget>`
+      ${when(x => !x.isLoading && x.accountsLoaded && x.accounts.length === 0, html<AccountWidget>/*html*/`
         <div class="empty-state">
           <div class="empty-state-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -55,7 +55,7 @@ const template = html<AccountWidget>/*html*/ `
         </div>
       `)}
       
-      ${when(x => !x.isLoading && !(x.accountsLoaded && x.accounts.length === 0), html<AccountWidget>`
+      ${when(x => !x.isLoading && !(x.accountsLoaded && x.accounts.length === 0), html<AccountWidget>/*html*/`
         <account-list
           @account-toggle="${(x, c) => x.handleAccountToggle(c.event)}"
           @account-actions="${(x, c) => x.handleAccountActions(c.event)}"
@@ -372,6 +372,7 @@ export class AccountWidget extends BaseWidget {
   
   // Store unsubscribe function
   private unsubscribe?: () => void;
+
   
   async connectedCallback() {
     super.connectedCallback();
@@ -383,12 +384,12 @@ export class AccountWidget extends BaseWidget {
       
       // Load accounts data
       await this.loadAccounts();
-      
+
       // Subscribe to account repository changes
       const accountRepo = repositoryService.getAccountRepository();
       this.unsubscribe = accountRepo.subscribe((event) => {
         // Update accounts when repository changes
-        console.debug('Account repository event:', event.type, event.entity || event.entityId);
+        console.log('Account repository event:', event.type, event.entity || event.entityId);
         this.loadAccounts();
       });
       
