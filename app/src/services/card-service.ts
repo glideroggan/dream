@@ -4,38 +4,7 @@ import { userService } from './user-service';
 import { repositoryService } from './repository-service';
 import { Account } from '../repositories/account-repository';
 import { ProductEntityType } from '../repositories/product-repository';
-import { Card, CardType } from '../repositories/card-repository';
-
-export interface CardRequirement {
-    type: string;
-    value: any;
-    description: string;
-}
-
-export interface CardProduct {
-    id: string;
-    name: string;
-    type: "credit" | "debit";
-    description: string;
-    features: string[];
-    requirements: CardRequirement[];
-    imageUrl?: string;
-    monthlyFee?: number;
-    currency?: string;
-}
-
-export interface CardRequestData {
-    productId: string;
-    cardType: "credit" | "debit";
-    linkedAccountId?: string | null;
-    requestDate: string;
-}
-
-export interface CardServiceResult {
-    success: boolean;
-    message?: string;
-    data?: any;
-}
+import { Card, CardProduct, CardRequirement, CardRequestData, CardServiceResult, CardType } from '../repositories/models/card-models';
 
 export class CardService {
     private static instance: CardService;

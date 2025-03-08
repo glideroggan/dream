@@ -16,11 +16,11 @@
   - create a repo for scheduled transfers
     these would be checked at intervals, and then processed, if "late" then just change created date to when it were supposed to be processed
 ## the loan workflow
+- doesn't show any of my accounts to deposit the loan into
   - home loan
     - shouldn't have the length of the loan in months, should already be set over a specific time
     - shouldn't have a purpose
   - purpose dropdown doesn't show any options
-  - doesn't show any of my accounts to deposit the loan into
 ## search
   - pressing esc should remove text from search, and remove the search results
 ## financial-health-widget
@@ -32,6 +32,18 @@
     - fixed with toast?
   - clicking on a connected card should take you to the card-detail-workflow
 ## card workflow
+- create a simulation of card activation by letting the card go through the activation process
+  - create a lifecycleService for cards
+    - it should save the time of the last step
+    - when active on the site, the simulation should run, start from main
+    - steps
+      - pending
+      - processing
+      - approved
+      - shipped
+      - delivered
+        - should cause an event, so that user can now activate the card
+        - should show a toast
 ## KYC workflow
   - probably should sign that kyc with the signing workflow
 

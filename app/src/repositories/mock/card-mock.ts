@@ -1,4 +1,4 @@
-import { Card, CardType, CardStatus, CardNetwork } from '../card-repository';
+import { Card, CardType, CardNetwork } from "../models/card-models";
 
 /**
  * Mock cards for demo/premium users - full range of card products

@@ -2,8 +2,9 @@ import { customElement, observable } from "@microsoft/fast-element";
 import { WorkflowBase, WorkflowResult } from "../workflow-base";
 import { template } from "./card-workflow.template";
 import { styles } from "./card-workflow.css";
-import { cardService, CardProduct } from "../../services/card-service";
+import { cardService } from "../../services/card-service";
 import { repositoryService } from "../../services/repository-service";
+import { CardProduct } from "../../repositories/models/card-models";
 
 export interface UserAccount {
     id: string;

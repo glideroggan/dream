@@ -1,10 +1,10 @@
 import { customElement, observable, attr } from '@microsoft/fast-element';
 import { WorkflowBase } from '../workflow-base';
-import { Card } from '../../repositories/card-repository';
 import { cardService } from '../../services/card-service';
 import { repositoryService } from '../../services/repository-service';
 import { template } from './card-detail-workflow.template';
 import { styles } from './card-detail-workflow.styles';
+import { Card } from '../../repositories/models/card-models';
 
 @customElement({
   name: 'card-detail-workflow',
