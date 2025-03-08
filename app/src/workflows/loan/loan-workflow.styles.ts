@@ -509,7 +509,6 @@ export const styles = css`
   .loan-summary-container {
     grid-column: 2;
     grid-row: 1 / span 2;
-    // width: 40%;
     position: relative;
   }
   

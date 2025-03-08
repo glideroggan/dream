@@ -1,15 +1,18 @@
-import { getSingletonManager } from './singleton-manager';
 import { repositoryService } from './repository-service';
 import { userService } from './user-service';
 import { Loan } from '../repositories/loan-repository';
+import { ProductEntity, ProductEntityType } from '../repositories/product-repository';
 
 // Loan types available
 export enum LoanType {
   PERSONAL = 'personal',
-  HOME = 'home',
-  VEHICLE = 'vehicle',
-  EDUCATION = 'education',
-  BUSINESS = 'business'
+  MORTGAGE = 'mortgage',
+  AUTO = 'auto',
+  STUDENT = 'student',
+  BUSINESS = 'business',
+  LINE_OF_CREDIT = 'line_of_credit',
+  VEHICLE = 'vehicle',  // For backward compatibility with mock data
+  HOME = 'home'         // For backward compatibility with mock data
 }
 
 // Loan status values
@@ -19,7 +22,7 @@ export enum LoanStatus {
   APPROVED = 'approved',
   REJECTED = 'rejected',
   ACTIVE = 'active',
-  CLOSED = 'closed',
+  PAID_OFF = 'paid_off',
   DEFAULTED = 'defaulted'
 }
 
@@ -36,24 +39,49 @@ export interface EligibilityResult {
   estimatedRate?: number;
 }
 
+// Loan application interface
+export interface LoanApplication {
+  productId: string;
+  type: LoanType;
+  amount: number;
+  term: number;
+  purpose: string;
+  applicantData?: Record<string, any>;
+}
+
+// Loan calculation result interface
+export interface LoanCalculationResult {
+  monthlyPayment: number;
+  totalInterest: number;
+  totalPayment: number;
+  interestRate: number;
+  amortizationSchedule?: Array<{
+    paymentNumber: number;
+    paymentAmount: number;
+    principalAmount: number;
+    interestAmount: number;
+    remainingBalance: number;
+  }>;
+}
+
 /**
  * Loan service to handle loan operations
  */
 export class LoanService {
   private static instance: LoanService;
   
-  private constructor() {}
+  private constructor() {
+    console.debug('LoanService initialized');
+  }
   
   /**
    * Get singleton instance
    */
   public static getInstance(): LoanService {
-    const singletonManager = getSingletonManager();
-    const instance = singletonManager.getOrCreate<LoanService>(
-      'LoanService', 
-      () => new LoanService()
-    );
-    return instance;
+    if (!LoanService.instance) {
+      LoanService.instance = new LoanService();
+    }
+    return LoanService.instance;
   }
   
   /**
@@ -81,6 +109,7 @@ export class LoanService {
             recommendedTerm: 36
           };
           
+        case LoanType.MORTGAGE:
         case LoanType.HOME:
           return {
             eligible: true,
@@ -90,6 +119,7 @@ export class LoanService {
             recommendedTerm: 360 // 30 years
           };
           
+        case LoanType.AUTO:
         case LoanType.VEHICLE:
           return {
             eligible: true,
@@ -99,7 +129,7 @@ export class LoanService {
             recommendedTerm: 60
           };
           
-        case LoanType.EDUCATION:
+        case LoanType.STUDENT:
           return {
             eligible: true,
             minAmount: 5000,
@@ -114,6 +144,15 @@ export class LoanService {
             minAmount: 0,
             maxAmount: 0,
             reason: "Business loans require a business profile. Please complete your business profile first."
+          };
+          
+        case LoanType.LINE_OF_CREDIT:
+          return {
+            eligible: true,
+            minAmount: 5000,
+            maxAmount: 100000,
+            estimatedRate: 6.75,
+            recommendedTerm: 60
           };
           
         default:
@@ -186,10 +225,13 @@ export class LoanService {
   private getBaseRate(loanType: LoanType): number {
     switch (loanType) {
       case LoanType.PERSONAL: return 5.99;
+      case LoanType.MORTGAGE:
       case LoanType.HOME: return 3.49;
+      case LoanType.AUTO:
       case LoanType.VEHICLE: return 4.25;
-      case LoanType.EDUCATION: return 3.99;
+      case LoanType.STUDENT: return 3.99;
       case LoanType.BUSINESS: return 6.75;
+      case LoanType.LINE_OF_CREDIT: return 6.75;
       default: return 5.99;
     }
   }
@@ -201,7 +243,8 @@ export class LoanService {
     loanType: LoanType, 
     amount: number,
     term: number,
-    purpose?: string
+    purpose?: string,
+    productId?: string
   ): Promise<LoanDetails> {
     try {
       // Get loan repository
@@ -211,8 +254,8 @@ export class LoanService {
       const { monthlyPayment, totalInterest, interestRate } = 
         this.calculateLoanDetails(amount, term, loanType);
       
-      // Create loan object using repository
-      const loan = await loanRepo.createLoanApplication({
+      // Use the repository's dedicated method for creating loan applications
+      return loanRepo.createLoanApplication({
         type: loanType,
         amount,
         term,
@@ -220,11 +263,9 @@ export class LoanService {
         monthlyPayment,
         totalInterest,
         purpose,
-        status: LoanStatus.DRAFT
+        status: LoanStatus.DRAFT,
+        productId
       });
-      
-      console.debug("Draft loan created:", loan);
-      return loan;
     } catch (error) {
       console.error("Error creating draft loan:", error);
       throw new Error("Failed to create loan application");
@@ -232,76 +273,19 @@ export class LoanService {
   }
   
   /**
-   * Update a draft loan with additional details
-   */
-  async updateLoanApplication(
-    loanId: string, 
-    updates: Partial<LoanDetails>
-  ): Promise<LoanDetails> {
-    try {
-      // Get loan repository
-      const loanRepo = repositoryService.getLoanRepository();
-      
-      // Get existing loan
-      const existingLoan = await loanRepo.getById(loanId);
-      
-      if (!existingLoan) {
-        throw new Error("Loan not found");
-      }
-      
-      // Create updated loan object
-      const updatedLoan: Loan = {
-        ...existingLoan,
-        ...updates,
-        updatedAt: new Date().toISOString()
-      };
-      
-      // If amount or term changed, recalculate
-      if (updates.amount || updates.term) {
-        const { monthlyPayment, totalInterest, interestRate } = 
-          this.calculateLoanDetails(
-            updatedLoan.amount, 
-            updatedLoan.term, 
-            updatedLoan.type
-          );
-        
-        updatedLoan.monthlyPayment = monthlyPayment;
-        updatedLoan.totalInterest = totalInterest;
-        updatedLoan.interestRate = interestRate;
-      }
-      
-      // Update loan in repository
-      await loanRepo.update(loanId, updatedLoan);
-      console.debug("Loan updated:", updatedLoan);
-      
-      return updatedLoan;
-    } catch (error) {
-      console.error("Error updating loan:", error);
-      throw new Error("Failed to update loan application");
-    }
-  }
-  
-  /**
-   * Update the destination account for a loan
-   */
-  async updateLoanAccount(loanId: string, accountId: string): Promise<LoanDetails> {
-    const loanRepo = repositoryService.getLoanRepository();
-    return loanRepo.updateLoanAccount(loanId, accountId);
-  }
-  
-  /**
    * Submit loan application for approval
    */
   async submitLoanApplication(loanId: string): Promise<LoanDetails> {
     try {
-      // Get loan repository
       const loanRepo = repositoryService.getLoanRepository();
+      const updatedLoan = await loanRepo.updateLoanStatus(loanId, LoanStatus.PENDING_APPROVAL);
       
-      // Update loan status to pending approval
-      const updatedLoan = await loanRepo.updateLoanStatus(
-        loanId, 
-        LoanStatus.PENDING_APPROVAL
-      );
+      if (!updatedLoan) {
+        throw new Error("Failed to update loan status");
+      }
+      
+      // Here you would add any business logic related to submitting an application
+      // For example: notify approvers, send confirmation email, etc.
       
       console.debug("Loan application submitted:", updatedLoan);
       return updatedLoan;
@@ -310,37 +294,208 @@ export class LoanService {
       throw new Error("Failed to submit loan application");
     }
   }
-  
+
   /**
-   * Get all loans for the current user
+   * Generate amortization schedule for a loan
    */
-  async getAllLoans(): Promise<LoanDetails[]> {
+  generateAmortizationSchedule(amount: number, termMonths: number, interestRate: number) {
+    const monthlyRate = interestRate / 100 / 12;
+    const monthlyPayment = amount * (
+      monthlyRate * Math.pow(1 + monthlyRate, termMonths)
+    ) / (
+      Math.pow(1 + monthlyRate, termMonths) - 1
+    );
+    
+    let remainingBalance = amount;
+    const schedule = [];
+    
+    for (let i = 1; i <= termMonths; i++) {
+      const interest = remainingBalance * monthlyRate;
+      const principal = monthlyPayment - interest;
+      remainingBalance -= principal;
+      
+      schedule.push({
+        paymentNumber: i,
+        paymentAmount: parseFloat(monthlyPayment.toFixed(2)),
+        principalAmount: parseFloat(principal.toFixed(2)),
+        interestAmount: parseFloat(interest.toFixed(2)),
+        remainingBalance: parseFloat(Math.max(0, remainingBalance).toFixed(2))
+      });
+    }
+    
+    return schedule;
+  }
+
+  /**
+   * Apply for a new loan
+   */
+  async applyForLoan(application: LoanApplication): Promise<Loan> {
     const loanRepo = repositoryService.getLoanRepository();
-    return loanRepo.getAll();
+    const productRepo = repositoryService.getProductRepository();
+    
+    // Verify the product exists
+    const product = await productRepo.getById(application.productId);
+    if (!product) {
+      throw new Error('Loan product not found');
+    }
+    
+    // Calculate loan details
+    const { interestRate, monthlyPayment, totalInterest } = 
+      this.calculateLoanDetails(application.amount, application.term, application.type);
+    
+    // Create loan application using repository
+    return loanRepo.createLoanApplication({
+      type: application.type,
+      amount: application.amount,
+      term: application.term,
+      interestRate,
+      monthlyPayment,
+      totalInterest,
+      purpose: application.purpose,
+      status: LoanStatus.PENDING_APPROVAL,
+      productId: application.productId
+    });
   }
   
   /**
-   * Get a specific loan by ID
+   * Get a specific loan
    */
-  async getLoanById(loanId: string): Promise<LoanDetails | undefined> {
+  async getLoan(loanId: string): Promise<Loan | undefined> {
     const loanRepo = repositoryService.getLoanRepository();
     return loanRepo.getById(loanId);
   }
   
   /**
+   * Get all loans of the current user
+   */
+  async getAllLoans(): Promise<Loan[]> {
+    const loanRepo = repositoryService.getLoanRepository();
+    return loanRepo.getAll();
+  }
+  
+  /**
    * Get active loans
    */
-  async getActiveLoans(): Promise<LoanDetails[]> {
+  async getActiveLoans(): Promise<Loan[]> {
     const loanRepo = repositoryService.getLoanRepository();
     return loanRepo.getActiveLoans();
   }
   
   /**
-   * Update loan with signature ID after signing
+   * Get pending loans
    */
-  async updateWithSignature(loanId: string, signatureId: string): Promise<LoanDetails> {
+  async getPendingLoans(): Promise<Loan[]> {
     const loanRepo = repositoryService.getLoanRepository();
-    return loanRepo.updateWithSignature(loanId, signatureId);
+    return loanRepo.getPendingLoans();
+  }
+  
+  /**
+   * Approve a loan application
+   */
+  async approveLoan(loanId: string, accountId: string): Promise<Loan | undefined> {
+    const loanRepo = repositoryService.getLoanRepository();
+    const loan = await loanRepo.getById(loanId);
+    
+    if (!loan) {
+      throw new Error('Loan not found');
+    }
+    
+    if (loan.status !== LoanStatus.PENDING_APPROVAL) {
+      throw new Error(`Loan cannot be approved. Current status: ${loan.status}`);
+    }
+    
+    // First update the account ID
+    await loanRepo.updateLoanAccount(loanId, accountId);
+    
+    // Then update the status to approved
+    return loanRepo.updateLoanStatus(loanId, LoanStatus.APPROVED);
+  }
+  
+  /**
+   * Reject a loan application
+   */
+  async rejectLoan(loanId: string, reason?: string): Promise<Loan | undefined> {
+    const loanRepo = repositoryService.getLoanRepository();
+    const loan = await loanRepo.getById(loanId);
+    
+    if (!loan) {
+      throw new Error('Loan not found');
+    }
+    
+    // Add rejection reason to application data
+    const applicationData = {
+      ...loan.applicationData,
+      rejectionReason: reason || 'Application did not meet approval criteria'
+    };
+    
+    // Update application data
+    await loanRepo.update(loanId, { applicationData });
+    
+    // Update status to rejected
+    return loanRepo.updateLoanStatus(loanId, LoanStatus.REJECTED);
+  }
+  
+  /**
+   * Activate an approved loan
+   */
+  async activateLoan(loanId: string): Promise<Loan | undefined> {
+    const loanRepo = repositoryService.getLoanRepository();
+    const loan = await loanRepo.getById(loanId);
+    
+    if (!loan) {
+      throw new Error('Loan not found');
+    }
+    
+    if (loan.status !== LoanStatus.APPROVED) {
+      throw new Error(`Loan cannot be activated. Current status: ${loan.status}`);
+    }
+    
+    // Business logic for activating a loan would go here
+    // For example: transfer funds to the account, create payment schedule, etc.
+    
+    return loanRepo.updateLoanStatus(loanId, LoanStatus.ACTIVE);
+  }
+  
+  /**
+   * Mark a loan as paid off
+   */
+  async markLoanAsPaidOff(loanId: string): Promise<Loan | undefined> {
+    const loanRepo = repositoryService.getLoanRepository();
+    const loan = await loanRepo.getById(loanId);
+    
+    if (!loan) {
+      throw new Error('Loan not found');
+    }
+    
+    if (loan.status !== LoanStatus.ACTIVE) {
+      throw new Error(`Loan cannot be marked as paid off. Current status: ${loan.status}`);
+    }
+    
+    return loanRepo.updateLoanStatus(loanId, LoanStatus.PAID_OFF);
+  }
+  
+  /**
+   * Get available loan products
+   */
+  async getLoanProducts(): Promise<ProductEntity[]> {
+    const productRepo = repositoryService.getProductRepository();
+    return productRepo.getByEntityType(ProductEntityType.LOAN);
+  }
+  
+  /**
+   * Check if a user has active loans
+   */
+  async hasActiveLoans(): Promise<boolean> {
+    const activeLoans = await this.getActiveLoans();
+    return activeLoans.length > 0;
+  }
+  
+  /**
+   * Get total active loan balance
+   */
+  async getTotalLoanBalance(): Promise<number> {
+    const activeLoans = await this.getActiveLoans();
+    return activeLoans.reduce((total, loan) => total + loan.amount, 0);
   }
 }
 

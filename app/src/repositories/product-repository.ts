@@ -3,15 +3,57 @@ import { StorageService } from '../services/storage-service';
 import { UserService } from '../services/user-service';
 import { Product } from '../services/product-service';
 import { generateMockProducts } from './mock/product-mock';
+import { generateUUID } from "../utilities/id-generator";
 
 /**
- * Product entity for storage that extends the Product interface
+ * Represents the type of entity a product affects or creates
+ */
+export enum ProductEntityType {
+  ACCOUNT = "account",
+  LOAN = "loan",
+  INVESTMENT = "investment",
+  INSURANCE = "insurance",
+  CARD = "card",
+  SERVICE = "service"
+}
+
+/**
+ * Represents a product category
+ */
+export enum ProductCategory {
+  BANKING = "banking",
+  LENDING = "lending",
+  INVESTING = "investing",
+  PROTECTION = "protection",
+  PAYMENTS = "payments",
+  SERVICES = "services"
+}
+
+/**
+ * Product entity interface
  */
 export interface ProductEntity extends Entity, Product {
-  // Entity already provides the id field
-  // Adding any additional storage-specific fields here
+  id: string;
+  name: string;
+  type: ProductEntityType;
+  category: ProductCategory;
+  description?: string;
+  features?: string[];
+  requirements?: ProductRequirement[];
+  relatedProductIds?: string[];
+  metadata?: Record<string, any>;
+  active: boolean;
   addedDate: string;
   lastUpdated: string;
+}
+
+/**
+ * Product requirement interface for eligibility checks
+ */
+export interface ProductRequirement {
+  type: "kyc" | "income" | "age" | "creditScore" | "residency" | "custom";
+  value: string | number | boolean;
+  description: string;
 }
 
 /**
@@ -41,6 +83,7 @@ export class ProductRepository extends LocalStorageRepository<ProductEntity> {
   async addOrUpdateProduct(product: Product): Promise<ProductEntity> {
     const now = new Date().toISOString();
     
+    // Try to get existing product
     const existingProduct = await this.getById(product.id);
     
     if (existingProduct) {
@@ -51,25 +94,82 @@ export class ProductRepository extends LocalStorageRepository<ProductEntity> {
         lastUpdated: now
       };
       
-      return this.update(product.id, updatedProduct) as Promise<ProductEntity>;
+      return await this.update(product.id, updatedProduct) as ProductEntity;
     } else {
-      // Create new product entity
-      const productEntity: ProductEntity = {
-        ...product,
+      // Create new product entity with required fields
+      const productEntity: Omit<ProductEntity, 'id'> = {
+        ...product as any, // Cast to satisfy TypeScript
+        category: (product as any).category || ProductCategory.SERVICES,
+        type: (product as any).type || ProductEntityType.SERVICE,
         addedDate: now,
         lastUpdated: now
       };
       
-      return this.create(productEntity);
+      return await this.create(productEntity);
     }
+  }
+  
+  /**
+   * Get all active products
+   */
+  async getActiveProducts(): Promise<ProductEntity[]> {
+    const all = await this.getAll();
+    return all.filter(product => product.active);
   }
   
   /**
    * Get active products
    */
-  async getActiveProducts(): Promise<ProductEntity[]> {
-    const all = await this.getAll();
-    return all.filter(product => product.active);
+  async getActive(): Promise<ProductEntity[]> {
+    return this.getActiveProducts();
+  }
+
+  /**
+   * Get products by category
+   */
+  async getByCategory(category: ProductCategory): Promise<ProductEntity[]> {
+    const products = await this.getAll();
+    return products.filter(
+      product => product.category === category && product.active
+    );
+  }
+
+  /**
+   * Get products by entity type
+   */
+  async getByEntityType(entityType: ProductEntityType): Promise<ProductEntity[]> {
+    const products = await this.getAll();
+    return products.filter(
+      product => product.type === entityType && product.active
+    );
+  }
+
+  /**
+   * Get a product by ID
+   */
+  async getById(id: string): Promise<ProductEntity | null> {
+    const product = await super.getById(id);
+    return product || null;
+  }
+
+  /**
+   * Get related products
+   */
+  async getRelatedProducts(productId: string): Promise<ProductEntity[]> {
+    const product = await this.getById(productId);
+    if (!product || !product.relatedProductIds || product.relatedProductIds.length === 0) {
+      return [];
+    }
+    
+    const relatedProducts: ProductEntity[] = [];
+    for (const relatedId of product.relatedProductIds) {
+      const related = await this.getById(relatedId);
+      if (related && related.active) {
+        relatedProducts.push(related);
+      }
+    }
+    
+    return relatedProducts;
   }
   
   /**
@@ -88,12 +188,6 @@ export class ProductRepository extends LocalStorageRepository<ProductEntity> {
         console.debug(`Repository: Product ${productId} found, active = ${product.active}`);
       } else {
         console.debug(`Repository: Product ${productId} not found`);
-      }
-      
-      if (!result) {
-        // Log all available products for debugging
-        const allProducts = await this.getAll();
-        console.debug(`All products in repository: ${allProducts.map(p => `${p.id} (active=${p.active})`).join(', ')}`);
       }
       
       return result;

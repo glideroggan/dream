@@ -1,88 +1,152 @@
-import { Entity, LocalStorageRepository } from './base-repository';
-import { StorageService } from '../services/storage-service';
-import { UserService } from '../services/user-service';
-import { LoanType, LoanStatus } from '../services/loan-service';
-import { generateMockLoans } from './mock/loan-mock';
+import { StorageService } from "../services/storage-service";
+import { UserService } from "../services/user-service";
+import { LoanStatus, LoanType } from "../services/loan-service";
+import { Entity, LocalStorageRepository } from "./base-repository";
+import { generateMockLoans } from "./mock/loan-mock";
 
-// Define the Loan entity that extends the base Entity interface
 export interface Loan extends Entity {
+  id: string;
+  productId: string; // Reference to the product
   type: LoanType;
   amount: number;
-  term: number; // In months
-  interestRate: number; // Annual percentage rate
+  term: number;
+  interestRate: number;
   monthlyPayment: number;
   totalInterest: number;
-  purpose?: string;
-  collateral?: string;
-  createdAt: string; // ISO date string
-  updatedAt: string; // ISO date string
+  purpose: string;
+  createdAt: string;
+  updatedAt: string;
   status: LoanStatus;
-  accountId?: string; // Where loan funds will be deposited
-  applicationData?: Record<string, any>; // Additional application data
-  signatureId?: string; // Reference to signing request
+  accountId: string;
+  signatureId?: string;
+  applicationData?: Record<string, any>;
 }
 
-/**
- * Repository for loan data, following the repository pattern
- */
 export class LoanRepository extends LocalStorageRepository<Loan> {
   constructor(storage: StorageService, userService: UserService) {
     super('loans', storage, userService);
   }
 
+  /**
+   * Initialize with mock data
+   */
   protected initializeMockData(): void {
     const mockLoans = generateMockLoans();
-
-    // Add mock loans
+    
     mockLoans.forEach(loan => {
       this.entities.set(loan.id, loan);
     });
-
-    // Save to storage
+    
     this.saveToStorage();
   }
 
   /**
-   * Create a new loan application
+   * Create a new loan with proper timestamps
    */
-  async createLoanApplication(loan: Omit<Loan, 'id' | 'createdAt' | 'updatedAt'>): Promise<Loan> {
-    const id = `loan_${Date.now()}`;
+  async create(loan: Omit<Loan, "id" | "createdAt" | "updatedAt">): Promise<Loan> {
     const now = new Date().toISOString();
-    
-    const newLoan: Loan = {
-      id,
+    const loanData = {
+      ...loan,
       createdAt: now,
-      updatedAt: now,
-      ...loan
+      updatedAt: now
     };
     
-    await this.create(newLoan);
-    return newLoan;
+    return super.create(loanData);
   }
 
   /**
-   * Update loan status
+   * Update a loan with proper timestamps
    */
-  async updateLoanStatus(loanId: string, status: LoanStatus): Promise<Loan> {
-    const loan = await this.getById(loanId);
-    if (!loan) {
-      throw new Error(`Loan with ID ${loanId} not found`);
-    }
-    
-    const updatedLoan: Loan = {
-      ...loan,
-      status,
+  async update(id: string, updates: Partial<Omit<Loan, "id" | "createdAt">>): Promise<Loan | undefined> {
+    const updatedData = {
+      ...updates,
       updatedAt: new Date().toISOString()
     };
     
-    await this.update(loanId, updatedLoan);
-    return updatedLoan;
+    return super.update(id, updatedData);
+  }
+
+  /**
+   * Create a new loan application with initial data
+   */
+  async createLoanApplication(data: {
+    type: LoanType;
+    amount: number;
+    term: number;
+    interestRate: number;
+    monthlyPayment: number;
+    totalInterest: number;
+    purpose?: string;
+    status: LoanStatus;
+    productId?: string;
+  }): Promise<Loan> {
+    // Set default product ID based on loan type if not provided
+    const productId = data.productId || `${data.type}-loan`;
+    
+    const loan: Omit<Loan, "id" | "createdAt" | "updatedAt"> = {
+      productId,
+      type: data.type,
+      amount: data.amount,
+      term: data.term,
+      interestRate: data.interestRate,
+      monthlyPayment: data.monthlyPayment,
+      totalInterest: data.totalInterest,
+      purpose: data.purpose || 'Not specified',
+      status: data.status,
+      accountId: 'pending' // Will be assigned when approved
+    };
+    
+    return this.create(loan);
+  }
+
+  /**
+   * Update the loan status
+   */
+  async updateLoanStatus(id: string, status: LoanStatus): Promise<Loan | undefined> {
+    const loan = await this.getById(id);
+    if (!loan) {
+      throw new Error(`Loan with ID ${id} not found`);
+    }
+    
+    return this.update(id, { status });
+  }
+
+  /**
+   * Update the loan's account ID
+   */
+  async updateLoanAccount(id: string, accountId: string): Promise<Loan | undefined> {
+    const loan = await this.getById(id);
+    if (!loan) {
+      throw new Error(`Loan with ID ${id} not found`);
+    }
+    
+    return this.update(id, { accountId });
+  }
+
+  /**
+   * Update loan with signature ID after signing
+   */
+  async updateWithSignature(id: string, signatureId: string): Promise<Loan | undefined> {
+    const loan = await this.getById(id);
+    if (!loan) {
+      throw new Error(`Loan with ID ${id} not found`);
+    }
+    
+    return this.update(id, { signatureId });
+  }
+
+  /**
+   * Get loans by account ID
+   */
+  async getByAccountId(accountId: string): Promise<Loan[]> {
+    const loans = await this.getAll();
+    return loans.filter(loan => loan.accountId === accountId);
   }
 
   /**
    * Get loans by status
    */
-  async getLoansByStatus(status: LoanStatus): Promise<Loan[]> {
+  async getByStatus(status: LoanStatus): Promise<Loan[]> {
     const loans = await this.getAll();
     return loans.filter(loan => loan.status === status);
   }
@@ -91,58 +155,21 @@ export class LoanRepository extends LocalStorageRepository<Loan> {
    * Get active loans
    */
   async getActiveLoans(): Promise<Loan[]> {
-    return this.getLoansByStatus(LoanStatus.ACTIVE);
+    return this.getByStatus(LoanStatus.ACTIVE);
   }
 
   /**
    * Get pending approval loans
    */
   async getPendingLoans(): Promise<Loan[]> {
-    return this.getLoansByStatus(LoanStatus.PENDING_APPROVAL);
+    return this.getByStatus(LoanStatus.PENDING_APPROVAL);
   }
 
   /**
-   * Get draft loans
+   * Get loans by product ID
    */
-  async getDraftLoans(): Promise<Loan[]> {
-    return this.getLoansByStatus(LoanStatus.DRAFT);
-  }
-
-  /**
-   * Update loan with signature ID after signing
-   */
-  async updateWithSignature(loanId: string, signatureId: string): Promise<Loan> {
-    const loan = await this.getById(loanId);
-    if (!loan) {
-      throw new Error(`Loan with ID ${loanId} not found`);
-    }
-    
-    const updatedLoan: Loan = {
-      ...loan,
-      signatureId,
-      updatedAt: new Date().toISOString()
-    };
-    
-    await this.update(loanId, updatedLoan);
-    return updatedLoan;
-  }
-
-  /**
-   * Update loan account ID (where funds will be deposited)
-   */
-  async updateLoanAccount(loanId: string, accountId: string): Promise<Loan> {
-    const loan = await this.getById(loanId);
-    if (!loan) {
-      throw new Error(`Loan with ID ${loanId} not found`);
-    }
-    
-    const updatedLoan: Loan = {
-      ...loan,
-      accountId,
-      updatedAt: new Date().toISOString()
-    };
-    
-    await this.update(loanId, updatedLoan);
-    return updatedLoan;
+  async getByProductId(productId: string): Promise<Loan[]> {
+    const loans = await this.getAll();
+    return loans.filter(loan => loan.productId === productId);
   }
 }

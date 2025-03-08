@@ -1,6 +1,14 @@
 import { getSingletonManager } from './singleton-manager';
 import { ProductRepository } from '../repositories/product-repository';
 import { repositoryService } from './repository-service';
+import { 
+  ProductEntity, 
+  ProductEntityType,
+  ProductCategory,
+  ProductRequirement
+} from '../repositories/product-repository';
+import { kycService } from './kyc-service';
+import { userService } from './user-service';
 
 // Base product interface that all product types extend
 export interface BaseProduct {
@@ -27,6 +35,7 @@ export interface ProductChangeEvent {
 export type ProductChangeListener = (event: ProductChangeEvent) => void;
 
 export class ProductService {
+  private static instance: ProductService;
   private products: Product[] = [];
   private initialized = false;
   private changeListeners: Set<ProductChangeListener> = new Set();
@@ -38,8 +47,10 @@ export class ProductService {
   
   // Singleton accessor
   public static getInstance(): ProductService {
-    const singletonManager = getSingletonManager();
-    return singletonManager.getOrCreate<ProductService>('ProductService', () => new ProductService());
+    if (!ProductService.instance) {
+      ProductService.instance = new ProductService();
+    }
+    return ProductService.instance;
   }
   
   /**
@@ -322,6 +333,130 @@ export class ProductService {
     
     document.dispatchEvent(event);
     console.debug('Product change DOM event dispatched for backward compatibility');
+  }
+
+  /**
+   * Get all available products
+   */
+  async getAllProducts(): Promise<ProductEntity[]> {
+    const repo = repositoryService.getProductRepository();
+    return await repo.getActive();
+  }
+
+  /**
+   * Get products by category
+   */
+  async getProductsByCategory(category: ProductCategory): Promise<ProductEntity[]> {
+    const repo = repositoryService.getProductRepository();
+    return await repo.getByCategory(category);
+  }
+
+  /**
+   * Get products by entity type
+   */
+  async getProductsByEntityType(entityType: ProductEntityType): Promise<ProductEntity[]> {
+    const repo = repositoryService.getProductRepository();
+    return await repo.getByEntityType(entityType);
+  }
+
+  /**
+   * Get product by ID
+   */
+  async getProductById(id: string): Promise<ProductEntity | null> {
+    const repo = repositoryService.getProductRepository();
+    return await repo.getById(id);
+  }
+
+  /**
+   * Check if user is eligible for a product
+   */
+  async checkEligibility(productId: string): Promise<{
+    eligible: boolean;
+    requirementsMet: string[];
+    requirementsNotMet: string[];
+    message?: string;
+  }> {
+    const product = await this.getProductById(productId);
+    if (!product) {
+      return {
+        eligible: false,
+        requirementsMet: [],
+        requirementsNotMet: ["Product not found"],
+        message: "Product not found"
+      };
+    }
+
+    if (!product.requirements || product.requirements.length === 0) {
+      return {
+        eligible: true,
+        requirementsMet: [],
+        requirementsNotMet: [],
+      };
+    }
+
+    const requirementsMet: string[] = [];
+    const requirementsNotMet: string[] = [];
+
+    // Check each requirement
+    for (const requirement of product.requirements) {
+      const meetsRequirement = await this.checkRequirement(requirement);
+      if (meetsRequirement) {
+        requirementsMet.push(requirement.description);
+      } else {
+        requirementsNotMet.push(requirement.description);
+      }
+    }
+
+    const eligible = requirementsNotMet.length === 0;
+    
+    return {
+      eligible,
+      requirementsMet,
+      requirementsNotMet,
+      message: eligible 
+        ? "You are eligible for this product" 
+        : "You don't meet all requirements for this product"
+    };
+  }
+
+  /**
+   * Check if a specific requirement is met
+   */
+  private async checkRequirement(requirement: ProductRequirement): Promise<boolean> {
+    switch (requirement.type) {
+      case "kyc":
+        return kycService.meetsKycRequirements(requirement.value as string);
+      
+      case "age":
+        const userAge = userService.getUserAge();
+        return userAge >= (requirement.value as number);
+      
+      case "creditScore":
+        // This would need integration with a credit score service
+        return true;
+      
+      case "income":
+        // This would need integration with an income verification service
+        return true;
+      
+      case "residency":
+        return userService.getUserResidency() === requirement.value;
+      
+      case "custom":
+        // Custom requirements would need specific logic
+        return true;
+      
+      default:
+        return false;
+    }
+  }
+
+  /**
+   * Get related products for cross-selling opportunities
+   */
+  async getRelatedProducts(productId: string): Promise<ProductEntity[]> {
+    const repo = repositoryService.getProductRepository();
+    return await repo.getRelatedProducts(productId);
   }
 }
 

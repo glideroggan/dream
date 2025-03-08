@@ -1,6 +1,10 @@
 # BUGS
-- the loan workflow purpose dropdown doesn't show any options
-- the loan workflow doesn't show any of my accounts to deposit the loan into
+- the loan workflow
+  - home loan
+    - shouldn't have the length of the loan in months, should already be set over a specific time
+    - shouldn't have a purpose
+  - purpose dropdown doesn't show any options
+  - doesn't show any of my accounts to deposit the loan into
 - the transaction signing is not so nice, the style of it should improve
 - need toast error when failing to start a workflow
 - ✔️Transaction list doesn't update after adding a new transaction

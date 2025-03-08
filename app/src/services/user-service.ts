@@ -7,6 +7,8 @@ export interface User {
   firstName: string;
   lastName: string;
   isLoggedIn: boolean;
+  age?: number;
+  residency?: string;
 }
 
 /**
@@ -54,6 +56,22 @@ export class UserService {
   }
   
   /**
+   * Get the user's age
+   * @returns The user's age or 0 if not available
+   */
+  getUserAge(): number {
+    return this.currentUser?.age || 0;
+  }
+  
+  /**
+   * Get the user's country of residency
+   * @returns The user's residency or empty string if not available
+   */
+  getUserResidency(): string {
+    return this.currentUser?.residency || '';
+  }
+  
+  /**
    * Load user from storage
    */
   private loadUser(): void {
@@ -78,7 +96,9 @@ export class UserService {
       email: 'demo@example.com',
       firstName: 'Demo',
       lastName: 'User',
-      isLoggedIn: true // Auto-login for demo
+      isLoggedIn: true, // Auto-login for demo
+      age: 30,
+      residency: 'Sweden'
     };
   }
   
@@ -102,7 +122,9 @@ export class UserService {
       email: `${username}@example.com`,
       firstName: username,
       lastName: 'User',
-      isLoggedIn: true
+      isLoggedIn: true,
+      age: 30,
+      residency: 'Sweden'
     };
     
     this.saveUser();
