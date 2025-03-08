@@ -9,18 +9,25 @@ import {
 import { kycService } from './kyc-service';
 import { userService } from './user-service';
 
-// Base product interface that all product types extend
+/**
+ * Base product interface that all product types extend
+ */
 export interface BaseProduct {
   id: string;
   name: string;
   type: string;
-  active: boolean;
 }
 
-// Generic product type with optional properties
+/**
+ * Product interface representing all possible product attributes
+ */
 export interface Product extends BaseProduct {
-  properties?: Record<string, any>;
-  [key: string]: any; // Allow any additional properties
+  description?: string;
+  features?: string[];
+  requirements?: any[];
+  relatedProductIds?: string[];
+  metadata?: Record<string, any>;
+  active?: boolean;
 }
 
 export type ProductChangeEventType = 'add' | 'remove' | 'update';
@@ -168,6 +175,8 @@ export class ProductService {
   
   /**
    * Check if the user has a specific product
+   * @param productId ID of the product to check
+   * @returns Promise resolving to true if the user has the product
    */
   public async hasProduct(productId: string): Promise<boolean> {
     await this.ensureRepositoryInitialized();
@@ -222,6 +231,14 @@ export class ProductService {
   public async addProduct<T extends BaseProduct>(product: T): Promise<void> {
     await this.ensureRepositoryInitialized();
     
+    // First, check if the user already has the product
+    // This prevents duplicate activation
+    const alreadyHasProduct = await this.hasProduct(product.id);
+    if (alreadyHasProduct) {
+      console.debug(`User already has product ${product.id}, won't add again`);
+      return Promise.resolve();
+    }
+    
     // Create a normalized product object that includes all properties
     const normalizedProduct: Product = {
       ...product, // Copy all properties from the specialized product
@@ -229,19 +246,22 @@ export class ProductService {
       active: true
     };
     
-    // Check if product already exists
+    // Add to repository
+    if (this.productRepository) {
+      await this.productRepository.addOrUpdateProduct(normalizedProduct);
+    }
+    
+    // Check if product already exists in memory
     const existingIndex = this.products.findIndex(p => p.id === normalizedProduct.id);
     
     if (existingIndex >= 0) {
       // Update existing product
       this.products[existingIndex] = { 
         ...this.products[existingIndex],
-        ...normalizedProduct 
+        ...normalizedProduct,
+        active: true
       };
       console.debug(`Updated existing product: ${normalizedProduct.id}`);
-      
-      // Save to repository
-      await this.saveProductToRepository(this.products[existingIndex]);
       
       // Notify listeners
       this.notifyProductChange('update', normalizedProduct.id, this.products[existingIndex]);
@@ -250,22 +270,12 @@ export class ProductService {
       this.products.push(normalizedProduct);
       console.debug(`Added new product: ${normalizedProduct.id}`);
       
-      // Save to repository
-      await this.saveProductToRepository(normalizedProduct);
-      
       // Notify listeners
       this.notifyProductChange('add', normalizedProduct.id, normalizedProduct);
     }
     
     // Also dispatch DOM event for backward compatibility
     this.dispatchProductChangeEvent();
-    
-    // Force a full refresh after adding the product to ensure
-    // all components will see the change immediately
-    setTimeout(() => {
-      console.debug(`Refreshing products after adding ${normalizedProduct.id}`);
-      this.refreshProducts();
-    }, 100);
     
     return Promise.resolve();
   }

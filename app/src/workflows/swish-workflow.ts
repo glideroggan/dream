@@ -1,8 +1,11 @@
 import { customElement, html, css, observable, repeat, when } from "@microsoft/fast-element";
 import { WorkflowBase, WorkflowResult } from "./workflow-base";
-import { getProductService, BaseProduct } from "../services/product-service";
+import { productService } from "../services/product-service";
 
-export interface SwishProduct extends BaseProduct {
+export interface SwishProduct {
+  id: string;
+  name: string;
+  type: string;
   description: string;
   features: string[];
   price: number;
@@ -32,21 +35,40 @@ const template = html<SwishWorkflow>/*html*/`
       ${when(x => x.isProductAdded, html`<div class="success-message">✓ Product added to your account!</div>`)}
     </div>
     
-    <div class="agreement-container">
-      <div class="agreement-checkbox-wrapper ${x => x.agreementChecked ? 'checked' : ''}" @click="${x => x.toggleAgreement()}">
-        <div class="custom-checkbox">
-          ${when(x => x.agreementChecked, html`
-            <svg class="checkmark" viewBox="0 0 24 24">
-              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"></path>
-            </svg>
-          `)}
+    ${when(x => !x.isProductActive, html`
+      <div class="agreement-container">
+        <div class="agreement-checkbox-wrapper ${x => x.agreementChecked ? 'checked' : ''}" @click="${x => x.toggleAgreement()}">
+          <div class="custom-checkbox">
+            ${when(x => x.agreementChecked, html`
+              <svg class="checkmark" viewBox="0 0 24 24">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"></path>
+              </svg>
+            `)}
+          </div>
+          <span class="checkbox-label">I agree to the terms and conditions. This product can be removed anytime from your account settings.</span>
         </div>
-        <span class="checkbox-label">I agree to the terms and conditions. This product can be removed anytime from your account settings.</span>
+        ${when(x => !x.agreementChecked && x.showValidationErrors, html`
+          <div class="error-message">You must agree to the terms before proceeding</div>
+        `)}
       </div>
-      ${when(x => !x.agreementChecked && x.showValidationErrors, html`
-        <div class="error-message">You must agree to the terms before proceeding</div>
-      `)}
-    </div>
+    `)}
+    
+    ${when(x => x.isProductActive, html`
+      <div class="already-active-message">
+        <div class="active-icon">✓</div>
+        <div class="active-text">
+          <h4>Swish is already active on your account</h4>
+          <p>You can manage your Swish settings in the account settings section.</p>
+        </div>
+      </div>
+    `)}
+    
+    ${when(x => x.isLoading, html`
+      <div class="loading-container">
+        <div class="spinner"></div>
+        <p>Checking product status...</p>
+      </div>
+    `)}
   </div>
 `;
 
@@ -221,6 +243,61 @@ const styles = css`
     margin-top: 6px;
     animation: fadeIn 0.3s ease-in-out;
   }
+  
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    gap: 12px;
+  }
+  
+  .spinner {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-top-color: var(--accent-color, #3498db);
+    animation: spin 1s ease-in-out infinite;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
+  .already-active-message {
+    background-color: var(--background-color-light, #f8f9fa);
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    border: 1px solid var(--border-color-light, #eaeaea);
+  }
+  
+  .active-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #2ecc71;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+  
+  .active-text h4 {
+    margin: 0 0 8px 0;
+    color: #2ecc71;
+  }
+  
+  .active-text p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-secondary, #666);
+  }
 `;
 
 @customElement({
@@ -229,12 +306,10 @@ const styles = css`
   styles
 })
 export class SwishWorkflow extends WorkflowBase {
-  // TODO: there should be a product registry
   @observable product: SwishProduct = {
-    id: "swish-standard",  // This ID must match what's checked in searchDisabledCondition
+    id: "swish-standard", 
     name: "Swish Premium",
     type: "payment-service",
-    active: true,
     description: "Swish is a modern payment solution that enables instant transfers between accounts with enhanced security features.",
     features: [
       "Instant transfers 24/7",
@@ -249,8 +324,10 @@ export class SwishWorkflow extends WorkflowBase {
   
   @observable productImage?: string;
   @observable isProductAdded: boolean = false;
+  @observable isProductActive: boolean = false;
   @observable agreementChecked: boolean = false;
   @observable showValidationErrors: boolean = false;
+  @observable isLoading: boolean = true;
   
   async initialize(params?: Record<string, any>): Promise<void> {
     console.debug("Initializing SwishWorkflow with params:", params);
@@ -265,19 +342,32 @@ export class SwishWorkflow extends WorkflowBase {
     
     // Set up the workflow UI
     this.updateTitle(`Add ${this.product.name} to Your Account`);
-    this.updateFooter(true, "Add to My Account");
     
-    // Initially the form is invalid until agreement is checked
-    this.notifyValidation(false);
+    // Start checking if the user already has the product
+    this.isLoading = true;
     
-    // Check if user already has this product
-    const productService = getProductService();
-    const hasProduct = await productService.hasProduct(this.product.id);
-    if (hasProduct) {
-      this.isProductAdded = true;
-      // No need for agreement if product is already added
-      this.agreementChecked = true;
-      this.notifyValidation(true);
+    try {
+      // Check if user already has this product
+      const hasProduct = await productService.hasProduct(this.product.id);
+      
+      console.debug(`User already has ${this.product.id}: ${hasProduct}`);
+      this.isProductActive = hasProduct;
+      
+      if (hasProduct) {
+        // Update UI for already active product
+        this.updateFooter(true, "Close");
+        this.notifyValidation(true);
+      } else {
+        // Update UI for product activation
+        this.updateFooter(true, "Add to My Account");
+        // Initially the form is invalid until agreement is checked
+        this.notifyValidation(false);
+      }
+    } catch (error) {
+      console.error("Error checking if product is active:", error);
+      this.isProductActive = false;
+    } finally {
+      this.isLoading = false;
     }
   }
   
@@ -287,16 +377,22 @@ export class SwishWorkflow extends WorkflowBase {
   }
   
   /**
-   * Simpler approach: just toggle the agreement state when the whole container is clicked
-   * This is more reliable than trying to handle checkbox events directly in FAST Element
+   * Toggle the agreement state when the agreement container is clicked
    */
   toggleAgreement(): void {
-    console.debug("Toggle agreement called, current state:", this.agreementChecked);
+    if (this.isProductActive) return; // Don't allow toggling if product is already active
+    
     this.agreementChecked = !this.agreementChecked;
     this.validateForm();
   }
   
   validateForm(): boolean {
+    // If product is already active, form is always valid
+    if (this.isProductActive) {
+      this.notifyValidation(true);
+      return true;
+    }
+    
     const isValid = this.agreementChecked;
     console.debug("Form validation result:", isValid, "Agreement checked:", this.agreementChecked);
     this.notifyValidation(isValid, isValid ? undefined : "Please agree to terms and conditions");
@@ -308,7 +404,18 @@ export class SwishWorkflow extends WorkflowBase {
   }
   
   public handlePrimaryAction(): void {
-    console.debug("Primary action triggered, agreement state:", this.agreementChecked);
+    console.debug("Primary action triggered");
+    
+    // If product is already active, just close the workflow
+    if (this.isProductActive) {
+      this.complete(true, { 
+        productId: this.product.id,
+        alreadyActive: true
+      }, "Product is already active on your account");
+      return;
+    }
+    
+    // Otherwise, validate and add product
     this.showValidationErrors = true;
     
     if (this.validateForm()) {
@@ -318,11 +425,11 @@ export class SwishWorkflow extends WorkflowBase {
   
   private async addProductToAccount(): Promise<void> {
     try {
-      const productService = getProductService();
-      
-      // Check if already added to avoid duplicates
+      // Double-check if already added to avoid duplicates
+      // This ensures race conditions don't cause duplicate products
       const alreadyAdded = await productService.hasProduct(this.product.id);
       if (alreadyAdded) {
+        this.isProductActive = true;
         this.complete(true, { 
           productId: this.product.id,
           alreadyAdded: true
@@ -331,7 +438,16 @@ export class SwishWorkflow extends WorkflowBase {
       }
       
       // Add the product to user's account
-      await productService.addProduct(this.product);
+      await productService.addProduct({
+        id: this.product.id, 
+        name: this.product.name,
+        type: this.product.type,
+        description: this.product.description,
+        features: this.product.features,
+        price: this.product.price,
+        currency: this.product.currency,
+        active: true
+      });
       
       // Show success message briefly before closing
       this.isProductAdded = true;
@@ -351,44 +467,19 @@ export class SwishWorkflow extends WorkflowBase {
   }
   
   /**
-   * Start the KYC process workflow
-   */
-  async initiateKycWorkflow(): Promise<WorkflowResult> {
-    console.debug("Starting KYC process for Swish activation...");
-    
-    // Make sure we're not trying to start a nested workflow if one is already active
-    if ((window as any).__nestedWorkflowActive) {
-      console.warn("Nested workflow already active, preventing duplicate");
-      return { success: false, message: "Workflow already in progress" };
-    }
-    
-    // Set flag to prevent multiple workflows
-    (window as any).__nestedWorkflowActive = true;
-    
-    try {
-      // Start the KYC workflow and wait for its result
-      const result = await this.startNestedWorkflow('kyc', {
-        reason: `Activating ${this.product.name} requires identity verification.`
-      });
-      return result;
-    } finally {
-      // Clear flag when finished
-      (window as any).__nestedWorkflowActive = false;
-    }
-  }
-  
-  /**
    * Handle resuming after a nested workflow completes
    */
   public resume(result?: WorkflowResult): void {
     console.debug("Swish workflow resumed after nested workflow", result);
     
-    // Clear the nested workflow flag just to be sure
-    (window as any).__nestedWorkflowActive = false;
-    
     // Restore the original UI state
     this.updateTitle(`Add ${this.product.name} to Your Account`);
-    this.updateFooter(true, "Add to My Account");
+    
+    if (this.isProductActive) {
+      this.updateFooter(true, "Close");
+    } else {
+      this.updateFooter(true, "Add to My Account");
+    }
     
     if (result?.success) {
       // Handle successful completion of the nested workflow

@@ -1,368 +1,318 @@
-import { PersonalInformation, KYCCompletionData } from '../workflows/kyc/kyc-workflow';
-import { repositoryService } from './repository-service';
-import { userService } from './user-service';
+import { storageService, StorageService } from './storage-service';
+import { userService, UserService } from './user-service';
+import { KYCCompletionData } from '../workflows/kyc/kyc-workflow';
 
-// KYC verification levels
+/**
+ * KYC (Know Your Customer) verification levels
+ */
 export enum KycLevel {
-  NONE = 'none',           // No KYC completed
-  BASIC = 'basic',         // Email verification only
-  STANDARD = 'standard',   // ID verification 
-  ENHANCED = 'enhanced'    // ID + address + additional checks
+  NONE = 'none',
+  BASIC = 'basic',
+  STANDARD = 'standard',
+  ENHANCED = 'enhanced'
 }
 
-// KYC verification status
+/**
+ * KYC verification status
+ */
 export enum KycStatus {
-  NOT_STARTED = 'not_started',
+  NONE = 'none',
   PENDING = 'pending',
   APPROVED = 'approved',
   REJECTED = 'rejected'
 }
 
-// Interface for KYC data in user settings
-export interface KycData {
+/**
+ * KYC verification data interface
+ */
+export interface KycVerificationData {
+  userId: string;
   level: KycLevel;
   status: KycStatus;
-  lastUpdated: string;
-  personalInfo?: PersonalInformation;
-  documents?: {
-    idDocumentName?: string;
-    addressDocumentName?: string;
-  }
+  lastVerified?: string;
+  expiresAt?: string;
+  requirements?: Record<string, boolean>;
 }
 
-export interface KycRequirement {
-  id: string;
-  name: string;
-  requiredLevel: KycLevel;
-  description: string;
-}
-
+/**
+ * Service for managing KYC verification processes
+ */
 export class KycService {
   private static instance: KycService;
-  private settingsRepo = repositoryService.getSettingsRepository();
-  private currentKycLevel: KycLevel = KycLevel.NONE;
-  private kycStatus: KycStatus = KycStatus.NOT_STARTED;
-  private kycLevels: Map<string, string[]> = new Map();
+  private storage: StorageService;
+  private userService: UserService;
+  private storageKey = 'kyc-data';
   
-  // Track which workflows and actions require KYC
-  private kycRequirements: KycRequirement[] = [
-    {
-      id: "isk-account",
-      name: "ISK Account",
-      requiredLevel: KycLevel.STANDARD,
-      description: "Opening an ISK account requires identity verification"
-    },
-    {
-      id: "large-transfer",
-      name: "Large Transfer",
-      requiredLevel: KycLevel.ENHANCED,
-      description: "Transfers over 50,000 require enhanced verification"
-    },
-    {
-      id: "pension-account",
-      name: "Pension Account",
-      requiredLevel: KycLevel.STANDARD,
-      description: "Opening a pension account requires identity verification"
-    }
-  ];
+  // Store KYC status for the current user
+  private currentUserKycData: KycVerificationData | null = null;
+  
+  // Store KYC requirement status for the current user
+  private kycRequirementCache: Map<string, boolean> = new Map();
   
   // Private constructor for singleton pattern
-  private constructor() {
-    this.initializeKycLevels();
-    console.debug("KycService instance created");
-    
-    // Mock data: Set the user's KYC status
-    this.currentKycLevel = KycLevel.BASIC;
-    this.kycStatus = KycStatus.APPROVED;
-    
-    // Load KYC data from repository on initialization
-    this.loadKycData();
+  private constructor(storage: StorageService, userService: UserService) {
+    console.debug('KycService initialized');
+    this.storage = storage;
+    this.userService = userService;
+    this.loadKycDataFromStorage();
   }
-
+  
   /**
-   * Get the singleton instance
+   * Get KycService instance (singleton)
    */
-  public static getInstance(): KycService {
+  public static getInstance(storage: StorageService, userService: UserService): KycService {
     if (!KycService.instance) {
-      KycService.instance = new KycService();
+      KycService.instance = new KycService(storage, userService);
     }
     return KycService.instance;
   }
-
+  
   /**
-   * Load KYC data from settings repository
+   * Load KYC data from storage for the current user
    */
-  private async loadKycData(): Promise<void> {
+  private loadKycDataFromStorage(): void {
+    const userId = this.userService.getCurrentUser()?.id;
+    if (!userId) {
+      console.warn('Cannot load KYC data: No current user');
+      return;
+    }
+    
     try {
-      const kycData = await this.getKycData();
-      if (kycData) {
-        this.currentKycLevel = kycData.level;
-        this.kycStatus = kycData.status;
-        console.debug('KYC data loaded from repository:', kycData);
+      const allKycData = this.storage.getItem<Record<string, KycVerificationData>>(this.storageKey) || {};
+      this.currentUserKycData = allKycData[userId] || null;
+      
+      if (this.currentUserKycData) {
+        console.debug(`Loaded KYC data for user ${userId}:`, this.currentUserKycData);
+        
+        // Initialize requirement cache from stored data
+        this.kycRequirementCache.clear();
+        if (this.currentUserKycData.requirements) {
+          for (const [req, isCompleted] of Object.entries(this.currentUserKycData.requirements)) {
+            this.kycRequirementCache.set(req, isCompleted);
+          }
+        }
+      } else {
+        console.debug(`No KYC data found for user ${userId}`);
       }
     } catch (error) {
-      console.error('Error loading KYC data:', error);
+      console.error('Error loading KYC data from storage:', error);
     }
   }
-
+  
   /**
-   * Check if the user meets the KYC requirements for a specific action
-   * @param requirementId Identifier for the requirement or level string ('basic', 'standard', etc.)
-   * @returns true if the user meets the requirements, false otherwise
+   * Save KYC data to storage
    */
-  public meetsKycRequirements(requirementId: string): boolean {
-    // First check if this is a specific requirement from our list
-    const requirement = this.kycRequirements.find(r => r.id === requirementId);
-    
-    if (requirement) {
-      // Compare the numeric level values
-      return this.getLevelValue(this.currentKycLevel) >= this.getLevelValue(requirement.requiredLevel);
+  private saveKycDataToStorage(): void {
+    const userId = this.userService.getCurrentUser()?.id;
+    if (!userId || !this.currentUserKycData) {
+      console.warn('Cannot save KYC data: No current user or KYC data');
+      return;
     }
     
-    // If not a specific requirement, check if it's a general level requirement
-    if (!this.kycLevels.has(requirementId)) {
-      console.warn(`Unknown KYC level or requirement requested: ${requirementId}`);
-      return false;
+    try {
+      // Get all KYC data
+      const allKycData = this.storage.getItem<Record<string, KycVerificationData>>(this.storageKey) || {};
+      
+      // Update the current user's data
+      allKycData[userId] = this.currentUserKycData;
+      
+      // Save back to storage
+      this.storage.setItem(this.storageKey, allKycData);
+      console.debug(`Saved KYC data for user ${userId}`);
+    } catch (error) {
+      console.error('Error saving KYC data to storage:', error);
     }
-    
-    // For basic and standard levels in demo mode, always return true
-    if (requirementId === 'basic' || requirementId === 'standard') {
-      return true;
-    }
-    
-    // For advanced and full levels, check if this is a real user (not demo)
-    const user = userService.getCurrentUser();
-    return user?.id !== 'demo-user';
   }
-
+  
   /**
-   * Get the KYC requirement for a specific action
-   */
-  public getKycRequirement(requirementId: string): KycRequirement | null {
-    return this.kycRequirements.find(r => r.id === requirementId) || null;
-  }
-
-  /**
-   * Get the user's current KYC level
+   * Get current KYC verification level for the user
    */
   public getCurrentKycLevel(): KycLevel {
-    return this.currentKycLevel;
+    return this.currentUserKycData?.level || KycLevel.NONE;
   }
-
+  
   /**
-   * Get the current KYC status
+   * Get current KYC verification status for the user
    */
   public getCurrentKycStatus(): KycStatus {
-    return this.kycStatus;
+    return this.currentUserKycData?.status || KycStatus.NONE;
   }
-
+  
   /**
-   * Get the current user's KYC level as a string
-   * @returns The highest KYC level the user meets
+   * Check if the user meets a specific KYC requirement
    */
-  public getUserKycLevel(): string {
-    // For legacy API compatibility
-    const user = userService.getCurrentUser();
-    
-    if (!user) {
-      return 'none';
+  public meetsKycRequirements(requirementId: string): boolean {
+    // First check from cache for performance
+    if (this.kycRequirementCache.has(requirementId)) {
+      const result = this.kycRequirementCache.get(requirementId) || false;
+      console.debug(`KYC requirement check (from cache) for ${requirementId}: ${result}`);
+      return result;
     }
     
-    if (user.id === 'demo-user') {
-      return 'standard';
+    // If not in cache, check from current user's KYC data
+    const meetsRequirement = !!this.currentUserKycData?.requirements?.[requirementId];
+    
+    // Cache the result
+    this.kycRequirementCache.set(requirementId, meetsRequirement);
+    
+    console.debug(`KYC requirement check for ${requirementId}: ${meetsRequirement}`);
+    return meetsRequirement;
+  }
+  
+  /**
+   * Update KYC verification status (e.g. from a verification workflow)
+   */
+  public async updateKycStatus(status: KycStatus, level: KycLevel): Promise<void> {
+    const userId = this.userService.getCurrentUser()?.id;
+    if (!userId) {
+      console.warn('Cannot update KYC status: No current user');
+      return;
     }
     
-    // In a real implementation, this would check verification status
-    // For now, return advanced for non-demo users
-    return 'advanced';
-  }
-
-  /**
-   * Start the KYC process
-   */
-  public async startKycProcess(targetLevel: KycLevel): Promise<boolean> {
-    // In a real app, this would launch the appropriate KYC flow
-    // For now, we'll just simulate it
-    console.debug(`Starting KYC process for level ${targetLevel}...`);
+    console.debug(`Updating KYC status to ${status} at level ${level}`);
     
-    // Return true to indicate the process has started
-    return true;
-  }
-
-  /**
-   * Get the current KYC data for the user from repository
-   */
-  public async getKycData(): Promise<KycData> {
-    const settings = await this.settingsRepo.getCurrentSettings();
-    
-    // If no KYC data exists, return default values
-    if (!settings.kycData) {
-      return {
+    // Initialize KYC data if it doesn't exist
+    if (!this.currentUserKycData) {
+      this.currentUserKycData = {
+        userId,
         level: KycLevel.NONE,
-        status: KycStatus.NOT_STARTED,
-        lastUpdated: new Date().toISOString()
+        status: KycStatus.NONE,
+        requirements: {}
       };
     }
     
-    return settings.kycData;
-  }
-  
-  /**
-   * Update the KYC status in the repository
-   */
-  public async updateKycStatus(status: KycStatus, level: KycLevel): Promise<void> {
-    // Update in-memory state
-    this.kycStatus = status;
-    this.currentKycLevel = level;
+    // Update status and level
+    this.currentUserKycData.status = status;
     
-    // Get current settings
-    const currentSettings = await this.settingsRepo.getCurrentSettings();
-    const currentKycData = currentSettings.kycData || {
-      level: KycLevel.NONE,
-      status: KycStatus.NOT_STARTED,
-      lastUpdated: new Date().toISOString()
-    };
-    
-    // Update the KYC data
-    const updatedKycData: KycData = {
-      ...currentKycData,
-      status,
-      level,
-      lastUpdated: new Date().toISOString()
-    };
-    
-    // Save to settings repository
-    await this.settingsRepo.updateSettings({
-      kycData: updatedKycData
-    });
-    
-    console.debug('KYC status updated:', updatedKycData);
-    
-    // Dispatch event for KYC status change
-    document.dispatchEvent(new CustomEvent('kyc-status-changed', {
-      bubbles: true,
-      composed: true,
-      detail: { status, level }
-    }));
-  }
-  
-  /**
-   * Save the full KYC verification data
-   */
-  public async saveKycVerificationData(data: KYCCompletionData, level: KycLevel): Promise<void> {
-    // Get current settings
-    const currentSettings = await this.settingsRepo.getCurrentSettings();
-    const currentKycData = currentSettings.kycData || {
-      level: KycLevel.NONE,
-      status: KycStatus.NOT_STARTED,
-      lastUpdated: new Date().toISOString()
-    };
-    
-    // Create updated KYC data with personal information
-    const updatedKycData: KycData = {
-      ...currentKycData,
-      level,
-      status: data.verificationStatus as unknown as KycStatus,
-      lastUpdated: new Date().toISOString(),
-      personalInfo: data.personalInfo,
-      documents: {
-        idDocumentName: data.uploadedFileName
-      }
-    };
-    
-    // Update in-memory state
-    this.kycStatus = updatedKycData.status;
-    this.currentKycLevel = updatedKycData.level;
-    
-    // Save to settings repository
-    await this.settingsRepo.updateSettings({
-      kycData: updatedKycData
-    });
-    
-    console.debug('KYC verification data saved:', updatedKycData);
-  }
-  
-  /**
-   * Check if the user needs to complete KYC for a specific level
-   */
-  public async isKycRequired(requiredLevel: KycLevel): Promise<boolean> {
-    const kycData = await this.getKycData();
-    
-    // If current level is below required or current status isn't approved
-    if (
-      this.getLevelValue(kycData.level) < this.getLevelValue(requiredLevel) ||
-      (kycData.status !== KycStatus.APPROVED && kycData.level !== KycLevel.NONE)
-    ) {
-      return true;
+    // Only upgrade the level, never downgrade
+    if (this.getLevelValue(level) > this.getLevelValue(this.currentUserKycData.level)) {
+      this.currentUserKycData.level = level;
     }
     
-    return false;
+    // Set last verification date
+    this.currentUserKycData.lastVerified = new Date().toISOString();
+    
+    // Set expiration date (e.g. 1 year from now)
+    const expiryDate = new Date();
+    expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+    this.currentUserKycData.expiresAt = expiryDate.toISOString();
+    
+    // Save updated data
+    this.saveKycDataToStorage();
   }
   
   /**
-   * Get a numeric value for KYC level for comparison
+   * Convert KYC level enum to numeric value for comparison
    */
   private getLevelValue(level: KycLevel): number {
-    const levels = {
-      [KycLevel.NONE]: 0,
-      [KycLevel.BASIC]: 1,
-      [KycLevel.STANDARD]: 2,
-      [KycLevel.ENHANCED]: 3
-    };
-    
-    return levels[level] || 0;
-  }
-
-  /**
-   * Initialize KYC levels with their requirements
-   */
-  private initializeKycLevels(): void {
-    // Basic KYC - email verification only
-    this.kycLevels.set('basic', ['email_verified']);
-    
-    // Standard KYC - email + ID verification
-    this.kycLevels.set('standard', ['email_verified', 'id_verified']);
-    
-    // Advanced KYC - email + ID + address verification
-    this.kycLevels.set('advanced', ['email_verified', 'id_verified', 'address_verified']);
-    
-    // Full KYC - comprehensive verification including financial history
-    this.kycLevels.set('full', [
-      'email_verified', 
-      'id_verified', 
-      'address_verified', 
-      'income_verified', 
-      'financial_history_verified'
-    ]);
+    switch (level) {
+      case KycLevel.NONE: return 0;
+      case KycLevel.BASIC: return 1;
+      case KycLevel.STANDARD: return 2;
+      case KycLevel.ENHANCED: return 3;
+      default: return 0;
+    }
   }
   
   /**
-   * Check if a specific verification has been completed
-   * @param verificationType Type of verification to check
-   * @returns True if the verification has been completed
+   * Save KYC verification data 
+   * This should be called after a successful verification process
    */
-  public hasVerification(verificationType: string): boolean {
-    // In a real implementation, this would check specific verifications
-    // For demo purposes, we'll assume some basic verifications
-    
-    const commonVerifications = ['email_verified', 'id_verified'];
-    if (commonVerifications.includes(verificationType)) {
-      return true;
+  public async saveKycVerificationData(data: KYCCompletionData, level: KycLevel): Promise<void> {
+    const userId = this.userService.getCurrentUser()?.id;
+    if (!userId) {
+      console.warn('Cannot save KYC verification data: No current user');
+      return;
     }
     
-    // More advanced verifications only for non-demo users
-    const user = userService.getCurrentUser();
-    if (user?.id !== 'demo-user') {
-      const advancedVerifications = ['address_verified'];
-      if (advancedVerifications.includes(verificationType)) {
-        return true;
-      }
+    console.debug(`Saving KYC verification data at level ${level}:`, data);
+    
+    // Initialize KYC data if it doesn't exist
+    if (!this.currentUserKycData) {
+      this.currentUserKycData = {
+        userId,
+        level: KycLevel.NONE,
+        status: KycStatus.NONE,
+        requirements: {}
+      };
     }
     
-    return false;
+    // Initialize requirements object if needed
+    if (!this.currentUserKycData.requirements) {
+      this.currentUserKycData.requirements = {};
+    }
+    
+    // Set appropriate requirements as met based on the level
+    if (level === KycLevel.BASIC || level === KycLevel.STANDARD || level === KycLevel.ENHANCED) {
+      this.currentUserKycData.requirements['basic-customer'] = true;
+      this.kycRequirementCache.set('basic-customer', true);
+    }
+    
+    if (level === KycLevel.STANDARD || level === KycLevel.ENHANCED) {
+      // Add specific product KYC requirements (typical ones)
+      this.currentUserKycData.requirements['standard-customer'] = true;
+      this.currentUserKycData.requirements['isk-account'] = true;
+      this.currentUserKycData.requirements['pension-account'] = true;
+      this.currentUserKycData.requirements['loan-applicant'] = true;
+      
+      // Update cache
+      this.kycRequirementCache.set('standard-customer', true);
+      this.kycRequirementCache.set('isk-account', true);
+      this.kycRequirementCache.set('pension-account', true);
+      this.kycRequirementCache.set('loan-applicant', true);
+      
+      console.debug('Set standard KYC requirements as met');
+    }
+    
+    if (level === KycLevel.ENHANCED) {
+      this.currentUserKycData.requirements['enhanced-customer'] = true;
+      this.currentUserKycData.requirements['mortgage-applicant'] = true;
+      
+      // Update cache
+      this.kycRequirementCache.set('enhanced-customer', true);
+      this.kycRequirementCache.set('mortgage-applicant', true);
+      
+      console.debug('Set enhanced KYC requirements as met');
+    }
+    
+    // Save updated data
+    this.saveKycDataToStorage();
+  }
+  
+  /**
+   * Check if a user needs to complete KYC to use a specific product
+   */
+  public needsKycForProduct(product: { requiresKyc?: boolean, kycRequirementId?: string }): boolean {
+    if (!product.requiresKyc || !product.kycRequirementId) {
+      return false;
+    }
+    
+    return !this.meetsKycRequirements(product.kycRequirementId);
+  }
+  
+  /**
+   * Reset KYC status (for testing/development)
+   */
+  public resetKycStatus(): void {
+    const userId = this.userService.getCurrentUser()?.id;
+    if (!userId) {
+      console.warn('Cannot reset KYC status: No current user');
+      return;
+    }
+    
+    this.currentUserKycData = {
+      userId,
+      level: KycLevel.NONE,
+      status: KycStatus.NONE,
+      requirements: {}
+    };
+    
+    this.kycRequirementCache.clear();
+    this.saveKycDataToStorage();
+    console.debug('KYC status reset for current user');
   }
 }
 
-// Export a singleton instance
-export const kycService = KycService.getInstance();
+// Create and export a singleton KycService instance
+export const kycService = KycService.getInstance(storageService, userService);
 

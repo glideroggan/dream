@@ -281,6 +281,7 @@ export class KycWorkflow extends WorkflowBase {
   @observable isProcessing: boolean = false;
   @observable requiredKycLevel: KycLevel = KycLevel.STANDARD;
   @observable requiredReason: string = "";
+  @observable kycRequirementId: string | undefined = undefined;
   
   initialize(params?: Record<string, any>): void {
     // Set initial title but now change the cancel button text to "Back"
@@ -296,6 +297,11 @@ export class KycWorkflow extends WorkflowBase {
     
     if (params?.reason) {
       this.requiredReason = params.reason;
+    }
+    
+    if (params?.kycRequirementId) {
+      this.kycRequirementId = params.kycRequirementId;
+      console.debug(`KYC workflow initialized with requirement ID: ${this.kycRequirementId}`);
     }
     
     // Validate the first step
@@ -538,10 +544,11 @@ export class KycWorkflow extends WorkflowBase {
         );
       })
       .then(() => {
-        // Complete the workflow with success
+        // Complete the workflow with success, including the requirement ID if we have it
         this.complete(true, {
           verificationStatus: 'pending',
-          level: this.requiredKycLevel
+          level: this.requiredKycLevel,
+          kycRequirementId: this.kycRequirementId
         }, "Identity verification submitted successfully");
       })
       .catch(error => {
