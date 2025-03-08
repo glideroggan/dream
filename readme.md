@@ -1,4 +1,5 @@
 # BUGS
+- looks like there are some mocks in the loan-service file
 - the transaction signing is not so nice, the style of it should improve
 - need toast error when failing to start a workflow
 - when there is only one choice from the search inputs, enter key should select it
@@ -11,6 +12,38 @@
 - all the amounts, should be positive, and instead the type of the transaction should be the one that decides if it is showing as a negative value or not
 - the button in the bottom in financial health widget is unstyled
 - can't use keyboard in transfer workflow
+
+# FEATURES
+
+## new workflows
+- ✔️a signing workflow
+  - ✔️make it look like mobile bankid
+  - ✔️make use of it in the "take a loan" workflow
+- edit payment contacts
+  Doesn't need to be a "page", can just be a workflow, showing different buttons for doing things
+    - edit
+    - add
+    - remove
+  Once done, it goes away
+## interval based tasks
+Would be nice to get a bit more things happening, if we could do like in the life cycle service, but for other things, like loan due payments coming in, then it would actually look like a real bank account
+- transaction simulation
+- create a simulation of card activation by letting the card go through the activation process
+  - create a lifecycleService for cards
+    - it should save the time of the last step
+    - when active on the site, the simulation should run, start from main
+    - steps
+      - pending
+      - processing
+      - approved
+      - shipped
+      - delivered
+        - should cause an event, so that user can now activate the card
+        - should show a toast
+
+# TODO
+## account info
+- account info workflow, needs an empty/default state when no account is selected
 ## transfer workflow
 - transfers should be able to be scheduled
   - create a repo for scheduled transfers
@@ -24,6 +57,7 @@
 ## search
   - pressing esc should remove text from search, and remove the search results
 ## financial-health-widget
+- the goals are created on the accounts? they should be separate entities
   - when there is more than 1 recommendation, you can't see it
 ## create account workflow
   - it could be wider, so that when selecting an account, you get the description of the account to the right
@@ -32,20 +66,12 @@
     - fixed with toast?
   - clicking on a connected card should take you to the card-detail-workflow
 ## card workflow
-- create a simulation of card activation by letting the card go through the activation process
-  - create a lifecycleService for cards
-    - it should save the time of the last step
-    - when active on the site, the simulation should run, start from main
-    - steps
-      - pending
-      - processing
-      - approved
-      - shipped
-      - delivered
-        - should cause an event, so that user can now activate the card
-        - should show a toast
+- the workflow seems to have some default KYC values, we should make sure we take the KYC data from the service
+
 ## KYC workflow
   - probably should sign that kyc with the signing workflow
+
+
 
 
 # TODO
@@ -72,24 +98,12 @@
 - should there be a single insight/recommendation in the header of the account widget?
   that can sum the entire thing up?
 
-# account info
-- ✔️make account details show more information about the account
-- account info workflow, needs an empty/default state when no account is selected
-- ✔️rename function of the account, in account details
+
 
 # financial health widget
 - score should be nicer
 
-# new workflows
-- a signing workflow
-  - make it look like mobile bankid
-  - make use of it in the "take a loan" workflow
-- edit payment contacts
-  Doesn't need to be a "page", can just be a workflow, showing different buttons for doing things
-    - edit
-    - add
-    - remove
-  Once done, it goes away
+
 
 # workflow
 - maybe pinnable?

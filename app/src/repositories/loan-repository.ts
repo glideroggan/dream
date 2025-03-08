@@ -1,26 +1,8 @@
 import { StorageService } from "../services/storage-service";
 import { UserService } from "../services/user-service";
-import { LoanStatus, LoanType } from "../services/loan-service";
 import { Entity, LocalStorageRepository } from "./base-repository";
 import { generateMockLoans } from "./mock/loan-mock";
-
-export interface Loan extends Entity {
-  id: string;
-  productId: string; // Reference to the product
-  type: LoanType;
-  amount: number;
-  term: number;
-  interestRate: number;
-  monthlyPayment: number;
-  totalInterest: number;
-  purpose: string;
-  createdAt: string;
-  updatedAt: string;
-  status: LoanStatus;
-  accountId: string;
-  signatureId?: string;
-  applicationData?: Record<string, any>;
-}
+import { Loan, LoanStatus, LoanType } from "./models/loan-models";
 
 export class LoanRepository extends LocalStorageRepository<Loan> {
   constructor(storage: StorageService, userService: UserService) {

@@ -1,4 +1,4 @@
-import { Transaction } from "../../repositories/transaction-repository";
+import { Transaction } from "../../repositories/models/transaction-models";
 import { TransactionViewModel } from "./transaction-list-component";
 
 /**

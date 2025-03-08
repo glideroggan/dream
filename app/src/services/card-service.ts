@@ -2,7 +2,7 @@ import { kycService } from './kyc-service';
 import { productService } from './product-service';
 import { userService } from './user-service';
 import { repositoryService } from './repository-service';
-import { Account } from '../repositories/account-repository';
+import { Account } from '../repositories/models/account-models';
 import { ProductEntityType } from '../repositories/product-repository';
 import { Card, CardProduct, CardRequirement, CardRequestData, CardServiceResult, CardType } from '../repositories/models/card-models';
 

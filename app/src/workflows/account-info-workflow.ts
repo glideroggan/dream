@@ -8,9 +8,9 @@ import {
   when,
   ref,
 } from '@microsoft/fast-element'
-import { Account } from '../repositories/account-repository'
 import { WorkflowBase } from './workflow-base'
 import { repositoryService } from '../services/repository-service'
+import { Account } from '../repositories/models/account-models'
 
 const template = html<AccountInfoWorkflow>/*html*/ `
   ${when(

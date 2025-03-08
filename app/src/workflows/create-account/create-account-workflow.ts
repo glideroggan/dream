@@ -10,8 +10,8 @@ import {
 import { WorkflowBase, WorkflowResult } from '../workflow-base'
 import { kycService, KycLevel } from '../../services/kyc-service'
 import { repositoryService } from '../../services/repository-service'
-import { Account } from '../../repositories/account-repository'
 import { ProductEntity, ProductEntityType, ProductRepository } from '../../repositories/product-repository'
+import { Account } from '../../repositories/models/account-models'
 
 // Define account types
 export interface CreateAccountType extends Omit<Account, 'balance'| 'currency'| 'accountNumber'|'isActive'|'createdAt'> {
@@ -494,6 +494,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
   async initialize(params?: Record<string, any>): Promise<void> {
     console.log('Initializing create account workflow with params:', params)
     // Set initial title and footer
+    this.setModalWidth('500px')
     this.updateTitle('Create New Account')
     this.updateFooter(true, 'Create Account')
 

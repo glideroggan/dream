@@ -1,4 +1,4 @@
-import { Account } from '../account-repository';
+import { Account } from '../models/account-models';
 
 /**
  * Mock accounts for the demo user (full featured)

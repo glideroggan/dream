@@ -1,68 +1,14 @@
 import { repositoryService } from './repository-service';
 import { userService } from './user-service';
-import { Loan } from '../repositories/loan-repository';
 import { ProductEntity, ProductEntityType } from '../repositories/product-repository';
-
-// Loan types available
-export enum LoanType {
-  PERSONAL = 'personal',
-  MORTGAGE = 'mortgage',
-  AUTO = 'auto',
-  EDUCATION = 'education',
-  BUSINESS = 'business',
-  LINE_OF_CREDIT = 'line_of_credit',
-  VEHICLE = 'vehicle',  // For backward compatibility with mock data
-  HOME = 'home'         // For backward compatibility with mock data
-}
-
-// Loan status values
-export enum LoanStatus {
-  DRAFT = 'draft',
-  PENDING_APPROVAL = 'pending_approval',
-  APPROVED = 'approved',
-  REJECTED = 'rejected',
-  ACTIVE = 'active',
-  PAID_OFF = 'paid_off',
-  DEFAULTED = 'defaulted'
-}
-
-// Export Loan type from repository for convenience
-export type LoanDetails = Loan;
-
-// Eligibility criteria result
-export interface EligibilityResult {
-  eligible: boolean;
-  maxAmount: number;
-  minAmount: number;
-  reason?: string;
-  recommendedTerm?: number;
-  estimatedRate?: number;
-}
-
-// Loan application interface
-export interface LoanApplication {
-  productId: string;
-  type: LoanType;
-  amount: number;
-  term: number;
-  purpose: string;
-  applicantData?: Record<string, any>;
-}
-
-// Loan calculation result interface
-export interface LoanCalculationResult {
-  monthlyPayment: number;
-  totalInterest: number;
-  totalPayment: number;
-  interestRate: number;
-  amortizationSchedule?: Array<{
-    paymentNumber: number;
-    paymentAmount: number;
-    principalAmount: number;
-    interestAmount: number;
-    remainingBalance: number;
-  }>;
-}
+import { 
+  Loan, 
+  LoanType, 
+  LoanStatus, 
+  LoanApplication, 
+  EligibilityResult, 
+  LoanCalculationResult 
+} from '../repositories/models/loan-models';
 
 /**
  * Loan service to handle loan operations
@@ -245,7 +191,7 @@ export class LoanService {
     term: number,
     purpose?: string,
     productId?: string
-  ): Promise<LoanDetails> {
+  ): Promise<Loan> {
     try {
       // Get loan repository
       const loanRepo = repositoryService.getLoanRepository();
@@ -275,7 +221,7 @@ export class LoanService {
   /**
    * Submit loan application for approval
    */
-  async submitLoanApplication(loanId: string): Promise<LoanDetails> {
+  async submitLoanApplication(loanId: string): Promise<Loan> {
     try {
       const loanRepo = repositoryService.getLoanRepository();
       const updatedLoan = await loanRepo.updateLoanStatus(loanId, LoanStatus.PENDING_APPROVAL);

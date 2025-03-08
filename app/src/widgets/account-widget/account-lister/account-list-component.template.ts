@@ -1,7 +1,7 @@
 import { html, when, repeat } from "@microsoft/fast-element";
 import { AccountInsight } from "../../../helpers/account-insights-helper";
-import { Account } from "../../../repositories/account-repository";
 import { AccountListComponent } from "./account-list-component";
+import { Account } from "../../../repositories/models/account-models";
 
 export const template = html<AccountListComponent>/*html*/ `
   <div class="accounts-list">

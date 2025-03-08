@@ -45,6 +45,7 @@ export class TransferWorkflow extends WorkflowBase {
   async initialize(params?: Record<string, any>): Promise<void> {
     console.debug("Initializing TransferWorkflow with params:", params);
     
+    this.setModalWidth('500px')
     this.updateTitle("Transfer Money");
     this.updateFooter(true, "Continue");
     

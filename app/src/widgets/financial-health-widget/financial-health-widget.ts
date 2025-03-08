@@ -2,8 +2,6 @@ import { FASTElement, customElement, html, css, observable, when } from "@micros
 import { repositoryService } from "../../services/repository-service";
 import { workflowManager } from "../../services/workflow-manager-service";
 import { WorkflowIds } from "../../workflows/workflow-registry";
-import { Account } from "../../repositories/account-repository";
-import { Transaction } from "../../repositories/transaction-repository";
 
 // Import components
 import "./components/health-score-component";
@@ -18,6 +16,8 @@ import { SavingsGoal } from "./components/savings-rate-component";
 import { AccountTypeData, AccountTypeMapItem } from "./components/net-worth-component";
 import { DataPoint } from "./components/monthly-spending-chart";
 import { CategoryExpense } from "./components/expense-categories-chart";
+import { Account } from "../../repositories/models/account-models";
+import { Transaction } from "../../repositories/models/transaction-models";
 
 
 const template = html<FinancialHealthWidget>/*html*/ `

@@ -1,7 +1,7 @@
 import { FASTElement, customElement, html, css, observable, repeat, when } from "@microsoft/fast-element";
-import { Transaction } from "../../repositories/transaction-repository";
 import { TransactionViewModelHelper } from "./transaction-view-model-helper";
 import { repositoryService } from "../../services/repository-service";
+import { Transaction } from "../../repositories/models/transaction-models";
 
 export interface TransactionViewModel extends Transaction {
   isIncoming: boolean;

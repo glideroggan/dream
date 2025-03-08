@@ -1,15 +1,15 @@
 import { FASTElement, customElement, html, css, observable, repeat, when } from "@microsoft/fast-element";
 import { TransactionViewModel } from "../transaction-list-component";
-import { Account } from "../../../repositories/account-repository";
 import { repositoryService } from "../../../services/repository-service";
 import { cardService } from "../../../services/card-service";
 import { TransactionViewModelHelper } from "../transaction-view-model-helper";
-import { Transaction } from "../../../repositories/transaction-repository";
 import { AccountInsightsHelper, AccountInsight } from "../../../helpers/account-insights-helper";
 import { template } from "./account-list-component.template";
 import { styles } from "./account-list-component.css";
 import { WorkflowIds } from "../../../workflows/workflow-registry";
 import { workflowManager } from "../../../services/workflow-manager-service";
+import { Account } from "../../../repositories/models/account-models";
+import { Transaction } from "../../../repositories/models/transaction-models";
 
 @customElement({
   name: "account-list",

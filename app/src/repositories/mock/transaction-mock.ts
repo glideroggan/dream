@@ -1,4 +1,8 @@
-import { Transaction, TransactionStatuses, TransactionTypes } from '../transaction-repository';
+import { 
+  Transaction, 
+  TransactionStatuses, 
+  TransactionTypes 
+} from '../models/transaction-models';
 import { generateUUID } from '../../utilities/id-generator';
 
 // Helper functions - reused by both demo and established user transaction generators

@@ -1,14 +1,15 @@
-import { customElement, html, css, observable, when } from "@microsoft/fast-element";
-import { WorkflowBase, WorkflowResult } from "../workflow-base";
-import { loanService, LoanType, LoanDetails, EligibilityResult, LoanStatus } from "../../services/loan-service";
+import { customElement, observable } from "@microsoft/fast-element";
+import { WorkflowBase } from "../workflow-base";
+import { loanService } from "../../services/loan-service";
 import { repositoryService } from "../../services/repository-service";
 import { ProductEntity, ProductEntityType } from "../../repositories/product-repository";
 import { WorkflowIds } from "../workflow-registry";
-import { Account } from "../../repositories/account-repository";
 
 // Include template and styles
 import { template } from "./loan-workflow.template";
 import { styles } from "./loan-workflow.styles";
+import { Account } from "../../repositories/models/account-models";
+import { LoanType, EligibilityResult, LoanDetails } from "../../repositories/models/loan-models";
 
 @customElement({
   name: "loan-workflow",

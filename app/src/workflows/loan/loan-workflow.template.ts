@@ -1,6 +1,5 @@
 import { html, repeat } from "@microsoft/fast-element";
 import { LoanWorkflow } from "./loan-workflow";
-import { LoanType } from "../../services/loan-service";
 import { when } from "@microsoft/fast-element";
 import { ProductEntity } from "../../repositories/product-repository";
 import { getProductIcon, getInterestRateDisplay } from "./loan-workflow.helper";

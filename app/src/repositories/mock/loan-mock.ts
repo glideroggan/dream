@@ -1,5 +1,4 @@
-import { Loan } from '../loan-repository';
-import { LoanStatus, LoanType } from '../../services/loan-service';
+import { Loan, LoanStatus, LoanType } from '../models/loan-models';
 import { generateUUID } from '../../utilities/id-generator';
 
 /**

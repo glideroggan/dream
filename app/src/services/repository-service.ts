@@ -1,7 +1,7 @@
 import { storageService } from './storage-service';
 import { userService } from './user-service';
 import { AccountRepository } from '../repositories/account-repository';
-import { TransactionRepository, TransactionStatuses, TransactionTypes } from '../repositories/transaction-repository';
+import { TransactionRepository } from '../repositories/transaction-repository';
 import { ProductRepository } from '../repositories/product-repository';
 import { SettingsRepository } from '../repositories/settings-repository';
 import { LoanRepository } from '../repositories/loan-repository';
@@ -111,6 +111,3 @@ class RepositoryService {
 export const repositoryService = new RepositoryService();
 // create repositories right away
 repositoryService.intialize();
-
-// Re-export the constants for backwards compatibility
-export { TransactionStatuses, TransactionTypes };

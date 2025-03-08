@@ -1,4 +1,4 @@
-import { Account } from "../repositories/account-repository";
+import { Account } from "../repositories/models/account-models";
 
 export interface AccountInsight {
   type: string;

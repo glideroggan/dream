@@ -4,8 +4,8 @@ import { WorkflowIds } from "../../workflows/workflow-registry";
 import "./account-lister/account-list-component";
 import "./transaction-list-component";
 import { workflowManager } from "../../services/workflow-manager-service";
-import { Account } from "../../repositories/account-repository";
 import { BaseWidget } from "../../components/base-widget";
+import { Account } from "../../repositories/models/account-models";
 
 const template = html<AccountWidget>/*html*/ `
   <div class="account-widget">
