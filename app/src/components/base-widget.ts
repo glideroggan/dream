@@ -1,4 +1,5 @@
 import { FASTElement, observable } from "@microsoft/fast-element";
+import { workflowManager } from "../services/workflow-manager-service";
 
 /**
  * Base class for widget components that provides common functionality and styling.
@@ -20,6 +21,9 @@ export class BaseWidget extends FASTElement {
    */
   @observable errorMessage: string = "";
 
+  protected initialized: boolean = false;
+  protected error: Error | null = null;
+
   connectedCallback(): void {
     super.connectedCallback();
     
@@ -36,6 +40,7 @@ export class BaseWidget extends FASTElement {
    */
   protected notifyInitialized(): void {
     this.isLoading = false;
+    this.initialized = true;
     
     // Dispatch initialized event for the widget wrapper
     this.dispatchEvent(new CustomEvent('initialized', {
@@ -51,6 +56,7 @@ export class BaseWidget extends FASTElement {
   protected handleError(error: Error | string): void {
     this.hasError = true;
     this.isLoading = false;
+    this.error = typeof error === 'string' ? new Error(error) : error;
     
     if (error instanceof Error) {
       this.errorMessage = error.message;
@@ -75,14 +81,14 @@ export class BaseWidget extends FASTElement {
    * @param params Optional parameters to pass to the workflow
    */
   protected startWorkflow(workflowId: string, params?: Record<string, any>): void {
-    this.dispatchEvent(new CustomEvent("start-workflow", {
-      bubbles: true,
-      composed: true,
-      detail: {
-        workflowId,
-        params
-      }
-    }));
+    try {
+      console.debug(`Starting workflow ${workflowId}`);
+      // This kicks off the workflow but doesn't return a result
+      workflowManager.startWorkflow(workflowId, params);
+    } catch (error) {
+      console.error(`Error starting workflow ${workflowId}:`, error);
+      this.handleError(error instanceof Error ? error : String(error));
+    }
   }
   
   /**
