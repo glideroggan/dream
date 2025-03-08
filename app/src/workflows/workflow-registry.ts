@@ -28,6 +28,7 @@ export const WorkflowIds = {
   SIGNING: "signing", // Add signing workflow ID
   LOAN: "loan", // Add loan workflow ID
   CARD: "card", // Add card workflow ID
+  CARD_DETAIL: "card-detail", // Add card detail workflow ID
 };
 
 // Define all available workflows
@@ -148,6 +149,16 @@ const workflowDefinitions: WorkflowDefinition[] = [
     searchable: true,
     popular: true,
     keywords: ['loan', 'borrow', 'mortgage', 'credit', 'financing', 'personal loan', 'home loan', 'car loan'],
+  },
+  {
+    id: WorkflowIds.CARD_DETAIL,
+    name: "Card Details",
+    description: "View and manage card details",
+    elementName: "card-detail-workflow",
+    module: "@workflows/card-detail",
+    icon: "💳",
+    searchable: false, // Not searchable directly, but accessible from card listings
+    keywords: ['card', 'card details', 'manage card', 'freeze card', 'card info'],
   },
 ];
 

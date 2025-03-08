@@ -1,7 +1,7 @@
 import { Entity, LocalStorageRepository } from './base-repository';
 import { StorageService } from '../services/storage-service';
 import { UserService } from '../services/user-service';
-import { generateMockTransactions, getMockTransactionsByUserType } from './mock/transaction-mock';
+import { getMockTransactionsByUserType } from './mock/transaction-mock';
 
 // Change enum to union type
 export type TransactionStatus = 'completed' | 'pending' | 'failed' | 'upcoming' | 'cancelled';

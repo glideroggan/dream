@@ -296,7 +296,7 @@ export class WorkflowManagerService {
 
     // Access the private method directly using type assertion
     // This is safe since we're in control of both implementations
-    const success = (this.modalComponent as any).loadWorkflowElement(workflowElement);
+    const success = (this.modalComponent as any).loadWorkflowElement(workflowElement, params);
     
     if (!success) {
       console.error("Failed to load workflow element into modal");

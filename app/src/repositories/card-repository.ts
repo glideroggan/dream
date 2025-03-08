@@ -4,7 +4,7 @@ import { Entity, LocalStorageRepository } from "./base-repository";
 import { generateMockCards } from "./mock/card-mock";
 
 export type CardType = 'debit' | 'credit' | 'prepaid' | 'virtual' | 'corporate' | 'gift';
-export type CardStatus = 'active' | 'blocked' | 'expired' | 'pending' | 'suspended' | 'canceled';
+export type CardStatus = 'active' | 'blocked' | 'expired' | 'pending' | 'suspended' | 'canceled' | 'frozen' | 'lost' | 'stolen';
 export type CardNetwork = 'visa' | 'mastercard' | 'amex' | 'discover' | 'unionpay' | 'other';
 
 export interface Card extends Entity {

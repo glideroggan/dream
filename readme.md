@@ -1,28 +1,10 @@
 # BUGS
-- account info
-  - should tell if there are any cards connected to the account
-- ✔️card workflow
-  - ✔️completing the create account workflow, doesn't update the validation on the card workflow
-- KYC
-  - probably should sign that kyc with the signing workflow
-- new user
-  - we need a debug button for adding money to a new account
+- ✔️new user
+  - ✔️we need a debug button for adding money to a new account
     Maybe it can just a a function we can call from debug window
-- search
-  - pressing esc should remove text from search, and remove the search results
-- account widget
-  - transfer button does nothing in widget empty state
-    - fixed with toast?
-- the loan workflow
-  - home loan
-    - shouldn't have the length of the loan in months, should already be set over a specific time
-    - shouldn't have a purpose
-  - purpose dropdown doesn't show any options
-  - doesn't show any of my accounts to deposit the loan into
 - the transaction signing is not so nice, the style of it should improve
 - need toast error when failing to start a workflow
 - ✔️Transaction list doesn't update after adding a new transaction
-- transfers should be able to be scheduled
 - when there is only one choice from the search inputs, enter key should select it
 - payment contact search doesn't tab through the results
 - favorite checkbox doesn't work on add payment contact
@@ -35,6 +17,32 @@
 - all the amounts, should be positive, and instead the type of the transaction should be the one that decides if it is showing as a negative value or not
 - the button in the bottom in financial health widget is unstyled
 - can't use keyboard in transfer workflow
+## transfer workflow
+- transfers should be able to be scheduled
+  - create a repo for scheduled transfers
+    these would be checked at intervals, and then processed, if "late" then just change created date to when it were supposed to be processed
+## the loan workflow
+  - home loan
+    - shouldn't have the length of the loan in months, should already be set over a specific time
+    - shouldn't have a purpose
+  - purpose dropdown doesn't show any options
+  - doesn't show any of my accounts to deposit the loan into
+## search
+  - pressing esc should remove text from search, and remove the search results
+## financial-health-widget
+  - when there is more than 1 recommendation, you can't see it
+## create account workflow
+  - it could be wider, so that when selecting an account, you get the description of the account to the right
+## account-widget
+  - transfer button does nothing in widget empty state
+    - fixed with toast?
+  - clicking on a connected card should take you to the card-detail-workflow
+  - ✔️should tell if there are any cards connected to the account
+## card workflow
+  - ✔️completing the create account workflow, doesn't update the validation on the card workflow
+## KYC workflow
+  - probably should sign that kyc with the signing workflow
+
 
 # TODO
 - can we include some colors?

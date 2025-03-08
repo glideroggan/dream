@@ -24,14 +24,30 @@ export class BaseWidget extends FASTElement {
   protected initialized: boolean = false;
   protected error: Error | null = null;
 
+  private startWorkflowHandler = this.workflowHandler.bind(this);
+
   connectedCallback(): void {
     super.connectedCallback();
     
+    // this.addEventListener('start-workflow', this.startWorkflowHandler);
+
     // Signal that we've connected to the DOM
     this.dispatchEvent(new CustomEvent('widget-connected', {
       bubbles: true,
       composed: true
     }));
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    
+    // this.removeEventListener('start-workflow', this.startWorkflowHandler);
+  }
+
+  private workflowHandler(event: Event): void {
+    event.stopImmediatePropagation()
+    const customEvent = event as CustomEvent;
+    this.startWorkflow(customEvent.detail.workflowId, customEvent.detail.params);
   }
   
   /**

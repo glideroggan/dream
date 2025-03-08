@@ -94,6 +94,7 @@ export class WorkflowService {
     this.registerWorkflow('swish', { tagName: 'swish-workflow' });
     this.registerWorkflow('add-contact', { tagName: 'add-contact-workflow' });
     this.registerWorkflow('card', { tagName: 'card-workflow' });
+    this.registerWorkflow('card-detail', { tagName: 'card-detail-workflow' });
   }
 
 }

@@ -492,6 +492,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
   }
 
   async initialize(params?: Record<string, any>): Promise<void> {
+    console.log('Initializing create account workflow with params:', params)
     // Set initial title and footer
     this.updateTitle('Create New Account')
     this.updateFooter(true, 'Create Account')

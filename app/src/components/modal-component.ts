@@ -420,7 +420,7 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
         return true;
       } else {
         // Handle pre-created elements (this path should be used mainly by the workflow manager)
-        return this.loadWorkflowElement(workflowIdOrElement);
+        return this.loadWorkflowElement(workflowIdOrElement, params);
       }
     } catch (error) {
       console.error(`Error loading workflow:`, error);
@@ -432,9 +432,9 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
    * Private method to load workflow elements
    * This should only be called by the workflow manager
    */
-  private loadWorkflowElement(workflowElement: HTMLElement): boolean {
+  private loadWorkflowElement(workflowElement: HTMLElement, params: Record<string, any> | undefined): boolean {
     try {
-      console.debug('[modal] Loading workflow element:', workflowElement);
+      console.log('[modal] Loading workflow element:', workflowElement);
 
       // Clear any existing workflow
       this.clearWorkflow(this.activeWorkflow !== null);
@@ -461,7 +461,7 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
 
       // Now initialize the workflow if needed (this will set the correct footer state)
       if (typeof (this.activeWorkflow as any).initialize === 'function') {
-        (this.activeWorkflow as any).initialize();
+        (this.activeWorkflow as any).initialize(params);
       }
       
       // Set focus after a short delay to ensure DOM is rendered

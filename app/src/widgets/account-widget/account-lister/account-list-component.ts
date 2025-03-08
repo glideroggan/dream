@@ -8,6 +8,8 @@ import { Transaction } from "../../../repositories/transaction-repository";
 import { AccountInsightsHelper, AccountInsight } from "../../../helpers/account-insights-helper";
 import { template } from "./account-list-component.template";
 import { styles } from "./account-list-component.css";
+import { WorkflowIds } from "../../../workflows/workflow-registry";
+import { workflowManager } from "../../../services/workflow-manager-service";
 
 @customElement({
   name: "account-list",
@@ -28,7 +30,7 @@ export class AccountListComponent extends FASTElement {
 
   // Cache for account insights
   private accountInsightsCache: Map<string, AccountInsight[]> = new Map();
-  
+
   // Track accounts with cards
   private accountsWithCards: Set<string> = new Set();
 
@@ -150,14 +152,14 @@ export class AccountListComponent extends FASTElement {
     try {
       // Get all cards
       const cards = await cardService.getAllCards();
-      
+
       // Associate cards with accounts
       for (const card of cards) {
         if (card.accountId) {
           this.accountsWithCards.add(card.accountId);
         }
       }
-      
+
       console.debug(`Found ${this.accountsWithCards.size} accounts with cards`);
     } catch (error) {
       console.error('Error loading cards data:', error);
@@ -176,7 +178,7 @@ export class AccountListComponent extends FASTElement {
   }
 
   private handleAccountUpdated(account: Account): void {
-    this.accounts = this.accounts.map(a => 
+    this.accounts = this.accounts.map(a =>
       a.id === account.id ? account : a
     );
   }
@@ -392,14 +394,8 @@ export class AccountListComponent extends FASTElement {
    * Handle account click to expand/collapse
    */
   handleAccountClick(account: Account) {
-    // console.debug('Account clicked:', account);
-
     // Toggle expanded state
     this.expandedAccountId = this.expandedAccountId === account.id ? null : account.id;
-
-    // this.dispatchEvent(new CustomEvent('account-toggle', {
-    //   detail: { accountId: account.id, expanded: this.expandedAccountId === account.id }
-    // }));
   }
 
   /**
@@ -416,12 +412,19 @@ export class AccountListComponent extends FASTElement {
   /**
    * Handle card icon click to show card details
    */
-  handleCardClick(account: Account, event: Event) {
+  async handleCardClick(account: Account, event: Event) {
     // Stop event propagation to prevent triggering the account click
     event.stopPropagation();
-    
-    console.debug('Card clicked for account:', account.id);
 
-    // TODO: start workflow to show card details
+    console.log('Card clicked for account:', account.id);
+    // get the associated card
+    const cards = await cardService.getCardsByAccountId(account.id);
+    if (cards.length === 0) {
+      console.warn('No cards found for account:', account.id);
+      return;
+    } else {
+      const result = await workflowManager.startWorkflow(WorkflowIds.CARD_DETAIL, { card: cards[0] });
+    }
+
   }
 }
