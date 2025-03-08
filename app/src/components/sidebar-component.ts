@@ -3,7 +3,7 @@ import { userService } from '../services/user-service';
 import { getSearchService, SearchResultItem, SearchService } from '../services/search-service';
 import { routerService } from '../services/router-service';
 import { appRoutes, routeIcons, routeMetadata } from '../routes/routes-registry';
-import { UserTypes } from '../repositories/user-repository';
+import { UserTypes, UserProfile, UserType } from '../repositories/user-repository';
 
 interface MenuItem {
   id: string;
@@ -34,13 +34,34 @@ const template = html<SidebarComponent>/*html*/`
     </nav>
     
     <div class="sidebar-footer">
-      <div class="user-info">
+      <div class="user-info" @click="${x => x.toggleUserSwitcher()}">
         <div class="avatar">${x => x.userInitials}</div>
         <div class="user-details">
           <div class="user-name">${x => x.userName}</div>
           <div class="user-role">${x => x.userRole}</div>
         </div>
+        <div class="dropdown-indicator">
+          <span class="${x => x.showUserSwitcher ? 'up' : 'down'}">▾</span>
+        </div>
       </div>
+      
+      ${when(x => x.showUserSwitcher, html<SidebarComponent>`
+        <div class="user-switcher">
+          <div class="user-switcher-header">Switch User</div>
+          <ul class="user-list">
+            ${repeat(x => x.availableUsers, html<UserProfile, SidebarComponent>/*html*/`
+              <li class="user-list-item ${(user, c) => user.id === c.parent.currentUserId ? 'active' : ''}" 
+                  @click="${(user, c) => c.parent.switchToUser(user)}">
+                <div class="user-list-avatar">${user => user.firstName.charAt(0) + user.lastName.charAt(0)}</div>
+                <div class="user-list-details">
+                  <div class="user-list-name">${user => user.firstName} ${user => user.lastName}</div>
+                  <div class="user-list-role">${(user, c) => c.parent.getUserRoleLabel(user.type)}</div>
+                </div>
+              </li>
+            `)}
+          </ul>
+        </div>
+      `)}
     </div>
   </div>
 `;
@@ -152,12 +173,21 @@ const styles = css`
   .sidebar-footer {
     padding: 16px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
   }
   
   .user-info {
     display: flex;
     align-items: center;
     gap: 12px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+  }
+  
+  .user-info:hover {
+    background-color: rgba(255, 255, 255, 0.1);
   }
   
   .avatar {
@@ -184,6 +214,88 @@ const styles = css`
     font-size: 12px;
     opacity: 0.8;
   }
+  
+  .dropdown-indicator {
+    margin-left: auto;
+    font-size: 14px;
+    transition: transform 0.2s ease;
+  }
+  
+  .dropdown-indicator .up {
+    display: inline-block;
+    transform: rotate(180deg);
+  }
+  
+  .user-switcher {
+    position: absolute;
+    bottom: 100%;
+    left: 8px;
+    right: 8px;
+    background-color: var(--sidebar-bg, #2c3e50);
+    border-radius: 8px;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+    overflow: hidden;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .user-switcher-header {
+    padding: 12px 16px;
+    font-weight: 500;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+  
+  .user-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .user-list-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    gap: 12px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .user-list-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .user-list-item.active {
+    background-color: var(--primary-color, #3498db);
+  }
+  
+  .user-list-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: var(--primary-color, #3498db);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+  }
+  
+  .user-list-details {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .user-list-name {
+    font-weight: 500;
+    font-size: 14px;
+  }
+  
+  .user-list-role {
+    font-size: 12px;
+    opacity: 0.8;
+  }
 `;
 
 @customElement({
@@ -196,12 +308,17 @@ export class SidebarComponent extends FASTElement {
   @observable userName: string = 'Guest';
   @observable userRole: string = 'Visitor';
   @observable userInitials: string = 'G';
+  @observable showUserSwitcher: boolean = false;
+  @observable availableUsers: UserProfile[] = [];
+  @observable currentUserId: string = '';
 
-  private searchService: SearchService
+  private searchService: SearchService;
+  private clickOutsideHandler: (event: MouseEvent) => void;
 
   constructor() {
-    super()
-    this.searchService = getSearchService()
+    super();
+    this.searchService = getSearchService();
+    this.clickOutsideHandler = this.handleClickOutside.bind(this);
   }
 
   connectedCallback(): void {
@@ -211,6 +328,7 @@ export class SidebarComponent extends FASTElement {
     this.initializeMenuItems();
     
     this.loadUserData();
+    this.loadAvailableUsers();
     
     // Register theme pages with search service
     this.registerThemePagesForSearch();
@@ -260,6 +378,7 @@ export class SidebarComponent extends FASTElement {
     super.disconnectedCallback();
     document.removeEventListener('user-login', this.loadUserData.bind(this));
     document.removeEventListener('user-logout', this.loadUserData.bind(this));
+    document.removeEventListener('click', this.clickOutsideHandler);
     
     // Clean up search registrations
     this.menuItems.forEach(item => {
@@ -313,22 +432,10 @@ export class SidebarComponent extends FASTElement {
     const user = userService.getCurrentUser();
     if (user) {
       this.userName = `${user.firstName} ${user.lastName}`;
+      this.currentUserId = user.id;
       
       // Map user type to a display-friendly role
-      switch (user.type) {
-        case UserTypes.PREMIUM:
-          this.userRole = 'Premium Member';
-          break;
-        case UserTypes.ESTABLISHED:
-          this.userRole = 'Member';
-          break;
-        case UserTypes.NEW:
-          this.userRole = 'New User';
-          break;
-        case UserTypes.DEMO:
-        default:
-          this.userRole = 'Demo User';
-      }
+      this.userRole = this.getUserRoleLabel(user.type);
       
       this.userInitials = user.firstName.charAt(0) + user.lastName.charAt(0);
     } else {
@@ -336,7 +443,55 @@ export class SidebarComponent extends FASTElement {
       this.userName = 'Guest User';
       this.userRole = 'Visitor';
       this.userInitials = 'GU';
+      this.currentUserId = '';
     }
+  }
+
+  getUserRoleLabel(userType: UserType): string {
+    switch (userType) {
+      case UserTypes.PREMIUM:
+        return 'Premium Member';
+      case UserTypes.ESTABLISHED:
+        return 'Member';
+      case UserTypes.NEW:
+        return 'New User';
+      case UserTypes.DEMO:
+      default:
+        return 'Demo User';
+    }
+  }
+
+  loadAvailableUsers(): void {
+    this.availableUsers = userService.getAllUsers();
+  }
+
+  toggleUserSwitcher(): void {
+    this.showUserSwitcher = !this.showUserSwitcher;
+    
+    if (this.showUserSwitcher) {
+      // Add click outside listener when dropdown is shown
+      setTimeout(() => {
+        document.addEventListener('click', this.clickOutsideHandler);
+      }, 0);
+    } else {
+      // Remove listener when dropdown is hidden
+      document.removeEventListener('click', this.clickOutsideHandler);
+    }
+  }
+
+  handleClickOutside(event: MouseEvent): void {
+    if (this.showUserSwitcher && !this.contains(event.target as Node)) {
+      this.showUserSwitcher = false;
+      document.removeEventListener('click', this.clickOutsideHandler);
+    }
+  }
+
+  switchToUser(user: UserProfile): void {
+    if (user.id !== this.currentUserId) {
+      userService.switchToUser(user.id);
+      this.loadUserData();
+    }
+    this.showUserSwitcher = false;
   }
 
   handleNavigation(item: MenuItem): void {

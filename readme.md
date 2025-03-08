@@ -1,10 +1,8 @@
 # BUGS
 - account info
   - should tell if there are any cards connected to the account
-- card workflow
-  - completing the create account workflow, doesn't update the validation on the card workflow
-- ✔️logo
-  - ✔️we need to check about the animation on the logo, it should at least use the requestAnimationFrame?
+- ✔️card workflow
+  - ✔️completing the create account workflow, doesn't update the validation on the card workflow
 - KYC
   - probably should sign that kyc with the signing workflow
 - new user
@@ -15,7 +13,6 @@
 - account widget
   - transfer button does nothing in widget empty state
     - fixed with toast?
-  - ✔️not subscribing to accounts, so no updates without reload
 - the loan workflow
   - home loan
     - shouldn't have the length of the loan in months, should already be set over a specific time
