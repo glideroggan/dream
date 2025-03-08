@@ -1,7 +1,7 @@
 import { customElement, html, css, observable, when } from "@microsoft/fast-element";
 import { repositoryService } from "../../services/repository-service";
 import { WorkflowIds } from "../../workflows/workflow-registry";
-import "./account-list-component";
+import "./account-lister/account-list-component";
 import "./transaction-list-component";
 import { workflowManager } from "../../services/workflow-manager-service";
 import { Account } from "../../repositories/account-repository";

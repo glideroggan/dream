@@ -14,6 +14,7 @@ declare global {
     userService?: any
     storageService?: any
     registerWidget?: (widget: WidgetDefinition) => void
+    addMoney?: (amount: number) => void
   }
 }
 
@@ -27,6 +28,7 @@ console.debug('Main.ts started executing - before imports');
 import { WidgetDefinition, widgetService } from './services/widget-service'
 import { storageService } from './services/storage-service';
 import { userService } from './services/user-service';
+import { repositoryService } from './services/repository-service';
 
 // Initialize storage and user services early
 window.storageService = storageService;
@@ -45,7 +47,39 @@ console.debug('Storage and user services initialized');
 window.widgetService = widgetService
 console.debug('Widget service initialized', widgetService);
 
-
+// Add the money function to window that actually adds money to the first account
+window.addMoney = async (amount: number) => {
+  try {
+    // Get account repository
+    const accountRepo = repositoryService.getAccountRepository();
+    
+    // Get user's accounts
+    const accounts = await accountRepo.getAll();
+    
+    if (accounts.length === 0) {
+      console.error("No accounts found to add money to");
+      return false;
+    }
+    
+    // Find a checking account, or use the first account
+    const targetAccount = accounts.find(acc => acc.type === 'checking') || accounts[0];
+    
+    // Update the balance
+    const updatedAccount = {
+      ...targetAccount,
+      balance: targetAccount.balance + amount
+    };
+    
+    // Save the updated account
+    await accountRepo.update(targetAccount.id, updatedAccount);
+    
+    console.log(`Added $${amount} to account ${targetAccount.name}. New balance: $${updatedAccount.balance}`);
+    return true;
+  } catch (error) {
+    console.error("Failed to add money:", error);
+    return false;
+  }
+};
 
 // Import registries that register with search service
 import { registerAllWidgets } from './widgets/widget-registry';
