@@ -1,64 +1,15 @@
 import { Entity, LocalStorageRepository } from './base-repository';
 import { StorageService } from '../services/storage-service';
 import { UserService } from '../services/user-service';
-import { Product } from '../services/product-service';
 import { generateMockProducts } from './mock/product-mock';
 import { generateUUID } from "../utilities/id-generator";
+import { 
+  Product, 
+  ProductEntity, 
+  ProductCategory, 
+  ProductEntityType 
+} from './models/product-models';
 
-/**
- * Represents the type of entity a product affects or creates
- */
-export enum ProductEntityType {
-  ACCOUNT = "account",
-  LOAN = "loan",
-  INVESTMENT = "investment",
-  INSURANCE = "insurance",
-  CARD = "card",
-  SERVICE = "service"
-}
-
-/**
- * Represents a product category
- */
-export enum ProductCategory {
-  BANKING = "banking",
-  LENDING = "lending",
-  INVESTING = "investing",
-  PROTECTION = "protection",
-  PAYMENTS = "payments",
-  SERVICES = "services"
-}
-
-/**
- * Product entity interface
- */
-export interface ProductEntity extends Entity, Product {
-  id: string;
-  name: string;
-  type: ProductEntityType;
-  category: ProductCategory;
-  description?: string;
-  features?: string[];
-  requirements?: ProductRequirement[];
-  relatedProductIds?: string[];
-  metadata?: Record<string, any>;
-  active: boolean;
-  addedDate: string;
-  lastUpdated: string;
-}
-
-/**
- * Product requirement interface for eligibility checks
- */
-export interface ProductRequirement {
-  type: "kyc" | "income" | "age" | "creditScore" | "residency" | "hasAccount" | "custom";
-  value: string | number | boolean;
-  description: string;
-}
-
-/**
- * Repository for managing user products
- */
 export class ProductRepository extends LocalStorageRepository<ProductEntity> {
   constructor(storage: StorageService, userService: UserService) {
     super('products', storage, userService);

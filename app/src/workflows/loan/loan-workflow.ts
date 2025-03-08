@@ -2,7 +2,6 @@ import { customElement, observable } from "@microsoft/fast-element";
 import { WorkflowBase } from "../workflow-base";
 import { loanService } from "../../services/loan-service";
 import { repositoryService } from "../../services/repository-service";
-import { ProductEntity, ProductEntityType } from "../../repositories/product-repository";
 import { WorkflowIds } from "../workflow-registry";
 
 // Include template and styles
@@ -10,6 +9,7 @@ import { template } from "./loan-workflow.template";
 import { styles } from "./loan-workflow.styles";
 import { Account } from "../../repositories/models/account-models";
 import { LoanType, EligibilityResult, LoanDetails } from "../../repositories/models/loan-models";
+import { ProductEntity, ProductEntityType } from "../../repositories/models/product-models";
 
 @customElement({
   name: "loan-workflow",

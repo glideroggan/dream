@@ -1,5 +1,6 @@
 import { StorageService } from './storage-service';
-import { UserProfile, UserRepository, UserType, UserTypes } from '../repositories/user-repository';
+import { UserRepository } from '../repositories/user-repository';
+import { UserProfile, UserType, UserTypes } from '../repositories/models/user-models';
 import { repositoryService } from './repository-service';
 
 export class UserService {

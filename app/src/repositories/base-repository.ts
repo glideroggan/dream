@@ -1,7 +1,6 @@
 import { StorageService } from '../services/storage-service';
 import { UserService } from '../services/user-service';
 import { generateUniqueId } from '../utilities/id-generator';
-import { UserType } from './user-repository';
 
 // Type definitions
 export interface Entity {

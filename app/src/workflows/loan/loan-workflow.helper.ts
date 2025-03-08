@@ -1,4 +1,4 @@
-import { ProductEntity } from "../../repositories/product-repository";
+import { ProductEntity } from "../../repositories/models/product-models";
 
 /**
  * Get appropriate icon based on loan product type

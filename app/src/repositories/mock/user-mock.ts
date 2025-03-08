@@ -1,4 +1,4 @@
-import { UserProfile, UserType } from '../user-repository';
+import { UserProfile, UserType } from '../models/user-models';
 
 /**
  * Generate mock users for development and testing

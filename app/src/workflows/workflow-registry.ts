@@ -1,6 +1,6 @@
 import { workflowService } from '../services/workflow-service';
 import { getSearchService, SearchResultItem } from '../services/search-service';
-import { getProductService, ProductChangeEvent } from '../services/product-service';
+import { getProductService } from '../services/product-service';
 
 export interface WorkflowDefinition {
   id: string;

@@ -1,8 +1,8 @@
 import { html, repeat } from "@microsoft/fast-element";
 import { LoanWorkflow } from "./loan-workflow";
 import { when } from "@microsoft/fast-element";
-import { ProductEntity } from "../../repositories/product-repository";
 import { getProductIcon, getInterestRateDisplay } from "./loan-workflow.helper";
+import { ProductEntity } from "../../repositories/models/product-models";
 
 // Step 1: Choose loan product
 const step1Template = html<LoanWorkflow>/*html*/`

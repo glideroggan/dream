@@ -7,7 +7,7 @@ import {
   Observable
 } from '@microsoft/fast-element';
 import { WidgetDefinition, widgetService } from '../services/widget-service';
-import { getProductService, ProductService, ProductChangeEvent } from '../services/product-service';
+import { getProductService, ProductService } from '../services/product-service';
 import { 
   getWidgetPreferredSize, 
   getWidgetMinWidth, 
@@ -27,6 +27,7 @@ import { workflowManager } from '../services/workflow-manager-service';
 import { repositoryService } from '../services/repository-service';
 import { UserSettings } from '../repositories/settings-repository';
 import { GridLayout } from '../components/grid-layout';
+import { ProductChangeEvent } from '../repositories/models/product-models';
 
 // Shared template parts that can be composed by child classes
 export const baseContentTemplate = html<BasePage>/*html*/ `

@@ -3,8 +3,8 @@ import { productService } from './product-service';
 import { userService } from './user-service';
 import { repositoryService } from './repository-service';
 import { Account } from '../repositories/models/account-models';
-import { ProductEntityType } from '../repositories/product-repository';
 import { Card, CardProduct, CardRequirement, CardRequestData, CardServiceResult, CardType } from '../repositories/models/card-models';
+import { ProductEntityType } from '../repositories/models/product-models';
 
 export class CardService {
     private static instance: CardService;

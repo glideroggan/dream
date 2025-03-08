@@ -1,4 +1,4 @@
-import { ProductEntity, ProductCategory, ProductEntityType } from '../product-repository';
+import { ProductEntity, ProductCategory, ProductEntityType } from '../models/product-models';
 
 export function generateMockProducts(): ProductEntity[] {
   const now = new Date().toISOString();

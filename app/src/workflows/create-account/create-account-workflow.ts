@@ -10,8 +10,9 @@ import {
 import { WorkflowBase, WorkflowResult } from '../workflow-base'
 import { kycService, KycLevel } from '../../services/kyc-service'
 import { repositoryService } from '../../services/repository-service'
-import { ProductEntity, ProductEntityType, ProductRepository } from '../../repositories/product-repository'
+import {ProductRepository } from '../../repositories/product-repository'
 import { Account } from '../../repositories/models/account-models'
+import { ProductEntity, ProductEntityType } from '../../repositories/models/product-models'
 
 // Define account types
 export interface CreateAccountType extends Omit<Account, 'balance'| 'currency'| 'accountNumber'|'isActive'|'createdAt'> {

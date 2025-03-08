@@ -3,7 +3,7 @@ import { userService } from '../services/user-service';
 import { getSearchService, SearchResultItem, SearchService } from '../services/search-service';
 import { routerService } from '../services/router-service';
 import { appRoutes, routeIcons, routeMetadata } from '../routes/routes-registry';
-import { UserTypes, UserProfile, UserType } from '../repositories/user-repository';
+import { UserProfile, UserType, UserTypes } from '../repositories/models/user-models';
 
 interface MenuItem {
   id: string;

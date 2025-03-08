@@ -1,44 +1,17 @@
-import { ProductRepository } from '../repositories/product-repository';
 import { repositoryService } from './repository-service';
+import { kycService } from './kyc-service';
+import { userService } from './user-service';
 import { 
+  BaseProduct,
+  Product,
   ProductEntity, 
   ProductEntityType,
   ProductCategory,
-  ProductRequirement
-} from '../repositories/product-repository';
-import { kycService } from './kyc-service';
-import { userService } from './user-service';
-
-/**
- * Base product interface that all product types extend
- */
-export interface BaseProduct {
-  id: string;
-  name: string;
-  type: string;
-}
-
-/**
- * Product interface representing all possible product attributes
- */
-export interface Product extends BaseProduct {
-  description?: string;
-  features?: string[];
-  requirements?: any[];
-  relatedProductIds?: string[];
-  metadata?: Record<string, any>;
-  active?: boolean;
-}
-
-export type ProductChangeEventType = 'add' | 'remove' | 'update';
-
-export interface ProductChangeEvent {
-  type: ProductChangeEventType;
-  productId: string;
-  product?: Product;
-}
-
-export type ProductChangeListener = (event: ProductChangeEvent) => void;
+  ProductRequirement,
+  ProductChangeEventType,
+  ProductChangeEvent,
+  ProductChangeListener
+} from '../repositories/models/product-models';
 
 export class ProductService {
   // Static instance for singleton pattern
@@ -47,7 +20,7 @@ export class ProductService {
   private products: Product[] = [];
   private initialized = false;
   private changeListeners: Set<ProductChangeListener> = new Set();
-  private productRepository: ProductRepository | null = null;
+  private productRepository: any | null = null;
   
   private constructor() {
     console.debug("ProductService instance created");

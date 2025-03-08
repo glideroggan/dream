@@ -1,6 +1,5 @@
 import { repositoryService } from './repository-service';
 import { userService } from './user-service';
-import { ProductEntity, ProductEntityType } from '../repositories/product-repository';
 import { 
   Loan, 
   LoanType, 
@@ -9,6 +8,7 @@ import {
   EligibilityResult, 
   LoanCalculationResult 
 } from '../repositories/models/loan-models';
+import { ProductEntity, ProductEntityType } from '../repositories/models/product-models';
 
 /**
  * Loan service to handle loan operations
