@@ -1,12 +1,7 @@
 import {
-  FASTElement,
   customElement,
-  html,
-  css,
   observable,
   attr,
-  when,
-  ref,
 } from '@microsoft/fast-element'
 import { WorkflowBase } from '../workflow-base'
 import { repositoryService } from '../../services/repository-service'

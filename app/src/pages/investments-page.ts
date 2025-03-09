@@ -4,7 +4,8 @@ import {
   html,
   css
 } from '@microsoft/fast-element';
-import { BasePage, baseContentTemplate, baseStyles } from './base-page';
+import { BasePage, baseContentTemplate } from './base-page';
+import { baseStyles } from './base-page.css';
 
 // Use the base template
 const template = baseContentTemplate;

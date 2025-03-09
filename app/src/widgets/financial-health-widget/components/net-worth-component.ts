@@ -30,16 +30,6 @@ const template = html<NetWorthComponent>/*html*/ `
         `)}
       </div>
       
-      <div class="account-summary">
-        <div class="summary-item assets">
-          <div class="summary-label">Assets:</div>
-          <div class="summary-value">${x => x.formatCurrencyShort(x.totalAssets)}</div>
-        </div>
-        <div class="summary-item liabilities">
-          <div class="summary-label">Liabilities:</div>
-          <div class="summary-value">${x => x.formatCurrencyShort(x.totalLiabilities)}</div>
-        </div>
-      </div>
     </div>
   </div>
 `;

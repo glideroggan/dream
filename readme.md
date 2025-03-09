@@ -1,5 +1,5 @@
 # BUGS
-- account-details-workflow is showing a different card, if not linking, we should remove the image and just keep some details
+- ✔️account-details-workflow is showing a different card, if not linking, we should remove the image and just keep some details
 - looks like there are some mocks in the loan-service file
 - the transaction signing is not so nice, the style of it should improve
 - need toast error when failing to start a workflow
@@ -17,9 +17,6 @@
 # FEATURES
 
 ## new workflows
-- ✔️a signing workflow
-  - ✔️make it look like mobile bankid
-  - ✔️make use of it in the "take a loan" workflow
 - edit payment contacts
   Doesn't need to be a "page", can just be a workflow, showing different buttons for doing things
     - edit
@@ -43,7 +40,7 @@ Would be nice to get a bit more things happening, if we could do like in the lif
         - should show a toast
 
 # TODO
-- We should take the auto resize width from account-info and put in the base-workflow so that all workflows can use it
+- ✔️We should take the auto resize width from account-info and put in the base-workflow so that all workflows can use it
 ## account info
 - account info workflow, needs an empty/default state when no account is selected
 ## transfer workflow
@@ -69,7 +66,6 @@ Would be nice to get a bit more things happening, if we could do like in the lif
   - clicking on a connected card should take you to the card-detail-workflow
 ## card workflow
 - the workflow seems to have some default KYC values, we should make sure we take the KYC data from the service
-
 ## KYC workflow
   - probably should sign that kyc with the signing workflow
 

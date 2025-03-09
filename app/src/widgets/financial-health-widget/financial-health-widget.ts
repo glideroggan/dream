@@ -194,7 +194,6 @@ const styles = css`
   }
   
   .net-worth-savings-row {
-    height: 220px;
   }
   
   .panel {

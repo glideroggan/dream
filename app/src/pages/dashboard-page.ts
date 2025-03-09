@@ -1,10 +1,10 @@
 import {
   customElement,
   attr,
-  html,
   css
 } from '@microsoft/fast-element';
-import { BasePage, baseContentTemplate, baseStyles } from './base-page';
+import { BasePage, baseContentTemplate } from './base-page';
+import { baseStyles } from './base-page.css';
 
 // Use the base template
 const template = baseContentTemplate;
@@ -16,7 +16,6 @@ const styles = css`
   /* Dashboard-specific styles */
   .content-header {
     border-bottom: 1px solid var(--neutral-outline-rest);
-    padding-bottom: 12px;
   }
 `;
 
