@@ -1,5 +1,5 @@
 import { FASTElement, customElement, observable, attr } from "@microsoft/fast-element";
-import { getWidgetById } from "../../widgets/widget-registry";
+import { getWidgetById, getWidgetColumnSpan, getWidgetRowSpan } from "../../widgets/widget-registry";
 import { widgetService } from "../../services/widget-service";
 import { template } from "./widget-wrapper-template";
 import { styles } from "./widget-wrapper-styles";
@@ -28,8 +28,19 @@ export class WidgetWrapper extends FASTElement {
   @attr({ mode: "boolean" }) hideCloseButton: boolean = false;
   @attr widgetName: string = '';
   @attr({ attribute: 'seamless-integration', mode: 'boolean' }) seamlessIntegration: boolean = false;
-  @attr currentSize: GridItemSize = 'md'; // Default widget size
-  @attr({ mode: "boolean" }) showSizeControls: boolean = true; // Whether to show size controls
+  
+  // Size attributes (for backward compatibility)
+  @attr currentSize: GridItemSize = 'md'; 
+  
+  // New grid span attributes
+  @attr({ mode: "fromView" }) colSpan: number = 8; // Default to half width (8/16 columns)
+  @attr({ mode: "fromView" }) rowSpan: number = 1; // Default to single row
+  @attr({ mode: "boolean" }) showSizeControls: boolean = true;
+  @attr({ mode: "boolean" }) useLegacySizing: boolean = false; // Default to new sizing UI
+  @attr maxColSpan: number = 16;
+  @attr maxRowSpan: number = 8;
+  @attr minColSpan: number = 1;
+  @attr minRowSpan: number = 1;
 
   // Timeout configuration
   @attr({ mode: "fromView" }) warningTimeout: number = 5000; // 5 seconds for warning
@@ -79,8 +90,16 @@ export class WidgetWrapper extends FASTElement {
     );
   }
 
-  // Available sizes for widget
+  // Legacy: Available sizes for widget (backward compatibility)
   readonly availableSizes: GridItemSize[] = ['sm', 'md', 'lg', 'xl'];
+
+  // Map of sizes to column spans for backward compatibility
+  readonly sizeToSpanMap = {
+    'sm': 4,   // Small: 4/16 columns
+    'md': 8,   // Medium: 8/16 columns
+    'lg': 12,  // Large: 12/16 columns
+    'xl': 16   // Extra Large: 16/16 columns (full width)
+  };
 
   /**
    * Computed property for display name
@@ -108,6 +127,45 @@ export class WidgetWrapper extends FASTElement {
     
     // Get widget info from registry
     this.updateWidgetDefinition();
+    
+    // If spans are not set explicitly, get them from widget definition
+    if (this._widgetDefinition) {
+      if (!this.hasAttribute('colSpan') && this._widgetDefinition.colSpan) {
+        this.colSpan = this._widgetDefinition.colSpan;
+        console.debug(`Widget wrapper ${this.widgetId} setting colSpan from registry: ${this.colSpan}`);
+      }
+      
+      if (!this.hasAttribute('rowSpan') && this._widgetDefinition.rowSpan) {
+        this.rowSpan = this._widgetDefinition.rowSpan;
+        console.debug(`Widget wrapper ${this.widgetId} setting rowSpan from registry: ${this.rowSpan}`);
+      }
+      
+      // For backward compatibility - map size to column span if needed
+      if (this.colSpan === 8 && this._widgetDefinition.preferredSize) {
+        const size = this._widgetDefinition.preferredSize as GridItemSize;
+        this.colSpan = this.sizeToSpanMap[size] || 8;
+        console.debug(`Widget wrapper ${this.widgetId} setting colSpan from preferredSize: ${this.colSpan}`);
+      }
+    } else {
+      // If no definition, get spans directly from registry functions
+      if (!this.hasAttribute('colSpan')) {
+        const colSpan = getWidgetColumnSpan(this.widgetId);
+        if (colSpan) {
+          this.colSpan = colSpan;
+          console.debug(`Widget wrapper ${this.widgetId} setting colSpan from registry function: ${this.colSpan}`);
+        }
+      }
+      
+      if (!this.hasAttribute('rowSpan')) {
+        const rowSpan = getWidgetRowSpan(this.widgetId);
+        if (rowSpan) {
+          this.rowSpan = rowSpan;
+          console.debug(`Widget wrapper ${this.widgetId} setting rowSpan from registry function: ${this.rowSpan}`);
+        }
+      }
+    }
+    
+    console.debug(`Widget wrapper connected: ${this.displayName}, spans: ${this.colSpan}x${this.rowSpan}`);
 
     // Start timeout tracking if in loading state
     if (this.state === 'loading') {
@@ -131,7 +189,7 @@ export class WidgetWrapper extends FASTElement {
     // Check if we need to load the module for this widget
     this.initializeWidgetModule();
 
-    console.debug(`Widget wrapper connected: ${this.displayName}, timeouts: warning=${this.warningTimeout}ms, failure=${this.failureTimeout}ms`);
+    console.debug(`Widget wrapper connected: ${this.displayName}, spans: ${this.colSpan}x${this.rowSpan}`);
   }
 
   disconnectedCallback() {
@@ -452,8 +510,8 @@ export class WidgetWrapper extends FASTElement {
   }
 
   /**
-   * Change widget size and emit change event
-   * @param newSize The new size to apply to the widget
+   * Legacy: Change widget size and emit change event (for backward compatibility)
+   * Maps size to column span and dispatches the appropriate event
    */
   changeSize(newSize: GridItemSize): void {
     if (this.currentSize === newSize) return;
@@ -461,22 +519,84 @@ export class WidgetWrapper extends FASTElement {
     const oldSize = this.currentSize;
     this.currentSize = newSize;
     
-    console.debug(`Widget ${this.widgetId} size changing from ${oldSize} to ${newSize}`);
+    // Map size to column span
+    const newColSpan = this.sizeToSpanMap[newSize] || 8;
     
-    // Create and dispatch a custom event for the size change
-    const sizeChangeEvent = new CustomEvent('widget-size-change', {
+    console.debug(`Widget ${this.widgetId} size changing from ${oldSize} to ${newSize} (col span: ${newColSpan})`);
+    
+    // Use the changeSpans method with the new column span
+    this.changeSpans(newColSpan, this.rowSpan);
+  }
+  
+  /**
+   * Change widget spans (columns and rows) and emit change event
+   */
+  changeSpans(newColSpan: number, newRowSpan: number): void {
+    // Clamp values to valid ranges
+    newColSpan = Math.max(this.minColSpan, Math.min(newColSpan, this.maxColSpan));
+    newRowSpan = Math.max(this.minRowSpan, Math.min(newRowSpan, this.maxRowSpan));
+    
+    if (this.colSpan === newColSpan && this.rowSpan === newRowSpan) return;
+    
+    const oldColSpan = this.colSpan;
+    const oldRowSpan = this.rowSpan;
+    this.colSpan = newColSpan;
+    this.rowSpan = newRowSpan;
+    
+    console.debug(`Widget ${this.widgetId} spans changing from ${oldColSpan}x${oldRowSpan} to ${newColSpan}x${newRowSpan}`);
+    
+    // Create and dispatch a custom event for the span change
+    const spanChangeEvent = new CustomEvent('widget-spans-change', {
       bubbles: true,
       composed: true,
       detail: {
         widgetId: this.widgetId,
-        oldSize,
-        newSize
+        oldColSpan,
+        oldRowSpan,
+        colSpan: newColSpan,
+        rowSpan: newRowSpan
       }
     });
     
-    this.dispatchEvent(sizeChangeEvent);
+    this.dispatchEvent(spanChangeEvent);
   }
   
+  /**
+   * Increase column span by 1
+   */
+  increaseColSpan(): void {
+    if (this.colSpan < this.maxColSpan) {
+      this.changeSpans(this.colSpan + 1, this.rowSpan);
+    }
+  }
+  
+  /**
+   * Decrease column span by 1
+   */
+  decreaseColSpan(): void {
+    if (this.colSpan > this.minColSpan) {
+      this.changeSpans(this.colSpan - 1, this.rowSpan);
+    }
+  }
+  
+  /**
+   * Increase row span by 1
+   */
+  increaseRowSpan(): void {
+    if (this.rowSpan < this.maxRowSpan) {
+      this.changeSpans(this.colSpan, this.rowSpan + 1);
+    }
+  }
+  
+  /**
+   * Decrease row span by 1
+   */
+  decreaseRowSpan(): void {
+    if (this.rowSpan > this.minRowSpan) {
+      this.changeSpans(this.colSpan, this.rowSpan - 1);
+    }
+  }
+
   /**
    * Get CSS class for size button based on whether it's the current size
    * @param size The size to check

@@ -9,24 +9,26 @@ export const WidgetIds = {
   SWISH: "swish-widget",
   SLOW: "slow-widget",
   ERROR: "error-widget",
-  FINANCIAL_HEALTH: "financial-health"  // Add new widget ID
+  FINANCIAL_HEALTH: "financial-health"  
   // Add more widget IDs here as needed
 };
 
-// Define widget size options
+// Define widget size options (for backward compatibility)
 export type WidgetSize = 'sm' | 'md' | 'lg' | 'xl';
 
-// Enhanced widget definition with size preference and search metadata
+// Enhanced widget definition with grid dimensions and search metadata
 interface EnhancedWidgetDefinition extends WidgetDefinition {
-  preferredSize?: WidgetSize;
+  preferredSize?: WidgetSize; // Legacy - for backward compatibility
+  colSpan?: number; // Number of columns this widget spans (out of 16)
+  rowSpan?: number; // Number of rows this widget spans (out of 8)
   minWidth?: number; // Minimum width in pixels
-  fullWidth?: boolean; // Add this property to force full width
+  fullWidth?: boolean; // Force full width
   searchable?: boolean;
   keywords?: string[];
   description?: string;
   icon?: string;
-  requiresProduct?: string; // Add product requirement property
-  searchDisabledCondition?: () => Promise<boolean>; // Add search disabled condition
+  requiresProduct?: string;
+  searchDisabledCondition?: () => Promise<boolean>;
 }
 
 // Define all available widgets
@@ -38,7 +40,8 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     elementName: 'financial-health-widget',
     module: '@widgets/financial-health',
     defaultConfig: {},
-    preferredSize: 'lg',
+    colSpan: 10, // Increased from 8 to account for smaller columns
+    rowSpan: 4, // Adjusted for smaller rows
     minWidth: 380,
     searchable: true,
     keywords: ['financial health', 'net worth', 'savings rate', 'spending trends', 'recommendations', 'financial advisor'],
@@ -51,8 +54,9 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     elementName: 'account-widget',
     module: '@widgets/account',
     defaultConfig: {},
-    preferredSize: 'xl', // Account widget works best with more space
-    minWidth: 380, // Account widget needs more space for balance details
+    colSpan: 12, // Increased from 10 to account for smaller columns
+    rowSpan: 3, // Adjusted for smaller rows
+    minWidth: 380,
     searchable: true,
     keywords: ['accounts', 'checking account', 'savings account', 'bank accounts', 'money', 'balance'],
     icon: '🏦'
@@ -64,14 +68,14 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     elementName: 'welcome-widget',
     module: '@widgets/welcome',
     defaultConfig: { username: 'Guest' },
-    preferredSize: 'xl', 
-    minWidth: 800, // Welcome widget can be smaller
-    fullWidth: true, // Force this widget to take up the entire row
+    colSpan: 16, // Full width
+    rowSpan: 4, // Adjusted for smaller rows
+    minWidth: 800,
+    fullWidth: true,
     searchable: true,
     keywords: ['welcome', 'introduction', 'guide', 'getting started', 'help'],
     icon: '👋'
   },
-  // Add Swish widget definition
   {
     id: WidgetIds.SWISH,
     name: 'Swish Payment',
@@ -79,29 +83,27 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     elementName: 'swish-widget',
     module: '@widgets/swish',
     defaultConfig: {},
-    preferredSize: 'md',
-    minWidth: 340, // Swish widget needs space for buttons and info
+    colSpan: 8, // Increased from 6 to account for smaller columns
+    rowSpan: 3, // Adjusted for smaller rows
+    minWidth: 340,
     searchable: true,
     keywords: ['payment', 'transfer', 'swish', 'money', 'send money'],
     icon: '💸',
-    requiresProduct: 'swish-standard', // This widget requires the swish-standard product
-    // Hide Swish widget in search if user doesn't have the Swish product
+    requiresProduct: 'swish-standard',
     searchDisabledCondition: async () => {
       const productService = getProductService();
-      // Check if user has the required product
       const hasSwish = await productService.hasProduct("swish-standard");
-      // Return true to disable if user does NOT have the product
       return !hasSwish;
     }
   },
-  // Example widgets for demonstrating different loading states
   {
     id: WidgetIds.SLOW,
     name: 'Slow Loading Widget',
     description: 'A widget that takes 6 seconds to load',
     elementName: 'slow-widget',
     module: '@widgets/slow',
-    preferredSize: 'sm',
+    colSpan: 6, // Increased from 4 to account for smaller columns
+    rowSpan: 2, // Adjusted for smaller rows
     minWidth: 300,
     searchable: true,
     keywords: ['slow', 'demo', 'example', 'loading'],
@@ -113,7 +115,8 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     description: 'A widget that fails to initialize',
     elementName: 'error-widget',
     module: '@widgets/error',
-    preferredSize: 'sm',
+    colSpan: 6, // Increased from 4 to account for smaller columns
+    rowSpan: 2, // Adjusted for smaller rows
     minWidth: 300,
     searchable: true,
     keywords: ['error', 'demo', 'example', 'failure'],
@@ -130,11 +133,27 @@ export function getWidgetDefinitions(): EnhancedWidgetDefinition[] {
 }
 
 /**
- * Gets the preferred size for a widget
+ * Gets the preferred size for a widget (legacy support)
  */
 export function getWidgetPreferredSize(widgetId: string): WidgetSize {
   const widget = widgetDefinitions.find(w => w.id === widgetId);
-  return widget?.preferredSize || 'md'; // Default to medium if not specified
+  return widget?.preferredSize || 'md'; 
+}
+
+/**
+ * Gets the column span for a widget
+ */
+export function getWidgetColumnSpan(widgetId: string): number {
+  const widget = widgetDefinitions.find(w => w.id === widgetId);
+  return widget?.colSpan || 8; // Default to 8 columns (half of the grid)
+}
+
+/**
+ * Gets the row span for a widget
+ */
+export function getWidgetRowSpan(widgetId: string): number {
+  const widget = widgetDefinitions.find(w => w.id === widgetId);
+  return widget?.rowSpan || 1; // Default to 1 row
 }
 
 /**

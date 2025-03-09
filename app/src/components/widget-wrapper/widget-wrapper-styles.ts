@@ -4,12 +4,13 @@ export const styles = css`
   :host {
     display: block;
     width: 100%;
-    height: 100%;
+    height: 100%; /* Ensure host fills grid cell */
     font-family: var(--font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
     background-color: var(--widget-bg-color, #fff);
     border-radius: var(--widget-border-radius, 8px);
     box-shadow: var(--widget-shadow, 0 2px 8px rgba(0, 0, 0, 0.1));
     overflow: hidden;
+    box-sizing: border-box;
     
     /* Define color palette that widgets can inherit */
     --widget-background: #ffffff;
@@ -74,6 +75,7 @@ export const styles = css`
     display: flex;
     flex-direction: column;
     height: 100%;
+    overflow: hidden; /* Prevent content overflow */
   }
 
   .widget-header {
@@ -344,6 +346,7 @@ export const styles = css`
     flex: 1;
     padding: var(--widget-content-padding, 1rem);
     overflow: auto;
+    position: relative; /* For proper sizing of content */
   }
 
   .widget-content.seamless {
@@ -400,6 +403,10 @@ export const styles = css`
     color: white;
   }
 
+  .timeout-button-wait:hover {
+    background-color: #bbdefb;
+  }
+
   .error-container {
     color: #721c24;
   }
@@ -454,5 +461,49 @@ export const styles = css`
       padding: 4px 8px;
       font-size: 0.75rem;
     }
+  }
+
+  .span-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .span-control-group {
+    display: flex;
+    align-items: center;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+    padding: 0 2px;
+  }
+
+  .span-label {
+    font-size: 10px;
+    color: #555;
+    padding: 0 2px;
+  }
+
+  .span-value {
+    font-size: 12px;
+    width: 18px;
+    text-align: center;
+    font-weight: 600;
+  }
+
+  .span-button {
+    border: none;
+    background: transparent;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1;
+    padding: 0;
+    margin: 0;
+    border-radius: 3px;
+  }
+
+  .span-button:hover {
+    background-color: rgba(0, 0, 0, 0.1);
   }
 `;

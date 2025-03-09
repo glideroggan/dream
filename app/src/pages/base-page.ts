@@ -13,7 +13,10 @@ import {
   getWidgetMinWidth, 
   getAutoWidgetsForProduct,
   isWidgetAvailableForUser,
-  shouldWidgetBeFullWidth
+  shouldWidgetBeFullWidth,
+  getWidgetById,
+  getWidgetColumnSpan,
+  getWidgetRowSpan
 } from '../widgets/widget-registry';
 import { ModalComponent } from '../components/modal-component';
 import { createWidgetWrapper } from '../utils/widget-helper';
@@ -60,6 +63,7 @@ export class BasePage extends FASTElement {
   @observable activeWidgets: WidgetDefinition[] = [];
   @observable ready: boolean = false;
   @observable workflowTitle: string = "Workflow";
+  protected dataPage: boolean = true; // Added missing property
   protected productChangeUnsubscribe: (() => void) | null = null;
   protected initialWidgets: string = '';
   protected _initialWidgetsLoaded = false;
@@ -296,26 +300,35 @@ export class BasePage extends FASTElement {
         this.activeWidgets.push(widget);
         Observable.notify(this, 'activeWidgets');
 
-        const widgetContainer = this.shadowRoot?.querySelector('.widgets-container') as HTMLElement;
+        // Get the widget definition from registry for spans
+        const widgetDef = getWidgetById(widgetId);
+        console.debug(`Loading widget ${widgetId}, definition:`, widgetDef);
+
+        // Create the wrapper with spans from registry
         const wrapperElement = createWidgetWrapper({
           widgetId: widget.id,
           initialState: 'loading',
           additionalAttributes: {
             'widget-name': widget.name || widget.id,
-            'page-type': this.pageType
+            'page-type': this.pageType,
+            'colSpan': (widgetDef?.colSpan || getWidgetColumnSpan(widgetId)).toString(),
+            'rowSpan': (widgetDef?.rowSpan || getWidgetRowSpan(widgetId)).toString()
           }
         });
         
+        const widgetContainer = this.shadowRoot?.querySelector('.widgets-container') as HTMLElement;
         widgetContainer.appendChild(wrapperElement);
         
-        // Use grid-layout's addItem method if available
+        // Use grid-layout's addItem method with proper spans
         const gridLayout = widgetContainer as any;
         if (gridLayout.addItem && typeof gridLayout.addItem === 'function') {
           gridLayout.addItem(wrapperElement, {
             id: widget.id,
             preferredSize: getWidgetPreferredSize(widget.id),
-            minWidth: getWidgetMinWidth(widget.id),
-            fullWidth: shouldWidgetBeFullWidth(widget.id)
+            colSpan: widgetDef?.colSpan || getWidgetColumnSpan(widgetId),
+            rowSpan: widgetDef?.rowSpan || getWidgetRowSpan(widgetId),
+            minWidth: widgetDef?.minWidth || getWidgetMinWidth(widget.id),
+            fullWidth: widgetDef?.fullWidth || shouldWidgetBeFullWidth(widget.id)
           });
         }
         
@@ -326,7 +339,7 @@ export class BasePage extends FASTElement {
           wrapperElement.classList.remove('widget-highlight');
         }, 2000);
         
-        // Let grid handle layout optimization
+        // Update layout
         if (gridLayout.updateLayout && typeof gridLayout.updateLayout === 'function') {
           gridLayout.updateLayout();
         }
@@ -382,17 +395,14 @@ export class BasePage extends FASTElement {
     if (!widgetContainer) return;
     
     // Get the GridLayout component
-    const gridLayout = widgetContainer as GridLayout; // Cast to any to access the addItem method
+    const gridLayout = widgetContainer as GridLayout;
 
-    // TODO: continue here
-    const getSize = async (page: string, widgetId: string) => {
-      const size = await this.settingsRepository.getWidgetSize(page, widgetId);
-      console.debug(`Widget ${widgetId} size: ${size}`);
-      return size;
-    }
-
+    // Process each active widget
     this.activeWidgets.forEach(async (widget) => {
+      const widgetDef = getWidgetById(widget.id);
+      console.debug(`Adding widget to DOM: ${widget.id}, definition:`, widgetDef);
       
+      // Create widget wrapper
       const wrapperElement = createWidgetWrapper({
         widgetId: widget.id,
         initialState: 'loading',
@@ -400,30 +410,32 @@ export class BasePage extends FASTElement {
         failureTimeout: 10000,
         additionalAttributes: {
           'widget-name': widget.name || widget.id,
-          'page-type': this.pageType
+          'page-type': this.pageType,
+          'colSpan': widgetDef?.colSpan?.toString() || getWidgetColumnSpan(widget.id).toString(),
+          'rowSpan': widgetDef?.rowSpan?.toString() || getWidgetRowSpan(widget.id).toString()
         }
       });
-
 
       // Add wrapper to DOM
       widgetContainer.appendChild(wrapperElement);
       
-      const userSize = await getSize(this.pageTitle, widget.id);
-      // If grid-layout component has the addItem method, use it to properly set up the item
+      // Get user preferences if available
+      const userSize = this.dataPage ? 
+        await this.settingsRepository.getWidgetSize(this.pageType, widget.id) : null;
+      
+      // Add to grid layout with proper metadata
       gridLayout.addItem(wrapperElement, {
         id: widget.id,
         preferredSize: userSize || getWidgetPreferredSize(widget.id),
-        minWidth: getWidgetMinWidth(widget.id),
-        fullWidth: shouldWidgetBeFullWidth(widget.id)
+        colSpan: widgetDef?.colSpan || getWidgetColumnSpan(widget.id),
+        rowSpan: widgetDef?.rowSpan || getWidgetRowSpan(widget.id),
+        minWidth: widgetDef?.minWidth || getWidgetMinWidth(widget.id),
+        fullWidth: widgetDef?.fullWidth || shouldWidgetBeFullWidth(widget.id)
       });
       
+      // Create the actual widget element inside the wrapper
       this.createWidgetElement(widget, wrapperElement);
     });
-
-    // Let the grid layout optimize itself
-    setTimeout(() => {
-      gridLayout.updateLayout();
-    }, 50);
   }
 
   protected handleResize() {

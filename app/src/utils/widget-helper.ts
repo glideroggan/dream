@@ -1,4 +1,4 @@
-import { getWidgetPreferredSize, getWidgetMinWidth } from '../widgets/widget-registry';
+import { getWidgetPreferredSize, getWidgetMinWidth, getWidgetColumnSpan, getWidgetRowSpan } from '../widgets/widget-registry';
 import { WidgetDefinition, widgetService } from '../services/widget-service';
 
 /**
@@ -98,6 +98,21 @@ export function createWidgetWrapper(options: WidgetOptions): HTMLElement {
   // Set hide-close-button attribute if needed
   if (opts.hideCloseButton) {
     wrapperElement.setAttribute('hide-close-button', '');
+  }
+
+  // Ensure colSpan and rowSpan are set from registry if not explicitly provided
+  if (!wrapperElement.hasAttribute('colSpan')) {
+    const colSpan = getWidgetColumnSpan(opts.widgetId);
+    if (colSpan) {
+      wrapperElement.setAttribute('colSpan', colSpan.toString());
+    }
+  }
+  
+  if (!wrapperElement.hasAttribute('rowSpan')) {
+    const rowSpan = getWidgetRowSpan(opts.widgetId);
+    if (rowSpan) {
+      wrapperElement.setAttribute('rowSpan', rowSpan.toString());
+    }
   }
   
   return wrapperElement;

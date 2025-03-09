@@ -7,12 +7,33 @@ export const template = html<WidgetWrapper>/*html*/`
     <div class="widget-header">
       ${when(x => x.showSizeControls, html<WidgetWrapper>/*html*/`
         <div class="widget-size-controls">
-        ${repeat(x => x.availableSizes, html<GridItemSize, WidgetWrapper>/*html*/`
-            <button 
-              class="${(x, c) => c.parent.getSizeButtonClass(x)}" 
-              @click="${(x, c) => c.parent.handleSizeButtonClick(c.event, x)}" 
-              title="Change widget to ${x => x} size"
-            >${(x, c) => c.parent.getSizeButtonText(x)}</button>
+          <!-- Legacy size controls for backward compatibility -->
+          ${when(x => x.useLegacySizing, html<WidgetWrapper>/*html*/`
+            ${repeat(x => x.availableSizes, html<GridItemSize, WidgetWrapper>/*html*/`
+              <button 
+                class="${(x, c) => c.parent.getSizeButtonClass(x)}" 
+                @click="${(x, c) => c.parent.handleSizeButtonClick(c.event, x)}" 
+                title="Change widget to ${x => x} size"
+              >${(x, c) => c.parent.getSizeButtonText(x)}</button>
+            `)}
+          `)}
+          
+          <!-- New grid span controls -->
+          ${when(x => !x.useLegacySizing, html<WidgetWrapper>/*html*/`
+            <div class="span-controls">
+              <div class="span-control-group">
+                <span class="span-label">W:</span>
+                <button class="span-button" @click="${x => x.decreaseColSpan()}" title="Decrease width">-</button>
+                <span class="span-value">${x => x.colSpan}</span>
+                <button class="span-button" @click="${x => x.increaseColSpan()}" title="Increase width">+</button>
+              </div>
+              <div class="span-control-group">
+                <span class="span-label">H:</span>
+                <button class="span-button" @click="${x => x.decreaseRowSpan()}" title="Decrease height">-</button>
+                <span class="span-value">${x => x.rowSpan}</span>
+                <button class="span-button" @click="${x => x.increaseRowSpan()}" title="Increase height">+</button>
+              </div>
+            </div>
           `)}
         </div>
       `)}
