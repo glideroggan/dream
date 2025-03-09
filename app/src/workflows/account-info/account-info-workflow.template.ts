@@ -17,91 +17,93 @@ export const template = html<AccountInfoWorkflow>/*html*/ `
     (x) => x.account,
     html<AccountInfoWorkflow>/*html*/ `
       <div class="account-info">
-        <div class="info-section">
-          <div class="account-header">
-            <div class="account-icon ${(x) => x.account?.type.toLowerCase() || ''}">
-              ${(x) => x.account?.type.substring(0, 1) || ''}
-            </div>
-            <div class="account-title">
-              ${when(
-                (x) => x.isRenaming,
-                html<AccountInfoWorkflow>/*html*/ `
-                  <div class="rename-container">
-                    <input 
-                      type="text" 
-                      ${ref('nameInput')}
-                      :value="${(x) => x.account?.name || ''}" 
-                      class="rename-input"
-                      @keyup="${(x, c) => x.accountNameChanged(c.event)}"
-                    />
-                    <div class="rename-actions">
-                      <button @click="${(x) => x.saveRename()}" class="rename-btn save">Save</button>
-                      <button @click="${(x) => x.cancelRename()}" class="rename-btn cancel">Cancel</button>
-                    </div>
-                  </div>
-                `
-              )}
-              ${when(
-                (x) => !x.isRenaming,
-                html<AccountInfoWorkflow>/*html*/ `
-                  <h3>${(x) => x.account?.name || 'Account'}</h3>
-                  <div class="account-title-actions">
-                    <span class="account-type">${(x) => x.account?.type || ''}</span>
-                    <button @click="${(x) => x.startRename()}" class="rename-icon" title="Rename account">✏️</button>
-                  </div>
-                `
-              )}
-            </div>
-          </div>
-
-          <div class="account-balance">
-            <span class="balance-label">Current Balance</span>
-            <span
-              class="balance-amount ${(x) =>
-                (x.account?.balance || 0) < 0 ? 'negative' : ''}"
-            >
-              $${(x) => x.formatCurrency(x.account?.balance || 0)}
-            </span>
-          </div>
-        </div>
-
-        <div class="info-section details-section">
-          <h4>Account Details</h4>
-          <div class="detail-row">
-            <span class="detail-label">Account Number</span>
-            <span class="detail-value"
-              >${(x) => x.formatAccountNumber(x.account?.accountNumber || '')}</span
-            >
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Created</span>
-            <span class="detail-value"
-              >${(x) => x.formatDate(x.account?.createdAt || '')}</span
-            >
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Status</span>
-            <span
-              class="detail-value status ${(x) =>
-                x.account?.isActive ? 'active' : 'inactive'}"
-            >
-              ${(x) => (x.account?.isActive ? 'Active' : 'Inactive')}
-            </span>
-          </div>
-          ${when(
-            (x) => x.hasInterestRate,
-            html<AccountInfoWorkflow>/*html*/ `
-              <div class="detail-row">
-                <span class="detail-label">Interest Rate</span>
-                <span class="detail-value"
-                  >${(x) =>
-                    x.account?.interestRate
-                      ? x.account.interestRate + '%'
-                      : 'N/A'}</span
-                >
+        <div class="account-header-sections">
+          <div class="info-section">
+            <div class="account-header">
+              <div class="account-icon ${(x) => x.account?.type.toLowerCase() || ''}">
+                ${(x) => x.account?.type.substring(0, 1) || ''}
               </div>
-            `
-          )}
+              <div class="account-title">
+                ${when(
+                  (x) => x.isRenaming,
+                  html<AccountInfoWorkflow>/*html*/ `
+                    <div class="rename-container">
+                      <input 
+                        type="text" 
+                        ${ref('nameInput')}
+                        :value="${(x) => x.account?.name || ''}" 
+                        class="rename-input"
+                        @keyup="${(x, c) => x.accountNameChanged(c.event)}"
+                      />
+                      <div class="rename-actions">
+                        <button @click="${(x) => x.saveRename()}" class="rename-btn save">Save</button>
+                        <button @click="${(x) => x.cancelRename()}" class="rename-btn cancel">Cancel</button>
+                      </div>
+                    </div>
+                  `
+                )}
+                ${when(
+                  (x) => !x.isRenaming,
+                  html<AccountInfoWorkflow>/*html*/ `
+                    <h3>${(x) => x.account?.name || 'Account'}</h3>
+                    <div class="account-title-actions">
+                      <span class="account-type">${(x) => x.account?.type || ''}</span>
+                      <button @click="${(x) => x.startRename()}" class="rename-icon" title="Rename account">✏️</button>
+                    </div>
+                  `
+                )}
+              </div>
+            </div>
+
+            <div class="account-balance">
+              <span class="balance-label">Current Balance</span>
+              <span
+                class="balance-amount ${(x) =>
+                  (x.account?.balance || 0) < 0 ? 'negative' : ''}"
+              >
+                $${(x) => x.formatCurrency(x.account?.balance || 0)}
+              </span>
+            </div>
+          </div>
+
+          <div class="info-section details-section">
+            <h4>Account Details</h4>
+            <div class="detail-row">
+              <span class="detail-label">Account Number</span>
+              <span class="detail-value"
+                >${(x) => x.formatAccountNumber(x.account?.accountNumber || '')}</span
+              >
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Created</span>
+              <span class="detail-value"
+                >${(x) => x.formatDate(x.account?.createdAt || '')}</span
+              >
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Status</span>
+              <span
+                class="detail-value status ${(x) =>
+                  x.account?.isActive ? 'active' : 'inactive'}"
+              >
+                ${(x) => (x.account?.isActive ? 'Active' : 'Inactive')}
+              </span>
+            </div>
+            ${when(
+              (x) => x.hasInterestRate,
+              html<AccountInfoWorkflow>/*html*/ `
+                <div class="detail-row">
+                  <span class="detail-label">Interest Rate</span>
+                  <span class="detail-value"
+                    >${(x) =>
+                      x.account?.interestRate
+                        ? x.account.interestRate + '%'
+                        : 'N/A'}</span
+                  >
+                </div>
+              `
+            )}
+          </div>
         </div>
 
         ${when(
@@ -109,14 +111,7 @@ export const template = html<AccountInfoWorkflow>/*html*/ `
           html<AccountInfoWorkflow>/*html*/ `
             <div class="info-section type-specific-section">
               <h4>Credit Card Details</h4>
-              <div class="credit-card-visual">
-                <div class="credit-card">
-                  <div class="card-chip">⬜</div>
-                  <div class="card-number">${(x) => x.formatAccountNumber(x.account?.accountNumber || '')}</div>
-                  <div class="card-name">${(x) => x.account?.name}</div>
-                  <div class="card-expiry">Valid thru: ${(x) => x.getFutureDate(3)}</div>
-                </div>
-              </div>
+              
               <div class="detail-row">
                 <span class="detail-label">Credit Limit</span>
                 <span class="detail-value">$${(x) => x.formatCurrency(x.account?.creditLimit || 0)}</span>

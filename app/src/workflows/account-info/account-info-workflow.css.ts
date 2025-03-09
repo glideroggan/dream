@@ -5,6 +5,36 @@ export const styles = css`
     display: flex;
     flex-direction: column;
     gap: 16px;
+    max-width: 100%;
+  }
+
+  /* New container for the header sections */
+  .account-header-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* Responsive layout for the header sections */
+  @media (min-width: 768px) {
+    .account-header-sections {
+      flex-direction: row;
+      align-items: stretch;
+    }
+    
+    .account-header-sections > .info-section {
+      flex: 1;
+      min-width: 0; /* To allow proper shrinking */
+    }
+    
+    .account-header-sections > .info-section:first-child {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .account-balance {
+      margin-top: auto; /* Push the balance to the bottom */
+    }
   }
 
   .info-section {
@@ -17,6 +47,7 @@ export const styles = css`
     display: flex;
     align-items: center;
     margin-bottom: 16px;
+    flex-wrap: wrap;
   }
 
   .account-icon {
@@ -49,9 +80,17 @@ export const styles = css`
     background-color: #f1c40f;
   }
 
+  .account-title {
+    flex: 1;
+    min-width: 0; /* Ensure text truncation works */
+  }
+
   .account-title h3 {
     margin: 0 0 4px 0;
     font-size: 18px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .account-type {
@@ -80,10 +119,25 @@ export const styles = css`
     color: var(--error-color, #e74c3c);
   }
 
+  .details-section {
+    display: flex;
+    flex-direction: column;
+  }
+
   .details-section h4 {
     margin: 0 0 12px 0;
     font-size: 16px;
     color: var(--text-primary, #333);
+  }
+
+  /* Make the detail rows fill the space better */
+  @media (min-width: 768px) {
+    .details-section .detail-row {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      min-height: 28px; /* Ensure consistent row heights */
+    }
   }
 
   .detail-row {
@@ -92,6 +146,8 @@ export const styles = css`
     align-items: center;
     padding: 8px 0;
     border-bottom: 1px solid var(--divider-color, #eaeaea);
+    flex-wrap: wrap;
+    gap: 8px;
   }
 
   .detail-row:last-child {
@@ -105,6 +161,38 @@ export const styles = css`
 
   .detail-value {
     font-weight: 500;
+    word-break: break-word;
+  }
+
+  /* Card display improvements for smaller screens */
+  @media (max-width: 480px) {
+    .credit-card {
+      width: 100%;
+      max-width: none;
+    }
+  }
+
+  /* Responsive layout for larger screens */
+  @media (min-width: 640px) {
+    .type-specific-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    
+    .credit-card-visual,
+    .savings-progress,
+    .pension-projection,
+    .payment-breakdown {
+      grid-column: 1 / -1;
+    }
+  }
+
+  /* Enhanced layout for extra large screens */
+  @media (min-width: 1200px) {
+    .type-specific-section {
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    }
   }
 
   .status {
@@ -163,6 +251,7 @@ export const styles = css`
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-wrap: wrap;
   }
   
   .rename-icon {
@@ -182,6 +271,7 @@ export const styles = css`
     display: flex;
     flex-direction: column;
     gap: 8px;
+    width: 100%;
   }
   
   .rename-input {
@@ -189,6 +279,7 @@ export const styles = css`
     border: 1px solid var(--divider-color, #eaeaea);
     border-radius: 4px;
     font-size: 16px;
+    width: 100%;
   }
   
   .rename-actions {
@@ -222,6 +313,8 @@ export const styles = css`
   /* Credit card styling */
   .credit-card-visual {
     margin: 16px 0;
+    display: flex;
+    justify-content: center;
   }
   
   .credit-card {
@@ -229,6 +322,7 @@ export const styles = css`
     border-radius: 10px;
     padding: 20px;
     color: white;
+    width: 100%;
     max-width: 300px;
     height: 180px;
     display: flex;
@@ -343,6 +437,8 @@ export const styles = css`
     display: flex;
     justify-content: space-between;
     margin-top: 8px;
+    flex-wrap: wrap;
+    gap: 8px;
   }
   
   .legend-item {

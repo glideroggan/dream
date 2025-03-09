@@ -23,7 +23,7 @@ export class AccountInfoWorkflow extends WorkflowBase {
   @observable account: Account | null = null
   @observable isRenaming: boolean = false
   nameInput: HTMLInputElement;
-  // nameInput: string = ''
+  
 
   @attr({ attribute: 'hide-actions', mode: 'boolean' })
   hideActions: boolean = false
@@ -44,12 +44,19 @@ export class AccountInfoWorkflow extends WorkflowBase {
   async initialize(params?: Record<string, any>): Promise<void> {
     console.debug('Initializing Account-info-workflow with params:', params)
 
-    this.setModalWidth('500px')
+    // this.updateModalWidth();
     this.updateTitle('Account Details')
 
     if (params?.account) {
       this.account = params.account
     }
+  }
+
+  /**
+   * Clean up event listeners when component is disconnected
+   */
+  disconnectedCallback(): void {
+    super.disconnectedCallback?.();
   }
 
   /**

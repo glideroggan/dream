@@ -43,6 +43,7 @@ Would be nice to get a bit more things happening, if we could do like in the lif
         - should show a toast
 
 # TODO
+- We should take the auto resize width from account-info and put in the base-workflow so that all workflows can use it
 ## account info
 - account info workflow, needs an empty/default state when no account is selected
 ## transfer workflow

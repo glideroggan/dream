@@ -24,19 +24,50 @@ export abstract class WorkflowBase extends FASTElement {
   private _host: WorkflowHost | null = null
   private _currentNestedWorkflowPromise: Promise<WorkflowResult> | null = null
 
+  private resizeHandler: () => void;
+
   constructor() {
     super()
     console.debug('[workflow-base] adding listener to ', this)
     const shadowRoot = this.shadowRoot!
     this.focus()
-    // const child = this.firstChild as HTMLElement
-    // child.focus()
-    // setInterval(() => {
-    //   console.debug('[workflow-base] ', shadowRoot.activeElement)
-    // }, 1000)
-    this.addEventListener('keydown', (e) => {
-      console.debug('[workflow-base] keydown event', e)
-    })
+    // this.addEventListener('keydown', (e) => {
+    //   console.log('[workflow-base] keydown event', e)
+    // })
+    // Add resize listener to adjust modal size when screen changes
+    this.resizeHandler = () => this.updateModalWidth();
+    window.addEventListener('resize', this.resizeHandler);
+  }
+
+  disconnectedCallback(): void {
+    if (this.resizeHandler) {
+      window.removeEventListener('resize', this.resizeHandler);
+    }
+  }
+
+  /**
+   * Updates the modal width based on the current screen size
+   */
+  private updateModalWidth(): void {
+    const width = this.getModalWidthForScreenSize();
+    this.setModalWidth(width);
+  }
+
+  /**
+   * Determines the appropriate modal width based on screen size
+   */
+  private getModalWidthForScreenSize(): string {
+    const screenWidth = window.innerWidth;
+    
+    if (screenWidth >= 1440) {
+      return '700px'; // Large desktop
+    } else if (screenWidth >= 1024) {
+      return '600px'; // Desktop
+    } else if (screenWidth >= 768) {
+      return '500px'; // Tablet
+    } else {
+      return '90%'; // Mobile - use percentage for small screens
+    }
   }
 
   /**
