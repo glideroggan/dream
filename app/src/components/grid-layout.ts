@@ -366,12 +366,6 @@ export class GridLayout extends FASTElement {
         metadata.rowSpan = rowSpan;
         
         console.debug(`GridLayout: Using spans from registry for ${metadata.id}: ${colSpan}x${rowSpan}`);
-      } 
-      // Third priority: Use legacy preferredSize if available
-      else if (metadata.preferredSize) {
-        colSpan = sizeToSpanMap[metadata.preferredSize];
-        rowSpan = 2; // Default rows for legacy sizes
-        console.debug(`GridLayout: Using spans from preferredSize ${metadata.preferredSize} for ${metadata.id}: ${colSpan}x${rowSpan}`);
       }
     }
     

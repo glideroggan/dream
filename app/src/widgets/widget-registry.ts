@@ -13,14 +13,10 @@ export const WidgetIds = {
   // Add more widget IDs here as needed
 };
 
-// Define widget size options (for backward compatibility)
-export type WidgetSize = 'sm' | 'md' | 'lg' | 'xl';
-
 // Enhanced widget definition with grid dimensions and search metadata
 interface EnhancedWidgetDefinition extends WidgetDefinition {
-  preferredSize?: WidgetSize; // Legacy - for backward compatibility
-  colSpan?: number; // Number of columns this widget spans (out of 16)
-  rowSpan?: number; // Number of rows this widget spans (out of 8)
+  colSpan: number; // Number of columns this widget spans (out of 16)
+  rowSpan: number; // Number of rows this widget spans (out of 16)
   minWidth?: number; // Minimum width in pixels
   fullWidth?: boolean; // Force full width
   searchable?: boolean;
@@ -41,7 +37,7 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     module: '@widgets/financial-health',
     defaultConfig: {},
     colSpan: 10,
-    rowSpan: 6, // Increased rows for fixed-height grid
+    rowSpan: 6,
     minWidth: 380,
     searchable: true,
     keywords: ['financial health', 'net worth', 'savings rate', 'spending trends', 'recommendations', 'financial advisor'],
@@ -55,7 +51,7 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     module: '@widgets/account',
     defaultConfig: {},
     colSpan: 12,
-    rowSpan: 5, // Increased rows for fixed-height grid
+    rowSpan: 5,
     minWidth: 380,
     searchable: true,
     keywords: ['accounts', 'checking account', 'savings account', 'bank accounts', 'money', 'balance'],
@@ -130,14 +126,6 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
  */
 export function getWidgetDefinitions(): EnhancedWidgetDefinition[] {
   return widgetDefinitions;
-}
-
-/**
- * Gets the preferred size for a widget (legacy support)
- */
-export function getWidgetPreferredSize(widgetId: string): WidgetSize {
-  const widget = widgetDefinitions.find(w => w.id === widgetId);
-  return widget?.preferredSize || 'md'; 
 }
 
 /**

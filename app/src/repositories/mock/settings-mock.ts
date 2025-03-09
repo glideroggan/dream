@@ -1,14 +1,11 @@
-import { UserSettings } from '../settings-repository';
+import { UserSettings } from "../settings-repository";
 
 export const defaultSettings: UserSettings = {
-  id: 'user-settings',
-  theme: 'system',
-  language: 'en',
+  id: "default-settings",
+  theme: "light",
+  language: "en",
   enableNotifications: true,
-  dashboardLayout: [],
-  savingsWidgets: [],
-  investmentsWidgets: [],
-  kycData: undefined,
   paymentContacts: [],
   widgetLayout: {},
+  autoAddedProducts: {}
 };

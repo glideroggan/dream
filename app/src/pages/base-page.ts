@@ -9,7 +9,6 @@ import {
 import { WidgetDefinition, widgetService } from '../services/widget-service';
 import { getProductService, ProductService } from '../services/product-service';
 import { 
-  getWidgetPreferredSize, 
   getWidgetMinWidth, 
   getAutoWidgetsForProduct,
   isWidgetAvailableForUser,
@@ -280,7 +279,8 @@ export class BasePage extends FASTElement {
       });
 
       if (Object.keys(updatedSettings).length > 0) {
-        await settingsRepo.updateSettings(updatedSettings);
+        // Fix: use update method instead of non-existent saveSettings method
+        await settingsRepo.update(userSettings.id, updatedSettings);
       }
     } catch (error) {
       console.error('Error removing product widgets from user settings:', error);
@@ -304,15 +304,36 @@ export class BasePage extends FASTElement {
         const widgetDef = getWidgetById(widgetId);
         console.debug(`Loading widget ${widgetId}, definition:`, widgetDef);
 
-        // Create the wrapper with spans from registry
+        // Get grid dimensions from registry
+        let colSpan = widgetDef?.colSpan || getWidgetColumnSpan(widgetId);
+        let rowSpan = widgetDef?.rowSpan || getWidgetRowSpan(widgetId);
+        
+        // Try to load grid dimensions from settings if available
+        if (this.dataPage) {
+          try {
+            const dimensions = await this.settingsRepository.getWidgetGridDimensions(
+              this.pageType, 
+              widgetId,
+              colSpan,   // Default to registry value if not in settings
+              rowSpan    // Default to registry value if not in settings
+            );
+            colSpan = dimensions.colSpan;
+            rowSpan = dimensions.rowSpan;
+            console.debug(`Loaded dimensions from settings for widget ${widgetId}: ${colSpan}x${rowSpan}`);
+          } catch (error) {
+            console.warn(`Failed to load grid dimensions for widget ${widgetId}:`, error);
+          }
+        }
+
+        // Create the wrapper with spans
         const wrapperElement = createWidgetWrapper({
           widgetId: widget.id,
           initialState: 'loading',
           additionalAttributes: {
             'widget-name': widget.name || widget.id,
             'page-type': this.pageType,
-            'colSpan': (widgetDef?.colSpan || getWidgetColumnSpan(widgetId)).toString(),
-            'rowSpan': (widgetDef?.rowSpan || getWidgetRowSpan(widgetId)).toString()
+            'colSpan': colSpan.toString(),
+            'rowSpan': rowSpan.toString()
           }
         });
         
@@ -331,9 +352,8 @@ export class BasePage extends FASTElement {
           
           gridLayout.addItem(wrapperElement, {
             id: widget.id,
-            preferredSize: getWidgetPreferredSize(widget.id),
-            colSpan: widgetDef?.colSpan || getWidgetColumnSpan(widgetId),
-            rowSpan: widgetDef?.rowSpan || getWidgetRowSpan(widgetId),
+            colSpan,
+            rowSpan,
             minWidth: widgetDef?.minWidth || getWidgetMinWidth(widget.id),
             fullWidth: widgetDef?.fullWidth || shouldWidgetBeFullWidth(widget.id)
           });
@@ -431,16 +451,31 @@ export class BasePage extends FASTElement {
       // Add wrapper to DOM
       widgetContainer.appendChild(wrapperElement);
       
-      // Get user preferences if available
-      const userSize = this.dataPage ? 
-        await this.settingsRepository.getWidgetSize(this.pageType, widget.id) : null;
+      // Get grid dimensions from user settings
+      let colSpan = widgetDef?.colSpan || getWidgetColumnSpan(widget.id);
+      let rowSpan = widgetDef?.rowSpan || getWidgetRowSpan(widget.id);
+      
+      // If we're a data page, try to load saved dimensions
+      if (this.dataPage) {
+        try {
+          const dimensions = await this.settingsRepository.getWidgetGridDimensions(
+            this.pageType, 
+            widget.id,
+            colSpan,   // Default to registry value if not in settings
+            rowSpan    // Default to registry value if not in settings
+          );
+          colSpan = dimensions.colSpan;
+          rowSpan = dimensions.rowSpan;
+        } catch (error) {
+          console.warn(`Failed to load grid dimensions for widget ${widget.id}:`, error);
+        }
+      }
       
       // Add to grid layout with proper metadata
       gridLayout.addItem(wrapperElement, {
         id: widget.id,
-        preferredSize: userSize || getWidgetPreferredSize(widget.id),
-        colSpan: widgetDef?.colSpan || getWidgetColumnSpan(widget.id),
-        rowSpan: widgetDef?.rowSpan || getWidgetRowSpan(widget.id),
+        colSpan,
+        rowSpan,
         minWidth: widgetDef?.minWidth || getWidgetMinWidth(widget.id),
         fullWidth: widgetDef?.fullWidth || shouldWidgetBeFullWidth(widget.id)
       });
@@ -650,9 +685,13 @@ export class BasePage extends FASTElement {
     try {
       const settingsRepo = repositoryService.getSettingsRepository();
       const pageKey = `${this.pageType}Widgets`;
-      await settingsRepo.updateSettings({
+      
+      // Fix: Get current settings to access the ID, then use update method
+      const userSettings = await settingsRepo.getCurrentSettings();
+      await settingsRepo.update(userSettings.id, {
         [pageKey]: widgetIds
       });
+      
       console.debug(`Saved widget preferences for ${this.pageType}:`, widgetIds);
     } catch (error) {
       console.error('Error saving widget preferences:', error);

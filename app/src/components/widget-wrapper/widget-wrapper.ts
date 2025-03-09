@@ -5,7 +5,7 @@ import { template } from "./widget-wrapper-template";
 import { styles } from "./widget-wrapper-styles";
 import { createWidgetEvents, createBoundEventHandlers, isModuleError } from "./widget-wrapper-events";
 import { WidgetTimeoutHandler } from "./widget-wrapper-timeout";
-import { GridItemSize } from "../grid-layout";
+import { repositoryService } from "../../services/repository-service";
 
 /**
  * Widget loading states
@@ -27,18 +27,21 @@ export class WidgetWrapper extends FASTElement {
   @attr moduleImportPath: string = '';
   @attr({ mode: "boolean" }) hideCloseButton: boolean = false;
   @attr widgetName: string = '';
+  
+  // Computed properties
+  get displayName(): string {
+    return this.widgetName || this.widgetTitle || this.widgetId || 'Unknown Widget';
+  }
   @attr({ attribute: 'seamless-integration', mode: 'boolean' }) seamlessIntegration: boolean = false;
+  @attr({ attribute: 'save-dimensions', mode: 'boolean' }) saveDimensions: boolean = true;
+  @attr({ attribute: 'load-from-settings', mode: 'boolean' }) loadFromSettings: boolean = true;
   
-  // Size attributes (for backward compatibility)
-  @attr currentSize: GridItemSize = 'md'; 
-  
-  // New grid span attributes
+  // Grid span attributes
   @attr({ mode: "fromView" }) colSpan: number = 8; // Default to half width (8/16 columns)
   @attr({ mode: "fromView" }) rowSpan: number = 1; // Default to single row
   @attr({ mode: "boolean" }) showSizeControls: boolean = true;
-  @attr({ mode: "boolean" }) useLegacySizing: boolean = false; // Default to new sizing UI
   @attr maxColSpan: number = 16;
-  @attr maxRowSpan: number = 16; // Increased from 8 to 16 to allow for more vertical space
+  @attr maxRowSpan: number = 16; 
   @attr minColSpan: number = 1;
   @attr minRowSpan: number = 1;
 
@@ -90,33 +93,6 @@ export class WidgetWrapper extends FASTElement {
     );
   }
 
-  // Legacy: Available sizes for widget (backward compatibility)
-  readonly availableSizes: GridItemSize[] = ['sm', 'md', 'lg', 'xl'];
-
-  // Map of sizes to column spans for backward compatibility
-  readonly sizeToSpanMap = {
-    'sm': 4,   // Small: 4/16 columns
-    'md': 8,   // Medium: 8/16 columns
-    'lg': 12,  // Large: 12/16 columns
-    'xl': 16   // Extra Large: 16/16 columns (full width)
-  };
-
-  /**
-   * Computed property for display name
-   */
-  get displayName(): string {
-    // First use explicit widget name if provided
-    if (this.widgetName) {
-      return this.widgetName;
-    }
-    // Then try to get name from widget definition
-    if (this._widgetDefinition && this._widgetDefinition.name) {
-      return this._widgetDefinition.name;
-    }
-    // Fall back to widget ID
-    return this.widgetId || 'Unknown widget';
-  }
-
   connectedCallback() {
     super.connectedCallback();
 
@@ -138,39 +114,37 @@ export class WidgetWrapper extends FASTElement {
     // Get widget info from registry
     this.updateWidgetDefinition();
     
-    // If spans are not set explicitly, get them from widget definition
-    if (this._widgetDefinition) {
-      if (!this.hasAttribute('colSpan') && this._widgetDefinition.colSpan) {
-        this.colSpan = this._widgetDefinition.colSpan;
-        console.debug(`Widget wrapper ${this.widgetId} setting colSpan from registry: ${this.colSpan}`);
-      }
-      
-      if (!this.hasAttribute('rowSpan') && this._widgetDefinition.rowSpan) {
-        this.rowSpan = this._widgetDefinition.rowSpan;
-        console.debug(`Widget wrapper ${this.widgetId} setting rowSpan from registry: ${this.rowSpan}`);
-      }
-      
-      // For backward compatibility - map size to column span if needed
-      if (this.colSpan === 8 && this._widgetDefinition.preferredSize) {
-        const size = this._widgetDefinition.preferredSize as GridItemSize;
-        this.colSpan = this.sizeToSpanMap[size] || 8;
-        console.debug(`Widget wrapper ${this.widgetId} setting colSpan from preferredSize: ${this.colSpan}`);
-      }
+    // Load dimensions from settings if enabled
+    if (this.loadFromSettings && this.pageType && this.widgetId) {
+      this.loadDimensionsFromSettings();
     } else {
-      // If no definition, get spans directly from registry functions
-      if (!this.hasAttribute('colSpan')) {
-        const colSpan = getWidgetColumnSpan(this.widgetId);
-        if (colSpan) {
-          this.colSpan = colSpan;
-          console.debug(`Widget wrapper ${this.widgetId} setting colSpan from registry function: ${this.colSpan}`);
+      // If spans are not set explicitly, get them from widget definition
+      if (this._widgetDefinition) {
+        if (!this.hasAttribute('colSpan') && this._widgetDefinition.colSpan) {
+          this.colSpan = this._widgetDefinition.colSpan;
+          console.debug(`Widget wrapper ${this.widgetId} setting colSpan from registry: ${this.colSpan}`);
         }
-      }
-      
-      if (!this.hasAttribute('rowSpan')) {
-        const rowSpan = getWidgetRowSpan(this.widgetId);
-        if (rowSpan) {
-          this.rowSpan = rowSpan;
-          console.debug(`Widget wrapper ${this.widgetId} setting rowSpan from registry function: ${this.rowSpan}`);
+        
+        if (!this.hasAttribute('rowSpan') && this._widgetDefinition.rowSpan) {
+          this.rowSpan = this._widgetDefinition.rowSpan;
+          console.debug(`Widget wrapper ${this.widgetId} setting rowSpan from registry: ${this.rowSpan}`);
+        }
+      } else {
+        // If no definition, get spans directly from registry functions
+        if (!this.hasAttribute('colSpan')) {
+          const colSpan = getWidgetColumnSpan(this.widgetId);
+          if (colSpan) {
+            this.colSpan = colSpan;
+            console.debug(`Widget wrapper ${this.widgetId} setting colSpan from registry function: ${this.colSpan}`);
+          }
+        }
+        
+        if (!this.hasAttribute('rowSpan')) {
+          const rowSpan = getWidgetRowSpan(this.widgetId);
+          if (rowSpan) {
+            this.rowSpan = rowSpan;
+            console.debug(`Widget wrapper ${this.widgetId} setting rowSpan from registry function: ${this.rowSpan}`);
+          }
         }
       }
     }
@@ -524,25 +498,6 @@ export class WidgetWrapper extends FASTElement {
   }
 
   /**
-   * Legacy: Change widget size and emit change event (for backward compatibility)
-   * Maps size to column span and dispatches the appropriate event
-   */
-  changeSize(newSize: GridItemSize): void {
-    if (this.currentSize === newSize) return;
-    
-    const oldSize = this.currentSize;
-    this.currentSize = newSize;
-    
-    // Map size to column span
-    const newColSpan = this.sizeToSpanMap[newSize] || 8;
-    
-    console.debug(`Widget ${this.widgetId} size changing from ${oldSize} to ${newSize} (col span: ${newColSpan})`);
-    
-    // Use the changeSpans method with the new column span
-    this.changeSpans(newColSpan, this.rowSpan);
-  }
-  
-  /**
    * Change widget spans (columns and rows) and emit change event
    */
   changeSpans(newColSpan: number, newRowSpan: number, isUserResized: boolean = true): void {
@@ -575,6 +530,11 @@ export class WidgetWrapper extends FASTElement {
         isUserResized
       }
     });
+    
+    // Save dimensions to settings if user resized and saving is enabled
+    if (isUserResized && this.saveDimensions) {
+      this.saveDimensionsToSettings(newColSpan, newRowSpan);
+    }
     
     // Dispatch the event immediately (no timeout)
     console.debug(`Dispatching span change event for ${this.widgetId}: ${newColSpan}x${newRowSpan}`);
@@ -893,40 +853,40 @@ export class WidgetWrapper extends FASTElement {
     }
   }
 
-  /**
-   * Get CSS class for size button based on whether it's the current size
-   * @param size The size to check
-   * @returns CSS class names for the button
-   */
-  getSizeButtonClass(size: string): string {
-    return size === this.currentSize ? 'size-button size-button-active' : 'size-button';
-  }
+  // /**
+  //  * Get CSS class for size button based on whether it's the current size
+  //  * @param size The size to check
+  //  * @returns CSS class names for the button
+  //  */
+  // getSizeButtonClass(size: string): string {
+  //   return size === this.currentSize ? 'size-button size-button-active' : 'size-button';
+  // }
   
-  /**
-   * Get display text for size button
-   * @param size The size to get display text for
-   * @returns Display text for the size button
-   */
-  getSizeButtonText(size: GridItemSize): string {
-    switch (size as string) {
-      case 'sm': return 'S';
-      case 'md': return 'M';
-      case 'lg': return 'L';
-      case 'xl': return 'XL';
-      default: return size.charAt(0).toUpperCase();
-    }
-  }
+  // /**
+  //  * Get display text for size button
+  //  * @param size The size to get display text for
+  //  * @returns Display text for the size button
+  //  */
+  // getSizeButtonText(size: GridItemSize): string {
+  //   switch (size as string) {
+  //     case 'sm': return 'S';
+  //     case 'md': return 'M';
+  //     case 'lg': return 'L';
+  //     case 'xl': return 'XL';
+  //     default: return size.charAt(0).toUpperCase();
+  //   }
+  // }
   
-  /**
-   * Handle size button click event
-   * @param event The click event
-   * @param size The size selected
-   */
-  handleSizeButtonClick(event: Event, size: GridItemSize): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.changeSize(size);
-  }
+  // /**
+  //  * Handle size button click event
+  //  * @param event The click event
+  //  * @param size The size selected
+  //  */
+  // handleSizeButtonClick(event: Event, size: GridItemSize): void {
+  //   event.preventDefault();
+  //   event.stopPropagation();
+  //   this.changeSize(size);
+  // }
 
   /**
    * Handle resize requests from widgets
@@ -944,5 +904,60 @@ export class WidgetWrapper extends FASTElement {
     
     // Stop propagation since we've handled it
     event.stopPropagation();
+  }
+
+  /**
+   * Load widget dimensions from user settings
+   */
+  private async loadDimensionsFromSettings(): Promise<void> {
+    if (!this.widgetId || !this.pageType) return;
+    
+    try {
+      const settingsRepo = repositoryService.getSettingsRepository();
+      const dimensions = await settingsRepo.getWidgetGridDimensions(this.pageType, this.widgetId);
+      
+      console.debug(`Loaded dimensions for ${this.widgetId} from settings: ${dimensions.colSpan}x${dimensions.rowSpan}`);
+      
+      // Apply dimensions from settings
+      if (dimensions.colSpan && dimensions.colSpan > 0) {
+        this.colSpan = dimensions.colSpan;
+      }
+      
+      if (dimensions.rowSpan && dimensions.rowSpan > 0) {
+        this.rowSpan = dimensions.rowSpan;
+      }
+    } catch (error) {
+      console.warn(`Failed to load dimensions from settings for widget ${this.widgetId}:`, error);
+      
+      // Fall back to widget registry values
+      if (!this.hasAttribute('colSpan')) {
+        this.colSpan = getWidgetColumnSpan(this.widgetId);
+      }
+      
+      if (!this.hasAttribute('rowSpan')) {
+        this.rowSpan = getWidgetRowSpan(this.widgetId);
+      }
+    }
+  }
+
+  /**
+   * Save widget dimensions to user settings
+   */
+  private async saveDimensionsToSettings(colSpan: number, rowSpan: number): Promise<void> {
+    if (!this.saveDimensions || !this.widgetId || !this.pageType) return;
+    
+    try {
+      const settingsRepo = repositoryService.getSettingsRepository();
+      await settingsRepo.updateWidgetGridDimensions(
+        this.pageType, 
+        this.widgetId, 
+        colSpan, 
+        rowSpan
+      );
+      
+      console.debug(`Saved dimensions for ${this.widgetId} to settings: ${colSpan}x${rowSpan}`);
+    } catch (error) {
+      console.warn(`Failed to save dimensions to settings for widget ${this.widgetId}:`, error);
+    }
   }
 }

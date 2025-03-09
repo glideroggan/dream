@@ -1,4 +1,4 @@
-import { getWidgetPreferredSize, getWidgetMinWidth, getWidgetColumnSpan, getWidgetRowSpan } from '../widgets/widget-registry';
+import { getWidgetMinWidth, getWidgetColumnSpan, getWidgetRowSpan } from '../widgets/widget-registry';
 import { WidgetDefinition, widgetService } from '../services/widget-service';
 
 /**
@@ -20,9 +20,6 @@ export interface WidgetOptions {
   // Additional attributes
   additionalAttributes?: Record<string, string>;
   
-  // Whether to add size class automatically based on widget registry
-  autoAddSizeClass?: boolean;
-
   // Whether to hide the close button
   hideCloseButton?: boolean;
 }
@@ -34,7 +31,6 @@ const DEFAULT_OPTIONS: Partial<WidgetOptions> = {
   initialState: 'loading',
   warningTimeout: 5000,
   failureTimeout: 10000,
-  autoAddSizeClass: true,
   additionalClasses: [],
   additionalAttributes: {},
   hideCloseButton: false
@@ -71,13 +67,6 @@ export function createWidgetWrapper(options: WidgetOptions): HTMLElement {
   
   // Add data attribute for easier selection (this is a data attribute, so kebab-case is appropriate)
   wrapperElement.setAttribute('data-widget-id', opts.widgetId);
-  
-  // Add size class if requested
-  if (opts.autoAddSizeClass) {
-    const preferredSize = getWidgetPreferredSize(opts.widgetId);
-    const size = preferredSize || 'md';
-    wrapperElement.classList.add(`widget-${size}`);
-  }
   
   // Add min-width information as a data attribute
   const minWidth = getWidgetMinWidth(opts.widgetId);

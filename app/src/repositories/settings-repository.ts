@@ -1,7 +1,6 @@
 import { StorageService } from '../services/storage-service';
 import { UserService } from '../services/user-service';
-import { WidgetSize } from '../widgets/widget-registry';
-import { Entity } from './base-repository';
+import { Entity, LocalStorageRepository } from './base-repository';
 import { PaymentContact } from './models/payment-contact';
 import { PageWidgetSettings, WidgetsLayout } from './models/widget-settings';
 import { defaultSettings } from './mock/settings-mock';
@@ -11,32 +10,49 @@ export interface UserSettings extends Entity {
   theme?: string;
   language?: string;
   enableNotifications?: boolean;
-  paymentContacts: PaymentContact[]
+  paymentContacts: PaymentContact[];
   
   // Widget preferences by page
   widgetLayout: WidgetsLayout;
   
+  // Record of product IDs to array of page types where widgets were auto-added
+  autoAddedProducts?: Record<string, string[]>;
+  
   // Allow for additional dynamic properties
   [key: string]: any;
-
-  // Record of product IDs to array of page types where widgets were auto-added
-  autoAddedProducts?: Record<string, string[]>; 
 }
 
-export class SettingsRepository {
+export class SettingsRepository extends LocalStorageRepository<UserSettings> {
   
   constructor(
-    private storage: StorageService,
-    private userService: UserService
-  ) {}
+    storage: StorageService,
+    userService: UserService
+  ) {
+    super('settings', storage, userService);
+  }
+
+  protected initializeMockData(): void {
+    // Use the default settings as mock data
+    const mockSettings = { ...defaultSettings };
+    
+    // Add mock settings
+    this.createForMocks(mockSettings);
+    
+    // Save to storage
+    this.saveToStorage();
+    
+    console.debug('Initialized settings with default mock data');
+  }
 
   /**
-   * Update the size of a specific widget on a page
-   * @param pageKey - The unique key/identifier for the page
-   * @param widgetId - The ID of the widget to update
-   * @param newSize - The new size to set for the widget
+   * Update the grid dimensions of a specific widget on a page
    */
-  async updateWidgetSize(pageKey: string, widgetId: string, newSize: WidgetSize): Promise<void> {
+  async updateWidgetGridDimensions(
+    pageKey: string, 
+    widgetId: string, 
+    colSpan: number, 
+    rowSpan: number
+  ): Promise<void> {
     const settings = await this.getCurrentSettings();
     
     // Initialize widgetLayout if it doesn't exist
@@ -54,30 +70,33 @@ export class SettingsRepository {
     
     if (widgetIndex >= 0) {
       // Update existing widget settings
-      settings.widgetLayout[pageKey][widgetIndex].size = newSize;
+      settings.widgetLayout[pageKey][widgetIndex].colSpan = colSpan;
+      settings.widgetLayout[pageKey][widgetIndex].rowSpan = rowSpan;
     } else {
       // Add new widget settings
       settings.widgetLayout[pageKey].push({
         id: widgetId,
-        size: newSize
+        colSpan,
+        rowSpan
       });
     }
     
     // Save updated settings
-    await this.updateSettings({ widgetLayout: settings.widgetLayout });
+    await this.update(settings.id, { widgetLayout: settings.widgetLayout });
     
-    console.debug(`Updated widget ${widgetId} on page ${pageKey} to size ${newSize}`);
+    console.debug(`Updated widget ${widgetId} on page ${pageKey} to dimensions ${colSpan}x${rowSpan}`);
   }
 
   /**
-   * Get the preferred size for a widget on a specific page
-   * @param pageKey - The unique key/identifier for the page
-   * @param widgetId - The ID of the widget
-   * @param defaultSize - Default size to return if no preference is stored
+   * Get the grid dimensions for a widget on a specific page
    */
-  async getWidgetSize(pageKey: string, widgetId: string, defaultSize: WidgetSize = 'md'): Promise<WidgetSize> {
+  async getWidgetGridDimensions(
+    pageKey: string, 
+    widgetId: string, 
+    defaultColSpan: number = 8,
+    defaultRowSpan: number = 1
+  ): Promise<{colSpan: number, rowSpan: number}> {
     const settings = await this.getCurrentSettings();
-    console.debug('current settings', settings)
     
     // Check if we have widget settings for this page and widget
     if (settings.widgetLayout && 
@@ -86,19 +105,22 @@ export class SettingsRepository {
       
       // Find the widget in the page's widget settings
       const widgetSettings = settings.widgetLayout[pageKey].find(widget => widget.id === widgetId);
-      console.debug('widget settings', widgetSettings)
       
-      if (widgetSettings && widgetSettings.size) {
-        return widgetSettings.size;
+      if (widgetSettings) {
+        // Use stored grid dimensions if available
+        const colSpan = widgetSettings.colSpan ?? defaultColSpan;
+        const rowSpan = widgetSettings.rowSpan ?? defaultRowSpan;
+        
+        return { colSpan, rowSpan };
       }
     }
     
-    return defaultSize;
+    // Return defaults if no settings found
+    return { colSpan: defaultColSpan, rowSpan: defaultRowSpan };
   }
 
   /**
    * Get all widget settings for a specific page
-   * @param pageKey - The unique key/identifier for the page
    */
   async getPageWidgetSettings(pageKey: string): Promise<PageWidgetSettings[]> {
     const settings = await this.getCurrentSettings();
@@ -112,8 +134,6 @@ export class SettingsRepository {
 
   /**
    * Save the complete widget layout for a page
-   * @param pageKey - The unique key/identifier for the page
-   * @param pageWidgets - The array of widget settings
    */
   async savePageWidgetLayout(pageKey: string, pageWidgets: PageWidgetSettings[]): Promise<void> {
     const settings = await this.getCurrentSettings();
@@ -127,7 +147,7 @@ export class SettingsRepository {
     settings.widgetLayout[pageKey] = pageWidgets;
     
     // Save updated settings
-    await this.updateSettings({ widgetLayout: settings.widgetLayout });
+    await this.update(settings.id, { widgetLayout: settings.widgetLayout });
     
     console.debug(`Saved widget layout for page ${pageKey}:`, pageWidgets);
   }
@@ -136,62 +156,15 @@ export class SettingsRepository {
    * Get current user settings
    */
   async getCurrentSettings(): Promise<UserSettings> {
-    const userId = this.userService.getCurrentUserId();
-    const key = `${userId}:settings`;
-    const storedSettings = this.storage.getItem<UserSettings>(key);
-
-    if (storedSettings) {
-      // Return stored settings with defaults for any missing properties
-      return {
-        ...defaultSettings,
-        ...storedSettings
-      };
+    const settings = await this.getAll();
+    
+    // There should only be one settings entry per user
+    if (settings.length > 0) {
+      return settings[0];
     } else {
-      // No settings found, save defaults but don't call getCurrentSettings again
-      // Instead, just save and return the defaults directly
-      this.storage.setItem(key, defaultSettings);
-      return { ...defaultSettings };
+      // Create a new settings entry with default values
+      return this.create({ ...defaultSettings });
     }
-  }
-
-  /**
-   * Update user settings
-   */
-  async updateSettings(settings: Partial<UserSettings>): Promise<void> {
-    const userId = this.userService.getCurrentUserId();
-    const key = `${userId}:settings`;
-    
-    // Directly get stored settings without recursively calling getCurrentSettings
-    let currentSettings = this.storage.getItem<UserSettings>(key);
-    
-    // If no settings exist yet, use defaults
-    if (!currentSettings) {
-      currentSettings = { ...defaultSettings };
-    }
-    
-    // Merge updated settings
-    const updatedSettings = {
-      ...currentSettings,
-      ...settings
-    };
-    
-    // Save to storage
-    this.storage.setItem(key, updatedSettings);
-    
-    console.debug('Settings updated:', settings);
-  }
-
-  /**
-   * Reset settings to defaults
-   */
-  async resetSettings(): Promise<void> {
-    const userId = this.userService.getCurrentUserId();
-    const key = `${userId}:settings`;
-    
-    // Save default settings
-    this.storage.setItem(key, defaultSettings);
-    
-    console.debug('Settings reset to defaults');
   }
 
   /**
@@ -208,7 +181,7 @@ export class SettingsRepository {
     // Add the new contact
     const updatedContacts = [...settings.paymentContacts, contact];
     
-    await this.updateSettings({
+    await this.update(settings.id, {
       paymentContacts: updatedContacts
     });
     
@@ -233,7 +206,7 @@ export class SettingsRepository {
       ...updates
     };
     
-    await this.updateSettings({
+    await this.update(settings.id, {
       paymentContacts: updatedContacts
     });
     
@@ -253,7 +226,7 @@ export class SettingsRepository {
       throw new Error(`Payment contact with ID ${contactId} not found`);
     }
     
-    await this.updateSettings({
+    await this.update(settings.id, {
       paymentContacts: updatedContacts
     });
     
