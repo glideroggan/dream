@@ -3,6 +3,7 @@ import { PaymentContact } from "../../repositories/models/payment-contact";
 import { Account } from "./transfer-workflow";
 import { workflowManager } from "../../services/workflow-manager-service";
 import { WorkflowIds } from "../workflow-registry";
+import { styles } from "./transfer-toaccount-component.css";
 
 interface AutocompleteItem {
   id: string;
@@ -24,7 +25,9 @@ const template = html<ToAccountField>/*html*/`
       @input="${(x, c) => x.handleInput(c.event)}"
       @focus="${(x, c) => x.handleFocus(c.event)}"
       @blur="${(x, c) => x.handleBlur(c.event)}"
+      @keyup="${(x, c) => x.handleKeyup(c.event as KeyboardEvent)}"
       ?required="${x => x.required}"
+      tabindex="1"
     />
     <div class="${x => x.itemDisplayClasses}">
       ${when(x => x.selectedItem, html`
@@ -46,8 +49,11 @@ const template = html<ToAccountField>/*html*/`
             <div class="${(item, c) => c.parent.getItemClasses(item)}" 
                 data-id="${item => item.id}" 
                 data-type="account"
-                
-                @click="${(item, c) => c.parent.selectItem(item)}">
+                tabindex="${(_, c) => c.index + 2}"
+                data-result-index="${(item, c) => c.index + 2}"
+                @keydown="${(item, c) => c.parent.handleResultKeydown(item, c.event as KeyboardEvent)}"
+                @click="${(item, c) => c.parent.selectItem(item)}"
+                @mouseenter="${(item, c) => c.parent.handleItemMouseEnter(item)}">
               <span class="item-badge account">Account</span>
               <span class="item-name">${item => item.displayName}</span>
               ${when(item => (item.originalItem as Account).balance !== undefined, html`
@@ -63,7 +69,11 @@ const template = html<ToAccountField>/*html*/`
             <div class="${(item, c) => c.parent.getItemClasses(item)}" 
                 data-id="${item => item.id}" 
                 data-type="contact"
-                @click="${(item, c) => c.parent.selectItem(item)}">
+                tabindex="${(_, c) => c.parent.filteredAccounts.length + c.index + 2}"
+                data-result-index="${(_, c) => c.parent.filteredAccounts.length + c.index + 2}"
+                @keydown="${(item, c) => c.parent.handleResultKeydown(item, c.event as KeyboardEvent)}"
+                @click="${(item, c) => c.parent.selectItem(item)}"
+                @mouseenter="${(item, c) => c.parent.handleItemMouseEnter(item)}">
               <span class="item-badge contact">Contact</span>
               <span class="item-name">${item => item.displayName}</span>
               ${when(item => (item.originalItem as PaymentContact).accountNumber !== undefined, html`
@@ -74,7 +84,10 @@ const template = html<ToAccountField>/*html*/`
         `)}
         
         ${when(x => x.showNewContactOption, html`
-          <div class="new-contact-option" @click="${x => x.createNewContact()}">
+          <div class="new-contact-option" 
+               @click="${x => x.createNewContact()}"
+               tabindex="${x => x.filteredAccounts.length + x.filteredContacts.length + 2}"
+               @keydown="${(x, c) => x.handleNewContactKeydown(c.event as KeyboardEvent)}">
             <span class="add-icon">+</span>
             <span>Add New Contact</span>
           </div>
@@ -83,7 +96,10 @@ const template = html<ToAccountField>/*html*/`
         ${when(x => x.filteredItems.length === 0 && !x.showNewContactOption, html`
           <div class="no-results">
             <p>No matches found</p>
-            <button type="button" @click="${x => x.createNewContact()}" class="add-new-button">
+            <button type="button" 
+                   @click="${x => x.createNewContact()}" 
+                   class="add-new-button"
+                   tabindex="${x => x.filteredAccounts.length + x.filteredContacts.length + 2}">
               Create New Contact
             </button>
           </div>
@@ -95,258 +111,6 @@ const template = html<ToAccountField>/*html*/`
     <div class="error-message">${x => x.errorMessage}</div>
   `)}
 </div>
-`;
-
-const styles = css`
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    position: relative;
-  }
-  
-  label {
-    font-weight: 500;
-    font-size: 14px;
-    color: var(--text-secondary, #666);
-  }
-  
-  .autocomplete-wrapper {
-    position: relative;
-    width: 100%;
-    box-sizing: border-box;
-  }
-  
-  input {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid var(--border-color, #e0e0e0);
-    border-radius: 4px;
-    font-size: 16px;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    background-color: var(--input-bg, white);
-    box-sizing: border-box;
-  }
-  
-  input:focus {
-    border-color: var(--primary-color, #3498db);
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
-  }
-  
-  .has-error input {
-    border-color: var(--error-color, #e74c3c);
-    background-color: var(--error-bg, rgba(231, 76, 60, 0.05));
-  }
-  
-  .selected-item-display {
-    position: absolute;
-    top: 1px;
-    left: 1px;
-    right: 1px;
-    bottom: 1px;
-    pointer-events: none;
-    opacity: 0;
-    transform: translateY(10px);
-    transition: opacity 0.2s, transform 0.2s;
-    display: flex;
-    align-items: center;
-    padding: 0 8px;
-    border-radius: 3px;
-    box-sizing: border-box;
-  }
-  
-  .selected-item-display.visible {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
-  }
-  
-  .item-chip {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background-color: var(--chip-bg, #f3f4f6);
-    border-radius: 16px;
-    padding: 4px 8px;
-    max-width: 100%;
-    box-sizing: border-box;
-  }
-  
-  .item-badge {
-    font-size: 11px;
-    font-weight: 500;
-    padding: 2px 6px;
-    border-radius: 10px;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-  
-  .item-badge.account {
-    background-color: var(--account-color, #3498db);
-    color: white;
-  }
-  
-  .item-badge.contact {
-    background-color: var(--contact-color, #2ecc71);
-    color: white;
-  }
-  
-  .item-label {
-    font-size: 14px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  
-  .clear-button {
-    background: none;
-    border: none;
-    font-size: 18px;
-    cursor: pointer;
-    color: var(--text-tertiary, #999);
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    transition: color 0.2s;
-  }
-  
-  .clear-button:hover {
-    color: var(--error-color, #e74c3c);
-  }
-  
-  .autocomplete-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    margin-top: 4px;
-    background-color: var(--dropdown-bg, white);
-    border: 1px solid var(--border-color, #e0e0e0);
-    border-radius: 4px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    max-height: 300px;
-    overflow-y: auto;
-    z-index: 100;
-    width: 100%;
-    box-sizing: border-box;
-  }
-  
-  .group-label {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text-tertiary, #999);
-    padding: 8px 12px 4px;
-    background-color: var(--group-bg, #f9f9f9);
-    position: sticky;
-    top: 0;
-  }
-  
-  .autocomplete-item {
-    padding: 8px 12px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: background-color 0.15s;
-  }
-  
-  .autocomplete-item:hover, 
-  .autocomplete-item.highlighted {
-    background-color: var(--highlight-bg, #f5f9fd);
-  }
-  
-  .autocomplete-item .item-name {
-    font-weight: 500;
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  
-  .autocomplete-item .item-details {
-    font-size: 13px;
-    color: var(--text-secondary, #666);
-    white-space: nowrap;
-  }
-  
-  .error-message {
-    color: var(--error-color, #e74c3c);
-    font-size: 13px;
-    margin-top: 4px;
-  }
-  
-  /* Adjust input padding when an item is selected */
-  .selected-item-display.visible + input {
-    color: transparent;
-  }
-  
-  /* Animation when dropdown appears */
-  .autocomplete-dropdown {
-    animation: dropdown-fade 0.2s ease;
-    transform-origin: top center;
-  }
-  
-  @keyframes dropdown-fade {
-    from {
-      opacity: 0;
-      transform: translateY(-8px) scale(0.95);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-  }
-  
-  .new-contact-option {
-    padding: 8px 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    border-top: 1px solid var(--border-color, #e0e0e0);
-    background-color: var(--highlight-bg-subtle, #f7f9fc);
-    color: var(--primary-color, #3498db);
-    font-weight: 500;
-    transition: background-color 0.15s;
-  }
-  
-  .new-contact-option:hover {
-    background-color: var(--highlight-bg, #f0f7fd);
-  }
-  
-  .add-icon {
-    font-size: 16px;
-    font-weight: bold;
-  }
-  
-  .no-results {
-    padding: 16px;
-    text-align: center;
-    color: var(--text-secondary, #666);
-  }
-  
-  .no-results p {
-    margin: 0 0 12px 0;
-  }
-  
-  .add-new-button {
-    background-color: var(--primary-color, #3498db);
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: background-color 0.15s;
-  }
-  
-  .add-new-button:hover {
-    background-color: var(--primary-color-dark, #2980b9);
-  }
 `;
 
 @customElement({
@@ -371,6 +135,8 @@ export class ToAccountField extends FASTElement {
   @observable filteredAccounts: AutocompleteItem[] = [];
   @observable filteredContacts: AutocompleteItem[] = [];
   @observable showNewContactOption: boolean = false;
+  @observable currentFocusIndex: number = -1;
+  @observable isKeyboardNavigation: boolean = false;
   
   // Computed property for form group classes
   get formGroupClasses(): string {
@@ -388,9 +154,11 @@ export class ToAccountField extends FASTElement {
     return `item-badge ${this.selectedItem.type === 'account' ? 'account' : 'contact'}`;
   }
   
-  // Get classes for autocomplete items
+  // Get classes for autocomplete items with improved keyboard navigation indication
   getItemClasses(item: AutocompleteItem): string {
-    return `autocomplete-item ${item === this.highlightedItem ? 'highlighted' : ''}`;
+    const highlightClass = item === this.highlightedItem ? 'highlighted' : '';
+    const keyboardNavClass = this.isKeyboardNavigation ? 'keyboard-nav' : '';
+    return `autocomplete-item ${highlightClass} ${keyboardNavClass}`;
   }
   
   // Event to notify parent of value changes
@@ -542,6 +310,7 @@ export class ToAccountField extends FASTElement {
   handleFocus(event: Event) {
     this.showDropdown = true;
     this.updateFilteredItems();
+    this.isKeyboardNavigation = false; // Reset keyboard nav mode on focus
   }
   
   /**
@@ -556,6 +325,208 @@ export class ToAccountField extends FASTElement {
         this.dispatchValidationError(this.errorMessage);
       }
     }, 200);
+  }
+  
+  /**
+   * Handle keyboard events on the input field
+   */
+  handleKeyup(event: KeyboardEvent): void {
+    // Set keyboard navigation mode flag for visual styling
+    this.isKeyboardNavigation = true;
+    
+    // If dropdown isn't shown and user presses down, show it
+    if (!this.showDropdown && event.key === 'ArrowDown') {
+      this.showDropdown = true;
+      this.updateFilteredItems();
+      event.preventDefault();
+      return;
+    }
+    
+    if (this.showDropdown) {
+      switch (event.key) {
+        case 'ArrowDown':
+          this.highlightNextItem();
+          this.focusHighlightedItem();
+          event.preventDefault();
+          break;
+        case 'ArrowUp':
+          this.highlightPreviousItem();
+          this.focusHighlightedItem();
+          event.preventDefault();
+          break;
+        case 'Enter':
+          if (this.highlightedItem) {
+            this.selectItem(this.highlightedItem);
+            event.preventDefault();
+          } else if (this.showNewContactOption && this.inputValue.trim()) {
+            this.createNewContact();
+            event.preventDefault();
+          }
+          break;
+        case 'Escape':
+          this.showDropdown = false;
+          event.preventDefault();
+          break;
+        case 'Tab':
+          // Handle tabbing to the first result on Tab
+          if (this.showDropdown && this.filteredItems.length > 0 && !event.shiftKey) {
+            this.highlightedItem = this.filteredItems[0];
+            this.focusHighlightedItem();
+            event.preventDefault();
+          }
+          break;
+      }
+    }
+  }
+  
+  /**
+   * Focus the currently highlighted item in the DOM
+   */
+  private focusHighlightedItem(): void {
+    if (!this.highlightedItem) return;
+    
+    // Request animation frame to ensure DOM is updated
+    requestAnimationFrame(() => {
+      const itemElement = this.shadowRoot?.querySelector(`[data-id="${this.highlightedItem?.id}"]`) as HTMLElement;
+      if (itemElement) {
+        itemElement.focus();
+      }
+    });
+  }
+  
+  /**
+   * Handle keyboard events on result items
+   */
+  handleResultKeydown(item: AutocompleteItem, event: KeyboardEvent): void {
+    this.isKeyboardNavigation = true;
+    this.highlightedItem = item; // Set the highlighted item to the current item
+    
+    switch (event.key) {
+      case 'ArrowDown':
+        this.highlightNextItem();
+        this.focusHighlightedItem();
+        event.preventDefault();
+        break;
+      case 'ArrowUp':
+        this.highlightPreviousItem();
+        this.focusHighlightedItem();
+        event.preventDefault();
+        break;
+      case 'Enter':
+        this.selectItem(item);
+        event.preventDefault();
+        break;
+      case 'Escape':
+        this.showDropdown = false;
+        this.inputElement?.focus();
+        event.preventDefault();
+        break;
+      case 'Tab':
+        if (!event.shiftKey && item === this.getLastFocusableItem()) {
+          // If we're on the last item and tabbing forward, close dropdown and move to next control
+          this.showDropdown = false;
+          return; // Let the tab proceed naturally to next element
+        } else if (event.shiftKey && item === this.getFirstFocusableItem()) {
+          // If we're on the first item and tabbing backward, go back to input
+          this.inputElement?.focus();
+          event.preventDefault();
+        }
+        break;
+    }
+  }
+  
+  /**
+   * Get the first focusable item in the dropdown
+   */
+  private getFirstFocusableItem(): AutocompleteItem | null {
+    return this.filteredItems.length > 0 ? this.filteredItems[0] : null;
+  }
+  
+  /**
+   * Get the last focusable item in the dropdown
+   */
+  private getLastFocusableItem(): AutocompleteItem | null {
+    return this.filteredItems.length > 0 ? 
+      this.filteredItems[this.filteredItems.length - 1] : null;
+  }
+  
+  /**
+   * Handle mouse entry on items to provide visual feedback
+   */
+  handleItemMouseEnter(item: AutocompleteItem): void {
+    this.isKeyboardNavigation = false; // Reset keyboard navigation mode
+    this.highlightedItem = item; // Highlight hovered item
+  }
+  
+  /**
+   * Handle new contact option keydown
+   */
+  handleNewContactKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter') {
+      this.createNewContact();
+      event.preventDefault();
+    } else if (event.key === 'ArrowUp') {
+      if (this.filteredItems.length > 0) {
+        this.highlightedItem = this.filteredItems[this.filteredItems.length - 1];
+        this.focusHighlightedItem();
+      } else {
+        this.inputElement?.focus();
+      }
+      event.preventDefault();
+    }
+  }
+  
+  /**
+   * Highlight the next item in the dropdown
+   */
+  private highlightNextItem(): void {
+    if (this.filteredItems.length === 0) return;
+    
+    const currentIndex = this.highlightedItem 
+      ? this.filteredItems.indexOf(this.highlightedItem) 
+      : -1;
+      
+    const nextIndex = currentIndex + 1 >= this.filteredItems.length 
+      ? 0 
+      : currentIndex + 1;
+      
+    this.highlightedItem = this.filteredItems[nextIndex];
+    this.scrollItemIntoView(this.highlightedItem);
+  }
+  
+  /**
+   * Highlight the previous item in the dropdown
+   */
+  private highlightPreviousItem(): void {
+    if (this.filteredItems.length === 0) return;
+    
+    const currentIndex = this.highlightedItem 
+      ? this.filteredItems.indexOf(this.highlightedItem) 
+      : 0;
+      
+    const prevIndex = currentIndex - 1 < 0 
+      ? this.filteredItems.length - 1 
+      : currentIndex - 1;
+      
+    this.highlightedItem = this.filteredItems[prevIndex];
+    this.scrollItemIntoView(this.highlightedItem);
+  }
+  
+  /**
+   * Scroll an item into view
+   */
+  private scrollItemIntoView(item: AutocompleteItem): void {
+    // Find the DOM element for this item
+    const itemElement = this.shadowRoot?.querySelector(`[data-id="${item.id}"]`) as HTMLElement;
+    if (itemElement) {
+      // Scroll the item into view if needed
+      itemElement.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }
+  
+  // Reference to the input element for keyboard focus management
+  private get inputElement(): HTMLInputElement | null {
+    return this.shadowRoot?.querySelector('#toAccountInput') as HTMLInputElement;
   }
   
   /**

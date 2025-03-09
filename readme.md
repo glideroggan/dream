@@ -14,6 +14,10 @@
 - can't use keyboard in transfer workflow
 
 # FEATURES
+- common search dropdown component
+  Would be nice to just have one component that works
+  - search have one
+  - add contacts have one
 
 ## new workflows
 - edit payment contacts
