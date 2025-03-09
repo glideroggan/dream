@@ -17,7 +17,6 @@ const styles = css`
   }
   
   .error-widget {
-    height: 100%;
     display: flex;
     flex-direction: column;
     padding: 1rem;

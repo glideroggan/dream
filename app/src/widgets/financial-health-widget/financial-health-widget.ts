@@ -126,7 +126,6 @@ const styles = css`
     border-radius: 8px;
     padding: 0;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    height: 100%;
     display: flex;
     flex-direction: column;
   }

@@ -99,8 +99,8 @@ export const styles = css`
   .widget-container {
     display: flex;
     flex-direction: column;
-    height: 100%; /* Change back to 100% to fill the grid cell */
-    min-height: 100%;
+    height: auto; /* Changed from 100% to auto to allow shrinking */
+    /* min-height: 100%; removed to allow shrinking */
     overflow: hidden; /* Let child elements handle their own overflow */
   }
 
@@ -390,7 +390,6 @@ export const styles = css`
   }
 
   .widget-content ::slotted(*) {
-    height: auto;
     min-height: 0;
     flex: 1; /* Make slotted elements fill the available space */
   }
@@ -569,5 +568,38 @@ export const styles = css`
   .span-button:active {
     background-color: rgba(0, 0, 0, 0.25);
     transform: scale(0.95);
+  }
+
+  .auto-size-toggle {
+    width: 24px;
+    height: 20px;
+    border-radius: 4px;
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    color: #777;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 0;
+    margin-left: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
+  
+  .auto-size-toggle:hover {
+    background-color: #e0e0e0;
+  }
+  
+  .auto-size-toggle.active {
+    background-color: #0078d4;
+    border-color: #0078d4;
+    color: white;
+  }
+  
+  .auto-icon {
+    font-style: italic;
+    font-weight: bold;
   }
 `;

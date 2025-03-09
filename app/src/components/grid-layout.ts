@@ -33,7 +33,7 @@ const generateSpanStyles = () => {
     `;
   }
   
-  // Generate row-span classes
+  // Generate row-span classes - ensure we generate all 30 rows
   for (let i = 1; i <= MAX_GRID_ROWS; i++) {
     styles += `
     ::slotted(.row-span-${i}) {
@@ -43,6 +43,9 @@ const generateSpanStyles = () => {
     }
     `;
   }
+  
+  // Log to verify all rows are generated when the component loads
+  console.log(`Generated span styles for ${MAX_GRID_ROWS} rows`);
   
   return styles;
 };
@@ -152,7 +155,7 @@ export class GridLayout extends FASTElement {
   @attr({ attribute: "grid-gap" }) gridGap = DEFAULT_GRID_GAP;
   @attr({ attribute: "data-page" }) dataPage = '';
   @attr({ attribute: "columns" }) totalColumns = MAX_GRID_COLUMNS;
-  @attr({ attribute: "rows" }) totalRows = MAX_GRID_ROWS;
+  @attr({ attribute: "rows" }) totalRows = MAX_GRID_ROWS; // This should now be 30
   @observable gridStyle = '';
 
   private settingsRepository: SettingsRepository;
@@ -168,6 +171,15 @@ export class GridLayout extends FASTElement {
 
   connectedCallback(): void {
     super.connectedCallback();
+    
+    // Add debug logging to confirm totalRows is set correctly
+    console.debug(`GridLayout: initializing with ${this.totalColumns} columns and ${this.totalRows} rows`);
+    
+    // If rows attribute wasn't specified, ensure it's explicitly set to MAX_GRID_ROWS
+    if (!this.hasAttribute('rows')) {
+      this.totalRows = MAX_GRID_ROWS;
+      console.debug(`GridLayout: setting totalRows to MAX_GRID_ROWS (${MAX_GRID_ROWS})`);
+    }
     
     // Set custom CSS properties for row height
     this.style.setProperty('--min-row-height', `${this.minRowHeight}px`);
@@ -212,27 +224,33 @@ export class GridLayout extends FASTElement {
    */
   private handleWidgetSpansChange = (event: Event): void => {
     const customEvent = event as CustomEvent;
-    const { widgetId, colSpan, rowSpan, isUserResized, pageType, source } = customEvent.detail;
+    const { widgetId, colSpan, rowSpan, isUserResized, pageType, source, preserveRowSpan } = customEvent.detail;
     
-    console.debug(`GridLayout: Processing spans change for ${widgetId}: ${colSpan}x${rowSpan}, user=${isUserResized}, pageType=${pageType}, source=${source || 'unknown'}`);
-    
-    // Don't stop propagation - allow the event to bubble up to BasePage
+    console.debug(`GridLayout: Processing spans change for ${widgetId}: ${colSpan}x${rowSpan}, user=${isUserResized}, pageType=${pageType}, source=${source || 'unknown'}, preserveRowSpan=${preserveRowSpan}`);
     
     // Update the item metadata without needing to find the element
     const metadata = this.itemMetadata.get(widgetId);
     if (metadata) {
-      console.debug(`GridLayout: Updating metadata for ${widgetId} from ${metadata.colSpan}x${metadata.rowSpan} to ${colSpan}x${rowSpan}`);
+      // If preserveRowSpan flag is set, keep the current rowSpan value from metadata
+      const finalRowSpan = preserveRowSpan ? metadata.rowSpan || rowSpan : rowSpan;
+      
+      console.debug(`GridLayout: Updating metadata for ${widgetId} from ${metadata.colSpan}x${metadata.rowSpan} to ${colSpan}x${finalRowSpan}`);
       
       // Update metadata with new values
       metadata.colSpan = colSpan;
-      metadata.rowSpan = rowSpan;
+      metadata.rowSpan = finalRowSpan;
       metadata.userResized = isUserResized;
       
       // Find element directly by ID - this is more reliable
       const element = this.querySelector(`[data-grid-item-id="${widgetId}"]`);
       if (element && element instanceof HTMLElement) {
         console.debug(`GridLayout: Found element for ${widgetId}, updating spans`);
-        this.setItemSpans(element, colSpan, rowSpan, isUserResized);
+        // Only update what needs to be updated
+        if (preserveRowSpan) {
+          this.setItemColumnSpanOnly(element, colSpan);
+        } else {
+          this.setItemSpans(element, colSpan, finalRowSpan, isUserResized);
+        }
       }
       
       // Update layout regardless of whether we found the element
@@ -241,8 +259,8 @@ export class GridLayout extends FASTElement {
       // Save to settings repository if this was a user-initiated change
       console.debug(`are we saving? ${isUserResized} ${pageType} ${widgetId}`);
       if (isUserResized && pageType && widgetId) {
-        console.debug(`GridLayout: Saving ${widgetId} on ${pageType}: ${colSpan}x${rowSpan}`);
-        this.saveSpansToSettings(pageType, widgetId, colSpan, rowSpan);
+        console.debug(`GridLayout: Saving ${widgetId} on ${pageType}: ${colSpan}x${finalRowSpan}`);
+        this.saveSpansToSettings(pageType, widgetId, colSpan, finalRowSpan);
       } else if (isUserResized && !pageType) {
         console.warn(`GridLayout: Can't save ${widgetId} because pageType is missing!`);
         
@@ -251,7 +269,7 @@ export class GridLayout extends FASTElement {
         const fallbackPageType = gridElement?.getAttribute('data-page');
         if (fallbackPageType) {
           console.debug(`GridLayout: Using fallback pageType "${fallbackPageType}" for ${widgetId}`);
-          this.saveSpansToSettings(fallbackPageType, widgetId, colSpan, rowSpan);
+          this.saveSpansToSettings(fallbackPageType, widgetId, colSpan, finalRowSpan);
         }
       }
     } else {
@@ -495,9 +513,17 @@ export class GridLayout extends FASTElement {
       return;
     }
 
-    // Enforce minimum and maximum spans
+    // Enforce minimum and maximum spans, but log if we're clamping
+    const originalColSpan = colSpan;
+    const originalRowSpan = rowSpan;
+    
     colSpan = Math.max(1, Math.min(colSpan, this.totalColumns));
     rowSpan = Math.max(1, Math.min(rowSpan, this.totalRows));
+    
+    // Add debug logging if we're clamping 
+    if (colSpan !== originalColSpan || rowSpan !== originalRowSpan) {
+      console.debug(`GridLayout: Clamping spans - original: ${originalColSpan}x${originalRowSpan}, clamped: ${colSpan}x${rowSpan}, limits: ${this.totalColumns}x${this.totalRows}`);
+    }
     
     // Add debug logging to track span changes
     const id = item.getAttribute('data-grid-item-id') || 'unknown';
@@ -525,5 +551,38 @@ export class GridLayout extends FASTElement {
     item.style.setProperty('--current-row-span', rowSpan.toString());
     
     console.debug(`GridLayout: Set item ${id} to spans ${colSpan}x${rowSpan}, constrained: ${isUserResized}`);
+  }
+
+  /**
+   * Set only the column span of an item, preserving its row span
+   */
+  private setItemColumnSpanOnly(item: HTMLElement, colSpan: number): void {
+    if (!item) return;
+    
+    // Enforce column span limits
+    colSpan = Math.max(1, Math.min(colSpan, this.totalColumns));
+    
+    // Get the current row span from classes
+    const rowSpanClass = Array.from(item.classList)
+      .find(cls => cls.startsWith('row-span-'));
+    
+    // Remove existing column span classes
+    for (let i = 1; i <= MAX_GRID_COLUMNS; i++) {
+      item.classList.remove(`col-span-${i}`);
+    }
+    
+    // Add the new column span class
+    item.classList.add(`col-span-${colSpan}`);
+    
+    // Set custom property for responsive adjustments
+    item.style.setProperty('--current-col-span', colSpan.toString());
+    
+    // Debug info
+    const id = item.getAttribute('data-grid-item-id') || 'unknown';
+    const currentRowSpan = rowSpanClass ? 
+      parseInt(rowSpanClass.replace('row-span-', '')) : 
+      "preserved";
+    
+    console.debug(`GridLayout: Set item ${id} column span to ${colSpan}, preserved row span ${currentRowSpan}`);
   }
 }

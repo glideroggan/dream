@@ -415,12 +415,16 @@ export class AccountWidget extends BaseWidget {
   
   /**
    * Load accounts data
+   * After loading accounts data, notify about potential content changes
    */
   async loadAccounts() {
     const accountRepo = repositoryService.getAccountRepository();
     this.accounts = await accountRepo.getAll();
     this.accountsLoaded = true;
     console.debug('Loaded accounts:', this.accounts.length);
+    
+    // Notify base widget that content may have changed
+    setTimeout(() => this.notifyContentChanged(), 50);
   }
   
   /**
@@ -461,10 +465,14 @@ export class AccountWidget extends BaseWidget {
   
   /**
    * Handle account toggle event from child component
+   * Enhanced to notify base widget of content changes
    */
   handleAccountToggle(event: Event) {
     const customEvent = event as CustomEvent;
     console.debug('Account toggled:', customEvent.detail);
+    
+    // Use the new helper method to trigger size recalculation
+    setTimeout(() => this.notifyContentChanged(), 50);
   }
   
   /**

@@ -1,5 +1,6 @@
 import { FASTElement, observable, css } from "@microsoft/fast-element";
 import { workflowManager } from "../services/workflow-manager-service";
+import { MIN_ROW_HEIGHT, DEFAULT_GRID_GAP } from "../constants/grid-constants";
 
 // Common styles that will be applied to all widgets through inheritance
 export const baseWidgetStyles = css`
@@ -32,7 +33,7 @@ export const baseWidgetStyles = css`
 
   /* For widgets that need to scroll internally */
   :host(.scroll-content) .widget-content {
-    overflow: auto;
+    // overflow: auto;
   }
 `;
 
@@ -62,12 +63,19 @@ export class BaseWidget extends FASTElement {
   protected currentHeight: number = 0;
   protected currentRowSpan: number = 0;
   protected contentSizingTimer: number | null = null;
+  
+  // New properties to track content size
+  protected lastContentHeight: number = 0;
+  protected maxContentHeight: number = 0;
+  protected userResizedHeight: number | null = null;
+  protected isFirstSizeCheck: boolean = true;
 
   connectedCallback(): void {
     super.connectedCallback();
     
     // Set up resize observer to handle content overflow detection
     this.resizeObserver = new ResizeObserver(entries => {
+      console.log('Widget resize observed:', entries[0]);
       this.handleResize(entries[0]);
       
       // Also check if we need more rows for our content
@@ -84,6 +92,9 @@ export class BaseWidget extends FASTElement {
     
     // Get current rowSpan from parent wrapper if available
     this.queryCurrentSpans();
+    
+    // Check initial content size after a brief delay to allow rendering
+    setTimeout(() => this.checkInitialContentFit(), 100);
   }
 
   disconnectedCallback(): void {
@@ -99,13 +110,12 @@ export class BaseWidget extends FASTElement {
    * Handle resize events to determine if scrollbars are needed
    */
   protected handleResize(entry: ResizeObserverEntry): void {
-    // Get the content element (most widgets will have a main container)
-    const contentEl = this.shadowRoot?.querySelector('.widget-content') as HTMLElement;
-    if (!contentEl) return;
-
-    // If the content height is greater than the container height, add overflow class
+    // Use the target (which is this component) scrollHeight for total content height
+    const contentHeight = entry.target.scrollHeight;
+    // Use contentRect.height for the visible container height
     const containerHeight = entry.contentRect.height;
-    const contentHeight = contentEl.scrollHeight;
+    
+    console.log(`Widget resize detected - content height: ${contentHeight}px, container: ${containerHeight}px`);
     
     if (contentHeight > containerHeight) {
       this.classList.add('scroll-content');
@@ -130,44 +140,144 @@ export class BaseWidget extends FASTElement {
 
   /**
    * Check if the content fits in the current space
-   * If not, request more rows from the parent wrapper
    */
   protected checkContentFit(entry: ResizeObserverEntry): void {
-    // Debounce calls to avoid too many resize events
+    // Replace debounce with immediate action when possible
     if (this.contentSizingTimer !== null) {
       window.clearTimeout(this.contentSizingTimer);
     }
     
-    this.contentSizingTimer = window.setTimeout(() => {
-      const contentEl = this.shadowRoot?.querySelector('.widget-content') as HTMLElement;
-      if (!contentEl) return;
-      
+    // Use requestAnimationFrame instead of setTimeout for visual updates
+    requestAnimationFrame(() => {
+      const contentHeight = entry.target.scrollHeight;
       const containerHeight = entry.contentRect.height;
-      const contentHeight = contentEl.scrollHeight;
       
-      // If we need more space, request additional rows
-      if (contentHeight > containerHeight && this.currentRowSpan > 0) {
-        // Calculate how many more rows we need
-        // Assuming each row is about 30px + 8px gap
-        const rowHeight = 38; // 30px row + 8px gap
-        const currentSpace = this.currentRowSpan * rowHeight;
-        const neededSpace = contentHeight;
-        
-        if (neededSpace > currentSpace) {
-          const additionalRowsNeeded = Math.ceil((neededSpace - currentSpace) / rowHeight);
-          if (additionalRowsNeeded > 0) {
-            const newRowSpan = Math.min(16, this.currentRowSpan + additionalRowsNeeded);
-            
-            console.debug(`Widget content overflow detected. ` +
-              `Content height: ${contentHeight}px, Container: ${containerHeight}px. ` +
-              `Requesting row span increase from ${this.currentRowSpan} to ${newRowSpan}`);
-              
-            // Only request more space if significant change and not too frequent
-            this.requestMoreRows(newRowSpan);
-          }
-        }
+      // Get current row span from parent wrapper
+      const parent = this.closest('widget-wrapper');
+      const currentRowSpan = parent ? parseInt(parent.getAttribute('rowSpan') || '0') : 0;
+      
+      // Calculate row height and add additional buffer for borders/padding
+      const rowHeight = MIN_ROW_HEIGHT + DEFAULT_GRID_GAP; 
+      
+      // Use ceiling and add a small buffer to prevent scrollbars (extra 0.2 rows)
+      const rowsNeeded = Math.ceil(contentHeight / rowHeight);
+      
+      console.log(`Content fit check: content=${contentHeight}px (${rowsNeeded} rows needed), ` +
+        `container=${containerHeight}px (${currentRowSpan} rows allocated)`);
+      
+      // Keep track of content height changes
+      const previousHeight = this.lastContentHeight;
+      this.lastContentHeight = contentHeight;
+      
+      // Update maximum observed content height if this is larger
+      if (contentHeight > this.maxContentHeight) {
+        this.maxContentHeight = contentHeight;
       }
-    }, 250); // Debounce to avoid excessive updates
+      
+      // Don't expand if user has manually set a smaller height
+      const shouldExpand = this.userResizedHeight === null || contentHeight <= this.userResizedHeight;
+      
+      // If content needs more rows than allocated - be more aggressive with expansion
+      if (shouldExpand && (rowsNeeded > currentRowSpan || this.isFirstSizeCheck)) {
+        this.isFirstSizeCheck = false;
+        
+        if (rowsNeeded > currentRowSpan) {
+          console.log(`Content needs more rows: ${rowsNeeded} vs ${currentRowSpan} allocated`);
+          // Add 1 more row than calculated to avoid edge case scrollbars
+          this.requestMoreRows(rowsNeeded + 1); 
+        }
+      } 
+      // If content has shrunk significantly (at least 2 rows and 25% difference)
+      else if (contentHeight < previousHeight * 0.8 && 
+               currentRowSpan > rowsNeeded + 1 && 
+               rowsNeeded < currentRowSpan * 0.75) {
+        console.log(`Content has shrunk significantly to ${rowsNeeded} rows vs ${currentRowSpan} allocated`);
+        this.notifyContentShrink(contentHeight, rowsNeeded);
+      }
+    });
+  }
+
+  /**
+   * Explicitly request a recalculation of size after content has changed
+   * Call this method when collapsing/hiding significant content
+   */
+  public recalculateSize(): void {
+    // Calculate current content height
+    const contentHeight = this.scrollHeight;
+    const containerHeight = this.clientHeight;
+    
+    // Use constants for row calculations
+    const rowHeight = MIN_ROW_HEIGHT + DEFAULT_GRID_GAP; // Base row height + gap
+    const rowsNeeded = Math.ceil(contentHeight / rowHeight);
+    
+    // Get current row span from parent wrapper
+    const parent = this.closest('widget-wrapper');
+    const currentRowSpan = parent ? parseInt(parent.getAttribute('rowSpan') || '0') : 0;
+    
+    console.log(`Manual recalculate - content height: ${contentHeight}px (${rowsNeeded} rows), ` +
+      `current rows: ${currentRowSpan}`);
+    
+    // If we have significantly more rows than needed (at least 2 rows and 25% difference)
+    if (currentRowSpan > rowsNeeded + 1 && rowsNeeded < currentRowSpan * 0.75) {
+      console.log(`Content requires fewer rows: ${rowsNeeded} vs ${currentRowSpan} allocated`);
+      this.notifyContentShrink(contentHeight, rowsNeeded);
+    }
+  }
+  
+  /**
+   * Notify the wrapper that content has shrunk significantly
+   * Includes the calculated rows needed for accurate resizing
+   * @param newHeight The new content height in pixels
+   * @param rowsNeeded The calculated number of rows needed for this content
+   */
+  protected notifyContentShrink(newHeight: number, rowsNeeded?: number): void {
+    const parent = this.closest('widget-wrapper');
+    if (parent) {
+      // Calculate rows if not provided
+      if (rowsNeeded === undefined) {
+        const rowHeight = 38;
+        rowsNeeded = Math.ceil(newHeight / rowHeight);
+      }
+      
+      // Dispatch an event with row calculation
+      const event = new CustomEvent('widget-content-shrink', {
+        bubbles: true,
+        composed: true,
+        detail: {
+          newContentHeight: newHeight,
+          rowsNeeded: rowsNeeded,
+          previousMax: this.maxContentHeight,
+          reason: 'content-shrink'
+        }
+      });
+      
+      parent.dispatchEvent(event);
+      
+      // Reset the max height tracking
+      if (newHeight < this.maxContentHeight * 0.6) {
+        this.maxContentHeight = newHeight;
+      }
+    }
+  }
+  
+  /**
+   * Called when user manually resizes the widget
+   * Helps widget understand the user's size preference
+   */
+  public setUserResizePreference(height: number): void {
+    this.userResizedHeight = height;
+    console.debug(`Widget user resize preference set: ${height}px`);
+  }
+
+  /**
+   * Reset user resize preference (e.g., when user clicks "auto size")
+   */
+  public resetUserResizePreference(): void {
+    this.userResizedHeight = null;
+    console.debug('Widget user resize preference reset to auto');
+    
+    // Check if we need to resize based on current content
+    this.checkInitialContentFit();
   }
   
   /**
@@ -268,32 +378,33 @@ export class BaseWidget extends FASTElement {
    * Call this from connectedCallback or after initialization
    */
   protected checkInitialContentFit(): void {
-    // Wait for rendering to complete
-    setTimeout(() => {
-      // Find the main content container - look for .widget-content first,
-      // then fall back to first child of shadow root
-      const container = this.shadowRoot?.querySelector('.widget-content') || 
-                      this.shadowRoot?.firstElementChild as HTMLElement;
-      
-      if (!container) return;
-      
-      const contentHeight = container.scrollHeight;
+    // Use requestAnimationFrame instead of setTimeout
+    requestAnimationFrame(() => {
+      // Use direct measurements from the component
+      const contentHeight = this.scrollHeight;
       const containerHeight = this.clientHeight;
       
-      console.debug(`BaseWidget: Content fit check - content height: ${contentHeight}px, container: ${containerHeight}px`);
+      // Get current row span
+      const parent = this.closest('widget-wrapper');
+      const currentRowSpan = parent ? parseInt(parent.getAttribute('rowSpan') || '0') : 0;
+      
+      // Calculate row height with extra buffer for padding/scrollbar
+      const rowHeight = MIN_ROW_HEIGHT + DEFAULT_GRID_GAP;
+      // Add buffer (0.5 row) to prevent scrollbars in edge cases
+      const rowsNeeded = Math.ceil(contentHeight / rowHeight + 0.5); 
+      
+      console.log(`Initial content fit check - content height: ${contentHeight}px (${rowsNeeded} rows), ` +
+        `container: ${containerHeight}px (${currentRowSpan} rows)`);
       
       // Request size adjustment if needed
-      if (contentHeight > containerHeight && containerHeight > 0) {
-        // Estimate needed rows (using standard row height + gap)
-        const rowHeight = 38; // Typical row height (30px) + gap (8px)
-        const neededRows = Math.ceil(contentHeight / rowHeight);
-        
-        if (neededRows > 0 && neededRows > this.currentRowSpan) {
-          console.debug(`BaseWidget: Content needs more space. Requesting ${neededRows} rows (current: ${this.currentRowSpan})`);
-          this.requestMoreRows(neededRows);
+      if (contentHeight > containerHeight * 0.9 && containerHeight > 0) { // Using 90% threshold
+        if (rowsNeeded >= currentRowSpan) {
+          console.log(`Content needs more space. Requesting ${rowsNeeded + 1} rows (current: ${currentRowSpan})`);
+          // Add 1 more row to prevent scrollbars in edge cases
+          this.requestMoreRows(rowsNeeded + 1);
         }
       }
-    }, 100);
+    });
   }
   
   /**
@@ -321,5 +432,65 @@ export class BaseWidget extends FASTElement {
       this.checkInitialContentFit();
       if (callback) callback();
     }, 50);
+  }
+
+  /**
+   * Notify accordion changes - components can call this after expand/collapse operations
+   * @param expanded Whether the accordion is expanded (true) or collapsed (false)
+   */
+  public notifyAccordionChange(expanded: boolean): void {
+    // Use requestAnimationFrame instead of setTimeout for visual updates
+    requestAnimationFrame(() => {
+      console.debug(`Accordion ${expanded ? 'expanded' : 'collapsed'}, rechecking content fit`);
+      
+      if (expanded) {
+        // For expansion, we need to check if more space is needed - no delay needed
+        this.checkInitialContentFit();
+      } else {
+        // For collapse, trigger shrink calculation immediately 
+        this.recalculateSize();
+      }
+    });
+  }
+
+  /**
+   * New helper method for any widget to signal content changes
+   * Can be called by any widget component when its content changes significantly
+   */
+  protected notifyContentChanged(): void {
+    // Clear any existing timeout
+    if (this.contentSizingTimer !== null) {
+      window.clearTimeout(this.contentSizingTimer);
+    }
+    
+    // Force an immediate recalculation
+    const contentHeight = this.scrollHeight;
+    const containerHeight = this.clientHeight;
+    
+    console.log(`Content changed notification: height=${contentHeight}px, container=${containerHeight}px`);
+    
+    // If significantly smaller, try to shrink
+    if (contentHeight < this.lastContentHeight * 0.8) {
+      console.log(`Content has shrunk significantly, recalculating size`);
+      this.recalculateSize();
+    } 
+    // If larger, check if we need to expand
+    else if (contentHeight > containerHeight) {
+      // Use constants for row calculations
+      const rowHeight = MIN_ROW_HEIGHT + DEFAULT_GRID_GAP;
+      const rowsNeeded = Math.ceil(contentHeight / rowHeight);
+      
+      // Get current row span
+      const parent = this.closest('widget-wrapper');
+      const currentRowSpan = parent ? parseInt(parent.getAttribute('rowSpan') || '0') : 0;
+      
+      if (rowsNeeded > currentRowSpan) {
+        console.log(`Content needs more space after change. Requesting ${rowsNeeded} rows`);
+        this.requestMoreRows(rowsNeeded);
+      }
+    }
+    
+    // Update our tracking
+    this.lastContentHeight = contentHeight;
   }
 }

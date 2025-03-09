@@ -7,13 +7,13 @@
 export const MAX_GRID_COLUMNS = 24;
 
 // Maximum number of rows in the grid
-export const MAX_GRID_ROWS = 24;
+export const MAX_GRID_ROWS = 30;
 
 // Default column span for widgets
 export const DEFAULT_COLUMN_SPAN = 8;
 
 // Default row span for widgets
-export const DEFAULT_ROW_SPAN = 2;
+export const DEFAULT_ROW_SPAN = 4;
 
 // Minimum column width in pixels
 export const MIN_COLUMN_WIDTH = 40;

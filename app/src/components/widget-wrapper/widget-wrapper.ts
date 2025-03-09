@@ -6,7 +6,8 @@ import { styles } from "./widget-wrapper-styles";
 import { createWidgetEvents, createBoundEventHandlers, isModuleError } from "./widget-wrapper-events";
 import { WidgetTimeoutHandler } from "./widget-wrapper-timeout";
 import { repositoryService } from "../../services/repository-service";
-import { MAX_GRID_COLUMNS, MAX_GRID_ROWS, DEFAULT_COLUMN_SPAN, DEFAULT_ROW_SPAN } from "../../constants/grid-constants";
+import { MAX_GRID_COLUMNS, MAX_GRID_ROWS, DEFAULT_COLUMN_SPAN, DEFAULT_ROW_SPAN, MIN_ROW_HEIGHT, DEFAULT_GRID_GAP } from "../../constants/grid-constants";
+import { WidgetResizeTracker } from "../../utils/resize-tracker";
 
 /**
  * Widget loading states
@@ -66,6 +67,24 @@ export class WidgetWrapper extends FASTElement {
   private initialized: boolean = false;
   private connectedEventDispatched: boolean = false;
 
+  // Add new properties for content-aware resizing
+  private resizeTracker: WidgetResizeTracker;
+  private contentResizeObserver: ResizeObserver | null = null;
+  private isManuallyResized: boolean = false;
+  autoSizeEnabled: boolean = true;
+  
+  @attr({ mode: "boolean" }) enableAutoSize: boolean = true;
+
+  // Add a property to track last resize time
+  private lastResizeTime: number = 0;
+  private resizeBlockActive: boolean = false;
+  private resizeBlockTimeoutId: number | null = null;
+
+  // Add properties for size lock
+  private sizeLockActive: boolean = false;
+  private sizeLockTargetRows: number = 0;
+  private sizeLockTimeoutId: number | null = null;
+
   constructor() {
     super();
     
@@ -92,6 +111,9 @@ export class WidgetWrapper extends FASTElement {
       this.warningTimeout,
       this.failureTimeout
     );
+
+    // Initialize resize tracker with default row span
+    this.resizeTracker = new WidgetResizeTracker(this.rowSpan);
   }
 
   connectedCallback() {
@@ -177,6 +199,17 @@ export class WidgetWrapper extends FASTElement {
     // Check if we need to load the module for this widget
     this.initializeWidgetModule();
 
+    // Set up content resize observer
+    if (this.enableAutoSize) {
+      this.setupContentResizeObserver();
+    }
+    
+    // Listen for content overflow events from the widget
+    this.addEventListener('widget-request-resize', this.handleResizeRequest.bind(this));
+    
+    // Listen for content shrink events
+    this.addEventListener('widget-content-shrink', this.handleContentShrink.bind(this));
+
     console.debug(`Widget wrapper connected: ${this.displayName}, spans: ${this.colSpan}x${this.rowSpan}`);
   }
 
@@ -190,6 +223,16 @@ export class WidgetWrapper extends FASTElement {
     this.removeEventListener('load-complete', this.eventHandlers.handleInitialized);
     document.removeEventListener('widget-module-error', this.eventHandlers.handleModuleError);
     this.removeEventListener('widget-request-resize', this.handleResizeRequest.bind(this));
+
+    // Clean up content resize observer
+    if (this.contentResizeObserver) {
+      this.contentResizeObserver.disconnect();
+      this.contentResizeObserver = null;
+    }
+    
+    // Remove content-related event listeners
+    this.removeEventListener('widget-request-resize', this.handleResizeRequest.bind(this));
+    this.removeEventListener('widget-content-shrink', this.handleContentShrink.bind(this));
   }
 
   /**
@@ -500,48 +543,88 @@ export class WidgetWrapper extends FASTElement {
 
   /**
    * Change widget spans (columns and rows) and emit change event
+   * Modified to respect preserveRowSpan flag
    */
-  changeSpans(newColSpan: number, newRowSpan: number, isUserResized: boolean = true): void {
+  changeSpans(newColSpan: number, newRowSpan: number, isUserResized: boolean = true, isContentShrink: boolean = false, detail: any = {}): void {
+    // If preserveRowSpan flag is set, use the current row span
+    if (detail?.preserveRowSpan) {
+      console.log(`Widget ${this.widgetId} preserving current row span: ${this.rowSpan}`);
+      newRowSpan = this.rowSpan;
+    }
+
+    // If we have an active size lock from a content shrink operation,
+    // prevent any attempts to override the target size UNLESS this is a follow-up call from the same operation
+    if (this.sizeLockActive && !isContentShrink) {
+      // Only enforce row span lock, allow column span changes
+      if (this.sizeLockTargetRows !== newRowSpan) {
+        console.log(`Widget ${this.widgetId} rejecting row span change during size lock: 
+          attempted ${newRowSpan}, locked at ${this.sizeLockTargetRows}`);
+        newRowSpan = this.sizeLockTargetRows; // Force the locked row span
+      }
+    }
+
     // Clamp values to valid ranges
     newColSpan = Math.max(this.minColSpan, Math.min(newColSpan, this.maxColSpan));
     newRowSpan = Math.max(this.minRowSpan, Math.min(newRowSpan, this.maxRowSpan));
     
-    // Use === for precise comparison
+    // Don't do anything if spans haven't changed
     if (this.colSpan === newColSpan && this.rowSpan === newRowSpan) return;
     
     const oldColSpan = this.colSpan;
     const oldRowSpan = this.rowSpan;
     
-    console.debug(`Widget ${this.widgetId} spans changing from ${oldColSpan}x${oldRowSpan} to ${newColSpan}x${newRowSpan}, user resized: ${isUserResized}`);
+    console.log(`Widget ${this.widgetId} spans changing from ${oldColSpan}x${oldRowSpan} to ${newColSpan}x${newRowSpan}, 
+      user resized: ${isUserResized}, content shrink: ${isContentShrink}`);
     
-    // Update properties immediately
+    // Update properties AND attributes for immediate feedback
     this.colSpan = newColSpan;
     this.rowSpan = newRowSpan;
     
-    // Create span change event
+    // Explicit attribute updates to ensure they're synchronized with properties
+    this.setAttribute('colSpan', newColSpan.toString());
+    this.setAttribute('rowSpan', newRowSpan.toString());
+    
+    // Update DOM classes
+    this.updateRowSpanClasses(newRowSpan);
+    
+    // Create span change event with additional flag
     const spanChangeEvent = new CustomEvent('widget-spans-change', {
       bubbles: true,
       composed: true,
       detail: {
         widgetId: this.widgetId,
-        pageType: this.pageType, // Include pageType in the event details
+        pageType: this.pageType,
         oldColSpan,
         oldRowSpan,
         colSpan: newColSpan,
         rowSpan: newRowSpan,
-        isUserResized
+        isUserResized,
+        isContentShrink, // Add this flag so grid layout can respect content-based changes
+        source: isUserResized ? 'user-resize' : isContentShrink ? 'content-shrink' : 'content-resize'
       }
     });
     
-    // We'll let the base-page handle the settings update directly
-    // Remove local save to settings since base-page will handle it
-    // if (isUserResized && this.saveDimensions) {
-    //   this.saveDimensionsToSettings(newColSpan, newRowSpan);
-    // }
-    
-    // Dispatch the event immediately
-    console.debug(`Dispatching span change event for ${this.widgetId}: ${newColSpan}x${newRowSpan}`);
+    // Dispatch the event for the grid to handle
+    console.log(`Dispatching span change event for ${this.widgetId}: ${newColSpan}x${newRowSpan}`);
     this.dispatchEvent(spanChangeEvent);
+    
+    // Track if this was a user-initiated resize
+    if (isUserResized) {
+      this.isManuallyResized = true;
+      this.resizeTracker.recordUserResize(newRowSpan);
+      
+      // Also notify any contained widget
+      const widgetElement = this.querySelector('[class*="widget"]');
+      if (widgetElement && typeof (widgetElement as any).setUserResizePreference === 'function') {
+        (widgetElement as any).setUserResizePreference(newRowSpan * (MIN_ROW_HEIGHT + DEFAULT_GRID_GAP));
+      }
+    }
+    
+    // Also update parent grid-layout directly for immediate visual feedback
+    this.updateParentGridClasses(newColSpan, newRowSpan);
+    
+    // Trigger grid layout update
+    this.triggerGridLayoutUpdate();
   }
 
   /**
@@ -558,67 +641,8 @@ export class WidgetWrapper extends FASTElement {
       
       console.debug(`WidgetWrapper: Increasing column span for ${this.widgetId} from ${oldColSpan} to ${newColSpan}`);
       
-      // Direct property update first for immediate UI feedback
-      this.colSpan = newColSpan;
-      
-      try {
-        // Create the event with proper details
-        const spanChangeEvent = new CustomEvent('widget-spans-change', {
-          bubbles: true,
-          composed: true,
-          detail: {
-            widgetId: this.widgetId,
-            pageType: this.pageType, // Ensure pageType is always included
-            oldColSpan: oldColSpan,
-            oldRowSpan: this.rowSpan,
-            colSpan: newColSpan,
-            rowSpan: this.rowSpan,
-            isUserResized: true,
-            source: 'increaseColSpan'
-          }
-        });
-        
-        console.debug(`WidgetWrapper: Dispatching span change for ${this.widgetId} with pageType ${this.pageType}`);
-        
-        // CRITICAL: First update DOM attributes directly 
-        this.style.setProperty('--col-span', newColSpan.toString());
-        this.setAttribute('colSpan', newColSpan.toString());
-        
-        // Also update our own classes if we're directly in a grid layout
-        const parentElement = this.parentElement;
-        if (parentElement && parentElement.classList.contains('widgets-container')) {
-          // Remove all existing col-span-* classes
-          for (let i = 1; i <= this.maxColSpan; i++) {
-            this.classList.remove(`col-span-${i}`);
-          }
-          // Add the new col-span class
-          this.classList.add(`col-span-${newColSpan}`);
-          console.debug(`WidgetWrapper: Updated own col-span class to col-span-${newColSpan}`);
-        }
-        
-        // Then dispatch the event for the grid to handle
-        this.dispatchEvent(spanChangeEvent);
-        
-        // Check if the event was handled
-        setTimeout(() => {
-          console.debug(`WidgetWrapper: After event dispatch - ${this.widgetId} colSpan attribute: ${this.getAttribute('colSpan')}`);
-          
-          // Check parent element
-          if (parentElement) {
-            // Check if we need to check ourselves or parent
-            if (parentElement.classList.contains('widgets-container')) {
-              const selfHasColSpanClass = Array.from(this.classList).some(c => c.startsWith('col-span-'));
-              console.debug(`WidgetWrapper: Direct grid child has col-span class: ${selfHasColSpanClass}, classes: ${this.className}`);
-            } else {
-              // Normal case - check parent
-              const hasColSpanClass = Array.from(parentElement.classList).some(c => c.startsWith('col-span-'));
-              console.debug(`WidgetWrapper: Parent element has col-span class: ${hasColSpanClass}, classes: ${parentElement.className}`);
-            }
-          }
-        }, 50);
-      } catch (error) {
-        console.error(`Error dispatching span change event:`, error);
-      }
+      // Only update column span, preserve current row span exactly as is
+      this.changeColSpanOnly(newColSpan);
     }
   }
   
@@ -636,68 +660,65 @@ export class WidgetWrapper extends FASTElement {
       
       console.debug(`WidgetWrapper: Decreasing column span for ${this.widgetId} from ${oldColSpan} to ${newColSpan}`);
       
-      // Direct property update for immediate feedback
-      this.colSpan = newColSpan;
-      
-      try {
-        // Create the event with proper details
-        const spanChangeEvent = new CustomEvent('widget-spans-change', {
-          bubbles: true,
-          composed: true,
-          detail: {
-            widgetId: this.widgetId,
-            pageType: this.pageType, // Ensure pageType is always included
-            oldColSpan: oldColSpan,
-            oldRowSpan: this.rowSpan,
-            colSpan: newColSpan,
-            rowSpan: this.rowSpan,
-            isUserResized: true,
-            source: 'decreaseColSpan'
-          }
-        });
-        
-        console.debug(`WidgetWrapper: Dispatching span change for ${this.widgetId} with pageType ${this.pageType}`);
-        
-        // CRITICAL: First update DOM attributes directly
-        this.style.setProperty('--col-span', newColSpan.toString());
-        this.setAttribute('colSpan', newColSpan.toString());
-        
-        // Also update our own classes if we're directly in a grid layout
-        const parentElement = this.parentElement;
-        if (parentElement && parentElement.classList.contains('widgets-container')) {
-          // Remove all existing col-span-* classes
-          for (let i = 1; i <= this.maxColSpan; i++) {
-            this.classList.remove(`col-span-${i}`);
-          }
-          // Add the new col-span class
-          this.classList.add(`col-span-${newColSpan}`);
-          console.debug(`WidgetWrapper: Updated own col-span class to col-span-${newColSpan}`);
-        }
-        
-        // Then dispatch the event for the grid to handle
-        this.dispatchEvent(spanChangeEvent);
-        
-        // Check if the event was handled
-        setTimeout(() => {
-          console.debug(`WidgetWrapper: After event dispatch - ${this.widgetId} colSpan attribute: ${this.getAttribute('colSpan')}`);
-          
-          // Check parent element
-          if (parentElement) {
-            // Check if we need to check ourselves or parent
-            if (parentElement.classList.contains('widgets-container')) {
-              const selfHasColSpanClass = Array.from(this.classList).some(c => c.startsWith('col-span-'));
-              console.debug(`WidgetWrapper: Direct grid child has col-span class: ${selfHasColSpanClass}, classes: ${this.className}`);
-            } else {
-              // Normal case - check parent
-              const hasColSpanClass = Array.from(parentElement.classList).some(c => c.startsWith('col-span-'));
-              console.debug(`WidgetWrapper: Parent element has col-span class: ${hasColSpanClass}, classes: ${parentElement.className}`);
-            }
-          }
-        }, 50);
-      } catch (error) {
-        console.error(`Error dispatching span change event:`, error);
-      }
+      // Only update column span, preserve current row span exactly as is
+      this.changeColSpanOnly(newColSpan);
     }
+  }
+  
+  /**
+   * Change only column span without affecting row span
+   * This prevents the automatic row recalculation that happens in changeSpans
+   */
+  private changeColSpanOnly(newColSpan: number): void {
+    const currentRowSpan = this.rowSpan;
+    
+    // Direct property update first for immediate UI feedback
+    this.colSpan = newColSpan;
+    
+    // CRITICAL: First update DOM attributes directly 
+    this.style.setProperty('--col-span', newColSpan.toString());
+    this.setAttribute('colSpan', newColSpan.toString());
+    
+    // Create event that explicitly preserves the current row span
+    const spanChangeEvent = new CustomEvent('widget-spans-change', {
+      bubbles: true,
+      composed: true,
+      detail: {
+        widgetId: this.widgetId,
+        pageType: this.pageType,
+        oldColSpan: this.colSpan,
+        oldRowSpan: currentRowSpan,
+        colSpan: newColSpan,
+        rowSpan: currentRowSpan, // Important: keep current row span
+        isUserResized: true,
+        source: 'colSpanChangeOnly',
+        preserveRowSpan: true // Add a flag to indicate row span should be preserved
+      }
+    });
+    
+    // Also update our own classes if we're directly in a grid layout
+    const parentElement = this.parentElement;
+    if (parentElement && parentElement.classList.contains('widgets-container')) {
+      // Remove all existing col-span-* classes
+      for (let i = 1; i <= this.maxColSpan; i++) {
+        this.classList.remove(`col-span-${i}`);
+      }
+      // Add the new col-span class
+      this.classList.add(`col-span-${newColSpan}`);
+    }
+    
+    // Update parent grid styles directly but ONLY for columns
+    if (parentElement) {
+      // Remove existing column span classes
+      for (let i = 1; i <= this.maxColSpan; i++) {
+        parentElement.classList.remove(`col-span-${i}`);
+      }
+      parentElement.classList.add(`col-span-${newColSpan}`);
+      parentElement.style.gridColumn = `span ${newColSpan}`;
+    }
+    
+    // Then dispatch the event for the grid to handle
+    this.dispatchEvent(spanChangeEvent);
   }
   
   /**
@@ -860,41 +881,6 @@ export class WidgetWrapper extends FASTElement {
     }
   }
 
-  // /**
-  //  * Get CSS class for size button based on whether it's the current size
-  //  * @param size The size to check
-  //  * @returns CSS class names for the button
-  //  */
-  // getSizeButtonClass(size: string): string {
-  //   return size === this.currentSize ? 'size-button size-button-active' : 'size-button';
-  // }
-  
-  // /**
-  //  * Get display text for size button
-  //  * @param size The size to get display text for
-  //  * @returns Display text for the size button
-  //  */
-  // getSizeButtonText(size: GridItemSize): string {
-  //   switch (size as string) {
-  //     case 'sm': return 'S';
-  //     case 'md': return 'M';
-  //     case 'lg': return 'L';
-  //     case 'xl': return 'XL';
-  //     default: return size.charAt(0).toUpperCase();
-  //   }
-  // }
-  
-  // /**
-  //  * Handle size button click event
-  //  * @param event The click event
-  //  * @param size The size selected
-  //  */
-  // handleSizeButtonClick(event: Event, size: GridItemSize): void {
-  //   event.preventDefault();
-  //   event.stopPropagation();
-  //   this.changeSize(size);
-  // }
-
   /**
    * Handle resize requests from widgets
    */
@@ -902,15 +888,312 @@ export class WidgetWrapper extends FASTElement {
     const customEvent = event as CustomEvent;
     const { rowSpan, reason } = customEvent.detail;
     
+    // If resize events are blocked, ignore this request
+    if (this.resizeBlockActive) {
+      console.log(`Widget ${this.widgetId} ignoring resize request during blocking period`);
+      event.stopPropagation();
+      return;
+    }
+    
     console.debug(`Widget ${this.widgetId} received resize request: ${rowSpan} rows (${reason})`);
     
+    // If user has manually resized and auto-size is disabled, ignore the request
+    if (this.isManuallyResized && !this.autoSizeEnabled) {
+      console.debug(`Widget ${this.widgetId} ignoring resize request - manually sized by user`);
+      event.stopPropagation();
+      return;
+    }
+    
+    // Get appropriate row span from resize tracker
+    const newRowSpan = this.resizeTracker.getExpandedRowSpan(rowSpan);
+    
     // Only increase, never decrease rows from content fit requests
-    if (rowSpan > this.rowSpan && reason === 'content-overflow') {
-      this.changeSpans(this.colSpan, rowSpan, true);
+    if (newRowSpan > this.rowSpan && reason === 'content-overflow') {
+      this.changeSpans(this.colSpan, newRowSpan, false);
     }
     
     // Stop propagation since we've handled it
     event.stopPropagation();
+  }
+
+  /**
+   * Set up observer to monitor content size changes
+   */
+  private setupContentResizeObserver(): void {
+    if (this.contentResizeObserver) {
+      this.contentResizeObserver.disconnect();
+    }
+    
+    this.contentResizeObserver = new ResizeObserver(entries => {
+      // Only proceed if auto-size is enabled
+      if (!this.enableAutoSize || this.sizeLockActive) return;
+      
+      const contentElement = entries[0];
+      if (!contentElement) return;
+      
+      const contentRect = contentElement.contentRect;
+      const contentScrollHeight = contentElement.target.scrollHeight;
+      
+      // More aggressive overflow detection (5px threshold instead of 20px)
+      if (contentScrollHeight > contentRect.height + 5) {
+        // Process immediately without timeout
+        this.handleContentOverflow(contentScrollHeight);
+      }
+    });
+    
+    // Immediate observation
+    const contentSlot = this.shadowRoot?.querySelector('.widget-content');
+    if (contentSlot) {
+      this.contentResizeObserver?.observe(contentSlot);
+      console.debug(`Widget wrapper content observer set up for ${this.widgetId}`);
+    }
+  }
+
+  /**
+   * Handle content overflow by requesting more rows if needed
+   */
+  private handleContentOverflow(contentHeight: number): void {
+    // Skip if auto-size is disabled or if manually resized
+    if (!this.enableAutoSize || (this.isManuallyResized && !this.autoSizeEnabled)) {
+      return;
+    }
+    
+    // Calculate how many rows are needed for this content with buffer
+    const rowHeight = MIN_ROW_HEIGHT + DEFAULT_GRID_GAP;
+    const neededRows = Math.ceil(contentHeight / rowHeight + 0.5); // Add 0.5 row buffer
+    
+    // Get appropriate row span from resize tracker
+    const newRowSpan = this.resizeTracker.getExpandedRowSpan(neededRows);
+    
+    // Only resize if different from current - be more aggressive with expansion
+    if (newRowSpan > this.rowSpan) {
+      console.debug(`Widget ${this.widgetId} content overflow detected. ` +
+        `Content height: ${contentHeight}px. Expanding from ${this.rowSpan} to ${newRowSpan + 1} rows.`);
+      
+      // Add one extra row to prevent edge case scrollbars
+      this.changeSpans(this.colSpan, newRowSpan + 1, false);
+    }
+  }
+
+  /**
+   * Handle content shrink events from widgets
+   */
+  private handleContentShrink(event: Event): void {
+    const customEvent = event as CustomEvent;
+    const { newContentHeight, rowsNeeded } = customEvent.detail;
+    
+    console.log(`Widget ${this.widgetId} received content shrink notification: ${newContentHeight}px (${rowsNeeded} rows needed)`);
+    
+    // Skip if auto-size is disabled
+    if (!this.autoSizeEnabled) {
+      console.log(`Widget ${this.widgetId} ignoring content shrink - auto-size disabled`);
+      return;
+    }
+    
+    // If we got rows needed directly from the event, use that
+    // Otherwise calculate based on height
+    let neededRows = rowsNeeded;
+    if (!neededRows) {
+      const rowHeight = MIN_ROW_HEIGHT + DEFAULT_GRID_GAP;
+      neededRows = Math.max(Math.ceil(newContentHeight / rowHeight), this.minRowSpan);
+    }
+    
+    // Add larger buffer to avoid aggressive shrinking (20% instead of 10%)
+    const targetRows = Math.ceil(neededRows * 1.2);
+    
+    // Ensure we don't shrink below the minimum
+    const newRowSpan = Math.max(targetRows, this.minRowSpan);
+    
+    console.log(`Widget ${this.widgetId} content shrink calculation:
+      Content height: ${newContentHeight}px
+      Content needs ${rowsNeeded} rows
+      Current row span: ${this.rowSpan}
+      Target row span: ${newRowSpan}`);
+    
+    // Only shrink if new size is significantly smaller (at least 20%)
+    if (newRowSpan < this.rowSpan * 0.8) {
+      console.log(`Widget ${this.widgetId} shrinking from ${this.rowSpan} to ${newRowSpan} rows`);
+      
+      // Set the size lock
+      this.sizeLockActive = true;
+      this.sizeLockTargetRows = newRowSpan;
+      
+      // Clear any existing size lock timeout
+      if (this.sizeLockTimeoutId !== null) {
+        window.clearTimeout(this.sizeLockTimeoutId);
+      }
+      
+      // Force immediate DOM update using direct manipulation
+      this.updateRowSpanClasses(newRowSpan);
+      this.changeSpans(this.colSpan, newRowSpan, false, true);
+      this.updateParentGridClasses(this.colSpan, newRowSpan);
+      
+      // Use requestAnimationFrame for reliable DOM updates
+      requestAnimationFrame(() => {
+        // Force reflow to ensure DOM is updated
+        void document.body.offsetHeight;
+        
+        // Find and notify parent grid-layout that it needs to update
+        this.triggerGridLayoutUpdate();
+        
+        // Release size lock after a short delay
+        requestAnimationFrame(() => {
+          console.log(`Widget ${this.widgetId}: Size lock released after shrink operation`);
+          this.sizeLockActive = false;
+        });
+      });
+    } else {
+      console.log(`Widget ${this.widgetId} NOT shrinking - difference not significant enough`);
+    }
+    
+    // Stop propagation since we've handled it
+    event.stopPropagation();
+  }
+
+  /**
+   * Block resize events temporarily to prevent oscillation
+   */
+  private blockResizeEvents(): void {
+    // Set flag to block resize events
+    this.resizeBlockActive = true;
+    console.log(`Widget ${this.widgetId}: Blocking resize events for 500ms to prevent oscillation`);
+    
+    // Clear any existing timeout
+    if (this.resizeBlockTimeoutId !== null) {
+      window.clearTimeout(this.resizeBlockTimeoutId);
+    }
+    
+    // Set timeout to unblock after 500ms
+    this.resizeBlockTimeoutId = window.setTimeout(() => {
+      this.resizeBlockActive = false;
+      this.resizeBlockTimeoutId = null;
+      console.log(`Widget ${this.widgetId}: Resize events unblocked`);
+    }, 500);
+  }
+
+  /**
+   * Trigger parent grid-layout to update its layout
+   */
+  private triggerGridLayoutUpdate(): void {
+    // Find parent grid-layout
+    const gridLayout = this.closest('grid-layout');
+    if (gridLayout) {
+      console.log(`Triggering layout update on parent grid-layout`);
+      
+      // Try to call updateLayout if it exists
+      if (typeof (gridLayout as any).updateLayout === 'function') {
+        (gridLayout as any).updateLayout();
+      }
+      
+      // Also dispatch a resize event that the grid might be listening for
+      const resizeEvent = new CustomEvent('grid-item-resize', {
+        bubbles: true,
+        composed: true,
+        detail: {
+          widgetId: this.widgetId,
+          rowSpan: this.rowSpan,
+          colSpan: this.colSpan
+        }
+      });
+      
+      this.dispatchEvent(resizeEvent);
+    }
+  }
+
+  /**
+   * Update row-span classes directly to ensure DOM is updated
+   */
+  private updateRowSpanClasses(rowSpan: number): void {
+    // Remove all existing row-span classes
+    for (let i = 1; i <= this.maxRowSpan; i++) {
+      this.classList.remove(`row-span-${i}`);
+    }
+    
+    // Add the new row span class
+    this.classList.add(`row-span-${rowSpan}`);
+    
+    // Also update any parent grid item if we're in a grid
+    const parentElement = this.parentElement;
+    if (parentElement) {
+      for (let i = 1; i <= this.maxRowSpan; i++) {
+        parentElement.classList.remove(`row-span-${i}`);
+      }
+      parentElement.classList.add(`row-span-${rowSpan}`);
+      
+      console.debug(`Direct DOM update: Set row-span-${rowSpan} class on parent element`);
+    }
+  }
+
+  /**
+   * Update parent grid item classes directly (bypassing the event system)
+   * Make this faster and more robust
+   */
+  private updateParentGridClasses(colSpan: number, rowSpan: number): void {
+    // Find all possible parent elements that might need updating
+    // This helps ensure grid layout updates even with different DOM structures
+    const gridItemParent = this.parentElement;
+    const gridContainer = this.closest('.grid-container') || this.closest('grid-layout');
+    
+    // Update immediate parent (usually grid-item)
+    if (gridItemParent) {
+      // Apply classes
+      for (let i = 1; i <= this.maxColSpan; i++) {
+        gridItemParent.classList.remove(`col-span-${i}`);
+      }
+      gridItemParent.classList.add(`col-span-${colSpan}`);
+      
+      for (let i = 1; i <= this.maxRowSpan; i++) {
+        gridItemParent.classList.remove(`row-span-${i}`);
+      }
+      gridItemParent.classList.add(`row-span-${rowSpan}`);
+      
+      // Apply inline styles for immediate visual feedback
+      gridItemParent.style.gridColumn = `span ${colSpan}`;
+      gridItemParent.style.gridRow = `span ${rowSpan}`;
+    }
+    
+    // If we're in a grid container, force a layout recalculation
+    // if (gridContainer) {
+    //   // This forces a reflow, which can help with immediate visual updates
+    //   gridContainer.style.display = 'grid';
+    //   // Read a layout property to force the browser to apply the previous style
+    //   void gridContainer.offsetHeight; 
+    // }
+    
+    console.log(`Direct grid update: ${colSpan}x${rowSpan} applied to DOM`);
+  }
+
+  /**
+   * Toggle auto-sizing behavior
+   */
+  toggleAutoSize(): void {
+    // Toggle the state
+    this.autoSizeEnabled = !this.autoSizeEnabled;
+    console.debug(`Widget ${this.widgetId} auto-size ${this.autoSizeEnabled ? 'enabled' : 'disabled'}`);
+    
+    if (this.autoSizeEnabled) {
+      // Reset user resize preference
+      this.isManuallyResized = false;
+      this.resizeTracker.resetUserPreference();
+      
+      // Notify contained widget
+      const widgetElement = this.querySelector('[class*="widget"]');
+      if (widgetElement && typeof (widgetElement as any).resetUserResizePreference === 'function') {
+        (widgetElement as any).resetUserResizePreference();
+      }
+      
+      // Check if we need to resize based on current content
+      this.setupContentResizeObserver();
+    } else {
+      // When auto-size is disabled, mark as manually sized to prevent auto-expansion
+      this.isManuallyResized = true;
+      
+      // Disconnect resize observer when auto-sizing is disabled
+      if (this.contentResizeObserver) {
+        this.contentResizeObserver.disconnect();
+        this.contentResizeObserver = null;
+      }
+    }
   }
 
   /**
@@ -922,7 +1205,6 @@ export class WidgetWrapper extends FASTElement {
     try {
       const settingsRepo = repositoryService.getSettingsRepository();
       const dimensions = await settingsRepo.getWidgetGridDimensions(this.pageType, this.widgetId);
-      
       console.debug(`Loaded dimensions for ${this.widgetId} from settings: ${dimensions.colSpan}x${dimensions.rowSpan}`);
       
       // Apply dimensions from settings
