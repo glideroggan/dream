@@ -22,7 +22,7 @@ const context = await build.context({
         'src/workflows/kyc/kyc-workflow.ts',
         'src/workflows/swish-workflow.ts',
         'src/workflows/payments/add-contact-workflow.ts',
-        'src/workflows/account-info-workflow.ts',
+        'src/workflows/account-info/account-info-workflow.ts',
         'src/workflows/signing/signing-workflow.ts',
         'src/workflows/loan/loan-workflow.ts',
         // pages

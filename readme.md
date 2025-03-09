@@ -1,4 +1,5 @@
 # BUGS
+- account-details-workflow is showing a different card, if not linking, we should remove the image and just keep some details
 - looks like there are some mocks in the loan-service file
 - the transaction signing is not so nice, the style of it should improve
 - need toast error when failing to start a workflow
