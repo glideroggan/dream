@@ -1,5 +1,5 @@
 import { FASTElement, customElement, observable } from '@microsoft/fast-element';
-import { getSearchService, SearchResultItem, SearchService, SearchServiceEvent } from '../services/search-service';
+import { getSearchService, SearchResultItem, SearchService, SearchServiceEvent } from '../../services/search-service';
 import { template } from './search-component-template';
 import { styles } from './search-component-styles';
 import { getCurrentPage } from './search-component-utils';
@@ -102,8 +102,17 @@ export class SearchComponent extends FASTElement {
   }
 
   handleKeydown(event: Event) {
-    const keyboardEvent = event as KeyboardEvent;
+    this.handleSearch(event);
+  }
 
+  handleInput(event: Event) {
+    const inputEvent = event as KeyboardEvent;
+    console.log('Input event:', inputEvent.key);
+    if (inputEvent.key === 'Escape') {
+      this.showSuggestions = false;
+      this.clearSearch();
+      return
+    }
     this.handleSearch(event);
   }
   

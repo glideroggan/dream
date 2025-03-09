@@ -1,8 +1,10 @@
 import { html } from '@microsoft/fast-element';
-import { SearchComponent } from './search-component';
-import { SearchResultItem } from '../services/search-service';
 import { ref, repeat, when } from '@microsoft/fast-element';
+import { SearchResultItem } from '../../services/search-service';
+import { SearchComponent } from './search-component';
 import { getTypeIcon } from './search-component-utils';
+
+// @input="${(x, c) => x.handleKeydown(c.event)}"
 
 export const template = html<SearchComponent>/*html*/`
   <div class="search-container">
@@ -17,7 +19,7 @@ export const template = html<SearchComponent>/*html*/`
         class="search-input" 
         @focus="${x => x.handleFocus()}"
         @blur="${x => x.handleBlur()}"
-        @input="${(x, c) => x.handleKeydown(c.event)}"
+        @keyup="${(x, c) => x.handleInput(c.event)}"
       />
       ${when(x => x.isLoading, html<SearchComponent>`
         <span class="search-loader"></span>
@@ -35,6 +37,8 @@ export const template = html<SearchComponent>/*html*/`
         ${repeat((x, c) => x.popularItems, html<SearchResultItem, SearchComponent>/*html*/`
           <div class="suggestion-item" 
               @click="${(item, c) => c.parent.selectResult(item)}"
+              tabindex="${(_, c) => c.index + 2}"
+              data-result-index="${(item, c) => c.index + 2}"
               @keydown="${(item, c) => c.parent.handleResultKeydown(item, c.event)}">
             <div class="suggestion-icon">${item => item.icon || getTypeIcon(item.type)}</div>
             <div class="suggestion-content">

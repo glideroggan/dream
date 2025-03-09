@@ -113,7 +113,7 @@ import './components/app-component'
 import './components/header-component'
 import './components/sidebar-component'
 import './components/footer-component'
-import './components/search-component'
+import './components/search/search-component'
 import { getSearchService } from './services/search-service';
 
 // Signal that widgets are now registered

@@ -46,6 +46,7 @@ const template = html<ToAccountField>/*html*/`
             <div class="${(item, c) => c.parent.getItemClasses(item)}" 
                 data-id="${item => item.id}" 
                 data-type="account"
+                
                 @click="${(item, c) => c.parent.selectItem(item)}">
               <span class="item-badge account">Account</span>
               <span class="item-name">${item => item.displayName}</span>
