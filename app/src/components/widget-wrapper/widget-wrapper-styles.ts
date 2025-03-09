@@ -347,6 +347,7 @@ export const styles = css`
     padding: var(--widget-content-padding, 1rem);
     overflow: auto;
     position: relative; /* For proper sizing of content */
+    min-height: 0; /* Important: allows content to determine sizing */
   }
 
   .widget-content.seamless {

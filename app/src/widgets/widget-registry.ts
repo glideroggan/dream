@@ -41,7 +41,7 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     module: '@widgets/financial-health',
     defaultConfig: {},
     colSpan: 10, // Increased from 8 to account for smaller columns
-    rowSpan: 4, // Adjusted for smaller rows
+    rowSpan: 4, // Increased row span to compensate for smaller row heights
     minWidth: 380,
     searchable: true,
     keywords: ['financial health', 'net worth', 'savings rate', 'spending trends', 'recommendations', 'financial advisor'],
@@ -55,7 +55,7 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     module: '@widgets/account',
     defaultConfig: {},
     colSpan: 12, // Increased from 10 to account for smaller columns
-    rowSpan: 3, // Adjusted for smaller rows
+    rowSpan: 3, // Increased row span to compensate for smaller row heights
     minWidth: 380,
     searchable: true,
     keywords: ['accounts', 'checking account', 'savings account', 'bank accounts', 'money', 'balance'],
@@ -69,7 +69,7 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     module: '@widgets/welcome',
     defaultConfig: { username: 'Guest' },
     colSpan: 16, // Full width
-    rowSpan: 4, // Adjusted for smaller rows
+    rowSpan: 5, // Increased row span to compensate for smaller row heights
     minWidth: 800,
     fullWidth: true,
     searchable: true,
@@ -84,7 +84,7 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     module: '@widgets/swish',
     defaultConfig: {},
     colSpan: 8, // Increased from 6 to account for smaller columns
-    rowSpan: 3, // Adjusted for smaller rows
+    rowSpan: 4, // Increased row span to compensate for smaller row heights
     minWidth: 340,
     searchable: true,
     keywords: ['payment', 'transfer', 'swish', 'money', 'send money'],
@@ -103,7 +103,7 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     elementName: 'slow-widget',
     module: '@widgets/slow',
     colSpan: 6, // Increased from 4 to account for smaller columns
-    rowSpan: 2, // Adjusted for smaller rows
+    rowSpan: 3, // Increased row span to compensate for smaller row heights
     minWidth: 300,
     searchable: true,
     keywords: ['slow', 'demo', 'example', 'loading'],
@@ -116,7 +116,7 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     elementName: 'error-widget',
     module: '@widgets/error',
     colSpan: 6, // Increased from 4 to account for smaller columns
-    rowSpan: 2, // Adjusted for smaller rows
+    rowSpan: 3, // Increased row span to compensate for smaller row heights
     minWidth: 300,
     searchable: true,
     keywords: ['error', 'demo', 'example', 'failure'],

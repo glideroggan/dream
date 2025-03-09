@@ -531,7 +531,7 @@ export class WidgetWrapper extends FASTElement {
   /**
    * Change widget spans (columns and rows) and emit change event
    */
-  changeSpans(newColSpan: number, newRowSpan: number): void {
+  changeSpans(newColSpan: number, newRowSpan: number, isUserResized: boolean = true): void {
     // Clamp values to valid ranges
     newColSpan = Math.max(this.minColSpan, Math.min(newColSpan, this.maxColSpan));
     newRowSpan = Math.max(this.minRowSpan, Math.min(newRowSpan, this.maxRowSpan));
@@ -543,7 +543,7 @@ export class WidgetWrapper extends FASTElement {
     this.colSpan = newColSpan;
     this.rowSpan = newRowSpan;
     
-    console.debug(`Widget ${this.widgetId} spans changing from ${oldColSpan}x${oldRowSpan} to ${newColSpan}x${newRowSpan}`);
+    console.debug(`Widget ${this.widgetId} spans changing from ${oldColSpan}x${oldRowSpan} to ${newColSpan}x${newRowSpan}, user resized: ${isUserResized}`);
     
     // Create and dispatch a custom event for the span change
     const spanChangeEvent = new CustomEvent('widget-spans-change', {
@@ -554,7 +554,8 @@ export class WidgetWrapper extends FASTElement {
         oldColSpan,
         oldRowSpan,
         colSpan: newColSpan,
-        rowSpan: newRowSpan
+        rowSpan: newRowSpan,
+        isUserResized  // Include whether this was a user-initiated resize
       }
     });
     
