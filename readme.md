@@ -3,17 +3,16 @@
 - the transaction signing is not so nice, the style of it should improve
 - need toast error when failing to start a workflow
 - when there is only one choice from the search inputs, enter key should select it
-- payment contact search doesn't tab through the results
+- ✔️payment contact search doesn't tab through the results
 - favorite checkbox doesn't work on add payment contact
-- ✔️do new transfers not update the account-widget?
 - need to update net worth after account and transaction changes
 - when you add the swish widget, you can't remove it until you reload, or switch page
-- ✔️dismiss the search result with esc
 - all the amounts, should be positive, and instead the type of the transaction should be the one that decides if it is showing as a negative value or not
 - the button in the bottom in financial health widget is unstyled
-- can't use keyboard in transfer workflow
+- ✔️can't use keyboard in transfer workflow
 
 # FEATURES
+- on thin screens it would be beneficial to collapse the sidebar to the left
 - common search dropdown component
   Would be nice to just have one component that works
   - search have one

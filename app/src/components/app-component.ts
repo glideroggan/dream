@@ -1,4 +1,4 @@
-import { FASTElement, customElement, html, css } from '@microsoft/fast-element';
+import { FASTElement, customElement, html, css, observable } from '@microsoft/fast-element';
 import { routerService } from '../services/router-service';
 import { registerAppRoutes } from '../routes/routes-registry';
 
@@ -9,10 +9,10 @@ import './footer-component';
 import './router-component';
 
 const template = html<AppComponent>/*html*/ `
-  <div class="app-container">
+  <div class="app-container ${x => x.sidebarCollapsed ? 'sidebar-collapsed' : ''}">
     <dream-header></dream-header>
     <div class="app-main">
-      <dream-sidebar></dream-sidebar>
+      <dream-sidebar @sidebar-toggle="${(x, c) => c.parent.handleSidebarToggle(c.event)}"></dream-sidebar>
       <main class="main-content">
         <dream-router></dream-router>
       </main>
@@ -45,6 +45,7 @@ const styles = css`
     display: flex;
     flex: 1;
     overflow: hidden;
+    transition: all 0.3s ease;
   }
 
   .main-content {
@@ -52,6 +53,13 @@ const styles = css`
     overflow-y: auto;
     position: relative;
     background-color: #f9f9f9;
+    transition: margin-left 0.3s ease;
+  }
+  
+  @media (max-width: 730px) {
+    .sidebar-collapsed .main-content {
+      margin-left: 60px;
+    }
   }
 `
 
@@ -61,6 +69,8 @@ const styles = css`
   styles,
 })
 export class AppComponent extends FASTElement {
+  @observable sidebarCollapsed: boolean = false;
+
   connectedCallback(): void {
     super.connectedCallback();
     
@@ -73,6 +83,9 @@ export class AppComponent extends FASTElement {
     // get the sidebar element, and listen for events
     const sidebar = this.shadowRoot?.querySelector('dream-sidebar');
     sidebar?.addEventListener('navigation', this.handleNavigation.bind(this));
+    
+    // Check initial screen size
+    this.sidebarCollapsed = window.innerWidth < 730;
   }
   
   /**
@@ -98,5 +111,14 @@ export class AppComponent extends FASTElement {
     } else {
       console.warn('Navigation event received but no valid route found', navigationEvent);
     }
+  }
+  
+  /**
+   * Handle sidebar toggle events
+   */
+  handleSidebarToggle(event: Event): void {
+    const customEvent = event as CustomEvent;
+    this.sidebarCollapsed = customEvent.detail.collapsed;
+    console.debug(`Sidebar collapsed state changed to: ${this.sidebarCollapsed}`);
   }
 }

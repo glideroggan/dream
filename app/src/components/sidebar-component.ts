@@ -16,7 +16,7 @@ interface MenuItem {
 }
 
 const template = html<SidebarComponent>/*html*/`
-  <div class="sidebar">
+  <div class="sidebar ${x => x.collapsed ? 'collapsed' : ''}">
     <nav class="menu">
       <ul>
         ${repeat(x => x.menuItems, html<MenuItem, SidebarComponent>/*html*/`
@@ -45,7 +45,7 @@ const template = html<SidebarComponent>/*html*/`
         </div>
       </div>
       
-      ${when(x => x.showUserSwitcher, html<SidebarComponent>`
+      ${when(x => x.showUserSwitcher, html<SidebarComponent>/*html*/`
         <div class="user-switcher">
           <div class="user-switcher-header">Switch User</div>
           <ul class="user-list">
@@ -63,6 +63,11 @@ const template = html<SidebarComponent>/*html*/`
         </div>
       `)}
     </div>
+    
+    <button class="collapse-toggle" @click="${x => x.toggleCollapsed()}" 
+            title="${x => x.collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}">
+      ${x => x.collapsed ? '→' : '←'}
+    </button>
   </div>
 `;
 
@@ -75,13 +80,24 @@ const styles = css`
     height: 100%;
     box-sizing: border-box;
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    transition: width 0.3s ease;
+  }
+
+  /* Apply this class to host when collapsed regardless of screen size */
+  :host(.sidebar-collapsed) {
+    width: 60px;
   }
 
   .sidebar {
     display: flex;
     flex-direction: column;
     height: 100%;
+    position: relative;
+    transition: all 0.3s ease;
+    width: 100%; /* Make inner sidebar match host width */
   }
+  
+  /* No need for width on .sidebar.collapsed since host will handle that */
   
   .sidebar-header {
     padding: 16px;
@@ -131,6 +147,7 @@ const styles = css`
     border-radius: 6px;
     margin: 0 8px;
     position: relative;
+    white-space: nowrap;
   }
   
   .menu-item a:hover {
@@ -191,6 +208,7 @@ const styles = css`
   }
   
   .avatar {
+    min-width: 40px; /* Ensure minimum width */
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -199,6 +217,7 @@ const styles = css`
     align-items: center;
     justify-content: center;
     font-weight: bold;
+    flex-shrink: 0; /* Prevent avatar from shrinking */
   }
   
   .user-details {
@@ -271,6 +290,7 @@ const styles = css`
   }
   
   .user-list-avatar {
+    min-width: 32px; /* Ensure minimum width */
     width: 32px;
     height: 32px;
     border-radius: 50%;
@@ -280,6 +300,7 @@ const styles = css`
     justify-content: center;
     font-weight: bold;
     font-size: 14px;
+    flex-shrink: 0; /* Prevent avatar from shrinking */
   }
   
   .user-list-details {
@@ -296,6 +317,98 @@ const styles = css`
     font-size: 12px;
     opacity: 0.8;
   }
+
+  .sidebar.collapsed .menu-item-label,
+  .sidebar.collapsed .user-details,
+  .sidebar.collapsed .dropdown-indicator {
+    display: none;
+  }
+
+  .sidebar.collapsed .menu-item-icon {
+    margin-right: 0;
+  }
+
+  .sidebar.collapsed .menu-item a {
+    justify-content: center;
+    padding: 12px 0;
+  }
+
+  .sidebar.collapsed .badge {
+    display: none;
+  }
+
+  .sidebar.collapsed .user-info {
+    justify-content: center;
+    padding: 8px 0; /* Adjust padding when collapsed */
+  }
+
+  .collapse-toggle {
+    position: absolute;
+    right: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: var(--sidebar-bg, #2c3e50);
+    color: var(--sidebar-text, #ecf0f1);
+    border: 1px solid var(--sidebar-text, #ecf0f1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 100;
+    font-size: 12px;
+    padding: 0;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+  }
+
+  .collapse-toggle:hover {
+    opacity: 1;
+  }
+
+  @media (max-width: 730px) {
+    :host {
+      width: 60px;
+    }
+    
+    :host(.sidebar-expanded) {
+      width: 250px;
+    }
+    
+    .sidebar {
+      width: 60px;
+    }
+    
+    .sidebar.expanded {
+      width: 250px;
+    }
+    
+    /* Change these selectors to match the class we're actually toggling */
+    .sidebar.collapsed .menu-item-label,
+    .sidebar.collapsed .user-details,
+    .sidebar.collapsed .dropdown-indicator {
+      display: none;
+    }
+  
+    .sidebar.collapsed .menu-item-icon {
+      margin-right: 0;
+    }
+  
+    .sidebar.collapsed .menu-item a {
+      justify-content: center;
+      padding: 12px 0;
+    }
+  
+    .sidebar.collapsed .badge {
+      display: none;
+    }
+  
+    .sidebar.collapsed .user-info {
+      justify-content: center;
+    }
+  }
 `;
 
 @customElement({
@@ -311,6 +424,7 @@ export class SidebarComponent extends FASTElement {
   @observable showUserSwitcher: boolean = false;
   @observable availableUsers: UserProfile[] = [];
   @observable currentUserId: string = '';
+  @observable collapsed: boolean = false;
 
   private searchService: SearchService;
   private clickOutsideHandler: (event: MouseEvent) => void;
@@ -350,6 +464,12 @@ export class SidebarComponent extends FASTElement {
     // Set initial active state based on current route
     // Using a small timeout to ensure the routes are registered first
     setTimeout(() => this.updateActiveMenuItem(), 10);
+    
+    // Set initial collapsed state based on screen width
+    this.checkScreenWidth();
+    
+    // Listen for window resize events to auto-collapse
+    window.addEventListener('resize', this.checkScreenWidth.bind(this));
   }
   
   /**
@@ -379,6 +499,7 @@ export class SidebarComponent extends FASTElement {
     document.removeEventListener('user-login', this.loadUserData.bind(this));
     document.removeEventListener('user-logout', this.loadUserData.bind(this));
     document.removeEventListener('click', this.clickOutsideHandler);
+    window.removeEventListener('resize', this.checkScreenWidth.bind(this));
     
     // Clean up search registrations
     this.menuItems.forEach(item => {
@@ -527,5 +648,51 @@ export class SidebarComponent extends FASTElement {
       
       this.searchService.registerItem(searchItem);
     });
+  }
+
+  /**
+   * Check screen width and auto-collapse sidebar if below threshold
+   */
+  private checkScreenWidth(): void {
+    const smallScreen = window.innerWidth < 730;
+    
+    // Update collapsed state based on screen size
+    if (smallScreen !== this.collapsed) {
+      this.collapsed = smallScreen;
+      
+      // Update host classes to match
+      if (this.collapsed) {
+        this.classList.add('sidebar-collapsed');
+        this.classList.remove('sidebar-expanded');
+      } else {
+        this.classList.remove('sidebar-collapsed');
+        this.classList.remove('sidebar-expanded'); // Not needed on large screens
+      }
+      
+      this.$emit('sidebar-toggle', { collapsed: this.collapsed });
+    }
+  }
+  
+  /**
+   * Toggle sidebar collapsed state
+   */
+  toggleCollapsed(): void {
+    this.collapsed = !this.collapsed;
+    
+    // Update the host element class to control width
+    if (this.collapsed) {
+      this.classList.add('sidebar-collapsed');
+      this.classList.remove('sidebar-expanded');
+    } else {
+      this.classList.remove('sidebar-collapsed');
+      
+      // Only add expanded class if we're on small screen
+      if (window.innerWidth < 730) {
+        this.classList.add('sidebar-expanded');
+      }
+    }
+    
+    // Trigger the event
+    this.$emit('sidebar-toggle', { collapsed: this.collapsed });
   }
 }
