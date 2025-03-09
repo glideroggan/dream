@@ -37,6 +37,12 @@ export abstract class WorkflowBase extends FASTElement {
     // Add resize listener to adjust modal size when screen changes
     this.resizeHandler = () => this.updateModalWidth();
     window.addEventListener('resize', this.resizeHandler);
+    
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback()
+    this.updateModalWidth()
   }
 
   disconnectedCallback(): void {

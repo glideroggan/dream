@@ -16,7 +16,7 @@ export const styles = css`
   }
 
   /* Responsive layout for the header sections */
-  @media (min-width: 768px) {
+  @media (min-width: 1024px) {
     .account-header-sections {
       flex-direction: row;
       align-items: stretch;
