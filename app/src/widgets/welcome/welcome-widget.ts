@@ -1,4 +1,5 @@
-import { FASTElement, customElement, html, css, attr, observable } from '@microsoft/fast-element';
+import { customElement, html, css, attr, observable } from '@microsoft/fast-element';
+import { BaseWidget, baseWidgetStyles } from '../../components/base-widget';
 
 const template = html<WelcomeWidget>/*html*/`
   <div class="welcome-widget">
@@ -64,18 +65,28 @@ const template = html<WelcomeWidget>/*html*/`
   </div>
 `;
 
+// Merge with base widget styles
 const styles = css`
+  ${baseWidgetStyles}
+  
   :host {
-    display: block;
-    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* Allow container to control height */
   }
   
+  /* Ensure welcome widget content doesn't block widget header controls */
   .welcome-widget {
     text-align: center;
     background: var(--background-color, #fff);
     border-radius: 8px;
     padding: 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 1; /* Lower z-index than header controls */
   }
   
   h2 {
@@ -100,6 +111,7 @@ const styles = css`
     justify-content: center;
     margin-bottom: 20px;
     border-bottom: 1px solid #ddd;
+    flex-wrap: wrap; /* Allow tabs to wrap on smaller screens */
   }
   
   .tab-button {
@@ -126,6 +138,8 @@ const styles = css`
   .tab-content {
     padding: 20px 10px;
     text-align: left;
+    flex: 1;
+    min-height: 250px; /* Ensure minimum height for content */
   }
   
   ul {
@@ -220,7 +234,7 @@ const styles = css`
   template,
   styles
 })
-export class WelcomeWidget extends FASTElement {
+export class WelcomeWidget extends BaseWidget {
   @attr({ attribute: 'widget-title' }) title = 'Welcome to Your Workspace';
   @observable message = 'Get started with your personalized dashboard. Here\'s how to navigate the interface.';
   @observable config: Record<string, unknown> = {};
@@ -235,47 +249,61 @@ export class WelcomeWidget extends FASTElement {
       this.removeAttribute('title');
     }
     
-    // Signal that the widget is initialized once connected
-    setTimeout(() => {
-      this.dispatchEvent(new CustomEvent('initialized', {
-        bubbles: true,
-        composed: true
-      }));
-    }, 0);
+    // Add event debugging to see what's happening with clicks
+    this.addEventListener('click', (e) => {
+      // Don't do anything with the event, just log it to see if it's being captured
+      // and ensure we're not accidentally stopping propagation
+      const target = e.target as HTMLElement;
+      const targetId = target.id || target.tagName;
+      console.debug(`Welcome widget received click on ${targetId}`, e);
+      
+      // Explicitly ensure propagation continues (shouldn't be needed but let's be safe)
+      e.stopPropagation = () => {
+        console.warn('Welcome widget prevented stopPropagation call');
+      };
+    }, { passive: true });
+    
+    // Notify parent that we're initialized
+    this.notifyInitialized();
+    
+    // Check if we need more space using base widget method
+    this.checkInitialContentFit();
     
     // Check if the widget should be shown based on user preference
     this.loadPreferences();
-  }
-
-  configChanged() {
-    // Apply any configuration from the parent
-    if (this.config.title) {
-      this.title = String(this.config.title);
-    }
     
-    if (this.config.message) {
-      this.message = String(this.config.message);
-    }
-    
-    if (this.config.showOnStartup !== undefined) {
-      this.showOnStartup = Boolean(this.config.showOnStartup);
-    }
+    // Add event listener for debugging span change events
+    this.addEventListener('widget-spans-change', (e) => {
+      console.debug('Welcome widget intercepted widget-spans-change event:', (e as CustomEvent).detail);
+      // Make sure event continues to propagate up
+    });
   }
   
   setActiveTab(event: Event): void {
+    // Only handle clicks directly on tab buttons, not from other elements
+    if (!(event.target as HTMLElement).closest('.tab-button')) {
+      return; // Don't handle clicks that didn't originate from tab buttons
+    }
+    
     const target = event.target as HTMLElement;
     const button = target.closest('.tab-button');
-
+    
     // get all tab buttons
     const tabButtons = this.shadowRoot?.querySelectorAll('.tab-button');
     tabButtons?.forEach(tabButton => {
       tabButton.setAttribute('aria-selected', 'false');
       tabButton.classList.remove('active');
     });
-
+    
     this.activeTab = button?.id ?? 'navigation';
     button?.setAttribute('aria-selected', 'true');
     button?.classList.add('active');
+    
+    // Make sure we're NOT stopping propagation
+    // event.stopPropagation(); - this would be wrong!
+    
+    // Use base widget method to update layout after tab change
+    this.handleContentViewChange();
   }
   
   showThemeDemo(): void {

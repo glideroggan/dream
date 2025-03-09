@@ -4,7 +4,8 @@ export const styles = css`
   :host {
     display: block;
     width: 100%;
-    height: 100%; /* Ensure host fills grid cell */
+    height: auto; /* Changed from 100% to auto to allow expansion */
+    min-height: 100%; /* Keep filling grid cell but allow growth */
     font-family: var(--font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
     background-color: var(--widget-bg-color, #fff);
     border-radius: var(--widget-border-radius, 8px);
@@ -74,8 +75,9 @@ export const styles = css`
   .widget-container {
     display: flex;
     flex-direction: column;
-    height: 100%;
-    overflow: hidden; /* Prevent content overflow */
+    height: 100%; /* Change back to 100% to fill the grid cell */
+    min-height: 100%;
+    overflow: hidden; /* Let child elements handle their own overflow */
   }
 
   .widget-header {
@@ -87,6 +89,7 @@ export const styles = css`
     border-bottom: 1px solid var(--widget-border-color);
     background-color: var(--widget-header-background);
     height: 40px;
+    z-index: 10; /* Keep header above widget content */
   }
 
   .widget-header h3 {
@@ -104,6 +107,9 @@ export const styles = css`
     display: flex;
     gap: 4px;
     margin-right: 12px;
+    z-index: 10; /* Ensure controls are above other elements */
+    position: relative; /* Create a stacking context */
+    z-index: 15; /* Even higher than the header itself */
   }
 
   .size-button {
@@ -345,13 +351,29 @@ export const styles = css`
   .widget-content {
     flex: 1;
     padding: var(--widget-content-padding, 1rem);
-    overflow: auto;
-    position: relative; /* For proper sizing of content */
-    min-height: 0; /* Important: allows content to determine sizing */
+    overflow: auto; /* Changed from visible to auto to ensure content is scrollable */
+    position: relative;
+    min-height: 0; /* Allow content to determine sizing within constraints */
+    display: flex;
+    flex-direction: column;
   }
 
-  .widget-content.seamless {
-    padding: 0;
+  /* Special styling for welcome widget to fill available space */
+  .widget-content.welcome-content {
+    padding: 0; /* Remove padding to maximize space */
+    position: relative; /* Create stacking context */
+    z-index: 1; /* Lower z-index than controls */
+  }
+
+  .widget-content ::slotted(*) {
+    height: auto;
+    min-height: 0;
+    flex: 1; /* Make slotted elements fill the available space */
+  }
+
+  /* Only add scrollbars when content is too large for the allocated grid cell */
+  .widget-content.overflow {
+    overflow: auto;
   }
 
   .loading-container,
@@ -468,6 +490,7 @@ export const styles = css`
     display: flex;
     gap: 8px;
     align-items: center;
+    margin-right: 10px;
   }
 
   .span-control-group {
@@ -476,12 +499,14 @@ export const styles = css`
     background-color: #f0f0f0;
     border-radius: 4px;
     padding: 0 2px;
+    border: 1px solid #ddd;
   }
 
   .span-label {
     font-size: 10px;
     color: #555;
     padding: 0 2px;
+    font-weight: bold;
   }
 
   .span-value {
@@ -489,6 +514,7 @@ export const styles = css`
     width: 18px;
     text-align: center;
     font-weight: 600;
+    color: #333;
   }
 
   .span-button {
@@ -497,14 +523,27 @@ export const styles = css`
     width: 20px;
     height: 20px;
     cursor: pointer;
-    font-size: 12px;
+    font-size: 14px;
     line-height: 1;
     padding: 0;
     margin: 0;
     border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    position: relative; /* Create stacking context */
+    z-index: 20; /* Higher than any other UI element */
+    isolation: isolate; /* Create stacking context */
   }
 
   .span-button:hover {
-    background-color: rgba(0, 0, 0, 0.1);
+    background-color: rgba(0, 0, 0, 0.15);
+    transform: scale(1.1);
+  }
+  
+  .span-button:active {
+    background-color: rgba(0, 0, 0, 0.25);
+    transform: scale(0.95);
   }
 `;

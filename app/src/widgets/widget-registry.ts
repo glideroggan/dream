@@ -40,8 +40,8 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     elementName: 'financial-health-widget',
     module: '@widgets/financial-health',
     defaultConfig: {},
-    colSpan: 10, // Increased from 8 to account for smaller columns
-    rowSpan: 4, // Increased row span to compensate for smaller row heights
+    colSpan: 10,
+    rowSpan: 6, // Increased rows for fixed-height grid
     minWidth: 380,
     searchable: true,
     keywords: ['financial health', 'net worth', 'savings rate', 'spending trends', 'recommendations', 'financial advisor'],
@@ -54,8 +54,8 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     elementName: 'account-widget',
     module: '@widgets/account',
     defaultConfig: {},
-    colSpan: 12, // Increased from 10 to account for smaller columns
-    rowSpan: 3, // Increased row span to compensate for smaller row heights
+    colSpan: 12,
+    rowSpan: 5, // Increased rows for fixed-height grid
     minWidth: 380,
     searchable: true,
     keywords: ['accounts', 'checking account', 'savings account', 'bank accounts', 'money', 'balance'],
@@ -69,7 +69,7 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     module: '@widgets/welcome',
     defaultConfig: { username: 'Guest' },
     colSpan: 16, // Full width
-    rowSpan: 5, // Increased row span to compensate for smaller row heights
+    rowSpan: 8, // Increased rows for fixed-height grid
     minWidth: 800,
     fullWidth: true,
     searchable: true,
@@ -83,8 +83,8 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     elementName: 'swish-widget',
     module: '@widgets/swish',
     defaultConfig: {},
-    colSpan: 8, // Increased from 6 to account for smaller columns
-    rowSpan: 4, // Increased row span to compensate for smaller row heights
+    colSpan: 8,
+    rowSpan: 5, // Increased rows for fixed-height grid
     minWidth: 340,
     searchable: true,
     keywords: ['payment', 'transfer', 'swish', 'money', 'send money'],
@@ -102,8 +102,8 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     description: 'A widget that takes 6 seconds to load',
     elementName: 'slow-widget',
     module: '@widgets/slow',
-    colSpan: 6, // Increased from 4 to account for smaller columns
-    rowSpan: 3, // Increased row span to compensate for smaller row heights
+    colSpan: 6,
+    rowSpan: 4, // Increased rows for fixed-height grid
     minWidth: 300,
     searchable: true,
     keywords: ['slow', 'demo', 'example', 'loading'],
@@ -115,8 +115,8 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     description: 'A widget that fails to initialize',
     elementName: 'error-widget',
     module: '@widgets/error',
-    colSpan: 6, // Increased from 4 to account for smaller columns
-    rowSpan: 3, // Increased row span to compensate for smaller row heights
+    colSpan: 6,
+    rowSpan: 4, // Increased rows for fixed-height grid
     minWidth: 300,
     searchable: true,
     keywords: ['error', 'demo', 'example', 'failure'],

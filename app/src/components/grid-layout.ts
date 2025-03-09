@@ -26,6 +26,8 @@ const styles = css`
     width: 100%;
     height: 100%;
     min-height: 400px;
+    /* Use fixed grid template rows instead of auto rows */
+    grid-auto-rows: var(--row-height, 30px);
   }
   
   /* Generate column-span classes */
@@ -35,19 +37,24 @@ const styles = css`
   }
   `).join('\n')}
   
-  /* Generate row-span classes - with fixed max-height for manual resizing */
-  ${Array.from({length: 8}, (_, i) => i + 1).map(i => `
+  /* Generate row-span classes with better overflow handling */
+  ${Array.from({length: 16}, (_, i) => i + 1).map(i => `
   ::slotted(.row-span-${i}) {
     grid-row: span ${i};
-    max-height: calc(${i} * var(--row-height, 30px) + (${i - 1}) * var(--grid-gap, 8px));
-  }
-  
-  /* When row is set explicitly by user, enforce height constraint */
-  ::slotted(.row-span-${i}.row-constrained) {
     height: calc(${i} * var(--row-height, 30px) + (${i - 1}) * var(--grid-gap, 8px));
-    overflow-y: auto;
+    overflow: auto; /* Add scrollbars when content exceeds fixed height */
   }
   `).join('\n')}
+  
+  /* When row is set explicitly by user, give it a minimum height but no maximum */
+  ::slotted(.row-span-${i => i}.row-constrained) {
+    min-height: calc(${i => i} * var(--row-height, 30px) + (${i => i - 1}) * var(--grid-gap, 8px));
+  }
+  
+  /* When content is larger than container, ensure scrollbars appear */
+  ::slotted(.overflow) {
+    overflow: auto !important;
+  }
   
   /* Add explicit support for full-width widgets */
   ::slotted(.widget-full-width) {
@@ -61,11 +68,15 @@ const styles = css`
     max-height: none;
   }
   
-  /* Ensure consistent sizing */
+  /* Ensure consistent sizing - crucial for fixed-size grid cells */
   ::slotted(*) {
     box-sizing: border-box;
-    overflow: auto;
-    height: 100%;
+    overflow: auto; /* Changed from visible to auto to ensure scrollbars appear when needed */
+    height: auto; /* Still auto-size to fit content */
+    min-height: 100%; /* Fill the grid cell */
+    max-height: 100%; /* Don't exceed grid cell height */
+    display: flex;
+    flex-direction: column;
   }
   
   @media (max-width: 800px) {
@@ -115,7 +126,7 @@ export class GridLayout extends FASTElement {
   @attr({ attribute: "grid-gap" }) gridGap = 8;
   @attr({ attribute: "data-page" }) dataPage = '';
   @attr({ attribute: "columns" }) totalColumns = 16;
-  @attr({ attribute: "rows" }) totalRows = 8;
+  @attr({ attribute: "rows" }) totalRows = 16; // Increased from 8 to 16 to match maxRowSpan
   @observable gridStyle = '';
 
   private settingsRepository: SettingsRepository;
@@ -147,9 +158,12 @@ export class GridLayout extends FASTElement {
     // Initialize grid style with default settings
     this.updateGridStyle();
     
-    // Listen for widget size change events
-    this.addEventListener('widget-size-change', this.handleWidgetSizeChange.bind(this));
-    this.addEventListener('widget-spans-change', this.handleWidgetSpansChange.bind(this));
+    // Listen for widget size change events - improved listeners with explicit callbacks
+    this.addEventListener('widget-size-change', this.handleWidgetSizeChange);
+    this.addEventListener('widget-spans-change', (e) => {
+      console.debug(`GridLayout: Received widget-spans-change event`, (e as CustomEvent).detail);
+      this.handleWidgetSpansChange(e);
+    });
     
     console.debug("GridLayout connected, metadata size:", this.itemMetadata.size);
   }
@@ -163,30 +177,28 @@ export class GridLayout extends FASTElement {
     }
     
     // Remove event listeners
-    this.removeEventListener('widget-size-change', this.handleWidgetSizeChange.bind(this));
-    this.removeEventListener('widget-spans-change', this.handleWidgetSpansChange.bind(this));
+    this.removeEventListener('widget-size-change', this.handleWidgetSizeChange);
+    this.removeEventListener('widget-spans-change', this.handleWidgetSpansChange);
   }
   
   /**
    * Handle widget spans change events from widget-wrapper components
    */
-  private handleWidgetSpansChange(event: Event): void {
+  private handleWidgetSpansChange = (event: Event): void => {
     const customEvent = event as CustomEvent;
-    const { widgetId, colSpan, rowSpan, isUserResized } = customEvent.detail;
+    const { widgetId, colSpan, rowSpan, isUserResized, source } = customEvent.detail;
     
-    console.debug(`GridLayout: Received spans change event for widget ${widgetId}: cols=${colSpan}, rows=${rowSpan}, userResized=${isUserResized}`);
+    console.debug(`GridLayout: Processing spans change for ${widgetId}: ${colSpan}x${rowSpan}, user=${isUserResized}, source=${source || 'unknown'}`);
+    
+    // Ensure event doesn't propagate further
+    event.stopPropagation();
     
     // Update the item metadata
     const metadata = this.itemMetadata.get(widgetId);
     if (metadata) {
       metadata.colSpan = colSpan;
       metadata.rowSpan = rowSpan;
-      metadata.userResized = isUserResized; // Store whether this was a user resize
-
-      // save new spans to settings if we have a page identifier
-      if (this.dataPage) {
-        this.saveWidgetSpansToSettings(this.dataPage, widgetId, colSpan, rowSpan, isUserResized);
-      }
+      metadata.userResized = isUserResized;
       
       // Find the element and update its span classes
       const element = this.querySelector(`[data-grid-item-id="${widgetId}"]`) as HTMLElement;
@@ -194,8 +206,32 @@ export class GridLayout extends FASTElement {
         this.setItemSpans(element, colSpan, rowSpan, isUserResized);
         console.debug(`GridLayout: Updated spans for ${widgetId} to ${colSpan}x${rowSpan}`);
         
-        // Update layout to adjust for the new size
+        // Immediate layout update
         this.updateLayout();
+        
+        // Also update the widget-wrapper to ensure consistency
+        const wrapper = element.querySelector('widget-wrapper');
+        if (wrapper) {
+          // Use setAttribute to ensure it's updated
+          wrapper.setAttribute('colSpan', colSpan.toString());
+          wrapper.setAttribute('rowSpan', rowSpan.toString());
+        }
+        
+        // Check for content overflow and add appropriate class
+        setTimeout(() => {
+          const content = element.querySelector('.widget-content');
+          if (content) {
+            const contentHeight = content.scrollHeight;
+            const containerHeight = element.clientHeight - 40; // Account for header
+            
+            if (contentHeight > containerHeight) {
+              element.classList.add('overflow');
+              console.debug(`GridLayout: Content overflow detected for ${widgetId}`);
+            } else {
+              element.classList.remove('overflow');
+            }
+          }
+        }, 50);
       }
     }
   }
@@ -386,13 +422,11 @@ export class GridLayout extends FASTElement {
   }
   
   /**
-   * Update the grid CSS style - adjusted to handle rows differently
+   * Update the grid CSS style - fixed to use template rows with fixed height
    */
   private updateGridStyle(): void {
     const containerWidth = this.clientWidth;
-    const containerHeight = this.clientHeight || 400;
     const columnCount = this.totalColumns;
-    const rowCount = this.totalRows;
     
     // Calculate available space after accounting for gaps
     const totalGapWidth = (columnCount - 1) * this.gridGap;
@@ -404,16 +438,21 @@ export class GridLayout extends FASTElement {
       Math.floor(availableWidth / columnCount)
     );
     
-    // Set the grid style with:
-    // - Fixed column sizing based on available width
-    // - Auto row sizing that respects minimum heights but allows content to expand
+    // Set a fixed row height that doesn't change based on content
+    const rowHeight = this.minRowHeight;
+    
+    // Create fixed-size grid
     this.gridStyle = `
       grid-template-columns: repeat(${columnCount}, minmax(${columnWidth}px, 1fr));
-      grid-auto-rows: minmax(${this.minRowHeight}px, auto);
+      grid-auto-rows: ${rowHeight}px;
       gap: ${this.gridGap}px;
+      align-items: stretch;
     `;
     
-    console.debug(`GridLayout: Grid sized with ${columnCount} columns (${columnWidth}px wide) and auto-sized rows (min ${this.minRowHeight}px tall)`);
+    // Update row height CSS variable for span calculations
+    this.style.setProperty('--row-height', `${rowHeight}px`);
+    
+    console.debug(`GridLayout: Using fixed grid with ${columnCount} columns (${columnWidth}px) and rows (${rowHeight}px)`);
   }
   
   /**
@@ -423,6 +462,10 @@ export class GridLayout extends FASTElement {
     // Enforce minimum and maximum spans
     colSpan = Math.max(1, Math.min(colSpan, this.totalColumns));
     rowSpan = Math.max(1, Math.min(rowSpan, this.totalRows));
+    
+    // Add debug logging to track span changes
+    const id = item.getAttribute('data-grid-item-id') || 'unknown';
+    console.debug(`GridLayout: Setting spans for ${id}: ${colSpan}x${rowSpan}`);
     
     // Remove existing span classes
     for (let i = 1; i <= this.totalColumns; i++) {
@@ -445,7 +488,6 @@ export class GridLayout extends FASTElement {
     item.style.setProperty('--current-col-span', colSpan.toString());
     item.style.setProperty('--current-row-span', rowSpan.toString());
     
-    const id = item.getAttribute('data-grid-item-id') || 'unknown';
     console.debug(`GridLayout: Set item ${id} to spans ${colSpan}x${rowSpan}, constrained: ${isUserResized}`);
   }
 }

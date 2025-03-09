@@ -18,20 +18,56 @@ export const template = html<WidgetWrapper>/*html*/`
             `)}
           `)}
           
-          <!-- New grid span controls -->
+          <!-- Fixed span controls with more direct event handling -->
           ${when(x => !x.useLegacySizing, html<WidgetWrapper>/*html*/`
             <div class="span-controls">
               <div class="span-control-group">
                 <span class="span-label">W:</span>
-                <button class="span-button" @click="${x => x.decreaseColSpan()}" title="Decrease width">-</button>
+                <button 
+                  class="span-button"
+                  type="button"
+                  @pointerdown="${(x, c) => { 
+                    console.debug('Width decrease button clicked'); 
+                    c.event.preventDefault(); 
+                    c.event.stopImmediatePropagation();
+                    x.decreaseColSpan(); 
+                  }}" 
+                  title="Decrease width">-</button>
                 <span class="span-value">${x => x.colSpan}</span>
-                <button class="span-button" @click="${x => x.increaseColSpan()}" title="Increase width">+</button>
+                <button 
+                  class="span-button"
+                  type="button"
+                  @pointerdown="${(x, c) => { 
+                    console.debug('Width increase button clicked'); 
+                    c.event.preventDefault(); 
+                    c.event.stopImmediatePropagation();
+                    x.increaseColSpan(); 
+                  }}" 
+                  title="Increase width">+</button>
               </div>
               <div class="span-control-group">
                 <span class="span-label">H:</span>
-                <button class="span-button" @click="${x => x.decreaseRowSpan()}" title="Decrease height">-</button>
+                <button 
+                  class="span-button"
+                  type="button"
+                  @pointerdown="${(x, c) => { 
+                    console.debug('Height decrease button clicked'); 
+                    c.event.preventDefault(); 
+                    c.event.stopImmediatePropagation();
+                    x.decreaseRowSpan(); 
+                  }}" 
+                  title="Decrease height">-</button>
                 <span class="span-value">${x => x.rowSpan}</span>
-                <button class="span-button" @click="${x => x.increaseRowSpan()}" title="Increase height">+</button>
+                <button 
+                  class="span-button"
+                  type="button"
+                  @pointerdown="${(x, c) => { 
+                    console.debug('Height increase button clicked'); 
+                    c.event.preventDefault(); 
+                    c.event.stopImmediatePropagation();
+                    x.increaseRowSpan(); 
+                  }}" 
+                  title="Increase height">+</button>
               </div>
             </div>
           `)}
@@ -87,7 +123,7 @@ export const template = html<WidgetWrapper>/*html*/`
       </div>
     `)}
     
-    <div class="widget-content ${x => x.seamlessIntegration ? 'seamless' : ''}">
+    <div class="widget-content ${x => x.seamlessIntegration ? 'seamless' : ''} ${x => x.widgetId === 'welcome' ? 'welcome-content' : ''}">
       ${when(x => x.state === 'loaded', html<WidgetWrapper>/*html*/`
         <slot></slot>
       `)}

@@ -38,7 +38,7 @@ export class WidgetWrapper extends FASTElement {
   @attr({ mode: "boolean" }) showSizeControls: boolean = true;
   @attr({ mode: "boolean" }) useLegacySizing: boolean = false; // Default to new sizing UI
   @attr maxColSpan: number = 16;
-  @attr maxRowSpan: number = 8;
+  @attr maxRowSpan: number = 16; // Increased from 8 to 16 to allow for more vertical space
   @attr minColSpan: number = 1;
   @attr minRowSpan: number = 1;
 
@@ -183,6 +183,9 @@ export class WidgetWrapper extends FASTElement {
     // Also listen for module errors that bubble up from widget-service
     document.addEventListener('widget-module-error', this.eventHandlers.handleModuleError);
 
+    // Listen for resize requests from the widget
+    this.addEventListener('widget-request-resize', this.handleResizeRequest.bind(this));
+
     // Check for existing error in widget service
     this.checkForExistingErrors();
 
@@ -201,6 +204,7 @@ export class WidgetWrapper extends FASTElement {
     this.removeEventListener('initialized', this.eventHandlers.handleInitialized);
     this.removeEventListener('load-complete', this.eventHandlers.handleInitialized);
     document.removeEventListener('widget-module-error', this.eventHandlers.handleModuleError);
+    this.removeEventListener('widget-request-resize', this.handleResizeRequest.bind(this));
   }
 
   /**
@@ -536,16 +540,19 @@ export class WidgetWrapper extends FASTElement {
     newColSpan = Math.max(this.minColSpan, Math.min(newColSpan, this.maxColSpan));
     newRowSpan = Math.max(this.minRowSpan, Math.min(newRowSpan, this.maxRowSpan));
     
+    // Use === for precise comparison
     if (this.colSpan === newColSpan && this.rowSpan === newRowSpan) return;
     
     const oldColSpan = this.colSpan;
     const oldRowSpan = this.rowSpan;
-    this.colSpan = newColSpan;
-    this.rowSpan = newRowSpan;
     
     console.debug(`Widget ${this.widgetId} spans changing from ${oldColSpan}x${oldRowSpan} to ${newColSpan}x${newRowSpan}, user resized: ${isUserResized}`);
     
-    // Create and dispatch a custom event for the span change
+    // Update properties immediately
+    this.colSpan = newColSpan;
+    this.rowSpan = newRowSpan;
+    
+    // Create span change event
     const spanChangeEvent = new CustomEvent('widget-spans-change', {
       bubbles: true,
       composed: true,
@@ -555,10 +562,12 @@ export class WidgetWrapper extends FASTElement {
         oldRowSpan,
         colSpan: newColSpan,
         rowSpan: newRowSpan,
-        isUserResized  // Include whether this was a user-initiated resize
+        isUserResized
       }
     });
     
+    // Dispatch the event immediately (no timeout)
+    console.debug(`Dispatching span change event for ${this.widgetId}: ${newColSpan}x${newRowSpan}`);
     this.dispatchEvent(spanChangeEvent);
   }
   
@@ -567,7 +576,34 @@ export class WidgetWrapper extends FASTElement {
    */
   increaseColSpan(): void {
     if (this.colSpan < this.maxColSpan) {
-      this.changeSpans(this.colSpan + 1, this.rowSpan);
+      const oldColSpan = this.colSpan;
+      const newColSpan = Math.min(oldColSpan + 1, this.maxColSpan);
+      
+      console.debug(`WidgetWrapper: Increasing column span for ${this.widgetId} from ${oldColSpan} to ${newColSpan}`);
+      
+      // Direct property update first for immediate UI feedback
+      this.colSpan = newColSpan;
+      
+      // Always dispatch the event even if seemingly redundant - needed for some widget types
+      const spanChangeEvent = new CustomEvent('widget-spans-change', {
+        bubbles: true,
+        composed: true,
+        detail: {
+          widgetId: this.widgetId,
+          oldColSpan: oldColSpan,
+          oldRowSpan: this.rowSpan,
+          colSpan: newColSpan,
+          rowSpan: this.rowSpan,
+          isUserResized: true,
+          source: 'increaseColSpan'
+        }
+      });
+      
+      console.debug(`WidgetWrapper: Dispatching span change for ${this.widgetId}: ${oldColSpan}->${newColSpan}x${this.rowSpan}`);
+      this.dispatchEvent(spanChangeEvent);
+      
+      // Force update the attribute in case binding isn't working
+      this.setAttribute('colSpan', newColSpan.toString());
     }
   }
   
@@ -576,7 +612,34 @@ export class WidgetWrapper extends FASTElement {
    */
   decreaseColSpan(): void {
     if (this.colSpan > this.minColSpan) {
-      this.changeSpans(this.colSpan - 1, this.rowSpan);
+      const oldColSpan = this.colSpan;
+      const newColSpan = Math.max(oldColSpan - 1, this.minColSpan);
+      
+      console.debug(`WidgetWrapper: Decreasing column span for ${this.widgetId} from ${oldColSpan} to ${newColSpan}`);
+      
+      // Direct property update for immediate feedback
+      this.colSpan = newColSpan;
+      
+      // Dispatch the event
+      const spanChangeEvent = new CustomEvent('widget-spans-change', {
+        bubbles: true,
+        composed: true,
+        detail: {
+          widgetId: this.widgetId,
+          oldColSpan: oldColSpan,
+          oldRowSpan: this.rowSpan,
+          colSpan: newColSpan,
+          rowSpan: this.rowSpan,
+          isUserResized: true,
+          source: 'decreaseColSpan'
+        }
+      });
+      
+      console.debug(`WidgetWrapper: Dispatching span change for ${this.widgetId}: ${oldColSpan}->${newColSpan}x${this.rowSpan}`);
+      this.dispatchEvent(spanChangeEvent);
+      
+      // Force update the attribute
+      this.setAttribute('colSpan', newColSpan.toString());
     }
   }
   
@@ -585,7 +648,30 @@ export class WidgetWrapper extends FASTElement {
    */
   increaseRowSpan(): void {
     if (this.rowSpan < this.maxRowSpan) {
-      this.changeSpans(this.colSpan, this.rowSpan + 1);
+      console.debug(`WidgetWrapper: Increasing row span for ${this.widgetId} from ${this.rowSpan} to ${this.rowSpan + 1}`);
+      const newRowSpan = Math.min(this.rowSpan + 1, this.maxRowSpan);
+      
+      // Direct property update first for immediate UI feedback
+      this.rowSpan = newRowSpan;
+      
+      try {
+        // Then dispatch the event for the grid to handle
+        const spanChangeEvent = new CustomEvent('widget-spans-change', {
+          bubbles: true,
+          composed: true,
+          detail: {
+            widgetId: this.widgetId,
+            colSpan: this.colSpan,
+            rowSpan: newRowSpan,
+            isUserResized: true
+          }
+        });
+        
+        console.debug(`Dispatching row span change event for ${this.widgetId}: ${this.colSpan}x${newRowSpan}`);
+        this.dispatchEvent(spanChangeEvent);
+      } catch (error) {
+        console.error(`Error dispatching span change event:`, error);
+      }
     }
   }
   
@@ -594,7 +680,30 @@ export class WidgetWrapper extends FASTElement {
    */
   decreaseRowSpan(): void {
     if (this.rowSpan > this.minRowSpan) {
-      this.changeSpans(this.colSpan, this.rowSpan - 1);
+      console.debug(`WidgetWrapper: Decreasing row span for ${this.widgetId} from ${this.rowSpan} to ${this.rowSpan - 1}`);
+      const newRowSpan = Math.max(this.rowSpan - 1, this.minRowSpan);
+      
+      // Direct property update first for immediate UI feedback
+      this.rowSpan = newRowSpan;
+      
+      try {
+        // Then dispatch the event for the grid to handle
+        const spanChangeEvent = new CustomEvent('widget-spans-change', {
+          bubbles: true,
+          composed: true,
+          detail: {
+            widgetId: this.widgetId,
+            colSpan: this.colSpan,
+            rowSpan: newRowSpan,
+            isUserResized: true
+          }
+        });
+        
+        console.debug(`Dispatching row span change event for ${this.widgetId}: ${this.colSpan}x${newRowSpan}`);
+        this.dispatchEvent(spanChangeEvent);
+      } catch (error) {
+        console.error(`Error dispatching span change event:`, error);
+      }
     }
   }
 
@@ -631,5 +740,23 @@ export class WidgetWrapper extends FASTElement {
     event.preventDefault();
     event.stopPropagation();
     this.changeSize(size);
+  }
+
+  /**
+   * Handle resize requests from widgets
+   */
+  private handleResizeRequest(event: Event): void {
+    const customEvent = event as CustomEvent;
+    const { rowSpan, reason } = customEvent.detail;
+    
+    console.debug(`Widget ${this.widgetId} received resize request: ${rowSpan} rows (${reason})`);
+    
+    // Only increase, never decrease rows from content fit requests
+    if (rowSpan > this.rowSpan && reason === 'content-overflow') {
+      this.changeSpans(this.colSpan, rowSpan, true);
+    }
+    
+    // Stop propagation since we've handled it
+    event.stopPropagation();
   }
 }
