@@ -24,6 +24,7 @@ export interface UserSettings extends Entity {
 
 export class SettingsRepository extends LocalStorageRepository<UserSettings> {
   
+  
   constructor(
     storage: StorageService,
     userService: UserService
@@ -42,6 +43,15 @@ export class SettingsRepository extends LocalStorageRepository<UserSettings> {
     this.saveToStorage();
     
     console.debug('Initialized settings with default mock data');
+  }
+
+  async removeWidgetFromLayout(pageType: string, widgetId: string): Promise<void> {
+    const settings = await this.getCurrentSettings();
+    const key = `${pageType}Widgets`;
+    const widgets = settings[key] || [];
+    const updatedWidgets = widgets.filter((id:string) => id !== widgetId);
+    await this.update(settings.id, { [key]: updatedWidgets });
+    console.debug(`Removed widget ${widgetId} from ${pageType}`);
   }
 
   /**

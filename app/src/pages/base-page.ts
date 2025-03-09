@@ -8,8 +8,8 @@ import {
 } from '@microsoft/fast-element';
 import { WidgetDefinition, widgetService } from '../services/widget-service';
 import { getProductService, ProductService } from '../services/product-service';
-import { 
-  getWidgetMinWidth, 
+import {
+  getWidgetMinWidth,
   getAutoWidgetsForProduct,
   isWidgetAvailableForUser,
   shouldWidgetBeFullWidth,
@@ -39,13 +39,13 @@ export const baseContentTemplate = html<BasePage>/*html*/ `
     </div>
     ${when<BasePage>(x => !x.ready, html<BasePage>/*html*/ `
       <div class="empty-message">Loading...</div>`
-    )}
+)}
     ${when<BasePage>(x => x.ready && x.activeWidgets.length === 0, html<BasePage>/*html*/ `
       <div class="empty-message">
         <p>No widgets available for this page yet.</p>
         <p>Check back soon for updates!</p>
       </div>`
-    )}
+)}
     <grid-layout class="widgets-container" data-page="${x => x.pageTitle}"></grid-layout>
     
     <!-- Modal for workflows -->
@@ -116,19 +116,19 @@ export class BasePage extends FASTElement {
     document.addEventListener('retry-widget', this.boundHandleRetryWidget);
     document.addEventListener('dismiss-widget', this.boundHandleDismissWidget);
     document.addEventListener('cancel-widget-load', this.boundHandleCancelWidget);
-    
+
     this.subscribeToProductChanges();
     // Diagnostic log to track page lifecycle
     console.debug(`${this.pageType} page connected`);
-  } 
+  }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
-    
+
     // Use bound event handlers for removal
     window.removeEventListener('resize', this.boundHandleResize);
     document.removeEventListener('start-workflow', this.boundHandleWorkflowStart);
-    document.removeEventListener('focus-widget', this.boundHandleWidgetFocus); 
+    document.removeEventListener('focus-widget', this.boundHandleWidgetFocus);
     document.removeEventListener('close-widget', this.boundHandleCloseWidget);
     document.removeEventListener('retry-widget', this.boundHandleRetryWidget);
     document.removeEventListener('dismiss-widget', this.boundHandleDismissWidget);
@@ -168,7 +168,7 @@ export class BasePage extends FASTElement {
   }
 
   protected async loadInitialWidgets(widgetIds: string[]): Promise<void> {
-    console.debug(`Loading initial widgets for ${this.pageTitle}:`, widgetIds);
+    console.log(`Loading initial widgets for ${this.pageTitle}:`, widgetIds);
     try {
       const widgets = await widgetService.loadWidgets(widgetIds);
       console.debug(`Loaded ${widgets.length} widgets:`, widgets);
@@ -212,8 +212,8 @@ export class BasePage extends FASTElement {
     try {
       const autoWidgets = getAutoWidgetsForProduct(productId);
       if (autoWidgets.length === 0) return;
-      console.debug(`Adding widgets for product ${productId} to ${this.pageType} page:`, 
-              autoWidgets.map(w => w.id));
+      console.log(`Adding widgets for product ${productId} to ${this.pageType} page:`,
+        autoWidgets.map(w => w.id));
       for (const widget of autoWidgets) {
         if (this.activeWidgets.some(w => w.id === widget.id)) {
           console.debug(`Widget ${widget.id} is already on ${this.pageType} page`);
@@ -254,7 +254,7 @@ export class BasePage extends FASTElement {
       const userSettings = await settingsRepo.getCurrentSettings();
       const widgetIdsToRemove = productWidgets.map(w => w.id);
       const updatedSettings: Partial<UserSettings> = {};
-      
+
       Object.keys(userSettings).forEach(key => {
         if (key.endsWith('Widgets')) {
           const pageWidgets = userSettings[key] as string[];
@@ -292,7 +292,6 @@ export class BasePage extends FASTElement {
         // Get the widget definition from registry for spans
         const widgetDef = getWidgetById(widgetId);
         console.debug(`Loading widget ${widgetId}, definition:`, widgetDef);
-        this.activeWidgets.push(widget);
         // Get grid dimensions from registry
         let colSpan = widgetDef?.colSpan || getWidgetColumnSpan(widgetId);
         let rowSpan = widgetDef?.rowSpan || getWidgetRowSpan(widgetId);
@@ -333,7 +332,7 @@ export class BasePage extends FASTElement {
         if (gridLayout.addItem && typeof gridLayout.addItem === 'function') {
           // Log grid layout presence and function
           console.debug(`Found grid-layout with addItem function for widget ${widgetId}`);
-          
+
           gridLayout.addItem(wrapperElement, {
             id: widget.id,
             colSpan,
@@ -341,13 +340,13 @@ export class BasePage extends FASTElement {
             minWidth: widgetDef?.minWidth || getWidgetMinWidth(widget.id),
             fullWidth: widgetDef?.fullWidth || shouldWidgetBeFullWidth(widget.id)
           });
-          
+
           // Verify data attribute after adding to grid
           console.debug(`Widget wrapper data-grid-item-id after grid.addItem: ${wrapperElement.getAttribute('data-grid-item-id')}`);
         } else {
           console.warn(`Grid layout for ${widgetId} does not have addItem method!`);
         }
-          
+
         this.createWidgetElement(widget, wrapperElement);
         wrapperElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
         wrapperElement.classList.add('widget-highlight');
@@ -390,28 +389,28 @@ export class BasePage extends FASTElement {
     } catch (error) {
       console.error(`Error creating widget ${widget.id}:`, error);
       wrapperElement.setAttribute('state', 'error');
-      wrapperElement.setAttribute('errorMessage', 
+      wrapperElement.setAttribute('errorMessage',
         error instanceof Error ? error.message : 'Failed to initialize widget'
       );
     }
   }
 
   protected async addWidgetsToDOM(): Promise<void> {
-    console.debug('Adding widgets to DOM...');
+    console.log('Adding widgets to DOM...');
     const widgetContainer = this.shadowRoot?.querySelector('.widgets-container') as HTMLElement;
     if (!widgetContainer) return;
-    
+
     // Get the GridLayout component
     const gridLayout = widgetContainer as GridLayout;
 
     // Set the data-page attribute on the grid layout to ensure it's available to all widgets
     gridLayout.setAttribute('data-page', this.pageType);
-    
+
     // Process each active widget
     this.activeWidgets.forEach(async (widget) => {
       const widgetDef = getWidgetById(widget.id);
       console.debug(`Adding widget to DOM: ${widget.id}, definition:`, widgetDef);
-      
+
       // Create widget wrapper with explicit page-type attribute
       const wrapperElement = createWidgetWrapper({
         widgetId: widget.id,
@@ -425,10 +424,10 @@ export class BasePage extends FASTElement {
           'rowSpan': widgetDef?.rowSpan?.toString() || getWidgetRowSpan(widget.id).toString()
         }
       });
-      
+
       // Debug the page type setting
       console.debug(`Widget wrapper ${widget.id} created with page-type: ${wrapperElement.getAttribute('page-type')}`);
-      
+
       // Add wrapper to DOM
       widgetContainer.appendChild(wrapperElement);
       // Get grid dimensions from user settings
@@ -512,7 +511,7 @@ export class BasePage extends FASTElement {
       console.error('No widget ID provided in focus-widget event');
       return;
     }
-    console.debug(`Focusing widget: ${widgetId}, target page: ${detail.targetPage}, current page: ${this.pageType}`);
+    console.log(`Focusing widget: ${widgetId}, target page: ${detail.targetPage}, current page: ${this.pageType}`);
     if (targetPage && targetPage !== this.pageType) {
       console.debug(`Ignoring widget focus event for ${widgetId} because target page ${targetPage} doesn't match current page ${this.pageType}`);
       return;
@@ -532,7 +531,7 @@ export class BasePage extends FASTElement {
           widgetElement.classList.remove('widget-highlight');
         }, 2000);
       } else {
-        console.debug(`Adding widget ${widgetId} to ${this.pageType} page from search/focus`);
+        console.log(`Adding widget ${widgetId} to ${this.pageType} page from search/focus`);
         await this.loadWidgetById(widgetId);
         await this.saveCurrentWidgetsToSettings();
       }
@@ -570,6 +569,7 @@ export class BasePage extends FASTElement {
   }
 
   protected handleDismissWidget(event: Event) {
+    console.debug('Dismissing widget:', event);
     const { widgetId } = (event as CustomEvent).detail;
     if (!widgetId) return;
     console.debug(`Dismissing widget ${widgetId} (from error state)`);
@@ -577,6 +577,7 @@ export class BasePage extends FASTElement {
   }
 
   protected handleCloseWidget(event: Event): void {
+    console.debug('Closing widget:', event);
     const { widgetId, pageType } = (event as CustomEvent).detail;
     if (!widgetId || this.pageType !== pageType) return;
     console.debug(`Closing widget ${widgetId} ${this.pageType} (user requested)`);
@@ -584,28 +585,52 @@ export class BasePage extends FASTElement {
   }
 
   private removeWidgetFromPage(widgetId: string): void {
+    // Find widget in active widgets array
     const widgetToRemove = this.activeWidgets.find(w => w.id === widgetId);
     if (!widgetToRemove) {
       console.warn(`Could not find widget ${widgetId} to remove`);
       return;
     }
+
+    // Update our active widgets tracking array
     this.activeWidgets = this.activeWidgets.filter(w => w.id !== widgetId);
-    if (this.shadowRoot) {
-      const wrapperElement = this.shadowRoot.querySelector(`[data-widget-id="${widgetId}"]`);
-      if (wrapperElement) {
-        wrapperElement.classList.add('widget-removing');
-        setTimeout(() => {
-          if (wrapperElement.parentElement) {
-            wrapperElement.parentElement.removeChild(wrapperElement);
-          }
-          // Update to use grid layout's updateLayout method
-          const gridLayout = this.shadowRoot?.querySelector('.widgets-container') as any;
-          if (gridLayout && typeof gridLayout.updateLayout === 'function') {
-            gridLayout.updateLayout();
-          }
-        }, 300);
-      }
+
+    // Get direct reference to the grid-layout
+    const gridLayout = this.shadowRoot?.querySelector('.widgets-container') as GridLayout;
+    if (!gridLayout) {
+      console.error("Could not find grid-layout component");
+      return;
     }
+
+    // Find the widget element directly within the grid
+    const widgetElement = gridLayout.querySelector(`[data-grid-item-id="${widgetId}"]`);
+    if (widgetElement) {
+      // Add a brief animation class if desired
+      widgetElement.classList.add('widget-removing');
+
+      // Use short timeout to allow animation to complete
+      setTimeout(() => {
+        // Remove from grid directly
+        if (widgetElement.parentElement) {
+          widgetElement.parentElement.removeChild(widgetElement);
+        }
+
+        // If grid-layout has a removeItem method, use it
+        if (typeof gridLayout.removeItem === 'function') {
+          gridLayout.removeItem(widgetId);
+        }
+
+        // Always update the layout
+        if (typeof gridLayout.updateLayout === 'function') {
+          gridLayout.updateLayout();
+        }
+      }, 300);
+
+      // remove any settings for this widget
+      this.settingsRepository.removeWidgetFromLayout(this.pageType, widgetId);
+    }
+
+    // Clean up and save settings
     this.widgetLoadAttempts.delete(widgetId);
     this.saveCurrentWidgetsToSettings();
   }
@@ -651,18 +676,20 @@ export class BasePage extends FASTElement {
     try {
       const settingsRepo = repositoryService.getSettingsRepository();
       const pageKey = `${this.pageType}Widgets`;
-      
+
+      console.log(`Saving widget preferences for ${this.pageType}:`, widgetIds);
+
       // Fix: Get current settings to access the ID, then use update method
       const userSettings = await settingsRepo.getCurrentSettings();
       await settingsRepo.update(userSettings.id, {
         [pageKey]: widgetIds
       });
-      
+
       // Ensure each widget exists in the layout
       for (const widgetId of widgetIds) {
         await settingsRepo.ensureWidgetInLayout(this.pageType, widgetId);
       }
-      
+
       console.debug(`Saved widget preferences for ${this.pageType}:`, widgetIds);
     } catch (error) {
       console.error('Error saving widget preferences:', error);

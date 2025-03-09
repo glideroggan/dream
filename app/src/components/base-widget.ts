@@ -75,7 +75,7 @@ export class BaseWidget extends FASTElement {
     
     // Set up resize observer to handle content overflow detection
     this.resizeObserver = new ResizeObserver(entries => {
-      console.log('Widget resize observed:', entries[0]);
+      console.debug('Widget resize observed:', entries[0]);
       this.handleResize(entries[0]);
       
       // Also check if we need more rows for our content
@@ -115,7 +115,7 @@ export class BaseWidget extends FASTElement {
     // Use contentRect.height for the visible container height
     const containerHeight = entry.contentRect.height;
     
-    console.log(`Widget resize detected - content height: ${contentHeight}px, container: ${containerHeight}px`);
+    console.debug(`Widget resize detected - content height: ${contentHeight}px, container: ${containerHeight}px`);
     
     if (contentHeight > containerHeight) {
       this.classList.add('scroll-content');
@@ -162,7 +162,7 @@ export class BaseWidget extends FASTElement {
       // Use ceiling and add a small buffer to prevent scrollbars (extra 0.2 rows)
       const rowsNeeded = Math.ceil(contentHeight / rowHeight);
       
-      console.log(`Content fit check: content=${contentHeight}px (${rowsNeeded} rows needed), ` +
+      console.debug(`Content fit check: content=${contentHeight}px (${rowsNeeded} rows needed), ` +
         `container=${containerHeight}px (${currentRowSpan} rows allocated)`);
       
       // Keep track of content height changes
@@ -182,7 +182,7 @@ export class BaseWidget extends FASTElement {
         this.isFirstSizeCheck = false;
         
         if (rowsNeeded > currentRowSpan) {
-          console.log(`Content needs more rows: ${rowsNeeded} vs ${currentRowSpan} allocated`);
+          console.debug(`Content needs more rows: ${rowsNeeded} vs ${currentRowSpan} allocated`);
           // Add 1 more row than calculated to avoid edge case scrollbars
           this.requestMoreRows(rowsNeeded + 1); 
         }
@@ -191,7 +191,7 @@ export class BaseWidget extends FASTElement {
       else if (contentHeight < previousHeight * 0.8 && 
                currentRowSpan > rowsNeeded + 1 && 
                rowsNeeded < currentRowSpan * 0.75) {
-        console.log(`Content has shrunk significantly to ${rowsNeeded} rows vs ${currentRowSpan} allocated`);
+        console.debug(`Content has shrunk significantly to ${rowsNeeded} rows vs ${currentRowSpan} allocated`);
         this.notifyContentShrink(contentHeight, rowsNeeded);
       }
     });
@@ -214,12 +214,12 @@ export class BaseWidget extends FASTElement {
     const parent = this.closest('widget-wrapper');
     const currentRowSpan = parent ? parseInt(parent.getAttribute('rowSpan') || '0') : 0;
     
-    console.log(`Manual recalculate - content height: ${contentHeight}px (${rowsNeeded} rows), ` +
+    console.debug(`Manual recalculate - content height: ${contentHeight}px (${rowsNeeded} rows), ` +
       `current rows: ${currentRowSpan}`);
     
     // If we have significantly more rows than needed (at least 2 rows and 25% difference)
     if (currentRowSpan > rowsNeeded + 1 && rowsNeeded < currentRowSpan * 0.75) {
-      console.log(`Content requires fewer rows: ${rowsNeeded} vs ${currentRowSpan} allocated`);
+      console.debug(`Content requires fewer rows: ${rowsNeeded} vs ${currentRowSpan} allocated`);
       this.notifyContentShrink(contentHeight, rowsNeeded);
     }
   }
@@ -393,13 +393,13 @@ export class BaseWidget extends FASTElement {
       // Add buffer (0.5 row) to prevent scrollbars in edge cases
       const rowsNeeded = Math.ceil(contentHeight / rowHeight + 0.5); 
       
-      console.log(`Initial content fit check - content height: ${contentHeight}px (${rowsNeeded} rows), ` +
+      console.debug(`Initial content fit check - content height: ${contentHeight}px (${rowsNeeded} rows), ` +
         `container: ${containerHeight}px (${currentRowSpan} rows)`);
       
       // Request size adjustment if needed
       if (contentHeight > containerHeight * 0.9 && containerHeight > 0) { // Using 90% threshold
         if (rowsNeeded >= currentRowSpan) {
-          console.log(`Content needs more space. Requesting ${rowsNeeded + 1} rows (current: ${currentRowSpan})`);
+          console.debug(`Content needs more space. Requesting ${rowsNeeded + 1} rows (current: ${currentRowSpan})`);
           // Add 1 more row to prevent scrollbars in edge cases
           this.requestMoreRows(rowsNeeded + 1);
         }
@@ -467,11 +467,11 @@ export class BaseWidget extends FASTElement {
     const contentHeight = this.scrollHeight;
     const containerHeight = this.clientHeight;
     
-    console.log(`Content changed notification: height=${contentHeight}px, container=${containerHeight}px`);
+    console.debug(`Content changed notification: height=${contentHeight}px, container=${containerHeight}px`);
     
     // If significantly smaller, try to shrink
     if (contentHeight < this.lastContentHeight * 0.8) {
-      console.log(`Content has shrunk significantly, recalculating size`);
+      console.debug(`Content has shrunk significantly, recalculating size`);
       this.recalculateSize();
     } 
     // If larger, check if we need to expand
@@ -485,7 +485,7 @@ export class BaseWidget extends FASTElement {
       const currentRowSpan = parent ? parseInt(parent.getAttribute('rowSpan') || '0') : 0;
       
       if (rowsNeeded > currentRowSpan) {
-        console.log(`Content needs more space after change. Requesting ${rowsNeeded} rows`);
+        console.debug(`Content needs more space after change. Requesting ${rowsNeeded} rows`);
         this.requestMoreRows(rowsNeeded);
       }
     }

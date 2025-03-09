@@ -72,11 +72,13 @@ export function isModuleError(errorMessage: string | undefined): boolean {
 
 /**
  * Create bound event handlers to ensure proper 'this' context
+ * Modified to accept explicit handlers which allows more flexibility
  */
-export function createBoundEventHandlers(component: any) {
+export function createBoundEventHandlers(component: any, handlers?: any) {
   return {
-    handleChildError: component.handleChildError.bind(component),
-    handleInitialized: component.handleInitialized.bind(component),
-    handleModuleError: component.handleModuleError.bind(component)
+    // Default implementation binds to component methods if handlers not provided
+    handleChildError: (handlers?.handleChildError || component.handleChildError).bind(component),
+    handleInitialized: (handlers?.handleInitialized || component.handleInitialized).bind(component),
+    handleModuleError: (handlers?.handleModuleError || component.handleModuleError).bind(component)
   };
 }

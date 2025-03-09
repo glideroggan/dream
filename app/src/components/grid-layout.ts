@@ -45,7 +45,7 @@ const generateSpanStyles = () => {
   }
   
   // Log to verify all rows are generated when the component loads
-  console.log(`Generated span styles for ${MAX_GRID_ROWS} rows`);
+  console.debug(`Generated span styles for ${MAX_GRID_ROWS} rows`);
   
   return styles;
 };

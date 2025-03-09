@@ -36,7 +36,7 @@ export class DashboardPage extends BasePage {
   }
 
   async loadWidgets(): Promise<void> {
-    console.debug('Dashboard page loading widgets...');
+    console.log('Dashboard page loading widgets...');
     
     // First try to load from user settings
     await this.loadUserWidgetPreferences();
