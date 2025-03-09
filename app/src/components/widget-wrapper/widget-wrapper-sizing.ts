@@ -215,51 +215,74 @@ export class WidgetSizingManager {
     const currentRowSpan = Number(this.component.rowSpan);
     const maxRowSpan = Number(this.component.maxRowSpan);
 
-    const oldRowSpan = currentRowSpan;
-    // const newRowSpan = Math.min(oldRowSpan + 1, maxRowSpan);
-    const newRowSpan = oldRowSpan + 1;
-    
-
-    console.log(`WidgetWrapper: Increasing row span for ${this.component.widgetId} from ${oldRowSpan} to ${newRowSpan}`);
-
-    // Direct property update first for immediate UI feedback
-    this.component.rowSpan = newRowSpan;
-
-    try {
-      // Create event with complete details matching the column span events
-      const spanChangeEvent = new CustomEvent('widget-spans-change', {
-        bubbles: true,
-        composed: true,
-        detail: {
-          widgetId: this.component.widgetId,
-          pageType: this.component.pageType, // Ensure pageType is always included
-          oldColSpan: this.component.colSpan,
-          oldRowSpan: oldRowSpan,
-          colSpan: this.component.colSpan,
-          rowSpan: newRowSpan,
-          isUserResized: true,
-          source: 'increaseRowSpan'
+    if (currentRowSpan < maxRowSpan) {
+      const oldRowSpan = currentRowSpan;
+      const newRowSpan = Math.min(oldRowSpan + 1, maxRowSpan);
+      
+      console.debug(`WidgetWrapper: Increasing row span for ${this.component.widgetId} from ${oldRowSpan} to ${newRowSpan}`);
+      
+      // Direct property update first for immediate UI feedback
+      this.component.rowSpan = newRowSpan;
+      
+      try {
+        // Flag as manually resized BEFORE dispatching events
+        this.component.isManuallyResized = true;
+        
+        // Block any auto-resize events that might immediately follow this manual resize
+        this.blockResizeEvents(500);
+        
+        // Create event with complete details matching the column span events
+        const spanChangeEvent = new CustomEvent('widget-spans-change', {
+          bubbles: true,
+          composed: true,
+          detail: {
+            widgetId: this.component.widgetId,
+            pageType: this.component.pageType,
+            oldColSpan: this.component.colSpan,
+            oldRowSpan: oldRowSpan,
+            colSpan: this.component.colSpan,
+            rowSpan: newRowSpan,
+            isUserResized: true,
+            source: 'increaseRowSpan'
+          }
+        });
+        
+        console.debug(`WidgetWrapper: Dispatching span change for ${this.component.widgetId} with pageType ${this.component.pageType}`);
+        
+        // Update DOM attributes directly 
+        this.component.style.setProperty('--row-span', newRowSpan.toString());
+        this.component.setAttribute('rowSpan', newRowSpan.toString());
+        
+        // Update row span classes
+        this.updateRowSpanClasses(newRowSpan);
+        
+        // Record user resize preference in the resize tracker
+        this.component.resizeTracker.recordUserResize(newRowSpan);
+        
+        // Notify contained widget about manual resize to prevent auto-sizing
+        const widgetElement = this.component.querySelector('[class*="widget"]');
+        if (widgetElement && typeof (widgetElement as any).setUserResizePreference === 'function') {
+          (widgetElement as any).setUserResizePreference(newRowSpan * (MIN_ROW_HEIGHT + DEFAULT_GRID_GAP));
         }
-      });
-
-      console.log(`WidgetWrapper: Dispatching span change for ${this.component.widgetId} with pageType ${this.component.pageType}`);
-
-      // Update DOM attributes directly 
-      this.component.style.setProperty('--row-span', newRowSpan.toString());
-      this.component.setAttribute('rowSpan', newRowSpan.toString());
-
-      // Update row span classes
-      this.updateRowSpanClasses(newRowSpan);
-
-      // Then dispatch the event for the grid to handle
-      this.component.dispatchEvent(spanChangeEvent);
-
-      // Save the dimensions if needed
-      if (this.component.saveDimensions) {
-        this.component.settingsManager.saveDimensionsToSettings(this.component.colSpan, newRowSpan);
+        
+        // Also disable auto-size if not already disabled
+        if (this.component.autoSizeEnabled) {
+          console.debug(`Disabling auto-size after manual resize for ${this.component.widgetId}`);
+          this.component.autoSizeEnabled = false;
+        }
+        
+        // Then dispatch the event for the grid to handle
+        this.component.dispatchEvent(spanChangeEvent);
+        
+        // Save the dimensions if needed
+        if (this.component.saveDimensions) {
+          this.component.settingsManager.saveDimensionsToSettings(this.component.colSpan, newRowSpan);
+        }
+      } catch (error) {
+        console.error(`Error dispatching span change event:`, error);
       }
-    } catch (error) {
-      console.error(`Error dispatching span change event:`, error);
+    } else {
+      console.debug(`Cannot increase row span beyond maximum (${maxRowSpan})`);
     }
   }
 
@@ -334,14 +357,14 @@ export class WidgetSizingManager {
       return;
     }
 
-    console.debug(`Widget ${this.component.widgetId} received resize request: ${rowSpan} rows (${reason})`);
-
-    // If user has manually resized and auto-size is disabled, ignore the request
-    if (this.component.isManuallyResized && !this.component.autoSizeEnabled) {
+    // IMPORTANT: If user has manually resized, do NOT auto-resize regardless of autoSizeEnabled setting
+    if (this.component.isManuallyResized) {
       console.debug(`Widget ${this.component.widgetId} ignoring resize request - manually sized by user`);
       event.stopPropagation();
       return;
     }
+
+    console.debug(`Widget ${this.component.widgetId} received resize request: ${rowSpan} rows (${reason})`);
 
     // Get appropriate row span from resize tracker
     const newRowSpan = this.component.resizeTracker.getExpandedRowSpan(rowSpan);

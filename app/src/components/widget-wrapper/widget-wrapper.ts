@@ -43,8 +43,8 @@ export class WidgetWrapper extends FASTElement {
   @attr({ mode: "fromView" }) colSpan: number = DEFAULT_COLUMN_SPAN;
   @attr({ mode: "fromView" }) rowSpan: number = DEFAULT_ROW_SPAN;
   @attr({ mode: "boolean" }) showSizeControls: boolean = true;
-  @attr maxColSpan: number = 12; // MAX_GRID_COLUMNS
-  @attr maxRowSpan: number = 12; // MAX_GRID_ROWS
+  @attr maxColSpan: number = 30; // MAX_GRID_COLUMNS
+  @attr maxRowSpan: number = 24; // Changed from 12 to 24 to allow taller widgets
   @attr minColSpan: number = 1;
   @attr minRowSpan: number = 1;
 

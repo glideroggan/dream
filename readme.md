@@ -1,4 +1,5 @@
 # BUGS
+- why do we have scrollbars when none of the widgets are overflowing?
 - ✔️closing welcome widget closes _all_ widgets
 - looks like there are some mocks in the loan-service file
 - the transaction signing is not so nice, the style of it should improve
