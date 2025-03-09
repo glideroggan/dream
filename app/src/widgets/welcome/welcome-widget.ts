@@ -1,5 +1,6 @@
 import { customElement, html, css, attr, observable } from '@microsoft/fast-element';
 import { BaseWidget, baseWidgetStyles } from '../../components/base-widget';
+import { debugWidgetStructure, fixWidgetStructure } from '../../utils/debug-utils';
 
 const template = html<WelcomeWidget>/*html*/`
   <div class="welcome-widget">
@@ -248,6 +249,30 @@ export class WelcomeWidget extends BaseWidget {
     if (this.hasAttribute('title')) {
       this.removeAttribute('title');
     }
+    
+    // Ensure we're using consistent ID attributes across the DOM
+    this.setAttribute('data-widget-id', 'welcome');
+    
+    // Find our parent widget-wrapper and ensure it has the right ID
+    const parentWrapper = this.closest('widget-wrapper');
+    if (parentWrapper) {
+      parentWrapper.setAttribute('widgetId', 'welcome');
+      parentWrapper.setAttribute('data-widget-id', 'welcome');
+      
+      // Also ensure our grandparent (grid item) has the right ID
+      const gridItem = parentWrapper.parentElement;
+      if (gridItem) {
+        gridItem.setAttribute('data-grid-item-id', 'welcome');
+        gridItem.setAttribute('data-widget-id', 'welcome');
+      }
+    }
+    
+    // DEBUG: After a short delay, check DOM structure
+    setTimeout(() => {
+      debugWidgetStructure('welcome');
+      // Try to fix the widget structure if there are issues
+      fixWidgetStructure('welcome');
+    }, 1000);
     
     // Add event debugging to see what's happening with clicks
     this.addEventListener('click', (e) => {

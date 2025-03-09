@@ -18,7 +18,7 @@ export const template = html<WidgetWrapper>/*html*/`
             `)}
           `)}
           
-          <!-- Fixed span controls with more direct event handling -->
+          <!-- Fixed span controls with more robust event handling -->
           ${when(x => !x.useLegacySizing, html<WidgetWrapper>/*html*/`
             <div class="span-controls">
               <div class="span-control-group">
@@ -27,10 +27,10 @@ export const template = html<WidgetWrapper>/*html*/`
                   class="span-button"
                   type="button"
                   @pointerdown="${(x, c) => { 
-                    console.debug('Width decrease button clicked'); 
+                    console.debug(`Width decrease button clicked for ${x.widgetId}`); 
                     c.event.preventDefault(); 
-                    c.event.stopImmediatePropagation();
-                    x.decreaseColSpan(); 
+                    c.event.stopPropagation();
+                    setTimeout(() => x.decreaseColSpan(), 0); // Use setTimeout to ensure the event is processed
                   }}" 
                   title="Decrease width">-</button>
                 <span class="span-value">${x => x.colSpan}</span>
@@ -38,10 +38,10 @@ export const template = html<WidgetWrapper>/*html*/`
                   class="span-button"
                   type="button"
                   @pointerdown="${(x, c) => { 
-                    console.debug('Width increase button clicked'); 
+                    console.debug(`Width increase button clicked for ${x.widgetId}`); 
                     c.event.preventDefault(); 
-                    c.event.stopImmediatePropagation();
-                    x.increaseColSpan(); 
+                    c.event.stopPropagation();
+                    setTimeout(() => x.increaseColSpan(), 0); // Use setTimeout to ensure the event is processed
                   }}" 
                   title="Increase width">+</button>
               </div>
@@ -51,10 +51,10 @@ export const template = html<WidgetWrapper>/*html*/`
                   class="span-button"
                   type="button"
                   @pointerdown="${(x, c) => { 
-                    console.debug('Height decrease button clicked'); 
+                    console.debug(`Height decrease button clicked for ${x.widgetId}`); 
                     c.event.preventDefault(); 
-                    c.event.stopImmediatePropagation();
-                    x.decreaseRowSpan(); 
+                    c.event.stopPropagation();
+                    setTimeout(() => x.decreaseRowSpan(), 0); // Use setTimeout to ensure the event is processed
                   }}" 
                   title="Decrease height">-</button>
                 <span class="span-value">${x => x.rowSpan}</span>
@@ -62,10 +62,10 @@ export const template = html<WidgetWrapper>/*html*/`
                   class="span-button"
                   type="button"
                   @pointerdown="${(x, c) => { 
-                    console.debug('Height increase button clicked'); 
+                    console.debug(`Height increase button clicked for ${x.widgetId}`); 
                     c.event.preventDefault(); 
-                    c.event.stopImmediatePropagation();
-                    x.increaseRowSpan(); 
+                    c.event.stopPropagation();
+                    setTimeout(() => x.increaseRowSpan(), 0); // Use setTimeout to ensure the event is processed
                   }}" 
                   title="Increase height">+</button>
               </div>

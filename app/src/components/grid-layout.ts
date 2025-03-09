@@ -56,10 +56,17 @@ const styles = css`
     overflow: auto !important;
   }
   
-  /* Add explicit support for full-width widgets */
+  /* Modified rule for full-width widgets - removed !important to allow overrides */
   ::slotted(.widget-full-width) {
-    grid-column: 1 / -1 !important;
+    grid-column: 1 / -1; /* Removed !important to allow span classes to override */
   }
+  
+  /* Ensure .col-span-* classes override the full-width class */
+  ::slotted(.col-span-1) { grid-column: span 1 !important; }
+  ::slotted(.col-span-2) { grid-column: span 2 !important; }
+  ::slotted(.col-span-3) { grid-column: span 3 !important; }
+  ::slotted(.col-span-4) { grid-column: span 4 !important; }
+  /* ...and so on for other span classes... */
   
   /* For auto-height (default) */
   ::slotted(.row-auto) {
@@ -196,43 +203,77 @@ export class GridLayout extends FASTElement {
     // Update the item metadata
     const metadata = this.itemMetadata.get(widgetId);
     if (metadata) {
+      // Log the previous metadata values for debugging
+      console.debug(`GridLayout: Previous metadata for ${widgetId}: colSpan=${metadata.colSpan}, rowSpan=${metadata.rowSpan}`);
+      
       metadata.colSpan = colSpan;
       metadata.rowSpan = rowSpan;
       metadata.userResized = isUserResized;
       
-      // Find the element and update its span classes
-      const element = this.querySelector(`[data-grid-item-id="${widgetId}"]`) as HTMLElement;
+      // Try multiple selectors to find the element - this is more robust
+      const selectors = [
+        `[data-grid-item-id="${widgetId}"]`,
+        `widget-wrapper[widgetId="${widgetId}"]`, // Direct wrapper as grid item
+      ];
+      
+      let element: HTMLElement | null = null;
+      for (const selector of selectors) {
+        const found = this.querySelector(selector) as HTMLElement;
+        if (found) {
+          element = found;
+          console.debug(`GridLayout: Found element for ${widgetId} using selector: ${selector}`);
+          break;
+        }
+      }
+      
       if (element) {
+        console.debug(`GridLayout: Found element for ${widgetId}, applying spans ${colSpan}x${rowSpan}`);
+        
+        // Before change classes
+        console.debug(`GridLayout: Element classes before: ${element.className}`);
+        
         this.setItemSpans(element, colSpan, rowSpan, isUserResized);
         console.debug(`GridLayout: Updated spans for ${widgetId} to ${colSpan}x${rowSpan}`);
+        
+        // After change classes
+        console.debug(`GridLayout: Element classes after: ${element.className}`);
         
         // Immediate layout update
         this.updateLayout();
         
         // Also update the widget-wrapper to ensure consistency
-        const wrapper = element.querySelector('widget-wrapper');
-        if (wrapper) {
-          // Use setAttribute to ensure it's updated
-          wrapper.setAttribute('colSpan', colSpan.toString());
-          wrapper.setAttribute('rowSpan', rowSpan.toString());
+        // Try to find the widget wrapper - either this element or a child
+        let wrapper: Element | null = null;
+        
+        if (element.tagName.toLowerCase() === 'widget-wrapper') {
+          // The element itself is the wrapper
+          wrapper = element;
+        } else {
+          // Look for a widget-wrapper child
+          wrapper = element.querySelector('widget-wrapper');
         }
         
-        // Check for content overflow and add appropriate class
-        setTimeout(() => {
-          const content = element.querySelector('.widget-content');
-          if (content) {
-            const contentHeight = content.scrollHeight;
-            const containerHeight = element.clientHeight - 40; // Account for header
-            
-            if (contentHeight > containerHeight) {
-              element.classList.add('overflow');
-              console.debug(`GridLayout: Content overflow detected for ${widgetId}`);
-            } else {
-              element.classList.remove('overflow');
-            }
-          }
-        }, 50);
+        if (wrapper) {
+          // Use setAttribute to ensure it's updated
+          console.debug(`GridLayout: Updating widget-wrapper attributes to colSpan=${colSpan}, rowSpan=${rowSpan}`);
+          wrapper.setAttribute('colSpan', colSpan.toString());
+          wrapper.setAttribute('rowSpan', rowSpan.toString());
+        } else {
+          console.warn(`GridLayout: Could not find widget-wrapper for ${widgetId}`);
+        }
+      } else {
+        console.warn(`GridLayout: Could not find grid item element with ID ${widgetId}`);
+        // Try debugging what elements we do have
+        const allItems = this.querySelectorAll('[data-grid-item-id]');
+        console.debug(`GridLayout: Found ${allItems.length} grid items with data-grid-item-id:`);
+        allItems.forEach(item => {
+          console.debug(`GridLayout: - ${item.getAttribute('data-grid-item-id')}`);
+        });
       }
+    } else {
+      console.warn(`GridLayout: No metadata found for widget ${widgetId}`);
+      // Log all metadata for debugging
+      console.debug(`GridLayout: Current metadata keys: ${Array.from(this.itemMetadata.keys()).join(', ')}`);
     }
   }
   

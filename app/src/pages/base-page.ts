@@ -316,12 +316,19 @@ export class BasePage extends FASTElement {
           }
         });
         
+        // Critical: Ensure data-grid-item-id is set on the wrapper's parent element
+        wrapperElement.setAttribute('data-widget-id', widgetId);
+        wrapperElement.setAttribute('data-grid-item-id', widgetId);
+
         const widgetContainer = this.shadowRoot?.querySelector('.widgets-container') as HTMLElement;
         widgetContainer.appendChild(wrapperElement);
         
         // Use grid-layout's addItem method with proper spans
         const gridLayout = widgetContainer as any;
         if (gridLayout.addItem && typeof gridLayout.addItem === 'function') {
+          // Log grid layout presence and function
+          console.debug(`Found grid-layout with addItem function for widget ${widgetId}`);
+          
           gridLayout.addItem(wrapperElement, {
             id: widget.id,
             preferredSize: getWidgetPreferredSize(widget.id),
@@ -330,6 +337,11 @@ export class BasePage extends FASTElement {
             minWidth: widgetDef?.minWidth || getWidgetMinWidth(widget.id),
             fullWidth: widgetDef?.fullWidth || shouldWidgetBeFullWidth(widget.id)
           });
+          
+          // Verify data attribute after adding to grid
+          console.debug(`Widget wrapper data-grid-item-id after grid.addItem: ${wrapperElement.getAttribute('data-grid-item-id')}`);
+        } else {
+          console.warn(`Grid layout for ${widgetId} does not have addItem method!`);
         }
         
         this.createWidgetElement(widget, wrapperElement);

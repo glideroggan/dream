@@ -125,6 +125,16 @@ export class WidgetWrapper extends FASTElement {
       this.removeAttribute('title');
     }
     
+    // Ensure data attributes are consistent - this is critical for grid layout to find the wrapper
+    this.setAttribute('data-widget-id', this.widgetId);
+    
+    // If we're inside a grid item, ensure it has consistent data attributes
+    const parentElement = this.parentElement;
+    if (parentElement) {
+      parentElement.setAttribute('data-grid-item-id', this.widgetId);
+      parentElement.setAttribute('data-widget-id', this.widgetId);
+    }
+    
     // Get widget info from registry
     this.updateWidgetDefinition();
     
@@ -575,35 +585,76 @@ export class WidgetWrapper extends FASTElement {
    * Increase column span by 1
    */
   increaseColSpan(): void {
-    if (this.colSpan < this.maxColSpan) {
-      const oldColSpan = this.colSpan;
-      const newColSpan = Math.min(oldColSpan + 1, this.maxColSpan);
+    // Explicitly convert to numbers to avoid string conversion issues
+    const currentColSpan = Number(this.colSpan);
+    const maxColSpan = Number(this.maxColSpan);
+    
+    if (currentColSpan < maxColSpan) {
+      const oldColSpan = currentColSpan;
+      const newColSpan = Math.min(oldColSpan + 1, maxColSpan);
       
       console.debug(`WidgetWrapper: Increasing column span for ${this.widgetId} from ${oldColSpan} to ${newColSpan}`);
       
       // Direct property update first for immediate UI feedback
       this.colSpan = newColSpan;
       
-      // Always dispatch the event even if seemingly redundant - needed for some widget types
-      const spanChangeEvent = new CustomEvent('widget-spans-change', {
-        bubbles: true,
-        composed: true,
-        detail: {
-          widgetId: this.widgetId,
-          oldColSpan: oldColSpan,
-          oldRowSpan: this.rowSpan,
-          colSpan: newColSpan,
-          rowSpan: this.rowSpan,
-          isUserResized: true,
-          source: 'increaseColSpan'
+      try {
+        // Create the event with proper details
+        const spanChangeEvent = new CustomEvent('widget-spans-change', {
+          bubbles: true,
+          composed: true,
+          detail: {
+            widgetId: this.widgetId,
+            oldColSpan: oldColSpan,
+            oldRowSpan: this.rowSpan,
+            colSpan: newColSpan,
+            rowSpan: this.rowSpan,
+            isUserResized: true,
+            source: 'increaseColSpan'
+          }
+        });
+        
+        console.debug(`WidgetWrapper: Dispatching span change for ${this.widgetId}: ${oldColSpan}->${newColSpan}x${this.rowSpan}`);
+        
+        // CRITICAL: First update DOM attributes directly 
+        this.style.setProperty('--col-span', newColSpan.toString());
+        this.setAttribute('colSpan', newColSpan.toString());
+        
+        // Also update our own classes if we're directly in a grid layout
+        const parentElement = this.parentElement;
+        if (parentElement && parentElement.classList.contains('widgets-container')) {
+          // Remove all existing col-span-* classes
+          for (let i = 1; i <= this.maxColSpan; i++) {
+            this.classList.remove(`col-span-${i}`);
+          }
+          // Add the new col-span class
+          this.classList.add(`col-span-${newColSpan}`);
+          console.debug(`WidgetWrapper: Updated own col-span class to col-span-${newColSpan}`);
         }
-      });
-      
-      console.debug(`WidgetWrapper: Dispatching span change for ${this.widgetId}: ${oldColSpan}->${newColSpan}x${this.rowSpan}`);
-      this.dispatchEvent(spanChangeEvent);
-      
-      // Force update the attribute in case binding isn't working
-      this.setAttribute('colSpan', newColSpan.toString());
+        
+        // Then dispatch the event for the grid to handle
+        this.dispatchEvent(spanChangeEvent);
+        
+        // Check if the event was handled
+        setTimeout(() => {
+          console.debug(`WidgetWrapper: After event dispatch - ${this.widgetId} colSpan attribute: ${this.getAttribute('colSpan')}`);
+          
+          // Check parent element
+          if (parentElement) {
+            // Check if we need to check ourselves or parent
+            if (parentElement.classList.contains('widgets-container')) {
+              const selfHasColSpanClass = Array.from(this.classList).some(c => c.startsWith('col-span-'));
+              console.debug(`WidgetWrapper: Direct grid child has col-span class: ${selfHasColSpanClass}, classes: ${this.className}`);
+            } else {
+              // Normal case - check parent
+              const hasColSpanClass = Array.from(parentElement.classList).some(c => c.startsWith('col-span-'));
+              console.debug(`WidgetWrapper: Parent element has col-span class: ${hasColSpanClass}, classes: ${parentElement.className}`);
+            }
+          }
+        }, 50);
+      } catch (error) {
+        console.error(`Error dispatching span change event:`, error);
+      }
     }
   }
   
@@ -611,35 +662,76 @@ export class WidgetWrapper extends FASTElement {
    * Decrease column span by 1
    */
   decreaseColSpan(): void {
-    if (this.colSpan > this.minColSpan) {
-      const oldColSpan = this.colSpan;
-      const newColSpan = Math.max(oldColSpan - 1, this.minColSpan);
+    // Explicitly convert to numbers to avoid string conversion issues
+    const currentColSpan = Number(this.colSpan);
+    const minColSpan = Number(this.minColSpan);
+    
+    if (currentColSpan > minColSpan) {
+      const oldColSpan = currentColSpan;
+      const newColSpan = Math.max(oldColSpan - 1, minColSpan);
       
       console.debug(`WidgetWrapper: Decreasing column span for ${this.widgetId} from ${oldColSpan} to ${newColSpan}`);
       
       // Direct property update for immediate feedback
       this.colSpan = newColSpan;
       
-      // Dispatch the event
-      const spanChangeEvent = new CustomEvent('widget-spans-change', {
-        bubbles: true,
-        composed: true,
-        detail: {
-          widgetId: this.widgetId,
-          oldColSpan: oldColSpan,
-          oldRowSpan: this.rowSpan,
-          colSpan: newColSpan,
-          rowSpan: this.rowSpan,
-          isUserResized: true,
-          source: 'decreaseColSpan'
+      try {
+        // Create the event with proper details
+        const spanChangeEvent = new CustomEvent('widget-spans-change', {
+          bubbles: true,
+          composed: true,
+          detail: {
+            widgetId: this.widgetId,
+            oldColSpan: oldColSpan,
+            oldRowSpan: this.rowSpan,
+            colSpan: newColSpan,
+            rowSpan: this.rowSpan,
+            isUserResized: true,
+            source: 'decreaseColSpan'
+          }
+        });
+        
+        console.debug(`WidgetWrapper: Dispatching span change for ${this.widgetId}: ${oldColSpan}->${newColSpan}x${this.rowSpan}`);
+        
+        // CRITICAL: First update DOM attributes directly
+        this.style.setProperty('--col-span', newColSpan.toString());
+        this.setAttribute('colSpan', newColSpan.toString());
+        
+        // Also update our own classes if we're directly in a grid layout
+        const parentElement = this.parentElement;
+        if (parentElement && parentElement.classList.contains('widgets-container')) {
+          // Remove all existing col-span-* classes
+          for (let i = 1; i <= this.maxColSpan; i++) {
+            this.classList.remove(`col-span-${i}`);
+          }
+          // Add the new col-span class
+          this.classList.add(`col-span-${newColSpan}`);
+          console.debug(`WidgetWrapper: Updated own col-span class to col-span-${newColSpan}`);
         }
-      });
-      
-      console.debug(`WidgetWrapper: Dispatching span change for ${this.widgetId}: ${oldColSpan}->${newColSpan}x${this.rowSpan}`);
-      this.dispatchEvent(spanChangeEvent);
-      
-      // Force update the attribute
-      this.setAttribute('colSpan', newColSpan.toString());
+        
+        // Then dispatch the event for the grid to handle
+        this.dispatchEvent(spanChangeEvent);
+        
+        // Check if the event was handled
+        setTimeout(() => {
+          console.debug(`WidgetWrapper: After event dispatch - ${this.widgetId} colSpan attribute: ${this.getAttribute('colSpan')}`);
+          
+          // Check parent element
+          if (parentElement) {
+            // Check if we need to check ourselves or parent
+            if (parentElement.classList.contains('widgets-container')) {
+              const selfHasColSpanClass = Array.from(this.classList).some(c => c.startsWith('col-span-'));
+              console.debug(`WidgetWrapper: Direct grid child has col-span class: ${selfHasColSpanClass}, classes: ${this.className}`);
+            } else {
+              // Normal case - check parent
+              const hasColSpanClass = Array.from(parentElement.classList).some(c => c.startsWith('col-span-'));
+              console.debug(`WidgetWrapper: Parent element has col-span class: ${hasColSpanClass}, classes: ${parentElement.className}`);
+            }
+          }
+        }, 50);
+      } catch (error) {
+        console.error(`Error dispatching span change event:`, error);
+      }
     }
   }
   
@@ -647,28 +739,75 @@ export class WidgetWrapper extends FASTElement {
    * Increase row span by 1
    */
   increaseRowSpan(): void {
-    if (this.rowSpan < this.maxRowSpan) {
-      console.debug(`WidgetWrapper: Increasing row span for ${this.widgetId} from ${this.rowSpan} to ${this.rowSpan + 1}`);
-      const newRowSpan = Math.min(this.rowSpan + 1, this.maxRowSpan);
+    // Explicitly convert to numbers to avoid string concatenation
+    const currentRowSpan = Number(this.rowSpan);
+    const maxRowSpan = Number(this.maxRowSpan);
+    
+    if (currentRowSpan < maxRowSpan) {
+      const oldRowSpan = currentRowSpan;
+      const newRowSpan = Math.min(oldRowSpan + 1, maxRowSpan); 
+      
+      console.debug(`WidgetWrapper: Increasing row span for ${this.widgetId} from ${oldRowSpan} to ${newRowSpan}`);
       
       // Direct property update first for immediate UI feedback
       this.rowSpan = newRowSpan;
       
       try {
-        // Then dispatch the event for the grid to handle
+        // Create event with complete details matching the column span events
         const spanChangeEvent = new CustomEvent('widget-spans-change', {
           bubbles: true,
           composed: true,
           detail: {
             widgetId: this.widgetId,
+            oldColSpan: this.colSpan,
+            oldRowSpan: oldRowSpan,
             colSpan: this.colSpan,
             rowSpan: newRowSpan,
-            isUserResized: true
+            isUserResized: true,
+            source: 'increaseRowSpan'
           }
         });
         
-        console.debug(`Dispatching row span change event for ${this.widgetId}: ${this.colSpan}x${newRowSpan}`);
+        console.debug(`WidgetWrapper: Dispatching span change for ${this.widgetId}: ${this.colSpan}x${oldRowSpan}->${newRowSpan}`);
+        
+        // Update DOM attributes directly 
+        this.style.setProperty('--row-span', newRowSpan.toString());
+        this.setAttribute('rowSpan', newRowSpan.toString());
+        
+        // The issue: Also ensure our own classes are updated if we're directly in a grid layout
+        // Detect if we're directly in the grid-layout (parent is widgets-container)
+        const parentElement = this.parentElement;
+        if (parentElement && parentElement.classList.contains('widgets-container')) {
+          // We're directly in the grid layout, so we need to update our own classes
+          // Remove all existing row-span-* classes
+          for (let i = 1; i <= this.maxRowSpan; i++) {
+            this.classList.remove(`row-span-${i}`);
+          }
+          // Add the new row-span class
+          this.classList.add(`row-span-${newRowSpan}`);
+          console.debug(`WidgetWrapper: Updated own row-span class to row-span-${newRowSpan}`);
+        }
+        
+        // Then dispatch the event for the grid to handle
         this.dispatchEvent(spanChangeEvent);
+        
+        // Check if the event was handled
+        setTimeout(() => {
+          console.debug(`WidgetWrapper: After event dispatch - ${this.widgetId} rowSpan attribute: ${this.getAttribute('rowSpan')}`);
+          
+          // Check parent element
+          if (parentElement) {
+            // Check if we need to set the class on ourselves when directly in grid
+            if (parentElement.classList.contains('widgets-container')) {
+              const selfHasRowSpanClass = Array.from(this.classList).some(c => c.startsWith('row-span-'));
+              console.debug(`WidgetWrapper: Direct grid child has row-span class: ${selfHasRowSpanClass}, classes: ${this.className}`);
+            } else {
+              // Normal case - check parent
+              const hasRowSpanClass = Array.from(parentElement.classList).some(c => c.startsWith('row-span-'));
+              console.debug(`WidgetWrapper: Parent element has row-span class: ${hasRowSpanClass}, classes: ${parentElement.className}`);
+            }
+          }
+        }, 50);
       } catch (error) {
         console.error(`Error dispatching span change event:`, error);
       }
@@ -679,28 +818,75 @@ export class WidgetWrapper extends FASTElement {
    * Decrease row span by 1
    */
   decreaseRowSpan(): void {
-    if (this.rowSpan > this.minRowSpan) {
-      console.debug(`WidgetWrapper: Decreasing row span for ${this.widgetId} from ${this.rowSpan} to ${this.rowSpan - 1}`);
-      const newRowSpan = Math.max(this.rowSpan - 1, this.minRowSpan);
+    // Explicitly convert to numbers to avoid string conversion issues
+    const currentRowSpan = Number(this.rowSpan);
+    const minRowSpan = Number(this.minRowSpan);
+    
+    if (currentRowSpan > minRowSpan) {
+      const oldRowSpan = currentRowSpan;
+      const newRowSpan = Math.max(oldRowSpan - 1, minRowSpan);
+      
+      console.debug(`WidgetWrapper: Decreasing row span for ${this.widgetId} from ${oldRowSpan} to ${newRowSpan}`);
       
       // Direct property update first for immediate UI feedback
       this.rowSpan = newRowSpan;
       
       try {
-        // Then dispatch the event for the grid to handle
+        // Create event with complete details
         const spanChangeEvent = new CustomEvent('widget-spans-change', {
           bubbles: true,
           composed: true,
           detail: {
             widgetId: this.widgetId,
+            oldColSpan: this.colSpan,
+            oldRowSpan: oldRowSpan,
             colSpan: this.colSpan,
             rowSpan: newRowSpan,
-            isUserResized: true
+            isUserResized: true,
+            source: 'decreaseRowSpan'
           }
         });
         
-        console.debug(`Dispatching row span change event for ${this.widgetId}: ${this.colSpan}x${newRowSpan}`);
+        console.debug(`WidgetWrapper: Dispatching span change for ${this.widgetId}: ${this.colSpan}x${oldRowSpan}->${newRowSpan}`);
+        
+        // Update DOM attributes directly
+        this.style.setProperty('--row-span', newRowSpan.toString());
+        this.setAttribute('rowSpan', newRowSpan.toString());
+        
+        // The issue: Also ensure our own classes are updated if we're directly in a grid layout
+        // Detect if we're directly in the grid-layout (parent is widgets-container)
+        const parentElement = this.parentElement;
+        if (parentElement && parentElement.classList.contains('widgets-container')) {
+          // We're directly in the grid layout, so we need to update our own classes
+          // Remove all existing row-span-* classes
+          for (let i = 1; i <= this.maxRowSpan; i++) {
+            this.classList.remove(`row-span-${i}`);
+          }
+          // Add the new row-span class
+          this.classList.add(`row-span-${newRowSpan}`);
+          console.debug(`WidgetWrapper: Updated own row-span class to row-span-${newRowSpan}`);
+        }
+        
+        // Then dispatch the event for the grid to handle
         this.dispatchEvent(spanChangeEvent);
+        
+        // Check if the event was handled
+        setTimeout(() => {
+          console.debug(`WidgetWrapper: After event dispatch - ${this.widgetId} rowSpan attribute: ${this.getAttribute('rowSpan')}`);
+          
+          // Check parent element
+          if (parentElement) {
+            // Check if we need to set the class on ourselves when directly in grid
+            if (parentElement.classList.contains('widgets-container')) {
+              const selfHasRowSpanClass = Array.from(this.classList).some(c => c.startsWith('row-span-'));
+              console.debug(`WidgetWrapper: Direct grid child has row-span class: ${selfHasRowSpanClass}, classes: ${this.className}`);
+            } else {
+              // Normal case - check parent
+              const hasRowSpanClass = Array.from(parentElement.classList).some(c => c.startsWith('row-span-'));
+              console.debug(`WidgetWrapper: Parent element has row-span class: ${hasRowSpanClass}, classes: ${parentElement.className}`);
+            }
+          }
+        }, 50);
       } catch (error) {
         console.error(`Error dispatching span change event:`, error);
       }

@@ -68,10 +68,10 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     elementName: 'welcome-widget',
     module: '@widgets/welcome',
     defaultConfig: { username: 'Guest' },
-    colSpan: 16, // Full width
+    colSpan: 16, // Start full width but allow resizing
     rowSpan: 8, // Increased rows for fixed-height grid
     minWidth: 800,
-    fullWidth: true,
+    fullWidth: false,  // Changed from true to false to allow resizing
     searchable: true,
     keywords: ['welcome', 'introduction', 'guide', 'getting started', 'help'],
     icon: '👋'
