@@ -59,16 +59,7 @@ export function createWidgetEvents(widgetId: string, pageType: string = '') {
   };
 }
 
-/**
- * Helper to determine if an error is an import/module error
- */
-export function isModuleError(errorMessage: string | undefined): boolean {
-  return !!(errorMessage && (
-    errorMessage.includes('import') ||
-    errorMessage.includes('module') ||
-    errorMessage.includes('not found')
-  ));
-}
+
 
 /**
  * Create bound event handlers to ensure proper 'this' context

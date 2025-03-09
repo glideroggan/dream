@@ -13,22 +13,20 @@ export const template = html<WidgetWrapper>/*html*/`
               <button 
                 class="span-button"
                 type="button"
-                @pointerdown="${(x, c) => { 
+                @click="${(x, c) => { 
                   console.debug(`Width decrease button clicked for ${x.widgetId}`); 
                   c.event.preventDefault(); 
-                  c.event.stopPropagation();
-                  setTimeout(() => x.decreaseColSpan(), 0); // Use setTimeout to ensure the event is processed
+                  x.decreaseColSpan();
                 }}" 
                 title="Decrease width">-</button>
               <span class="span-value">${x => x.colSpan}</span>
               <button 
                 class="span-button"
                 type="button"
-                @pointerdown="${(x, c) => { 
+                @click="${(x, c) => { 
                   console.debug(`Width increase button clicked for ${x.widgetId}`); 
-                  c.event.preventDefault(); 
-                  c.event.stopPropagation();
-                  setTimeout(() => x.increaseColSpan(), 0); // Use setTimeout to ensure the event is processed
+                  c.event.preventDefault();
+                  x.increaseColSpan();
                 }}" 
                 title="Increase width">+</button>
             </div>
@@ -37,32 +35,29 @@ export const template = html<WidgetWrapper>/*html*/`
               <button 
                 class="span-button"
                 type="button"
-                @pointerdown="${(x, c) => { 
+                @click="${(x, c) => { 
                   console.debug(`Height decrease button clicked for ${x.widgetId}`); 
-                  c.event.preventDefault(); 
-                  c.event.stopPropagation();
-                  setTimeout(() => x.decreaseRowSpan(), 0); // Use setTimeout to ensure the event is processed
+                  c.event.preventDefault();
+                  x.decreaseRowSpan();
                 }}" 
                 title="Decrease height">-</button>
               <span class="span-value">${x => x.rowSpan}</span>
               <button 
                 class="span-button"
                 type="button"
-                @pointerdown="${(x, c) => { 
+                @click="${(x, c) => { 
                   console.debug(`Height increase button clicked for ${x.widgetId}`); 
-                  c.event.preventDefault(); 
-                  c.event.stopPropagation();
-                  setTimeout(() => x.increaseRowSpan(), 0); // Use setTimeout to ensure the event is processed
+                  c.event.preventDefault();
+                  x.increaseRowSpan();
                 }}" 
                 title="Increase height">+</button>
             </div>
-            <!-- New auto-size toggle button -->
+            <!-- Auto-size toggle button -->
             <button 
               class="auto-size-toggle ${x => x.autoSizeEnabled ? 'active' : ''}"
               type="button"
               @click="${(x, c) => {
                 c.event.preventDefault();
-                c.event.stopPropagation();
                 x.toggleAutoSize();
               }}"
               title="${x => x.autoSizeEnabled ? 'Disable auto-sizing' : 'Enable auto-sizing'}">

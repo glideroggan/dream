@@ -199,7 +199,7 @@ export class GridLayout extends FASTElement {
     // Listen for widget size change events - improved listeners with explicit callbacks
     this.addEventListener('widget-size-change', this.handleWidgetSizeChange);
     this.addEventListener('widget-spans-change', (e) => {
-      console.debug(`GridLayout: Received widget-spans-change event`, (e as CustomEvent).detail);
+      console.log(`GridLayout: Received widget-spans-change event`, (e as CustomEvent).detail);
       this.handleWidgetSpansChange(e);
     });
     
@@ -226,7 +226,7 @@ export class GridLayout extends FASTElement {
     const customEvent = event as CustomEvent;
     const { widgetId, colSpan, rowSpan, isUserResized, pageType, source, preserveRowSpan } = customEvent.detail;
     
-    console.debug(`GridLayout: Processing spans change for ${widgetId}: ${colSpan}x${rowSpan}, user=${isUserResized}, pageType=${pageType}, source=${source || 'unknown'}, preserveRowSpan=${preserveRowSpan}`);
+    console.log(`GridLayout: Processing spans change for ${widgetId}: ${colSpan}x${rowSpan}, user=${isUserResized}, pageType=${pageType}, source=${source || 'unknown'}, preserveRowSpan=${preserveRowSpan}`);
     
     // Update the item metadata without needing to find the element
     const metadata = this.itemMetadata.get(widgetId);

@@ -168,7 +168,7 @@ export class BasePage extends FASTElement {
   }
 
   protected async loadInitialWidgets(widgetIds: string[]): Promise<void> {
-    console.log(`Loading initial widgets for ${this.pageTitle}:`, widgetIds);
+    console.debug(`Loading initial widgets for ${this.pageTitle}:`, widgetIds);
     try {
       const widgets = await widgetService.loadWidgets(widgetIds);
       console.debug(`Loaded ${widgets.length} widgets:`, widgets);
@@ -212,7 +212,7 @@ export class BasePage extends FASTElement {
     try {
       const autoWidgets = getAutoWidgetsForProduct(productId);
       if (autoWidgets.length === 0) return;
-      console.log(`Adding widgets for product ${productId} to ${this.pageType} page:`,
+      console.debug(`Adding widgets for product ${productId} to ${this.pageType} page:`,
         autoWidgets.map(w => w.id));
       for (const widget of autoWidgets) {
         if (this.activeWidgets.some(w => w.id === widget.id)) {
@@ -396,7 +396,7 @@ export class BasePage extends FASTElement {
   }
 
   protected async addWidgetsToDOM(): Promise<void> {
-    console.log('Adding widgets to DOM...');
+    console.debug('Adding widgets to DOM...');
     const widgetContainer = this.shadowRoot?.querySelector('.widgets-container') as HTMLElement;
     if (!widgetContainer) return;
 
@@ -511,7 +511,7 @@ export class BasePage extends FASTElement {
       console.error('No widget ID provided in focus-widget event');
       return;
     }
-    console.log(`Focusing widget: ${widgetId}, target page: ${detail.targetPage}, current page: ${this.pageType}`);
+    console.debug(`Focusing widget: ${widgetId}, target page: ${detail.targetPage}, current page: ${this.pageType}`);
     if (targetPage && targetPage !== this.pageType) {
       console.debug(`Ignoring widget focus event for ${widgetId} because target page ${targetPage} doesn't match current page ${this.pageType}`);
       return;
@@ -531,7 +531,7 @@ export class BasePage extends FASTElement {
           widgetElement.classList.remove('widget-highlight');
         }, 2000);
       } else {
-        console.log(`Adding widget ${widgetId} to ${this.pageType} page from search/focus`);
+        console.debug(`Adding widget ${widgetId} to ${this.pageType} page from search/focus`);
         await this.loadWidgetById(widgetId);
         await this.saveCurrentWidgetsToSettings();
       }
@@ -677,7 +677,7 @@ export class BasePage extends FASTElement {
       const settingsRepo = repositoryService.getSettingsRepository();
       const pageKey = `${this.pageType}Widgets`;
 
-      console.log(`Saving widget preferences for ${this.pageType}:`, widgetIds);
+      console.debug(`Saving widget preferences for ${this.pageType}:`, widgetIds);
 
       // Fix: Get current settings to access the ID, then use update method
       const userSettings = await settingsRepo.getCurrentSettings();

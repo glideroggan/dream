@@ -4,7 +4,7 @@ import { template } from "./widget-wrapper-template";
 import { styles } from "./widget-wrapper-styles";
 import { createWidgetEvents, createBoundEventHandlers } from "./widget-wrapper-events";
 import { WidgetTimeoutHandler } from "./widget-wrapper-timeout";
-import { WidgetStateManager } from "./widget-wrapper-state";
+import { WidgetStateManager } from "./widget-wrapper-error-handling";
 import { WidgetSizingManager } from "./widget-wrapper-sizing";
 import { WidgetSettingsManager } from "./widget-wrapper-settings";
 import { DEFAULT_COLUMN_SPAN, DEFAULT_ROW_SPAN } from "../../constants/grid-constants";

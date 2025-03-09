@@ -1,19 +1,17 @@
 # BUGS
-- closing welcome widget closes _all_ widgets
+- ✔️closing welcome widget closes _all_ widgets
 - looks like there are some mocks in the loan-service file
 - the transaction signing is not so nice, the style of it should improve
 - need toast error when failing to start a workflow
 - when there is only one choice from the search inputs, enter key should select it
-- ✔️payment contact search doesn't tab through the results
 - favorite checkbox doesn't work on add payment contact
 - need to update net worth after account and transaction changes
-- when you add the swish widget, you can't remove it until you reload, or switch page
+- ✔️when you add the swish widget, you can't remove it until you reload, or switch page
 - all the amounts, should be positive, and instead the type of the transaction should be the one that decides if it is showing as a negative value or not
 - the button in the bottom in financial health widget is unstyled
-- ✔️can't use keyboard in transfer workflow
 
 # FEATURES
-- on thin screens it would be beneficial to collapse the sidebar to the left
+- ✔️on thin screens it would be beneficial to collapse the sidebar to the left
 - common search dropdown component
   Would be nice to just have one component that works
   - search have one
@@ -43,9 +41,9 @@ Would be nice to get a bit more things happening, if we could do like in the lif
         - should show a toast
 
 # TODO
-- ✔️We should take the auto resize width from account-info and put in the base-workflow so that all workflows can use it
 ## account info
 - account info workflow, needs an empty/default state when no account is selected
+  - the empty state should have a smart dropdown
 ## transfer workflow
 - transfers should be able to be scheduled
   - create a repo for scheduled transfers
@@ -57,7 +55,7 @@ Would be nice to get a bit more things happening, if we could do like in the lif
     - shouldn't have a purpose
   - purpose dropdown doesn't show any options
 ## search
-  - pressing esc should remove text from search, and remove the search results
+  - ✔️pressing esc should remove text from search, and remove the search results
 ## financial-health-widget
 - the goals are created on the accounts? they should be separate entities
   - when there is more than 1 recommendation, you can't see it

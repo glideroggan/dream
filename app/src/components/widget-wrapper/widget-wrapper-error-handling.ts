@@ -1,5 +1,4 @@
 import { widgetService } from "../../services/widget-service";
-import { isModuleError } from "./widget-wrapper-events";
 import { WidgetWrapperState } from "./widget-wrapper";
 
 /**
@@ -253,4 +252,15 @@ export class WidgetStateManager {
     console.debug(`Closing widget: ${this.component.widgetId || this.component.displayName || 'Unknown'} - page type: ${this.component.pageType}`);
     this.component.dispatchEvent(this.component.events.closeEvent);
   }
+}
+
+/**
+ * Helper to determine if an error is an import/module error
+ */
+export function isModuleError(errorMessage: string | undefined): boolean {
+  return !!(errorMessage && (
+    errorMessage.includes('import') ||
+    errorMessage.includes('module') ||
+    errorMessage.includes('not found')
+  ));
 }
