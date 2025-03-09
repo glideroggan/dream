@@ -88,6 +88,40 @@ export class SettingsRepository extends LocalStorageRepository<UserSettings> {
   }
 
   /**
+   * Ensure a widget exists in the layout
+   */
+  async ensureWidgetInLayout(pageKey: string, widgetId: string): Promise<void> {
+    const settings = await this.getCurrentSettings();
+    
+    // Initialize widgetLayout if it doesn't exist
+    if (!settings.widgetLayout) {
+      settings.widgetLayout = {};
+    }
+    
+    // Initialize page widgets array if it doesn't exist
+    if (!settings.widgetLayout[pageKey]) {
+      settings.widgetLayout[pageKey] = [];
+    }
+    
+    // Check if widget already exists in layout
+    const widgetExists = settings.widgetLayout[pageKey].some(widget => widget.id === widgetId);
+    
+    // If not, add it with default dimensions
+    if (!widgetExists) {
+      settings.widgetLayout[pageKey].push({
+        id: widgetId,
+        colSpan: 8,  // Default to half-width
+        rowSpan: 2   // Default to 2 rows
+      });
+      
+      // Save updated settings
+      await this.update(settings.id, { widgetLayout: settings.widgetLayout });
+      
+      console.debug(`Added widget ${widgetId} to layout for page ${pageKey} with default dimensions`);
+    }
+  }
+
+  /**
    * Get the grid dimensions for a widget on a specific page
    */
   async getWidgetGridDimensions(

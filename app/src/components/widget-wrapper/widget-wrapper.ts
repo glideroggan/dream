@@ -523,6 +523,7 @@ export class WidgetWrapper extends FASTElement {
       composed: true,
       detail: {
         widgetId: this.widgetId,
+        pageType: this.pageType, // Include pageType in the event details
         oldColSpan,
         oldRowSpan,
         colSpan: newColSpan,
@@ -531,16 +532,17 @@ export class WidgetWrapper extends FASTElement {
       }
     });
     
-    // Save dimensions to settings if user resized and saving is enabled
-    if (isUserResized && this.saveDimensions) {
-      this.saveDimensionsToSettings(newColSpan, newRowSpan);
-    }
+    // We'll let the base-page handle the settings update directly
+    // Remove local save to settings since base-page will handle it
+    // if (isUserResized && this.saveDimensions) {
+    //   this.saveDimensionsToSettings(newColSpan, newRowSpan);
+    // }
     
-    // Dispatch the event immediately (no timeout)
+    // Dispatch the event immediately
     console.debug(`Dispatching span change event for ${this.widgetId}: ${newColSpan}x${newRowSpan}`);
     this.dispatchEvent(spanChangeEvent);
   }
-  
+
   /**
    * Increase column span by 1
    */
@@ -565,6 +567,7 @@ export class WidgetWrapper extends FASTElement {
           composed: true,
           detail: {
             widgetId: this.widgetId,
+            pageType: this.pageType, // Ensure pageType is always included
             oldColSpan: oldColSpan,
             oldRowSpan: this.rowSpan,
             colSpan: newColSpan,
@@ -574,7 +577,7 @@ export class WidgetWrapper extends FASTElement {
           }
         });
         
-        console.debug(`WidgetWrapper: Dispatching span change for ${this.widgetId}: ${oldColSpan}->${newColSpan}x${this.rowSpan}`);
+        console.debug(`WidgetWrapper: Dispatching span change for ${this.widgetId} with pageType ${this.pageType}`);
         
         // CRITICAL: First update DOM attributes directly 
         this.style.setProperty('--col-span', newColSpan.toString());
@@ -642,6 +645,7 @@ export class WidgetWrapper extends FASTElement {
           composed: true,
           detail: {
             widgetId: this.widgetId,
+            pageType: this.pageType, // Ensure pageType is always included
             oldColSpan: oldColSpan,
             oldRowSpan: this.rowSpan,
             colSpan: newColSpan,
@@ -651,7 +655,7 @@ export class WidgetWrapper extends FASTElement {
           }
         });
         
-        console.debug(`WidgetWrapper: Dispatching span change for ${this.widgetId}: ${oldColSpan}->${newColSpan}x${this.rowSpan}`);
+        console.debug(`WidgetWrapper: Dispatching span change for ${this.widgetId} with pageType ${this.pageType}`);
         
         // CRITICAL: First update DOM attributes directly
         this.style.setProperty('--col-span', newColSpan.toString());
@@ -719,6 +723,7 @@ export class WidgetWrapper extends FASTElement {
           composed: true,
           detail: {
             widgetId: this.widgetId,
+            pageType: this.pageType, // Ensure pageType is always included
             oldColSpan: this.colSpan,
             oldRowSpan: oldRowSpan,
             colSpan: this.colSpan,
@@ -728,7 +733,7 @@ export class WidgetWrapper extends FASTElement {
           }
         });
         
-        console.debug(`WidgetWrapper: Dispatching span change for ${this.widgetId}: ${this.colSpan}x${oldRowSpan}->${newRowSpan}`);
+        console.debug(`WidgetWrapper: Dispatching span change for ${this.widgetId} with pageType ${this.pageType}`);
         
         // Update DOM attributes directly 
         this.style.setProperty('--row-span', newRowSpan.toString());
@@ -798,6 +803,7 @@ export class WidgetWrapper extends FASTElement {
           composed: true,
           detail: {
             widgetId: this.widgetId,
+            pageType: this.pageType, // Ensure pageType is always included
             oldColSpan: this.colSpan,
             oldRowSpan: oldRowSpan,
             colSpan: this.colSpan,
@@ -807,7 +813,7 @@ export class WidgetWrapper extends FASTElement {
           }
         });
         
-        console.debug(`WidgetWrapper: Dispatching span change for ${this.widgetId}: ${this.colSpan}x${oldRowSpan}->${newRowSpan}`);
+        console.debug(`WidgetWrapper: Dispatching span change for ${this.widgetId} with pageType ${this.pageType}`);
         
         // Update DOM attributes directly
         this.style.setProperty('--row-span', newRowSpan.toString());

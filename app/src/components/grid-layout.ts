@@ -101,7 +101,9 @@ const styles = css`
 
 // Legacy size mapping to new column spans
 // for backward compatibility
-const sizeToSpanMap = {
+export type GridItemSize = 'sm' | 'md' | 'lg' | 'xl';
+
+const sizeToSpanMap: Record<GridItemSize, number> = {
   'sm': 4,
   'md': 8,
   'lg': 12,
@@ -114,13 +116,10 @@ export interface GridItemMetadata {
   minWidth?: number;
   colSpan?: number;
   rowSpan?: number;
-  preferredSize?: GridItemSize; // For backward compatibility
   fullWidth?: boolean;
   userResized?: boolean; // Whether the widget was manually resized by the user
 }
 
-// For backward compatibility
-export type GridItemSize = 'sm' | 'md' | 'lg' | 'xl';
 
 @customElement({
   name: "grid-layout",
@@ -193,87 +192,63 @@ export class GridLayout extends FASTElement {
    */
   private handleWidgetSpansChange = (event: Event): void => {
     const customEvent = event as CustomEvent;
-    const { widgetId, colSpan, rowSpan, isUserResized, source } = customEvent.detail;
+    const { widgetId, colSpan, rowSpan, isUserResized, pageType, source } = customEvent.detail;
     
-    console.debug(`GridLayout: Processing spans change for ${widgetId}: ${colSpan}x${rowSpan}, user=${isUserResized}, source=${source || 'unknown'}`);
+    console.debug(`GridLayout: Processing spans change for ${widgetId}: ${colSpan}x${rowSpan}, user=${isUserResized}, pageType=${pageType}, source=${source || 'unknown'}`);
     
-    // Ensure event doesn't propagate further
-    event.stopPropagation();
+    // Don't stop propagation - allow the event to bubble up to BasePage
     
-    // Update the item metadata
+    // Update the item metadata without needing to find the element
     const metadata = this.itemMetadata.get(widgetId);
     if (metadata) {
-      // Log the previous metadata values for debugging
-      console.debug(`GridLayout: Previous metadata for ${widgetId}: colSpan=${metadata.colSpan}, rowSpan=${metadata.rowSpan}`);
+      console.log(`GridLayout: Updating metadata for ${widgetId} from ${metadata.colSpan}x${metadata.rowSpan} to ${colSpan}x${rowSpan}`);
       
+      // Update metadata with new values
       metadata.colSpan = colSpan;
       metadata.rowSpan = rowSpan;
       metadata.userResized = isUserResized;
       
-      // Try multiple selectors to find the element - this is more robust
-      const selectors = [
-        `[data-grid-item-id="${widgetId}"]`,
-        `widget-wrapper[widgetId="${widgetId}"]`, // Direct wrapper as grid item
-      ];
-      
-      let element: HTMLElement | null = null;
-      for (const selector of selectors) {
-        const found = this.querySelector(selector) as HTMLElement;
-        if (found) {
-          element = found;
-          console.debug(`GridLayout: Found element for ${widgetId} using selector: ${selector}`);
-          break;
-        }
+      // Find element directly by ID - this is more reliable
+      const element = this.querySelector(`[data-grid-item-id="${widgetId}"]`);
+      if (element && element instanceof HTMLElement) {
+        console.log(`GridLayout: Found element for ${widgetId}, updating spans`);
+        this.setItemSpans(element, colSpan, rowSpan, isUserResized);
       }
       
-      if (element) {
-        console.debug(`GridLayout: Found element for ${widgetId}, applying spans ${colSpan}x${rowSpan}`);
+      // Update layout regardless of whether we found the element
+      this.updateLayout();
+      
+      // Save to settings repository if this was a user-initiated change
+      console.log(`are we saving? ${isUserResized} ${pageType} ${widgetId}`);
+      if (isUserResized && pageType && widgetId) {
+        console.debug(`GridLayout: Saving ${widgetId} on ${pageType}: ${colSpan}x${rowSpan}`);
+        this.saveSpansToSettings(pageType, widgetId, colSpan, rowSpan);
+      } else if (isUserResized && !pageType) {
+        console.warn(`GridLayout: Can't save ${widgetId} because pageType is missing!`);
         
-        // Before change classes
-        console.debug(`GridLayout: Element classes before: ${element.className}`);
-        
-        this.setItemSpans(element, colSpan, rowSpan, isUserResized);
-        console.debug(`GridLayout: Updated spans for ${widgetId} to ${colSpan}x${rowSpan}`);
-        
-        // After change classes
-        console.debug(`GridLayout: Element classes after: ${element.className}`);
-        
-        // Immediate layout update
-        this.updateLayout();
-        
-        // Also update the widget-wrapper to ensure consistency
-        // Try to find the widget wrapper - either this element or a child
-        let wrapper: Element | null = null;
-        
-        if (element.tagName.toLowerCase() === 'widget-wrapper') {
-          // The element itself is the wrapper
-          wrapper = element;
-        } else {
-          // Look for a widget-wrapper child
-          wrapper = element.querySelector('widget-wrapper');
+        // Try to get pageType from nearest parent with data-page attribute
+        const gridElement = this.closest('[data-page]');
+        const fallbackPageType = gridElement?.getAttribute('data-page');
+        if (fallbackPageType) {
+          console.debug(`GridLayout: Using fallback pageType "${fallbackPageType}" for ${widgetId}`);
+          this.saveSpansToSettings(fallbackPageType, widgetId, colSpan, rowSpan);
         }
-        
-        if (wrapper) {
-          // Use setAttribute to ensure it's updated
-          console.debug(`GridLayout: Updating widget-wrapper attributes to colSpan=${colSpan}, rowSpan=${rowSpan}`);
-          wrapper.setAttribute('colSpan', colSpan.toString());
-          wrapper.setAttribute('rowSpan', rowSpan.toString());
-        } else {
-          console.warn(`GridLayout: Could not find widget-wrapper for ${widgetId}`);
-        }
-      } else {
-        console.warn(`GridLayout: Could not find grid item element with ID ${widgetId}`);
-        // Try debugging what elements we do have
-        const allItems = this.querySelectorAll('[data-grid-item-id]');
-        console.debug(`GridLayout: Found ${allItems.length} grid items with data-grid-item-id:`);
-        allItems.forEach(item => {
-          console.debug(`GridLayout: - ${item.getAttribute('data-grid-item-id')}`);
-        });
       }
     } else {
       console.warn(`GridLayout: No metadata found for widget ${widgetId}`);
-      // Log all metadata for debugging
-      console.debug(`GridLayout: Current metadata keys: ${Array.from(this.itemMetadata.keys()).join(', ')}`);
+    }
+  }
+  
+  /**
+   * Save widget spans to settings repository
+   */
+  private saveSpansToSettings(pageType: string, widgetId: string, colSpan: number, rowSpan: number): void {
+    try {
+      console.debug(`GridLayout: Saving dimensions for ${widgetId} on ${pageType}: ${colSpan}x${rowSpan}`);
+      this.settingsRepository.updateWidgetGridDimensions(pageType, widgetId, colSpan, rowSpan)
+        .catch(err => console.error('Error saving widget dimensions:', err));
+    } catch (error) {
+      console.error('Error saving widget dimensions:', error);
     }
   }
   
@@ -493,7 +468,13 @@ export class GridLayout extends FASTElement {
   /**
    * Set an item's column and row span classes
    */
-  private setItemSpans(item: HTMLElement, colSpan: number, rowSpan: number, isUserResized: boolean = false): void {
+  private setItemSpans(item: HTMLElement | null, colSpan: number, rowSpan: number, isUserResized: boolean = false): void {
+    // If no element was found, just update layout
+    if (!item) {
+      console.warn(`GridLayout: Element not found for spans ${colSpan}x${rowSpan}`);
+      return;
+    }
+
     // Enforce minimum and maximum spans
     colSpan = Math.max(1, Math.min(colSpan, this.totalColumns));
     rowSpan = Math.max(1, Math.min(rowSpan, this.totalRows));
