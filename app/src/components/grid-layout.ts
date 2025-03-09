@@ -2,6 +2,13 @@ import { FASTElement, customElement, html, css, attr, observable } from "@micros
 import { repositoryService } from "../services/repository-service";
 import { SettingsRepository } from "../repositories/settings-repository";
 import { getWidgetColumnSpan, getWidgetRowSpan } from "../widgets/widget-registry";
+import { 
+  MAX_GRID_COLUMNS, 
+  MAX_GRID_ROWS, 
+  MIN_COLUMN_WIDTH, 
+  MIN_ROW_HEIGHT, 
+  DEFAULT_GRID_GAP 
+} from "../constants/grid-constants";
 
 /**
  * A responsive grid layout component that arranges items in a grid
@@ -12,6 +19,33 @@ const template = html<GridLayout>/*html*/`
     <slot></slot>
   </div>
 `;
+
+// Generate dynamic CSS for column and row spans based on constants
+const generateSpanStyles = () => {
+  let styles = '';
+  
+  // Generate column-span classes
+  for (let i = 1; i <= MAX_GRID_COLUMNS; i++) {
+    styles += `
+    ::slotted(.col-span-${i}) {
+      grid-column: span ${i};
+    }
+    `;
+  }
+  
+  // Generate row-span classes
+  for (let i = 1; i <= MAX_GRID_ROWS; i++) {
+    styles += `
+    ::slotted(.row-span-${i}) {
+      grid-row: span ${i};
+      height: calc(${i} * var(--row-height, 30px) + (${i - 1}) * var(--grid-gap, 8px));
+      overflow: auto;
+    }
+    `;
+  }
+  
+  return styles;
+};
 
 const styles = css`
   :host {
@@ -30,21 +64,8 @@ const styles = css`
     grid-auto-rows: var(--row-height, 30px);
   }
   
-  /* Generate column-span classes */
-  ${Array.from({length: 16}, (_, i) => i + 1).map(i => `
-  ::slotted(.col-span-${i}) {
-    grid-column: span ${i};
-  }
-  `).join('\n')}
-  
-  /* Generate row-span classes with better overflow handling */
-  ${Array.from({length: 16}, (_, i) => i + 1).map(i => `
-  ::slotted(.row-span-${i}) {
-    grid-row: span ${i};
-    height: calc(${i} * var(--row-height, 30px) + (${i - 1}) * var(--grid-gap, 8px));
-    overflow: auto; /* Add scrollbars when content exceeds fixed height */
-  }
-  `).join('\n')}
+  /* Dynamically generate span classes */
+  ${generateSpanStyles()}
   
   /* When row is set explicitly by user, give it a minimum height but no maximum */
   ::slotted(.row-span-${i => i}.row-constrained) {
@@ -66,7 +87,6 @@ const styles = css`
   ::slotted(.col-span-2) { grid-column: span 2 !important; }
   ::slotted(.col-span-3) { grid-column: span 3 !important; }
   ::slotted(.col-span-4) { grid-column: span 4 !important; }
-  /* ...and so on for other span classes... */
   
   /* For auto-height (default) */
   ::slotted(.row-auto) {
@@ -127,12 +147,12 @@ export interface GridItemMetadata {
   styles
 })
 export class GridLayout extends FASTElement {
-  @attr({ attribute: "min-column-width" }) minColumnWidth = 40;
-  @attr({ attribute: "min-row-height" }) minRowHeight = 30;     // Make rows smaller than columns for landscape screens
-  @attr({ attribute: "grid-gap" }) gridGap = 8;
+  @attr({ attribute: "min-column-width" }) minColumnWidth = MIN_COLUMN_WIDTH;
+  @attr({ attribute: "min-row-height" }) minRowHeight = MIN_ROW_HEIGHT;
+  @attr({ attribute: "grid-gap" }) gridGap = DEFAULT_GRID_GAP;
   @attr({ attribute: "data-page" }) dataPage = '';
-  @attr({ attribute: "columns" }) totalColumns = 16;
-  @attr({ attribute: "rows" }) totalRows = 16; // Increased from 8 to 16 to match maxRowSpan
+  @attr({ attribute: "columns" }) totalColumns = MAX_GRID_COLUMNS;
+  @attr({ attribute: "rows" }) totalRows = MAX_GRID_ROWS;
   @observable gridStyle = '';
 
   private settingsRepository: SettingsRepository;
@@ -201,7 +221,7 @@ export class GridLayout extends FASTElement {
     // Update the item metadata without needing to find the element
     const metadata = this.itemMetadata.get(widgetId);
     if (metadata) {
-      console.log(`GridLayout: Updating metadata for ${widgetId} from ${metadata.colSpan}x${metadata.rowSpan} to ${colSpan}x${rowSpan}`);
+      console.debug(`GridLayout: Updating metadata for ${widgetId} from ${metadata.colSpan}x${metadata.rowSpan} to ${colSpan}x${rowSpan}`);
       
       // Update metadata with new values
       metadata.colSpan = colSpan;
@@ -211,7 +231,7 @@ export class GridLayout extends FASTElement {
       // Find element directly by ID - this is more reliable
       const element = this.querySelector(`[data-grid-item-id="${widgetId}"]`);
       if (element && element instanceof HTMLElement) {
-        console.log(`GridLayout: Found element for ${widgetId}, updating spans`);
+        console.debug(`GridLayout: Found element for ${widgetId}, updating spans`);
         this.setItemSpans(element, colSpan, rowSpan, isUserResized);
       }
       
@@ -219,7 +239,7 @@ export class GridLayout extends FASTElement {
       this.updateLayout();
       
       // Save to settings repository if this was a user-initiated change
-      console.log(`are we saving? ${isUserResized} ${pageType} ${widgetId}`);
+      console.debug(`are we saving? ${isUserResized} ${pageType} ${widgetId}`);
       if (isUserResized && pageType && widgetId) {
         console.debug(`GridLayout: Saving ${widgetId} on ${pageType}: ${colSpan}x${rowSpan}`);
         this.saveSpansToSettings(pageType, widgetId, colSpan, rowSpan);
@@ -484,11 +504,11 @@ export class GridLayout extends FASTElement {
     console.debug(`GridLayout: Setting spans for ${id}: ${colSpan}x${rowSpan}`);
     
     // Remove existing span classes
-    for (let i = 1; i <= this.totalColumns; i++) {
+    for (let i = 1; i <= MAX_GRID_COLUMNS; i++) {
       item.classList.remove(`col-span-${i}`);
     }
     
-    for (let i = 1; i <= this.totalRows; i++) {
+    for (let i = 1; i <= MAX_GRID_ROWS; i++) {
       item.classList.remove(`row-span-${i}`);
     }
     

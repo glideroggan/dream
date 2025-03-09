@@ -389,7 +389,7 @@ export class AccountWidget extends BaseWidget {
       const accountRepo = repositoryService.getAccountRepository();
       this.unsubscribe = accountRepo.subscribe((event) => {
         // Update accounts when repository changes
-        console.log('Account repository event:', event.type, event.entity || event.entityId);
+        console.debug('Account repository event:', event.type, event.entity || event.entityId);
         this.loadAccounts();
       });
       

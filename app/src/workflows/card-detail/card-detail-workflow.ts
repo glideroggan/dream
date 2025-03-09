@@ -21,7 +21,7 @@ export class CardDetailWorkflow extends WorkflowBase {
   hideActions: boolean = false;
 
   async initialize(params?: Record<string, any>): Promise<void> {
-    console.log('Initializing Card-detail-workflow with params:', params);
+    console.debug('Initializing Card-detail-workflow with params:', params);
     this.setModalWidth('800px');
     this.updateTitle('Card Details');
     

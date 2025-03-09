@@ -12,6 +12,8 @@ export class RepositoryService {
   private transactionRepo: TransactionRepository;
   private settingsRepo: SettingsRepository;
   private productRepo: ProductRepository;
+  private cardRepo: CardRepository;
+  private loanRepo: LoanRepository
   
   private constructor(private storage: StorageService, private userService: UserService) {
     // Initialize repositories
@@ -19,6 +21,8 @@ export class RepositoryService {
     this.accountRepo = new AccountRepository(storage, userService, this.transactionRepo);
     this.settingsRepo = new SettingsRepository(storage, userService);
     this.productRepo = new ProductRepository(storage, userService);
+    this.cardRepo = new CardRepository(storage, userService);
+    this.loanRepo = new LoanRepository(storage, userService);
   }
   
   public static getInstance(storage: StorageService, userService: UserService): RepositoryService {
@@ -26,6 +30,14 @@ export class RepositoryService {
       RepositoryService.instance = new RepositoryService(storage, userService);
     }
     return RepositoryService.instance;
+  }
+
+  getLoanRepository(): LoanRepository {
+    return this.loanRepo;
+  }
+
+  getCardRepository(): CardRepository {
+    return this.cardRepo;
   }
   
   getAccountRepository(): AccountRepository {
@@ -48,5 +60,7 @@ export class RepositoryService {
 // Create and export singleton instance
 import { storageService } from './storage-service';
 import { userService } from './user-service';
+import { CardRepository } from '../repositories/card-repository';
+import { LoanRepository } from '../repositories/loan-repository';
 
 export const repositoryService = RepositoryService.getInstance(storageService, userService);

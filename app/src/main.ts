@@ -73,7 +73,7 @@ window.addMoney = async (amount: number) => {
     // Save the updated account
     await accountRepo.update(targetAccount.id, updatedAccount);
     
-    console.log(`Added $${amount} to account ${targetAccount.name}. New balance: $${updatedAccount.balance}`);
+    console.debug(`Added $${amount} to account ${targetAccount.name}. New balance: $${updatedAccount.balance}`);
     return true;
   } catch (error) {
     console.error("Failed to add money:", error);

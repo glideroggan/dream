@@ -1,76 +1,62 @@
-import { html, repeat, when } from "@microsoft/fast-element";
+import { html, when } from "@microsoft/fast-element";
 import { WidgetWrapper } from "./widget-wrapper";
-import { GridItemSize } from "../grid-layout";
 
 export const template = html<WidgetWrapper>/*html*/`
   <div class="widget-container" state="${x => x.state}">
     <div class="widget-header">
       ${when(x => x.showSizeControls, html<WidgetWrapper>/*html*/`
         <div class="widget-size-controls">
-          <!-- Legacy size controls for backward compatibility -->
-          ${when(x => x.useLegacySizing, html<WidgetWrapper>/*html*/`
-            ${repeat(x => x.availableSizes, html<GridItemSize, WidgetWrapper>/*html*/`
+          <!-- Span controls for width and height adjustment -->
+          <div class="span-controls">
+            <div class="span-control-group">
+              <span class="span-label">W:</span>
               <button 
-                class="${(x, c) => c.parent.getSizeButtonClass(x)}" 
-                @click="${(x, c) => c.parent.handleSizeButtonClick(c.event, x)}" 
-                title="Change widget to ${x => x} size"
-              >${(x, c) => c.parent.getSizeButtonText(x)}</button>
-            `)}
-          `)}
-          
-          <!-- Fixed span controls with more robust event handling -->
-          ${when(x => !x.useLegacySizing, html<WidgetWrapper>/*html*/`
-            <div class="span-controls">
-              <div class="span-control-group">
-                <span class="span-label">W:</span>
-                <button 
-                  class="span-button"
-                  type="button"
-                  @pointerdown="${(x, c) => { 
-                    console.debug(`Width decrease button clicked for ${x.widgetId}`); 
-                    c.event.preventDefault(); 
-                    c.event.stopPropagation();
-                    setTimeout(() => x.decreaseColSpan(), 0); // Use setTimeout to ensure the event is processed
-                  }}" 
-                  title="Decrease width">-</button>
-                <span class="span-value">${x => x.colSpan}</span>
-                <button 
-                  class="span-button"
-                  type="button"
-                  @pointerdown="${(x, c) => { 
-                    console.debug(`Width increase button clicked for ${x.widgetId}`); 
-                    c.event.preventDefault(); 
-                    c.event.stopPropagation();
-                    setTimeout(() => x.increaseColSpan(), 0); // Use setTimeout to ensure the event is processed
-                  }}" 
-                  title="Increase width">+</button>
-              </div>
-              <div class="span-control-group">
-                <span class="span-label">H:</span>
-                <button 
-                  class="span-button"
-                  type="button"
-                  @pointerdown="${(x, c) => { 
-                    console.debug(`Height decrease button clicked for ${x.widgetId}`); 
-                    c.event.preventDefault(); 
-                    c.event.stopPropagation();
-                    setTimeout(() => x.decreaseRowSpan(), 0); // Use setTimeout to ensure the event is processed
-                  }}" 
-                  title="Decrease height">-</button>
-                <span class="span-value">${x => x.rowSpan}</span>
-                <button 
-                  class="span-button"
-                  type="button"
-                  @pointerdown="${(x, c) => { 
-                    console.debug(`Height increase button clicked for ${x.widgetId}`); 
-                    c.event.preventDefault(); 
-                    c.event.stopPropagation();
-                    setTimeout(() => x.increaseRowSpan(), 0); // Use setTimeout to ensure the event is processed
-                  }}" 
-                  title="Increase height">+</button>
-              </div>
+                class="span-button"
+                type="button"
+                @pointerdown="${(x, c) => { 
+                  console.debug(`Width decrease button clicked for ${x.widgetId}`); 
+                  c.event.preventDefault(); 
+                  c.event.stopPropagation();
+                  setTimeout(() => x.decreaseColSpan(), 0); // Use setTimeout to ensure the event is processed
+                }}" 
+                title="Decrease width">-</button>
+              <span class="span-value">${x => x.colSpan}</span>
+              <button 
+                class="span-button"
+                type="button"
+                @pointerdown="${(x, c) => { 
+                  console.debug(`Width increase button clicked for ${x.widgetId}`); 
+                  c.event.preventDefault(); 
+                  c.event.stopPropagation();
+                  setTimeout(() => x.increaseColSpan(), 0); // Use setTimeout to ensure the event is processed
+                }}" 
+                title="Increase width">+</button>
             </div>
-          `)}
+            <div class="span-control-group">
+              <span class="span-label">H:</span>
+              <button 
+                class="span-button"
+                type="button"
+                @pointerdown="${(x, c) => { 
+                  console.debug(`Height decrease button clicked for ${x.widgetId}`); 
+                  c.event.preventDefault(); 
+                  c.event.stopPropagation();
+                  setTimeout(() => x.decreaseRowSpan(), 0); // Use setTimeout to ensure the event is processed
+                }}" 
+                title="Decrease height">-</button>
+              <span class="span-value">${x => x.rowSpan}</span>
+              <button 
+                class="span-button"
+                type="button"
+                @pointerdown="${(x, c) => { 
+                  console.debug(`Height increase button clicked for ${x.widgetId}`); 
+                  c.event.preventDefault(); 
+                  c.event.stopPropagation();
+                  setTimeout(() => x.increaseRowSpan(), 0); // Use setTimeout to ensure the event is processed
+                }}" 
+                title="Increase height">+</button>
+            </div>
+          </div>
         </div>
       `)}
       

@@ -493,7 +493,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
   }
 
   async initialize(params?: Record<string, any>): Promise<void> {
-    console.log('Initializing create account workflow with params:', params)
+    console.debug('Initializing create account workflow with params:', params)
     // Set initial title and footer
     this.setModalWidth('500px')
     this.updateTitle('Create New Account')
@@ -700,7 +700,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
   handleNameChange(event: Event) {
     const input = event.target as HTMLInputElement
     this.accountName = input.value
-    console.log('Account name:', this.accountName)
+    console.debug('Account name:', this.accountName)
     this.validateForm()
   }
 
@@ -723,7 +723,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
 
     // Check if account name is provided
     if (!this.accountName || this.accountName.trim().length < 3) {
-      console.log('Account name is invalid:', this.accountName)
+      console.debug('Account name is invalid:', this.accountName)
       this.errorMessage = 'Please enter an account name (minimum 3 characters)'
       this.notifyValidation(false, this.errorMessage)
       this.markInvalid('accountName')

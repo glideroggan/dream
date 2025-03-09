@@ -434,7 +434,7 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
    */
   private loadWorkflowElement(workflowElement: HTMLElement, params: Record<string, any> | undefined): boolean {
     try {
-      console.log('[modal] Loading workflow element:', workflowElement);
+      console.debug('[modal] Loading workflow element:', workflowElement);
 
       // Clear any existing workflow
       this.clearWorkflow(this.activeWorkflow !== null);

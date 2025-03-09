@@ -1,4 +1,25 @@
 import { css } from "@microsoft/fast-element";
+import { MAX_GRID_COLUMNS, MAX_GRID_ROWS } from "../../constants/grid-constants";
+
+// Generate dynamic CSS for row and column span classes
+const generateSpanSelectorStyles = () => {
+  let styles = '';
+  
+  // Generate styles for all possible spans
+  for (let i = 1; i <= Math.max(MAX_GRID_COLUMNS, MAX_GRID_ROWS); i++) {
+    // Add rules for both column and row spans
+    styles += `
+    :host(.col-span-${i}) {
+      grid-column: span ${i};
+    }
+    :host(.row-span-${i}) {
+      grid-row: span ${i};
+    }
+    `;
+  }
+  
+  return styles;
+};
 
 export const styles = css`
   :host {
@@ -55,6 +76,9 @@ export const styles = css`
     --widget-header-padding: 0.3rem 0.75rem;
     --widget-content-padding: 1rem;
   }
+
+  /* Generate dynamic span selectors for host element */
+  ${generateSpanSelectorStyles()}
   
   /* Only allow tooltips on interactive elements */
   :host .widget-wrapper:not(button):not([role="button"]):not(a)[title] {

@@ -41,7 +41,7 @@ export class CardService {
         try {
             // Using the product repository to get card type products
             const products = await productService.getProductsByEntityType(ProductEntityType.CARD);
-            console.log("Fetched card products:", products);
+            console.debug("Fetched card products:", products);
             
             // Map products to CardProduct interface
             return products.map(product => ({
@@ -134,7 +134,7 @@ export class CardService {
      * Request a new card
      */
     async requestCard(requestData: CardRequestData): Promise<CardServiceResult> {
-        console.log("Requesting card with data:", requestData);
+        console.debug("Requesting card with data:", requestData);
         try {
             console.debug("Processing card request:", requestData);
             
@@ -150,7 +150,7 @@ export class CardService {
             // For debit cards, verify the linked account exists
             if (requestData.cardType === 'debit' && requestData.linkedAccountId) {
                 const account = await this.accountRepo.getById(requestData.linkedAccountId);
-                console.log("Account back from accountRepo:", account);
+                console.debug("Account back from accountRepo:", account);
                 
                 if (!account) {
                     return {

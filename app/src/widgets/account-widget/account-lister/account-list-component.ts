@@ -416,7 +416,7 @@ export class AccountListComponent extends FASTElement {
     // Stop event propagation to prevent triggering the account click
     event.stopPropagation();
 
-    console.log('Card clicked for account:', account.id);
+    console.debug('Card clicked for account:', account.id);
     // get the associated card
     const cards = await cardService.getCardsByAccountId(account.id);
     if (cards.length === 0) {

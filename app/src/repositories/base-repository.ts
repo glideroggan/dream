@@ -46,7 +46,7 @@ export abstract class LocalStorageRepository<T extends Entity> implements Reposi
     }
     // create a unique id for the this repo and print it
     const id = generateUniqueId()
-    console.log('created repo with id:', storageKey, id)
+    console.debug('created repo with id:', storageKey, id)
   }
 
   /**
@@ -75,7 +75,7 @@ export abstract class LocalStorageRepository<T extends Entity> implements Reposi
 
   async create(data: Omit<T, 'id'>): Promise<T> {
     const entity = await this._create(data);
-    console.log('[base-repository] create', entity);
+    console.debug('[base-repository] create', entity);
     this.notifySubscribers({ type: 'create', entity });
     return entity;
   }
@@ -159,7 +159,7 @@ export abstract class LocalStorageRepository<T extends Entity> implements Reposi
   
   async getById(id: string): Promise<T | undefined> {
     // log content of entntities
-    console.log('entities:', this.entities)
+    console.debug('entities:', this.entities)
     return this.entities.get(id);
   }
   

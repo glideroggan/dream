@@ -107,7 +107,7 @@ export class SearchComponent extends FASTElement {
 
   handleInput(event: Event) {
     const inputEvent = event as KeyboardEvent;
-    console.log('Input event:', inputEvent.key);
+    console.debug('Input event:', inputEvent.key);
     if (inputEvent.key === 'Escape') {
       this.showSuggestions = false;
       this.clearSearch();

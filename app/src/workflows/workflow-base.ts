@@ -32,7 +32,7 @@ export abstract class WorkflowBase extends FASTElement {
     const shadowRoot = this.shadowRoot!
     this.focus()
     // this.addEventListener('keydown', (e) => {
-    //   console.log('[workflow-base] keydown event', e)
+    //   console.debug('[workflow-base] keydown event', e)
     // })
     // Add resize listener to adjust modal size when screen changes
     this.resizeHandler = () => this.updateModalWidth();

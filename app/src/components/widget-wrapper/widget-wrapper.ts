@@ -6,6 +6,7 @@ import { styles } from "./widget-wrapper-styles";
 import { createWidgetEvents, createBoundEventHandlers, isModuleError } from "./widget-wrapper-events";
 import { WidgetTimeoutHandler } from "./widget-wrapper-timeout";
 import { repositoryService } from "../../services/repository-service";
+import { MAX_GRID_COLUMNS, MAX_GRID_ROWS, DEFAULT_COLUMN_SPAN, DEFAULT_ROW_SPAN } from "../../constants/grid-constants";
 
 /**
  * Widget loading states
@@ -36,12 +37,12 @@ export class WidgetWrapper extends FASTElement {
   @attr({ attribute: 'save-dimensions', mode: 'boolean' }) saveDimensions: boolean = true;
   @attr({ attribute: 'load-from-settings', mode: 'boolean' }) loadFromSettings: boolean = true;
   
-  // Grid span attributes
-  @attr({ mode: "fromView" }) colSpan: number = 8; // Default to half width (8/16 columns)
-  @attr({ mode: "fromView" }) rowSpan: number = 1; // Default to single row
+  // Grid span attributes - using constants for default/max values
+  @attr({ mode: "fromView" }) colSpan: number = DEFAULT_COLUMN_SPAN;
+  @attr({ mode: "fromView" }) rowSpan: number = DEFAULT_ROW_SPAN;
   @attr({ mode: "boolean" }) showSizeControls: boolean = true;
-  @attr maxColSpan: number = 16;
-  @attr maxRowSpan: number = 16; 
+  @attr maxColSpan: number = MAX_GRID_COLUMNS;
+  @attr maxRowSpan: number = MAX_GRID_ROWS;
   @attr minColSpan: number = 1;
   @attr minRowSpan: number = 1;
 

@@ -206,7 +206,7 @@ export class ProductService {
     // Add to repository
     if (this.productRepository) {
       await this.productRepository.addOrUpdateProduct(normalizedProduct);
-      console.log(`Added product to repository: ${normalizedProduct.id}`);
+      console.debug(`Added product to repository: ${normalizedProduct.id}`);
     }
     
     // Add to user profile
