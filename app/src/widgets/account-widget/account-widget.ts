@@ -57,7 +57,6 @@ const template = html<AccountWidget>/*html*/ `
       
       ${when(x => !x.isLoading && !(x.accountsLoaded && x.accounts.length === 0), html<AccountWidget>/*html*/`
         <account-list
-          @account-toggle="${(x, c) => x.handleAccountToggle(c.event)}"
           @account-actions="${(x, c) => x.handleAccountActions(c.event)}"
           @ready="${x => x.handleAccountListReady()}">
         </account-list>
@@ -463,17 +462,17 @@ export class AccountWidget extends BaseWidget {
     this.startWorkflow(WorkflowIds.TRANSFER, { accounts: this.accounts });
   }
   
-  /**
-   * Handle account toggle event from child component
-   * Enhanced to notify base widget of content changes
-   */
-  handleAccountToggle(event: Event) {
-    const customEvent = event as CustomEvent;
-    console.debug('Account toggled:', customEvent.detail);
+  // /**
+  //  * Handle account toggle event from child component
+  //  * Enhanced to notify base widget of content changes
+  //  */
+  // handleAccountToggle(event: Event) {
+  //   const customEvent = event as CustomEvent;
+  //   console.log('Account toggled:', customEvent.detail);
     
-    // Use the new helper method to trigger size recalculation
-    setTimeout(() => this.notifyContentChanged(), 50);
-  }
+  //   // Use the new helper method to trigger size recalculation
+  //   // setTimeout(() => this.notifyContentChanged(), 50);
+  // }
   
   /**
    * Handle account actions button click

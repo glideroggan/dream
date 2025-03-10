@@ -143,13 +143,6 @@ export class WidgetWrapper extends FASTElement {
     // Ensure data attributes are consistent - this is critical for grid layout to find the wrapper
     this.setAttribute('data-widget-id', this.widgetId);
     
-    // If we're inside a grid item, ensure it has consistent data attributes
-    const parentElement = this.parentElement;
-    if (parentElement) {
-      parentElement.setAttribute('data-grid-item-id', this.widgetId);
-      parentElement.setAttribute('data-widget-id', this.widgetId);
-    }
-    
     // Get widget info from registry
     this.updateWidgetDefinition();
     

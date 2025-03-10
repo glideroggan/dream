@@ -195,7 +195,7 @@ async function registerWorkflowWithSearch(workflow: WorkflowDefinition): Promise
     popular: workflow.popular, // Include popular flag in search item
     searchDisabledCondition: workflow.searchDisabledCondition, // Pass through the condition
     action: () => {
-      console.debug(`Starting workflow from search: ${workflow.id}`);
+      console.log(`Starting workflow from search: ${workflow.id}`);
       
       // Dispatch an event that will cross shadow DOM boundaries
       const event = new CustomEvent('start-workflow', {

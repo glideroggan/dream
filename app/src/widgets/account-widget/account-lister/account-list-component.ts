@@ -1,4 +1,4 @@
-import { FASTElement, customElement, html, css, observable, repeat, when } from "@microsoft/fast-element";
+import { FASTElement, customElement, observable } from "@microsoft/fast-element";
 import { TransactionViewModel } from "../transaction-list-component";
 import { repositoryService } from "../../../services/repository-service";
 import { cardService } from "../../../services/card-service";
@@ -238,34 +238,34 @@ export class AccountListComponent extends FASTElement {
     return this.upcomingSummaryCache.get(accountId) || '';
   }
 
-  /**
-   * Calculate a human-readable summary of upcoming transactions
-   */
-  private calculateUpcomingSummary(transactions: TransactionViewModel[]): string {
-    // Calculate total incoming and outgoing amounts
-    const incoming = transactions.filter(t => t.isIncoming);
-    const outgoing = transactions.filter(t => !t.isIncoming);
+  // /**
+  //  * Calculate a human-readable summary of upcoming transactions
+  //  */
+  // private calculateUpcomingSummary(transactions: TransactionViewModel[]): string {
+  //   // Calculate total incoming and outgoing amounts
+  //   const incoming = transactions.filter(t => t.isIncoming);
+  //   const outgoing = transactions.filter(t => !t.isIncoming);
 
-    const incomingTotal = incoming.reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    const outgoingTotal = outgoing.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+  //   const incomingTotal = incoming.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+  //   const outgoingTotal = outgoing.reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
-    // Create a summary message
-    const parts = [];
+  //   // Create a summary message
+  //   const parts = [];
 
-    if (outgoing.length > 0) {
-      const closest = this.getClosestTransaction(outgoing);
-      const timeframe = this.getTimeframeText(closest.scheduledDate!);
-      parts.push(`${outgoing.length} out (-${outgoingTotal.toFixed(0)}) ${timeframe}`);
-    }
+  //   if (outgoing.length > 0) {
+  //     const closest = this.getClosestTransaction(outgoing);
+  //     const timeframe = this.getTimeframeText(closest.scheduledDate!);
+  //     parts.push(`${outgoing.length} out (-${outgoingTotal.toFixed(0)}) ${timeframe}`);
+  //   }
 
-    if (incoming.length > 0) {
-      const closest = this.getClosestTransaction(incoming);
-      const timeframe = this.getTimeframeText(closest.scheduledDate!);
-      parts.push(`${incoming.length} in (+${incomingTotal.toFixed(0)}) ${timeframe}`);
-    }
+  //   if (incoming.length > 0) {
+  //     const closest = this.getClosestTransaction(incoming);
+  //     const timeframe = this.getTimeframeText(closest.scheduledDate!);
+  //     parts.push(`${incoming.length} in (+${incomingTotal.toFixed(0)}) ${timeframe}`);
+  //   }
 
-    return parts.join(' · ');
-  }
+  //   return parts.join(' · ');
+  // }
 
   /**
    * Get the closest (soonest) transaction from a list
@@ -396,6 +396,7 @@ export class AccountListComponent extends FASTElement {
   handleAccountClick(account: Account) {
     // Toggle expanded state
     this.expandedAccountId = this.expandedAccountId === account.id ? null : account.id;
+    
   }
 
   /**

@@ -222,18 +222,18 @@ export class SearchComponent extends FASTElement {
     this.currentFocusedIndex = targetIndex;
   }
   
-  private getCurrentFocusedIndex(): number {
-    const items = this.getResultElements();
-    console.debug('Current focused index:', this.currentFocusedIndex, items.length);
+  // private getCurrentFocusedIndex(): number {
+  //   const items = this.getResultElements();
+  //   console.debug('Current focused index:', this.currentFocusedIndex, items.length);
     
-    for (let i = 0; i < items.length; i++) {
-      if (items[i] === document.activeElement) {
-        return i;
-      }
-    }
+  //   for (let i = 0; i < items.length; i++) {
+  //     if (items[i] === document.activeElement) {
+  //       return i;
+  //     }
+  //   }
     
-    return -1;
-  }
+  //   return -1;
+  // }
   
   async updateResults() {
     this.isLoading = true;

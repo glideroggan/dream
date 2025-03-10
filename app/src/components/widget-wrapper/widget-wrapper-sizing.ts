@@ -63,7 +63,7 @@ export class WidgetSizingManager {
     this.updateRowSpanClasses(newRowSpan);
 
     // Create span change event with additional flag
-    console.log('WidgetSizingManager: Emitting widget-spans-change event');
+    console.debug('WidgetSizingManager: Emitting widget-spans-change event');
     const spanChangeEvent = new CustomEvent('widget-spans-change', {
       bubbles: true,
       composed: true,
@@ -298,7 +298,7 @@ export class WidgetSizingManager {
       const oldRowSpan = currentRowSpan;
       const newRowSpan = Math.max(oldRowSpan - 1, minRowSpan);
 
-      console.log(`WidgetWrapper: Decreasing row span for ${this.component.widgetId} from ${oldRowSpan} to ${newRowSpan}`);
+      console.debug(`WidgetWrapper: Decreasing row span for ${this.component.widgetId} from ${oldRowSpan} to ${newRowSpan}`);
 
       // Direct property update first for immediate UI feedback
       this.component.rowSpan = newRowSpan;

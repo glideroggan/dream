@@ -199,7 +199,7 @@ export class GridLayout extends FASTElement {
     // Listen for widget size change events - improved listeners with explicit callbacks
     this.addEventListener('widget-size-change', this.handleWidgetSizeChange);
     this.addEventListener('widget-spans-change', (e) => {
-      console.log(`GridLayout: Received widget-spans-change event`, (e as CustomEvent).detail);
+      console.debug(`GridLayout: Received widget-spans-change event`, (e as CustomEvent).detail);
       this.handleWidgetSpansChange(e);
     });
     
@@ -226,7 +226,7 @@ export class GridLayout extends FASTElement {
     const customEvent = event as CustomEvent;
     const { widgetId, colSpan, rowSpan, isUserResized, pageType, source, preserveRowSpan } = customEvent.detail;
     
-    console.log(`GridLayout: Processing spans change for ${widgetId}: ${colSpan}x${rowSpan}, user=${isUserResized}, pageType=${pageType}, source=${source || 'unknown'}, preserveRowSpan=${preserveRowSpan}`);
+    console.debug(`GridLayout: Processing spans change for ${widgetId}: ${colSpan}x${rowSpan}, user=${isUserResized}, pageType=${pageType}, source=${source || 'unknown'}, preserveRowSpan=${preserveRowSpan}`);
     
     // Update the item metadata without needing to find the element
     const metadata = this.itemMetadata.get(widgetId);
@@ -290,12 +290,12 @@ export class GridLayout extends FASTElement {
     }
   }
   
-  /**
-   * Save widget spans to settings repository
-   */
-  private saveWidgetSpansToSettings(pageId: string, widgetId: string, colSpan: number, rowSpan: number, isUserResized: boolean): void {
-    return; // Disable saving to settings for now
-  }
+  // /**
+  //  * Save widget spans to settings repository
+  //  */
+  // private saveWidgetSpansToSettings(pageId: string, widgetId: string, colSpan: number, rowSpan: number, isUserResized: boolean): void {
+  //   return; // Disable saving to settings for now
+  // }
   
   /**
    * Handle legacy widget size change events (for backward compatibility)
@@ -345,12 +345,12 @@ export class GridLayout extends FASTElement {
     element.setAttribute('data-widget-id', metadata.id);
   }
   
-  /**
-   * Try to load saved spans from settings
-   */
-  private async loadSavedSpans(element: HTMLElement, metadata: GridItemMetadata): Promise<void> {
-    return; // Disable loading from settings for now
-  }
+  // /**
+  //  * Try to load saved spans from settings
+  //  */
+  // private async loadSavedSpans(element: HTMLElement, metadata: GridItemMetadata): Promise<void> {
+  //   return; // Disable loading from settings for now
+  // }
   
   /**
    * Apply default spans to an element based on its metadata
@@ -453,13 +453,13 @@ export class GridLayout extends FASTElement {
     this.updateItemSpans(id, colSpan, 2); // Use 2 rows for legacy sizes
   }
   
-  /**
-   * Get the maximum min-width from all items
-   */
-  private getMaxMinWidth(): number {
-    // For the fine-grained grid, we'll always use the minColumnWidth
-    return this.minColumnWidth;
-  }
+  // /**
+  //  * Get the maximum min-width from all items
+  //  */
+  // private getMaxMinWidth(): number {
+  //   // For the fine-grained grid, we'll always use the minColumnWidth
+  //   return this.minColumnWidth;
+  // }
   
   /**
    * Update the grid layout based on container size and item requirements
