@@ -1,6 +1,7 @@
 import { FASTElement, customElement, html, css, observable } from '@microsoft/fast-element';
 import { routerService } from '../services/router-service';
 import { registerAppRoutes } from '../routes/routes-registry';
+import { themeVariables } from '../styles/theme-variables';
 
 // Import components
 import './sidebar-component';
@@ -25,14 +26,6 @@ const styles = css`
   :host {
     display: block;
     height: 100vh;
-    --sidebar-bg: #2c3e50;
-    --header-bg: #ffffff;
-    --primary-color: #3498db;
-    --text-color: #333333;
-    --text-light: #ffffff;
-    --border-color: #e0e0e0;
-    --hover-bg: rgba(52, 152, 219, 0.1);
-    --divider-color: #ecf0f1;
   }
 
   .app-container {
@@ -73,21 +66,21 @@ export class AppComponent extends FASTElement {
 
   connectedCallback(): void {
     super.connectedCallback();
-    
+
     // Register all routes
     registerAppRoutes();
-    
+
     // Initialize the router (will navigate to default route if needed)
     routerService.initialize();
 
     // get the sidebar element, and listen for events
     const sidebar = this.shadowRoot?.querySelector('dream-sidebar');
     sidebar?.addEventListener('navigation', this.handleNavigation.bind(this));
-    
+
     // Check initial screen size
     this.sidebarCollapsed = window.innerWidth < 730;
   }
-  
+
   /**
    * Handle navigation events from the sidebar
    */
@@ -95,24 +88,24 @@ export class AppComponent extends FASTElement {
     console.debug('Received navigation event', event);
     const navigationEvent = event as CustomEvent;
     const item = navigationEvent.detail;
-    
+
     if (item && item.route) {
       // Extract the path from the route (remove the # if present)
       const path = item.route
-      
+
       // Use the router service to navigate
       routerService.navigateTo(path);
-      
+
       // Log navigation
       console.debug(`Navigating to: ${path}`);
-      
+
       // Prevent default browser navigation
       event.preventDefault();
     } else {
       console.warn('Navigation event received but no valid route found', navigationEvent);
     }
   }
-  
+
   /**
    * Handle sidebar toggle events
    */

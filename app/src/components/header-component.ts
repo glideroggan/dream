@@ -22,16 +22,17 @@ const template = html<HeaderComponent>/*html*/`
   </div>
 `;
 
+// ${themeVariables}
 const styles = css`
   :host {
     display: block;
     width: 100%;
-  }
+  }  
   
   .header-container {
-    background-color: #2c3e50;
-    background-image: linear-gradient(to right, #2c3e50, #4a6885);
-    color: white;
+    background-color: var(--header-bg);
+    background-image: linear-gradient(to right, var(--header-bg), color-mix(in srgb, var(--header-bg) 60%, var(--secondary-color)));
+    color: var(--text-light);
     padding: 0.75rem 1.5rem;
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
   }
@@ -72,12 +73,14 @@ const styles = css`
     font-size: 1.5rem;
     font-weight: bold;
     letter-spacing: 0.5px;
+    color: var(--text-light);
   }
   
   .logo-tagline {
     font-size: 0.7rem;
     opacity: 0.8;
     letter-spacing: 0.5px;
+    color: var(--text-light);
   }
   
   .search-wrapper {

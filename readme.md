@@ -1,4 +1,6 @@
 # BUGS
+- try to see if we can get rid of the observer for wrapper content
+  seems like it is expensive during width changes in the browser
 - why do we have scrollbars when none of the widgets are overflowing?
 - looks like there are some mocks in the loan-service file
 - the transaction signing is not so nice, the style of it should improve
@@ -75,7 +77,11 @@ Would be nice to get a bit more things happening, if we could do like in the lif
   - settings-repo
   - transaction-repo
   - user-repo
-- can we include some colors?
+- 🔧can we include some colors?
+  - next up is app-component, as it is using a hard coded color
+  - try to remove the use of hard coded colors
+  - can we include some fonts?
+  
 #384959: Primary text, headers, footers
 #6A89A7: Secondary elements, inactive states, dividers
 #88BDF2: Interactive elements (buttons, links), highlights, accent

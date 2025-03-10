@@ -18,14 +18,14 @@ export const styles = css`
     display: flex;
     align-items: center;
     width: 100%;
-    background-color: rgba(255, 255, 255, 0.15);
+    background-color: color-mix(in srgb, var(--text-light) 15%, transparent);
     border-radius: 6px;
     transition: all 0.2s ease;
   }
   
   .search-input-wrapper:focus-within {
-    background-color: rgba(255, 255, 255, 0.25);
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+    background-color: color-mix(in srgb, var(--text-light) 25%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--text-light) 20%, transparent);
   }
   
   .search-icon {
@@ -34,7 +34,7 @@ export const styles = css`
     justify-content: center;
     padding: 0 0.5rem 0 0.75rem;
     font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.8);
+    color: color-mix(in srgb, var(--text-light) 80%, transparent);
   }
   
   .search-input {
@@ -43,7 +43,7 @@ export const styles = css`
     border: none;
     font-size: 0.9rem;
     background-color: transparent;
-    color: white;
+    color: var(--text-light);
     width: 100%;
   }
   
@@ -52,7 +52,7 @@ export const styles = css`
   }
   
   .search-input::placeholder {
-    color: rgba(255, 255, 255, 0.7);
+    color: color-mix(in srgb, var(--text-light) 70%, transparent);
   }
   
   .search-clear {
@@ -61,21 +61,21 @@ export const styles = css`
     justify-content: center;
     padding: 0 0.75rem;
     font-size: 1.1rem;
-    color: rgba(255, 255, 255, 0.7);
+    color: color-mix(in srgb, var(--text-light) 70%, transparent);
     cursor: pointer;
     transition: color 0.2s;
   }
   
   .search-clear:hover {
-    color: rgba(255, 255, 255, 1);
+    color: var(--text-light);
   }
   
   .search-loader {
     width: 16px;
     height: 16px;
     margin-right: 0.75rem;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top: 2px solid rgba(255, 255, 255, 0.8);
+    border: 2px solid color-mix(in srgb, var(--text-light) 30%, transparent);
+    border-top: 2px solid color-mix(in srgb, var(--text-light) 80%, transparent);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
   }
@@ -91,15 +91,16 @@ export const styles = css`
     left: 50%;
     transform: translateX(-50%);
     width: 350px;
-    background: white;
+    background: var(--text-light);
     border-radius: 8px;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.05);
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--primary-color) 20%, transparent), 
+                0 0 0 1px color-mix(in srgb, var(--primary-color) 5%, transparent);
     display: none;
     z-index: 100;
     max-height: 450px;
     overflow-y: auto;
     padding: 8px 0;
-    color: #333;
+    color: var(--primary-text-color);
     animation: slideDown 0.2s ease-out;
   }
   
@@ -116,7 +117,7 @@ export const styles = css`
     padding: 8px 16px;
     font-size: 0.8rem;
     font-weight: bold;
-    color: #666;
+    color: var(--secondary-text-color);
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
@@ -136,12 +137,12 @@ export const styles = css`
   .suggestion-item:hover,
   .suggestion-item:focus,
   .suggestion-item.focused {
-    background-color: #f0f4f8;
+    background-color: var(--hover-bg);
     outline: none;
   }
   
   .suggestion-item:focus-visible {
-    box-shadow: 0 0 0 2px #1976d2;
+    box-shadow: 0 0 0 2px var(--accent-color);
     outline: none;
   }
   
@@ -151,7 +152,7 @@ export const styles = css`
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #f0f0f0;
+    background-color: var(--background-color);
     border-radius: 8px;
     margin-right: 12px;
     font-size: 18px;
@@ -161,7 +162,7 @@ export const styles = css`
   
   .suggestion-item:hover .suggestion-icon {
     transform: scale(1.05);
-    background-color: #e8e8e8;
+    background-color: color-mix(in srgb, var(--background-color) 80%, var(--primary-color));
   }
   
   .suggestion-content {
@@ -172,11 +173,12 @@ export const styles = css`
   .suggestion-title {
     font-weight: 500;
     margin-bottom: 2px;
+    color: var(--primary-text-color);
   }
   
   .suggestion-description {
     font-size: 0.8rem;
-    color: #666;
+    color: var(--secondary-text-color);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -196,24 +198,27 @@ export const styles = css`
   }
   
   .suggestion-type.theme {
-    background-color: #e3f2fd;
-    color: #1976d2;
+    background-color: var(--theme-bg, #e3f2fd);
+    color: var(--theme-color, #0d47a1);
+    font-weight: 500;
   }
   
   .suggestion-type.widget {
-    background-color: #e8f5e9;
-    color: #388e3c;
+    background-color: var(--widget-bg, #e8f5e9);
+    color: var(--widget-color, #388e3c);
+    font-weight: 500;
   }
   
   .suggestion-type.workflow {
-    background-color: #fff3e0;
-    color: #f57c00;
+    background-color: var(--workflow-bg, #fff1e6);
+    color: var(--workflow-color, #8f4700);
+    font-weight: 500;
   }
   
   .no-results {
     padding: 16px;
     text-align: center;
-    color: #666;
+    color: var(--secondary-text-color);
     font-style: italic;
   }
 `;

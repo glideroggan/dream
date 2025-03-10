@@ -75,11 +75,11 @@ const styles = css`
   :host {
     display: block;
     width: 250px;
-    background-color: var(--sidebar-bg, #2c3e50);
-    color: var(--sidebar-text, #ecf0f1);
+    background-color: var(--sidebar-bg);
+    color: var(--text-light);
     height: 100%;
     box-sizing: border-box;
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 2px 0 10px color-mix(in srgb, var(--primary-color) 10%, transparent);
     transition: width 0.3s ease;
   }
 
@@ -101,7 +101,7 @@ const styles = css`
   
   .sidebar-header {
     padding: 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid color-mix(in srgb, var(--text-light) 10%, transparent);
   }
   
   .logo {
@@ -141,7 +141,7 @@ const styles = css`
     display: flex;
     align-items: center;
     padding: 12px 16px;
-    color: var(--sidebar-text, #ecf0f1);
+    color: var(--text-light);
     text-decoration: none;
     transition: all 0.2s ease-in-out;
     border-radius: 6px;
@@ -151,14 +151,14 @@ const styles = css`
   }
   
   .menu-item a:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--hover-bg);
     transform: translateX(2px);
   }
   
   .menu-item.active a {
-    background-color: var(--primary-color, #3498db);
+    background-color: var(--accent-color);
     font-weight: 500;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 5px color-mix(in srgb, var(--primary-color) 20%, transparent);
     transform: translateX(3px);
   }
   
@@ -183,13 +183,13 @@ const styles = css`
   }
   
   .badge.primary {
-    background-color: #e74c3c;
-    color: white;
+    background-color: var(--new-badge-bg, #e74c3c);
+    color: var(--new-badge-text, #ffffff);
   }
   
   .sidebar-footer {
     padding: 16px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid color-mix(in srgb, var(--text-light) 10%, transparent);
     position: relative;
   }
   
@@ -204,7 +204,7 @@ const styles = css`
   }
   
   .user-info:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--hover-bg);
   }
   
   .avatar {
@@ -212,7 +212,7 @@ const styles = css`
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background-color: var(--primary-color, #3498db);
+    background-color: var(--accent-color);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -250,9 +250,9 @@ const styles = css`
     bottom: 100%;
     left: 8px;
     right: 8px;
-    background-color: var(--sidebar-bg, #2c3e50);
+    background-color: var(--sidebar-bg);
     border-radius: 8px;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 -2px 10px color-mix(in srgb, var(--primary-color) 20%, transparent);
     z-index: 100;
     overflow: hidden;
     max-height: 300px;
@@ -262,8 +262,8 @@ const styles = css`
   .user-switcher-header {
     padding: 12px 16px;
     font-weight: 500;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    background-color: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid color-mix(in srgb, var(--text-light) 10%, transparent);
+    background-color: color-mix(in srgb, var(--primary-color) 80%, black);
   }
   
   .user-list {
@@ -282,11 +282,11 @@ const styles = css`
   }
   
   .user-list-item:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--hover-bg);
   }
   
   .user-list-item.active {
-    background-color: var(--primary-color, #3498db);
+    background-color: var(--accent-color);
   }
   
   .user-list-avatar {
@@ -294,7 +294,7 @@ const styles = css`
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background-color: var(--primary-color, #3498db);
+    background-color: var(--accent-color);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -350,9 +350,9 @@ const styles = css`
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    background-color: var(--sidebar-bg, #2c3e50);
-    color: var(--sidebar-text, #ecf0f1);
-    border: 1px solid var(--sidebar-text, #ecf0f1);
+    background-color: var(--sidebar-bg);
+    color: var(--text-light);
+    border: 1px solid var(--border-color);
     display: flex;
     align-items: center;
     justify-content: center;
