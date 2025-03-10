@@ -71,6 +71,10 @@ Would be nice to get a bit more things happening, if we could do like in the lif
 
 
 # TODO
+- add more unit tests
+  - settings-repo
+  - transaction-repo
+  - user-repo
 - can we include some colors?
 #384959: Primary text, headers, footers
 #6A89A7: Secondary elements, inactive states, dividers
