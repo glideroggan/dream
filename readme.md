@@ -1,18 +1,15 @@
 # BUGS
 - why do we have scrollbars when none of the widgets are overflowing?
-- ✔️closing welcome widget closes _all_ widgets
 - looks like there are some mocks in the loan-service file
 - the transaction signing is not so nice, the style of it should improve
 - need toast error when failing to start a workflow
 - when there is only one choice from the search inputs, enter key should select it
 - favorite checkbox doesn't work on add payment contact
 - need to update net worth after account and transaction changes
-- ✔️when you add the swish widget, you can't remove it until you reload, or switch page
 - all the amounts, should be positive, and instead the type of the transaction should be the one that decides if it is showing as a negative value or not
 - the button in the bottom in financial health widget is unstyled
 
 # FEATURES
-- ✔️on thin screens it would be beneficial to collapse the sidebar to the left
 - common search dropdown component
   Would be nice to just have one component that works
   - search have one
@@ -56,7 +53,6 @@ Would be nice to get a bit more things happening, if we could do like in the lif
     - shouldn't have a purpose
   - purpose dropdown doesn't show any options
 ## search
-  - ✔️pressing esc should remove text from search, and remove the search results
 ## financial-health-widget
 - the goals are created on the accounts? they should be separate entities
   - when there is more than 1 recommendation, you can't see it

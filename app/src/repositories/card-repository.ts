@@ -67,7 +67,7 @@ export class CardRepository extends LocalStorageRepository<Card> {
       digitalWalletEnabled: data.digitalWalletEnabled ?? false,
     };
     
-    return super.create(cardData);
+    return this.create(cardData);
   }
   
   /**

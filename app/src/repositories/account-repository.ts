@@ -1,10 +1,10 @@
 import { repositoryService } from '../services/repository-service'
 import { StorageService } from '../services/storage-service'
 import { UserService } from '../services/user-service'
-import { Entity, LocalStorageRepository } from './base-repository'
+import { LocalStorageRepository } from './base-repository'
 import { TransactionRepository } from './transaction-repository'
 import { getMockAccountsByUserType } from './mock/account-mock'
-import { Account, AccountType, TransferResult } from './models/account-models'
+import { Account, TransferResult } from './models/account-models'
 
 // Account repository implementation
 export class AccountRepository extends LocalStorageRepository<Account> {
@@ -53,8 +53,7 @@ export class AccountRepository extends LocalStorageRepository<Account> {
       ...data,
     } as Account
 
-    await super.create(entity)
-    // this.saveToStorage()
+    await this.create(entity)
 
     return entity
   }
@@ -173,63 +172,63 @@ export class AccountRepository extends LocalStorageRepository<Account> {
     }
   }
 
-  /**
-   * Schedule a transfer for future execution
-   */
-  async scheduleTransfer(
-    fromId: string,
-    toId: string,
-    amount: number,
-    scheduledDate: Date,
-    description?: string
-  ): Promise<TransferResult> {
-    try {
-      const fromAccount = await this.getById(fromId)
-      const toAccount = await this.getById(toId)
+  // /**
+  //  * Schedule a transfer for future execution
+  //  */
+  // async scheduleTransfer(
+  //   fromId: string,
+  //   toId: string,
+  //   amount: number,
+  //   scheduledDate: Date,
+  //   description?: string
+  // ): Promise<TransferResult> {
+  //   try {
+  //     const fromAccount = await this.getById(fromId)
+  //     const toAccount = await this.getById(toId)
 
-      if (!fromAccount || !toAccount) {
-        return {
-          success: false,
-          message: 'One or more accounts not found',
-        }
-      }
+  //     if (!fromAccount || !toAccount) {
+  //       return {
+  //         success: false,
+  //         message: 'One or more accounts not found',
+  //       }
+  //     }
 
-      // For scheduled transfers, we don't check balance now
-      // We'll check when executing the transfer
+  //     // For scheduled transfers, we don't check balance now
+  //     // We'll check when executing the transfer
 
-      // Create upcoming transaction record
-      const transaction = await this.transactionRepo.createTransferTransaction(
-        fromId,
-        toId,
-        amount,
-        fromAccount.currency,
-        fromAccount.balance,
-        toAccount.balance,
-        description,
-        false // not completed yet
-      )
+  //     // Create upcoming transaction record
+  //     const transaction = await this.transactionRepo.createTransferTransaction(
+  //       fromId,
+  //       toId,
+  //       amount,
+  //       fromAccount.currency,
+  //       fromAccount.balance,
+  //       toAccount.balance,
+  //       description,
+  //       false // not completed yet
+  //     )
 
-      // Update the scheduled date
-      await this.transactionRepo.update(transaction.id, {
-        scheduledDate: scheduledDate.toISOString(),
-      })
+  //     // Update the scheduled date
+  //     await this.transactionRepo.update(transaction.id, {
+  //       scheduledDate: scheduledDate.toISOString(),
+  //     })
 
-      return {
-        success: true,
-        message: 'Transfer scheduled successfully',
-        transactionId: transaction.id,
-      }
-    } catch (error) {
-      console.error('Scheduling transfer failed:', error)
-      return {
-        success: false,
-        message:
-          error instanceof Error
-            ? error.message
-            : 'Scheduling transfer failed due to an unexpected error',
-      }
-    }
-  }
+  //     return {
+  //       success: true,
+  //       message: 'Transfer scheduled successfully',
+  //       transactionId: transaction.id,
+  //     }
+  //   } catch (error) {
+  //     console.error('Scheduling transfer failed:', error)
+  //     return {
+  //       success: false,
+  //       message:
+  //         error instanceof Error
+  //           ? error.message
+  //           : 'Scheduling transfer failed due to an unexpected error',
+  //     }
+  //   }
+  // }
 
   /**
    * Get accounts that are compatible with debit cards
