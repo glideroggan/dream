@@ -1,4 +1,5 @@
 # BUGS
+- something is broken with the grid-layout, its no longer working nice when resizing the window
 - try to see if we can get rid of the observer for wrapper content
   seems like it is expensive during width changes in the browser
 - why do we have scrollbars when none of the widgets are overflowing?
@@ -41,6 +42,7 @@ Would be nice to get a bit more things happening, if we could do like in the lif
         - should show a toast
 
 # TODO
+- getting time to release
 ## account info
 - account info workflow, needs an empty/default state when no account is selected
   - the empty state should have a smart dropdown
@@ -78,8 +80,9 @@ Would be nice to get a bit more things happening, if we could do like in the lif
   - transaction-repo
   - user-repo
 - 🔧can we include some colors?
-  - next up is app-component, as it is using a hard coded color
-  - try to remove the use of hard coded colors
+  - ✔️next up is app-component, as it is using a hard coded color
+  - ✔️try to remove the use of hard coded colors
+  - we have the workflows left
   - can we include some fonts?
   
 #384959: Primary text, headers, footers

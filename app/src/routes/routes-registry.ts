@@ -38,6 +38,7 @@ export const routeIcons: Record<string, string> = {
 
 /**
  * Additional route metadata for search and UI display
+ * // TODO: should we add these to the search?
  */
 export const routeMetadata: Record<string, {
   keywords: string[],
