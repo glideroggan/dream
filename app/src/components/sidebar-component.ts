@@ -368,7 +368,8 @@ const styles = css`
     opacity: 1;
   }
 
-  @media (max-width: 730px) {
+  /* Adjust this media query to match our grid breakpoints */
+  @media (max-width: 750px) {
     :host {
       width: 60px;
     }
@@ -654,7 +655,7 @@ export class SidebarComponent extends FASTElement {
    * Check screen width and auto-collapse sidebar if below threshold
    */
   private checkScreenWidth(): void {
-    const smallScreen = window.innerWidth < 730;
+    const smallScreen = window.innerWidth < 750; // Adjusted from 730px to 750px
     
     // Update collapsed state based on screen size
     if (smallScreen !== this.collapsed) {
@@ -687,7 +688,7 @@ export class SidebarComponent extends FASTElement {
       this.classList.remove('sidebar-collapsed');
       
       // Only add expanded class if we're on small screen
-      if (window.innerWidth < 730) {
+      if (window.innerWidth < 750) {
         this.classList.add('sidebar-expanded');
       }
     }

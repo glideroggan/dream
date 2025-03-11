@@ -109,15 +109,32 @@ const styles = css`
     flex-direction: column;
   }
   
-  @media (max-width: 800px) {
+  /* Improved responsive breakpoints to prevent horizontal scrollbars */
+  /* First breakpoint for medium screens */
+  @media (max-width: 960px) {
     ::slotted([class*="col-span-"]) {
-      grid-column: span min(var(--current-col-span, 1), 8);
+      grid-column: span min(var(--current-col-span, 1), 6);
     }
   }
   
-  @media (max-width: 500px) {
+  /* Second breakpoint for smaller screens but before sidebar collapse */
+  @media (max-width: 800px) {
     ::slotted([class*="col-span-"]) {
       grid-column: span min(var(--current-col-span, 1), 4);
+    }
+  }
+  
+  /* Critical breakpoint for mobile - force full width widgets with 2 column max grid */
+  @media (max-width: 750px) {
+    ::slotted([class*="col-span-"]) {
+      grid-column: 1 / -1 !important; /* Force full width regardless of specified col-span */
+    }
+  }
+  
+  /* Smallest screens - ensure single column layout */
+  @media (max-width: 500px) {
+    ::slotted(*) {
+      grid-column: 1 / -1 !important;
     }
   }
 `;
@@ -480,18 +497,32 @@ export class GridLayout extends FASTElement {
     const totalGapWidth = (columnCount - 1) * this.gridGap;
     const availableWidth = containerWidth - totalGapWidth;
     
+    // Adjust column count based on available width to prevent overflow
+    let adjustedColumnCount = columnCount;
+    
+    // For screens narrower than 960px but wider than 800px, reduce columns
+    if (containerWidth < 960 && containerWidth >= 800) {
+      adjustedColumnCount = Math.min(columnCount, 12); // Use at most 12 columns
+    } else if (containerWidth < 800 && containerWidth >= 750) {
+      adjustedColumnCount = Math.min(columnCount, 8); // Use at most 8 columns
+    } else if (containerWidth < 750 && containerWidth >= 500) {
+      adjustedColumnCount = 2; // Force 2 columns for mobile devices
+    } else if (containerWidth < 500) {
+      adjustedColumnCount = 1; // Force single column for very small devices
+    }
+    
     // Calculate column width (minimum is minColumnWidth)
     const columnWidth = Math.max(
       this.minColumnWidth, 
-      Math.floor(availableWidth / columnCount)
+      Math.floor(availableWidth / adjustedColumnCount)
     );
     
     // Set a fixed row height that doesn't change based on content
     const rowHeight = this.minRowHeight;
     
-    // Create fixed-size grid
+    // Create fixed-size grid with adjusted column count
     this.gridStyle = `
-      grid-template-columns: repeat(${columnCount}, minmax(${columnWidth}px, 1fr));
+      grid-template-columns: repeat(${adjustedColumnCount}, minmax(${columnWidth}px, 1fr));
       grid-auto-rows: ${rowHeight}px;
       gap: ${this.gridGap}px;
       align-items: stretch;
@@ -500,7 +531,7 @@ export class GridLayout extends FASTElement {
     // Update row height CSS variable for span calculations
     this.style.setProperty('--row-height', `${rowHeight}px`);
     
-    console.debug(`GridLayout: Using fixed grid with ${columnCount} columns (${columnWidth}px) and rows (${rowHeight}px)`);
+    console.debug(`GridLayout: Using fixed grid with ${adjustedColumnCount} columns (${columnWidth}px) and rows (${rowHeight}px)`);
   }
   
   /**

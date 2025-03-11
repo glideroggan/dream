@@ -1,7 +1,6 @@
 import { FASTElement, customElement, html, css, observable } from '@microsoft/fast-element';
 import { routerService } from '../services/router-service';
 import { registerAppRoutes } from '../routes/routes-registry';
-import { themeVariables } from '../styles/theme-variables';
 
 // Import components
 import './sidebar-component';

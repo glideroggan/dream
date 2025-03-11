@@ -80,11 +80,8 @@ Would be nice to get a bit more things happening, if we could do like in the lif
   - transaction-repo
   - user-repo
 - 🔧can we include some colors?
-  - ✔️next up is app-component, as it is using a hard coded color
-  - ✔️try to remove the use of hard coded colors
-  - we have the workflows left
+  ok, this was hard, and failed, lets try again later and commit more often on good changes
   - can we include some fonts?
-  
 #384959: Primary text, headers, footers
 #6A89A7: Secondary elements, inactive states, dividers
 #88BDF2: Interactive elements (buttons, links), highlights, accent

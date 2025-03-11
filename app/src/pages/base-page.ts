@@ -31,6 +31,70 @@ import { UserSettings } from '../repositories/settings-repository';
 import { GridLayout } from '../components/grid-layout';
 import { ProductChangeEvent } from '../repositories/models/product-models';
 
+// Add responsive styles for the base page
+export const basePageStyles = css`
+  :host {
+    display: block;
+    height: 100%;
+    width: 100%;
+    overflow: hidden; /* Prevent scrollbars on the host element */
+  }
+
+  .content-container {
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* Let individual components manage their own overflow */
+    box-sizing: border-box;
+  }
+
+  .content-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color, #eaeaea);
+  }
+
+  .content-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+
+  .widgets-container {
+    padding: 1rem;
+    overflow: auto; /* Allow vertical scrolling inside the container */
+    height: calc(100% - 70px); /* Adjust based on your header height */
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .empty-message {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-light-2, #888);
+  }
+
+  /* Responsive adjustments for different screen sizes */
+  @media (max-width: 960px) {
+    .widgets-container {
+      padding: 0.75rem;
+    }
+  }
+
+  @media (max-width: 750px) {
+    .widgets-container {
+      padding: 0.5rem;
+    }
+  }
+
+  @media (max-width: 500px) {
+    .widgets-container {
+      padding: 0.25rem;
+    }
+
+    .content-header h2 {
+      font-size: 1.25rem;
+    }
+  }
+`;
+
 // Shared template parts that can be composed by child classes
 export const baseContentTemplate = html<BasePage>/*html*/ `
   <div class="content-container">
@@ -58,6 +122,9 @@ export const baseContentTemplate = html<BasePage>/*html*/ `
 `;
 
 export class BasePage extends FASTElement {
+  // At the start of the class, add a static styles property
+  static styles = basePageStyles;
+
   @observable pageTitle: string = 'Page';
   @observable activeWidgets: WidgetDefinition[] = [];
   @observable ready: boolean = false;
@@ -120,6 +187,9 @@ export class BasePage extends FASTElement {
     this.subscribeToProductChanges();
     // Diagnostic log to track page lifecycle
     console.debug(`${this.pageType} page connected`);
+
+    // Trigger an initial layout optimization
+    setTimeout(() => this.handleResize(), 0);
   }
 
   disconnectedCallback(): void {

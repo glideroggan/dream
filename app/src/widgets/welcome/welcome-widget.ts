@@ -1,6 +1,5 @@
 import { customElement, html, css, attr, observable } from '@microsoft/fast-element';
 import { BaseWidget, baseWidgetStyles } from '../../components/base-widget';
-import { debugWidgetStructure, fixWidgetStructure } from '../../utils/debug-utils';
 
 const template = html<WelcomeWidget>/*html*/`
   <div class="welcome-widget">
@@ -79,7 +78,7 @@ const styles = css`
   /* Ensure welcome widget content doesn't block widget header controls */
   .welcome-widget {
     text-align: center;
-    background: var(--background-color, #fff);
+    // background: var(--background-color, #fff);
     border-radius: 8px;
     padding: 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -266,13 +265,6 @@ export class WelcomeWidget extends BaseWidget {
         gridItem.setAttribute('data-widget-id', 'welcome');
       }
     }
-    
-    // DEBUG: After a short delay, check DOM structure
-    setTimeout(() => {
-      debugWidgetStructure('welcome');
-      // Try to fix the widget structure if there are issues
-      fixWidgetStructure('welcome');
-    }, 1000);
     
     // Add event debugging to see what's happening with clicks
     this.addEventListener('click', (e) => {
