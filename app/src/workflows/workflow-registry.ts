@@ -1,6 +1,7 @@
 import { workflowService } from '../services/workflow-service';
 import { getSearchService, SearchResultItem } from '../services/search-service';
 import { getProductService } from '../services/product-service';
+import { repositoryService } from '../services/repository-service';
 
 export interface WorkflowDefinition {
   id: string;
@@ -11,7 +12,7 @@ export interface WorkflowDefinition {
   icon?: string;
   searchable?: boolean;
   keywords?: string[];
-  popular?: boolean; 
+  popular?: boolean;
   // Function that returns true if this workflow should NOT appear in search results
   searchDisabledCondition?: () => Promise<boolean>;
 }
@@ -22,7 +23,7 @@ export const WorkflowIds = {
   KYC: "kyc",
   CREATE_ACCOUNT: "create-account",
   SWISH: "swish",
-  ADD_CONTACT: "add-contact", 
+  ADD_CONTACT: "add-contact",
   ACCOUNT_INFO: "account-info",
   FINANCIAL_DETAILS: "financial-details", // TODO: implement this workflow
   SIGNING: "signing", // Add signing workflow ID
@@ -41,7 +42,7 @@ const workflowDefinitions: WorkflowDefinition[] = [
     module: "@workflows/card",
     icon: "💳",
     searchable: true,
-    popular: true, 
+    popular: true,
     keywords: ['card', 'credit card', 'debit card', 'apply card', 'new card', 'card application'],
   },
   {
@@ -52,20 +53,10 @@ const workflowDefinitions: WorkflowDefinition[] = [
     module: "@workflows/account-info",
     icon: "💸",
     searchable: true,
-    popular: true, 
+    popular: true,
     keywords: ['account', 'information', 'details', 'account info', 'account details'],
   },
-  {
-    id: WorkflowIds.TRANSFER,
-    name: "Transfer Money",
-    description: "Transfer money between accounts",
-    elementName: "transfer-workflow",
-    module: "@workflows/transfer",
-    icon: "💸",
-    searchable: true,
-    popular: true, 
-    keywords: ['transfer', 'send money', 'payment', 'move money', 'transfer funds'],
-  },
+
   {
     id: WorkflowIds.KYC,
     name: "Identity Verification",
@@ -99,17 +90,17 @@ const workflowDefinitions: WorkflowDefinition[] = [
     // Improved condition with additional debugging
     searchDisabledCondition: async () => {
       console.debug(`Checking if Swish workflow should be hidden (timestamp=${Date.now()})`);
-      
+
       try {
         const productService = getProductService();
-        
+
         // Force a full refresh before checking
         await productService.refreshProducts();
-        
+
         // Check for the product
         const hasSwish = await productService.hasProduct("swish-standard");
         console.debug(`Swish workflow searchability check result: hasSwish=${hasSwish}, timestamp=${Date.now()}`);
-        
+
         // If user has Swish, the workflow should be disabled (return true)
         return hasSwish;
       } catch (error) {
@@ -117,6 +108,40 @@ const workflowDefinitions: WorkflowDefinition[] = [
         return false; // Default to showing the workflow if there's an error
       }
     }
+  },
+  {
+    id: WorkflowIds.TRANSFER,
+    name: "Transfer Money",
+    description: "Transfer money between accounts",
+    elementName: "transfer-workflow",
+    module: "@workflows/transfer",
+    icon: "💸",
+    searchable: true,
+    popular: true,
+    keywords: ['transfer', 'send money', 'payment', 'move money', 'transfer funds'],
+    // you need to have at least one valid account to be able to transfer money
+    searchDisabledCondition: async () => {
+      console.debug(`Checking if Transfer workflow should be hidden (timestamp=${Date.now()})`);
+
+      try {
+        // const productService = getProductService();
+        const accountRepo = repositoryService.getAccountRepository();
+        const account = (await accountRepo.getAll())
+          .filter(account => account.isActive && account.balance > 0 && account.type === 'checking')
+        const hasAccount = account.length > 0;
+
+        // Check for the product
+        // const hasAccount = await productService.getProductsByCategory(ProductCategory.BANKING)
+        console.debug(`Transfer workflow searchability check result: hasAccount=${hasAccount}, timestamp=${Date.now()}`);
+
+        // If user has an account, the workflow should be enabled (return false)
+        return !hasAccount;
+      } catch (error) {
+        console.error("Error checking account product:", error);
+        return true; // Default to hiding the workflow if there's an error
+      }
+    }
+
   },
   {
     id: WorkflowIds.ADD_CONTACT,
@@ -170,7 +195,7 @@ async function registerWorkflowWithSearch(workflow: WorkflowDefinition): Promise
   if (!workflow.searchable || !workflow.keywords || workflow.keywords.length === 0) {
     return;
   }
-  
+
   // Check any condition that might disable search for this workflow
   if (workflow.searchDisabledCondition) {
     try {
@@ -184,7 +209,7 @@ async function registerWorkflowWithSearch(workflow: WorkflowDefinition): Promise
       return; // Skip registration on error
     }
   }
-  
+
   const searchItem: SearchResultItem = {
     id: `workflow-${workflow.id}`,
     title: workflow.name,
@@ -196,18 +221,18 @@ async function registerWorkflowWithSearch(workflow: WorkflowDefinition): Promise
     searchDisabledCondition: workflow.searchDisabledCondition, // Pass through the condition
     action: () => {
       console.log(`Starting workflow from search: ${workflow.id}`);
-      
+
       // Dispatch an event that will cross shadow DOM boundaries
       const event = new CustomEvent('start-workflow', {
-        bubbles: true, 
+        bubbles: true,
         composed: true, // This allows the event to cross shadow DOM boundaries
         detail: { workflowId: workflow.id }
       });
-      
+
       document.dispatchEvent(event);
     }
   };
-  
+
   getSearchService().registerItem(searchItem);
   console.debug(`Registered workflow with search: ${workflow.id}`);
 }
@@ -221,14 +246,14 @@ export function getAllSearchableWorkflows(): SearchResultItem[] {
     console.warn("Workflow definitions not available or not an array");
     return [];
   }
-  
+
   const searchItems: SearchResultItem[] = [];
-  
+
   try {
     for (const workflow of workflowDefinitions) {
       // Skip non-searchable workflows
       if (!workflow.searchable || !workflow.keywords) continue;
-      
+
       // Create search item
       searchItems.push({
         id: `workflow-${workflow.id}`,
@@ -241,13 +266,13 @@ export function getAllSearchableWorkflows(): SearchResultItem[] {
         searchDisabledCondition: workflow.searchDisabledCondition,
         action: () => {
           console.debug(`Starting workflow from search: ${workflow.id}`);
-          
+
           const event = new CustomEvent('start-workflow', {
-            bubbles: true, 
+            bubbles: true,
             composed: true,
             detail: { workflowId: workflow.id }
           });
-          
+
           document.dispatchEvent(event);
         }
       });
@@ -255,7 +280,7 @@ export function getAllSearchableWorkflows(): SearchResultItem[] {
   } catch (error) {
     console.error("Error creating workflow search items:", error);
   }
-  
+
   return searchItems;
 }
 
@@ -280,7 +305,7 @@ export function getAllSearchableWorkflows(): SearchResultItem[] {
  */
 export async function registerAllWorkflows(): Promise<void> {
   console.debug("Registering all workflows...");
-  
+
   for (const workflow of workflowDefinitions) {
     // Register with workflow service
     workflowService.registerWorkflow(workflow.id, {
@@ -288,17 +313,17 @@ export async function registerAllWorkflows(): Promise<void> {
       importFunc: () => import(/* @vite-ignore */ workflow.module)
     });
     console.debug(`Registered workflow: ${workflow.id}`);
-    
+
     // Register with search service if searchable
     registerWorkflowWithSearch(workflow);
   }
-  
+
   // Subscribe to product changes using the product service API
   // const productService = getProductService();
   // const unsubscribe = productService.subscribe(handleProductChange);
-  
+
   // Store the unsubscribe function somewhere if needed for cleanup
   // For now, we'll assume these subscriptions live for the lifetime of the application
-  
+
   console.debug("All workflows registered and subscribed to product changes");
 }

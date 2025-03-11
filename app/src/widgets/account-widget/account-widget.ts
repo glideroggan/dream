@@ -8,14 +8,17 @@ import { BaseWidget } from "../../components/base-widget";
 import { Account } from "../../repositories/models/account-models";
 
 const template = html<AccountWidget>/*html*/ `
+
   <div class="account-widget">
     <div class="widget-action-bar">
+      ${when(x => x.accountsLoaded && x.accounts.length > 0, html<AccountWidget>/*html*/`}
       <button class="transfer-button" 
         @click="${x => x.openTransferWorkflow()}" 
         title="Transfer Money"
         ?disabled="${x => x.accountsLoaded && x.accounts.length === 0}">
         Transfer
       </button>
+      `)}
     </div>
     
     <div class="content-area">

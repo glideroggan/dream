@@ -84,7 +84,7 @@ const template = html<TransactionListComponent>/*html*/ `
             
             ${when(x => x.hasMoreRegularTransactions, html<TransactionListComponent>/*html*/`
               <button class="view-all-button" @click="${x => x.loadMoreTransactions()}">
-                Load more transactions
+                Load more transactions <span class="arrow">↓</span>
               </button>
             `)}
           `)}
@@ -440,14 +440,29 @@ const styles = css`
   .view-all-button {
     display: block;
     width: 100%;
-    padding: 8px;
-    background-color: transparent;
+    padding: 10px;
+    background-color: var(--view-more-bg, rgba(52, 152, 219, 0.05));
     border: none;
     border-top: 1px solid var(--divider-color, #eaeaea);
     color: var(--primary-color, #3498db);
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     text-align: center;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    border-radius: 0 0 8px 8px;
+    margin-top: 4px;
+  }
+  
+  .view-all-button:hover {
+    background-color: var(--view-more-hover-bg, rgba(52, 152, 219, 0.12));
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+  
+  .view-all-button:active {
+    transform: translateY(0);
+    background-color: var(--view-more-active-bg, rgba(52, 152, 219, 0.2));
   }
   
   .view-all-button:hover {
