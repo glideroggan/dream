@@ -1,8 +1,5 @@
 # BUGS
-- ✔️something is broken with the grid-layout, its no longer working nice when resizing the window
-- ✔️try to see if we can get rid of the observer for wrapper content
-  seems like it is expensive during width changes in the browser
-- why do we have scrollbars when none of the widgets are overflowing?
+- ✔️why do we have scrollbars when none of the widgets are overflowing?
 - looks like there are some mocks in the loan-service file
 - the transaction signing is not so nice, the style of it should improve
 - need toast error when failing to start a workflow

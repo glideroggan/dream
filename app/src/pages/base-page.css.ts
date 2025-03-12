@@ -9,7 +9,7 @@ export const baseStyles = css`
 
   .content-container {
     padding: 1.5rem;
-    height: 100%;
+    // height: 100%;
     position: relative;
   }
 
