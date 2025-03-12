@@ -1,11 +1,13 @@
 import { customElement, html, css, observable, attr, when } from "@microsoft/fast-element";
-import { WorkflowBase } from "../workflow-base";
+import { WorkflowBase, WorkflowResult } from "../workflow-base";
 import { kycService, KycLevel, KycStatus } from "../../services/kyc-service";
 
 // Import step components
 import "./step1-component";
 import "./step2-component";
 import "./step3-component";
+import { workflowManager } from "../../services/workflow-manager-service";
+import { WorkflowIds } from "../workflow-registry";
 
 export interface PersonalInformation {
   fullName: string;
@@ -27,7 +29,7 @@ export interface KYCCompletionData {
 }
 
 // Main workflow template
-const template = html<KycWorkflow>/*html*/`
+const template = html<KycWorkflow>/*html*/ `
   <div class="kyc-workflow">
     <div class="kyc-header">
       <div class="kyc-icon">🪪</div>
@@ -110,7 +112,7 @@ const template = html<KycWorkflow>/*html*/`
         
         <button class="next-button" @click="${x => x.handleNext()}"
                 ?disabled="${x => !x.isCurrentStepValid || x.isProcessing}">
-          ${x => x.currentStep < 3 ? 'Next' : 'Complete Verification'}
+          ${x => x.currentStep < 3 ? 'Next' : 'Sign & Submit'}
         </button>
       </div>
     </div>
@@ -258,7 +260,7 @@ const styles = css`
 })
 export class KycWorkflow extends WorkflowBase {
   @attr({ mode: "boolean" }) autoFocus: boolean = true;
-  
+
   @observable personalInfo: PersonalInformation = {
     fullName: '',
     dateOfBirth: '',
@@ -271,7 +273,7 @@ export class KycWorkflow extends WorkflowBase {
     postalCode: '',
     country: ''
   };
-  
+
   @observable errorMessage: string = '';
   @observable consentChecked: boolean = false;
   @observable uploadedFile: File | null = null;
@@ -282,35 +284,35 @@ export class KycWorkflow extends WorkflowBase {
   @observable requiredKycLevel: KycLevel = KycLevel.STANDARD;
   @observable requiredReason: string = "";
   @observable kycRequirementId: string | undefined = undefined;
-  
+
   initialize(params?: Record<string, any>): void {
     // Set initial title but now change the cancel button text to "Back"
     this.updateTitle("Identity Verification");
-    this.updateFooter(true, "Back to Account"); // Changed from "Cancel" to be more descriptive
-    
+    this.updateFooter(true, "Back to Account");
+
     // Set the modal's primary button to disabled so they use our buttons instead
     this.notifyValidation(false);
-    
+
     if (params?.kycLevel) {
       this.requiredKycLevel = params.kycLevel;
     }
-    
+
     if (params?.reason) {
       this.requiredReason = params.reason;
     }
-    
+
     if (params?.kycRequirementId) {
       this.kycRequirementId = params.kycRequirementId;
       console.debug(`KYC workflow initialized with requirement ID: ${this.kycRequirementId}`);
     }
-    
+
     // Validate the first step
     this.validateCurrentStep();
   }
-  
+
   connectedCallback() {
     super.connectedCallback();
-    
+
     // Initialize with empty strings to avoid undefined
     this.personalInfo = {
       fullName: '',
@@ -324,76 +326,76 @@ export class KycWorkflow extends WorkflowBase {
       postalCode: '',
       country: ''
     };
-    
+
     // Add required attributes to form fields
     setTimeout(() => {
       const requiredFields = [
-        'fullName', 'dateOfBirth', 'nationality', 
-        'idType', 'idNumber', 'addressLine1', 
+        'fullName', 'dateOfBirth', 'nationality',
+        'idType', 'idNumber', 'addressLine1',
         'city', 'postalCode', 'country'
       ];
-      
+
       requiredFields.forEach(fieldId => {
         const field = this.shadowRoot?.querySelector(`[id="${fieldId}"]`) as HTMLInputElement | HTMLSelectElement;
         if (field) field.required = true;
       });
     }, 0);
   }
-  
+
   /**
    * Handle field changes from step components
    */
   handleFieldChanged(event: Event): void {
     const detail = (event as CustomEvent).detail;
-    
+
     if (detail.field && detail.value !== undefined) {
       // Update the specific field
       this.personalInfo = {
         ...this.personalInfo,
         [detail.field]: detail.value
       };
-      
+
       // Validate the current step
       this.validateCurrentStep();
     }
   }
-  
+
   /**
    * Handle document upload event from step 2
    */
   handleDocumentUploaded(event: Event): void {
     const detail = (event as CustomEvent).detail;
-    
+
     if (detail.fileName) {
       this.uploadedFileName = detail.fileName;
       this.uploadedFile = {} as File; // Fake file object
-      
+
       // Validate the current step
       this.validateCurrentStep();
     }
   }
-  
+
   /**
    * Handle consent checkbox change from step 3
    */
   handleConsentChanged(event: Event): void {
     const detail = (event as CustomEvent).detail;
-    
+
     if (detail.checked !== undefined) {
       this.consentChecked = detail.checked;
-      
+
       // Validate the current step
       this.validateCurrentStep();
     }
   }
-  
+
   /**
    * Validate the current step
    */
   validateCurrentStep(): void {
     this.errorMessage = "";
     this.isCurrentStepValid = false;
-    
+
     switch (this.currentStep) {
       case 1:
         // Check personal information
@@ -401,91 +403,91 @@ export class KycWorkflow extends WorkflowBase {
           this.errorMessage = "Please enter your full name";
           return;
         }
-        
+
         if (!this.personalInfo.dateOfBirth) {
           this.errorMessage = "Please enter your date of birth";
           return;
         }
-        
+
         // Validate age (must be at least 18)
         const birthDate = new Date(this.personalInfo.dateOfBirth);
         const today = new Date();
         let age = today.getFullYear() - birthDate.getFullYear();
         const monthDiff = today.getMonth() - birthDate.getMonth();
-        
+
         if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
           age--;
         }
-        
+
         if (age < 18) {
           this.errorMessage = "You must be at least 18 years old";
           return;
         }
-        
+
         if (!this.personalInfo.nationality) {
           this.errorMessage = "Please select your nationality";
           return;
         }
-        
+
         this.isCurrentStepValid = true;
         break;
-      
+
       case 2:
         // Check ID information
         if (!this.personalInfo.idType) {
           this.errorMessage = "Please select an ID type";
           return;
         }
-        
+
         if (!this.personalInfo.idNumber) {
           this.errorMessage = "Please enter your ID number";
           return;
         }
-        
+
         // Simpler validation for the fake document upload
         if (!this.uploadedFileName) {
           this.errorMessage = "Please upload your ID document";
           return;
         }
-        
+
         this.isCurrentStepValid = true;
         break;
-      
+
       case 3:
         // Check address information
         if (!this.personalInfo.addressLine1) {
           this.errorMessage = "Please enter your address";
           return;
         }
-        
+
         if (!this.personalInfo.city) {
           this.errorMessage = "Please enter your city";
           return;
         }
-        
+
         if (!this.personalInfo.postalCode) {
           this.errorMessage = "Please enter your postal code";
           return;
         }
-        
+
         if (!this.personalInfo.country) {
           this.errorMessage = "Please select your country";
           return;
         }
-        
+
         if (!this.consentChecked) {
           this.errorMessage = "You must agree to the terms";
           return;
         }
-        
+
         this.isCurrentStepValid = true;
         break;
-      
+
       default:
         this.isCurrentStepValid = false;
     }
   }
-  
+
   /**
    * Handle going back to the previous step
    */
@@ -495,23 +497,50 @@ export class KycWorkflow extends WorkflowBase {
       this.validateCurrentStep();
     }
   }
-  
+
+  // handles the signing nested workflow
+  public resume(result?: WorkflowResult): void {
+
+    console.log('KYC workflow resumed after nested workflow', result)
+
+    // Make sure we restore the original UI state - update the modal title and button text
+    this.updateTitle("Identity Verification");
+    this.updateFooter(true, "Back to Account");
+
+    // Reset the error message by default
+    this.errorMessage = ''
+
+    if (result?.success) {
+      // The nested workflow was successful, so we can complete this one
+      this.completeKyc();
+    }
+  }
+
   /**
    * Handle clicking the next button
    */
-  handleNext(): void {
+  async handleNext(): Promise<void> {
     if (!this.isCurrentStepValid || this.isProcessing) return;
-    
+
     if (this.currentStep < 3) {
       // Move to the next step
       this.currentStep++;
       this.validateCurrentStep();
     } else {
-      // On the last step, complete the verification
-      this.completeKyc();
+      // on the last step, start the signing workflow
+      const eventResults = await this.startNestedWorkflow(WorkflowIds.SIGNING, {
+        message: "Please sign to confirm your identity",
+        documentName: "KYC Verification",
+        primaryButtonText: "Done"
+      })
+      const results = (eventResults as any).detail as WorkflowResult;
+      console.log("Signing workflow results:", results);
+      if (results?.success) {
+        this.completeKyc();
+      }
     }
   }
-  
+
   /**
    * Handle the primary button click from the modal
    * For KYC workflow, the modal's primary button is actually a "Back" button
@@ -522,29 +551,31 @@ export class KycWorkflow extends WorkflowBase {
     // Use a more specific message that won't show up in the parent workflow
     this.cancel("Identity verification cancelled by user");
   }
-  
+
   completeKyc(): void {
+    console.log("KYC verification completed successfully");
     this.isProcessing = true;
     this.errorMessage = "";
-    
+
     // Compile the completion data
     const completionData: KYCCompletionData = {
       personalInfo: this.personalInfo,
       verificationStatus: 'pending', // Initially always pending until "verified" by backend
       uploadedFileName: this.uploadedFileName
     };
-    
+
     // Save to the KYC service
     kycService.saveKycVerificationData(completionData, this.requiredKycLevel)
       .then(() => {
         // Also update the KYC status
         return kycService.updateKycStatus(
-          KycStatus.PENDING, 
+          KycStatus.PENDING,
           this.requiredKycLevel
         );
       })
       .then(() => {
         // Complete the workflow with success, including the requirement ID if we have it
+        console.log("KYC data saved successfully:", completionData);
         this.complete(true, {
           verificationStatus: 'pending',
           level: this.requiredKycLevel,
@@ -558,5 +589,7 @@ export class KycWorkflow extends WorkflowBase {
       .finally(() => {
         this.isProcessing = false;
       });
+
   }
+
 }

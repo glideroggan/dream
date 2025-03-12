@@ -429,41 +429,41 @@ export interface SigningResult {
 })
 export class SigningWorkflow extends WorkflowBase {
   @attr({ mode: "boolean" }) autoFocus: boolean = true;
-  
+
   // Workflow parameters
   @observable message: string = "";
   @observable documentName: string = "";
   @observable documentHash: string = "";
-  
+
   // UI state
   @observable step: 'init' | 'signing' | 'completed' = 'init';
   @observable errorMessage: string = "";
   @observable progress: number = 100;
   @observable remainingTime: string = "5:00";
   @observable signingResult: SigningResult | null = null;
-  
+
   // Signing state
   private signingRequest: SigningRequest | null = null;
   private stopPollingCallback: (() => void) | null = null;
   private countdownInterval: number | null = null;
   private expiryTime: Date | null = null;
-  
+
   initialize(params?: Record<string, any>): void {
     // Set initial title and hide footer (we'll use our own buttons)
     this.updateTitle("Sign with BankID");
-    this.updateFooter(false);
-    
+    this.updateFooter(true, params?.primaryButtonText || "Sign");
+
     // Initialize from parameters
     if (params) {
       if (params.message) this.message = params.message;
       if (params.documentName) this.documentName = params.documentName;
       if (params.documentHash) this.documentHash = params.documentHash;
     }
-    
+
     // Notify the host that form validation is valid (since we use our own buttons)
-    this.notifyValidation(true);
+    this.notifyValidation(false);
   }
-  
+
   /**
    * Start an example transaction signing
    */
@@ -472,7 +472,7 @@ export class SigningWorkflow extends WorkflowBase {
     this.documentName = "";
     this.documentHash = "";
   }
-  
+
   /**
    * Start an example document signing
    */
@@ -481,7 +481,7 @@ export class SigningWorkflow extends WorkflowBase {
     this.documentName = "Loan Agreement.pdf";
     this.documentHash = "SHA256:f4b3c7d8e9a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8";
   }
-  
+
   /**
    * Clean up any resources when the workflow disconnects
    */
@@ -489,7 +489,7 @@ export class SigningWorkflow extends WorkflowBase {
     super.disconnectedCallback();
     this.cleanupResources();
   }
-  
+
   /**
    * Clean up timers and polling
    */
@@ -499,41 +499,41 @@ export class SigningWorkflow extends WorkflowBase {
       this.stopPollingCallback();
       this.stopPollingCallback = null;
     }
-    
+
     // Clear countdown timer
     if (this.countdownInterval !== null) {
       clearInterval(this.countdownInterval);
       this.countdownInterval = null;
     }
   }
-  
+
   /**
    * Handle the "Sign" button click - initiate signing process
    */
   handleInitiateSigning(): void {
     // Initiate the signing process
     this.signingRequest = signingService.initiateSigning(
-      this.message, 
+      this.message,
       this.documentHash
     );
-    
+
     // Update UI
     this.step = 'signing';
     this.errorMessage = "";
     this.progress = 100;
-    
+
     // Start expiry countdown
     this.expiryTime = this.signingRequest.expiresAt;
     this.updateRemainingTime();
     this.startCountdown();
-    
+
     // Start polling for status updates
     this.stopPollingCallback = signingService.pollSigningStatus(
       this.signingRequest.id,
       (request) => this.handleSigningStatusUpdate(request)
     );
   }
-  
+
   /**
    * Handle status updates from the signing service
    */
@@ -549,8 +549,9 @@ export class SigningWorkflow extends WorkflowBase {
         };
         this.step = 'completed';
         this.cleanupResources();
+
         break;
-        
+
       case SigningStatus.REJECTED:
         this.signingResult = {
           success: false,
@@ -559,7 +560,7 @@ export class SigningWorkflow extends WorkflowBase {
         this.step = 'completed';
         this.cleanupResources();
         break;
-        
+
       case SigningStatus.EXPIRED:
         this.signingResult = {
           success: false,
@@ -568,7 +569,7 @@ export class SigningWorkflow extends WorkflowBase {
         this.step = 'completed';
         this.cleanupResources();
         break;
-        
+
       case SigningStatus.CANCELLED:
         this.signingResult = {
           success: false,
@@ -579,7 +580,7 @@ export class SigningWorkflow extends WorkflowBase {
         break;
     }
   }
-  
+
   /**
    * Start the countdown timer for request expiry
    */
@@ -588,7 +589,7 @@ export class SigningWorkflow extends WorkflowBase {
     if (this.countdownInterval !== null) {
       clearInterval(this.countdownInterval);
     }
-    
+
     // Update every second
     this.countdownInterval = window.setInterval(() => {
       const expired = this.updateRemainingTime();
@@ -600,42 +601,42 @@ export class SigningWorkflow extends WorkflowBase {
       }
     }, 1000);
   }
-  
+
   /**
    * Update the countdown display
    * @returns True if the request has expired
    */
   private updateRemainingTime(): boolean {
     if (!this.expiryTime) return false;
-    
+
     const now = new Date();
     const difference = this.expiryTime.getTime() - now.getTime();
-    
+
     if (difference <= 0) {
       this.remainingTime = "0:00";
       this.progress = 0;
       return true;
     }
-    
+
     // Calculate minutes and seconds remaining
     const minutes = Math.floor(difference / 60000);
     const seconds = Math.floor((difference % 60000) / 1000);
     this.remainingTime = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    
+
     // Calculate progress as percentage of time remaining
     // Assuming the initial timeout was 5 minutes
     this.progress = Math.min(100, Math.max(0, difference / (5 * 60000) * 100));
-    
+
     return false;
   }
-  
+
   /**
    * Handle the decline button click in the init step
    */
   handleDecline(): void {
     this.cancel("Signing cancelled by user");
   }
-  
+
   /**
    * Handle the cancel button click in the signing step
    */
@@ -645,34 +646,47 @@ export class SigningWorkflow extends WorkflowBase {
     }
     this.cancel("Signing cancelled by user");
   }
-  
+
   /**
    * Handle the close button click in the completed step
    */
   handleClose(): void {
     if (this.signingResult) {
+      console.log("Signing result:", this.signingResult); 
       this.complete(
-        this.signingResult.success, 
+        this.signingResult.success,
         {
           signature: this.signingResult.signature,
           documentHash: this.signingResult.documentHash
-        }, 
+        },
         this.signingResult.message
       );
     } else {
+      console.log("No signing result available");
       this.cancel("Signing process was closed");
     }
   }
-  
+
   /**
    * Demo function to simulate approval (for testing only)
    */
   simulateApproval(): void {
     if (this.signingRequest) {
       signingService.simulateApproval(this.signingRequest.id);
+
+      // if (this.signingResult) {
+      //   this.complete(this.signingResult.success, {
+      //     signature: this.signingResult.signature,
+      //     documentHash: this.signingResult.documentHash
+      //   }, "Signing submitted successfully");
+      // } else {
+      //   this.cancel("Signing cancelled by user");
+      // }
+
+
     }
   }
-  
+
   /**
    * Demo function to simulate rejection (for testing only)
    */
@@ -681,12 +695,13 @@ export class SigningWorkflow extends WorkflowBase {
       signingService.simulateRejection(this.signingRequest.id);
     }
   }
-  
+
   /**
    * Handle primary action from modal footer
    * (not used since we hide the footer)
    */
   public handlePrimaryAction(): void {
-    // Not used
+    this.cancel("Signing cancelled by user");
+
   }
 }

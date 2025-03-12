@@ -7,14 +7,14 @@ const template = html<KycStep3Component>/*html*/`
     <div class="form-group">
       <label for="addressLine1">Address Line 1</label>
       <input type="text" id="addressLine1" placeholder="Street address"
-            :value="${x => x.personalInfo.addressLine1}"
+            :value="${x => x?.personalInfo.addressLine1}"
             @input="${(x, c) => x.handleTextInput('addressLine1', c.event)}" />
     </div>
 
     <div class="form-group">
       <label for="addressLine2">Address Line 2 (Optional)</label>
       <input type="text" id="addressLine2" placeholder="Apartment, suite, unit, etc."
-            :value="${x => x.personalInfo.addressLine2 || ''}"
+            :value="${x => x?.personalInfo.addressLine2 || ''}"
             @input="${(x, c) => x.handleTextInput('addressLine2', c.event)}" />
     </div>
 
@@ -22,14 +22,14 @@ const template = html<KycStep3Component>/*html*/`
       <div class="form-group">
         <label for="city">City</label>
         <input type="text" id="city" placeholder="City"
-              :value="${x => x.personalInfo.city}"
+              :value="${x => x?.personalInfo.city}"
               @input="${(x, c) => x.handleTextInput('city', c.event)}" />
       </div>
 
       <div class="form-group">
         <label for="postalCode">Postal Code</label>
         <input type="text" id="postalCode" placeholder="Postal Code"
-              :value="${x => x.personalInfo.postalCode}"
+              :value="${x => x?.personalInfo.postalCode}"
               @input="${(x, c) => x.handleTextInput('postalCode', c.event)}" />
       </div>
     </div>
@@ -37,7 +37,7 @@ const template = html<KycStep3Component>/*html*/`
     <div class="form-group">
       <label for="country">Country</label>
       <select id="country" 
-              :value="${x => x.personalInfo.country}"
+              :value="${x => x?.personalInfo.country}"
               @change="${(x, c) => x.handleTextInput('country', c.event)}">
         <option value="" disabled selected>Select your country</option>
         <option value="US">United States</option>
