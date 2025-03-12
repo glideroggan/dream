@@ -581,7 +581,7 @@ export class BasePage extends FASTElement {
       console.error('No widget ID provided in focus-widget event');
       return;
     }
-    console.log(`Focusing widget: ${widgetId}, target page: ${detail.targetPage}, current page: ${this.pageType}`);
+    console.debug(`Focusing widget: ${widgetId}, target page: ${detail.targetPage}, current page: ${this.pageType}`);
     if (targetPage && targetPage !== this.pageType) {
       console.debug(`Ignoring widget focus event for ${widgetId} because target page ${targetPage} doesn't match current page ${this.pageType}`);
       return;
@@ -595,7 +595,7 @@ export class BasePage extends FASTElement {
     if (this.shadowRoot) {
       const widgetElement = this.shadowRoot.querySelector(`[data-widget-id="${widgetId}"]`);
       if (widgetElement) {
-        console.log(`Scrolling to widget ${widgetId} on ${this.pageType} page`);
+        console.debug(`Scrolling to widget ${widgetId} on ${this.pageType} page`);
         widgetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
         widgetElement.classList.add('widget-highlight');
         setTimeout(() => {

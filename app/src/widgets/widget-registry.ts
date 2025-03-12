@@ -200,7 +200,7 @@ function registerWidgetWithSearch(widget: EnhancedWidgetDefinition): void {
     // FIXED: Let search component determine targetPage dynamically at runtime
     // instead of hardcoding it here
     action: (currentPage:string) => {
-      console.log(`Search requesting focus on widget: ${widget.id}`);
+      console.debug(`Search requesting focus on widget: ${widget.id}`);
       
       // The focus-widget event will be processed by the event handler in base-page.ts
       // and the current page will be determined by the search component

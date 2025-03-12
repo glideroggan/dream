@@ -470,7 +470,7 @@ export class AccountWidget extends BaseWidget {
   //  */
   // handleAccountToggle(event: Event) {
   //   const customEvent = event as CustomEvent;
-  //   console.log('Account toggled:', customEvent.detail);
+  //   console.debug('Account toggled:', customEvent.detail);
     
   //   // Use the new helper method to trigger size recalculation
   //   // setTimeout(() => this.notifyContentChanged(), 50);

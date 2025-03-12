@@ -5,9 +5,7 @@ import {
   LoanType, 
   LoanStatus, 
   LoanApplication, 
-  EligibilityResult, 
-  LoanCalculationResult 
-} from '../repositories/models/loan-models';
+  EligibilityResult} from '../repositories/models/loan-models';
 import { ProductEntity, ProductEntityType } from '../repositories/models/product-models';
 
 /**

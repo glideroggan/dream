@@ -415,15 +415,15 @@ export class WidgetSizingManager {
   // }
 
   public handleContentChange(event: Event): void {
-    console.log('Content change detected');
+    console.debug('Content change detected');
     const contentElement = event.target as HTMLElement;
     const contentScrollHeight = contentElement.scrollHeight;
     const contentHeight = contentElement.clientHeight;
-    console.log(`Content height: ${contentHeight}px, scroll height: ${contentScrollHeight}px`);
+    console.debug(`Content height: ${contentHeight}px, scroll height: ${contentScrollHeight}px`);
 
     const rowHeight = MIN_ROW_HEIGHT + DEFAULT_GRID_GAP;
     const neededRows = Math.ceil(contentScrollHeight / rowHeight + 1); // Add 0.5 row buffer
-    console.log(`Content needs ${neededRows} rows`);
+    console.debug(`Content needs ${neededRows} rows`);
     this.changeSpans(this.component.colSpan, neededRows + 1, false);
   }
 
@@ -633,7 +633,7 @@ export class WidgetSizingManager {
       gridItemParent.style.gridRow = `span ${rowSpan}`;
     }
 
-    console.log(`Direct grid update: ${colSpan}x${rowSpan} applied to DOM`);
+    console.debug(`Direct grid update: ${colSpan}x${rowSpan} applied to DOM`);
   }
 
   /**

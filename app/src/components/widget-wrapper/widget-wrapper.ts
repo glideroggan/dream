@@ -49,7 +49,7 @@ export class WidgetWrapper extends FASTElement {
   @attr minRowSpan: number = 1;
 
   colSpanChanged(oldValue: number, newValue: number) {
-    console.log(`Column span changed from ${oldValue} to ${newValue}`);
+    console.debug(`Column span changed from ${oldValue} to ${newValue}`);
     if (this.initialized) {
       this.sizingManager.changeSpans(newValue, this.rowSpan, true, true);
     }
