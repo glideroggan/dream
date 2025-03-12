@@ -56,10 +56,6 @@ export const template = html<WidgetWrapper>/*html*/`
             <button 
               class="auto-size-toggle ${x => x.autoSizeEnabled ? 'active' : ''}"
               type="button"
-              @click="${(x, c) => {
-                c.event.preventDefault();
-                x.toggleAutoSize();
-              }}"
               title="${x => x.autoSizeEnabled ? 'Disable auto-sizing' : 'Enable auto-sizing'}">
               <span class="auto-icon">A</span>
             </button>

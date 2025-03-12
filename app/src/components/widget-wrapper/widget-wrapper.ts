@@ -48,12 +48,21 @@ export class WidgetWrapper extends FASTElement {
   @attr minColSpan: number = 1;
   @attr minRowSpan: number = 1;
 
+  colSpanChanged(oldValue: number, newValue: number) {
+    console.log(`Column span changed from ${oldValue} to ${newValue}`);
+    if (this.initialized) {
+      this.sizingManager.changeSpans(newValue, this.rowSpan, true, true);
+    }
+  }
+
   // Timeout configuration
   @attr({ mode: "fromView" }) warningTimeout: number = 5000; // 5 seconds for warning
   @attr({ mode: "fromView" }) failureTimeout: number = 10000; // 10 seconds for auto-failure
 
   // Widget definition object
   @observable _widgetDefinition: any = null;
+
+
 
   // Events
   events: ReturnType<typeof createWidgetEvents>;
@@ -200,7 +209,7 @@ export class WidgetWrapper extends FASTElement {
     document.addEventListener('widget-module-error', this.eventHandlers.handleModuleError);
 
     // Listen for resize requests from the widget
-    this.addEventListener('widget-request-resize', this.handleResizeRequest.bind(this));
+    // this.addEventListener('widget-request-resize', this.handleResizeRequest.bind(this));
 
     // Check for existing error in widget service
     this.stateManager.checkForExistingErrors();
@@ -208,16 +217,17 @@ export class WidgetWrapper extends FASTElement {
     // Check if we need to load the module for this widget
     this.stateManager.initializeWidgetModule();
 
+    this.addEventListener('content-change', this.sizingManager.handleContentChange.bind(this.sizingManager));
     // Set up content resize observer
-    if (this.enableAutoSize) {
-      this.sizingManager.setupContentResizeObserver();
-    }
+    // if (this.enableAutoSize) {
+    //   this.sizingManager.setupContentResizeObserver();
+    // }
     
     // Listen for content overflow events from the widget
-    this.addEventListener('widget-request-resize', this.sizingManager.handleResizeRequest.bind(this.sizingManager));
+    // this.addEventListener('widget-request-resize', this.sizingManager.handleResizeRequest.bind(this.sizingManager));
     
     // Listen for content shrink events
-    this.addEventListener('widget-content-shrink', this.sizingManager.handleContentShrink.bind(this.sizingManager));
+    // this.addEventListener('widget-content-shrink', this.sizingManager.handleContentShrink.bind(this.sizingManager));
 
     console.debug(`Widget wrapper connected: ${this.displayName}, spans: ${this.colSpan}x${this.rowSpan}`);
   }
@@ -231,17 +241,19 @@ export class WidgetWrapper extends FASTElement {
     this.removeEventListener('initialized', this.eventHandlers.handleInitialized);
     this.removeEventListener('load-complete', this.eventHandlers.handleInitialized);
     document.removeEventListener('widget-module-error', this.eventHandlers.handleModuleError);
+
+    this.removeEventListener('content-change', this.sizingManager.handleContentChange.bind(this.sizingManager));
     
     // Remove resize-related event listeners
-    this.removeEventListener('widget-request-resize', this.handleResizeRequest.bind(this));
-    this.removeEventListener('widget-request-resize', this.sizingManager.handleResizeRequest.bind(this.sizingManager));
-    this.removeEventListener('widget-content-shrink', this.sizingManager.handleContentShrink.bind(this.sizingManager));
+    // this.removeEventListener('widget-request-resize', this.handleResizeRequest.bind(this));
+    // this.removeEventListener('widget-request-resize', this.sizingManager.handleResizeRequest.bind(this.sizingManager));
+    // this.removeEventListener('widget-content-shrink', this.sizingManager.handleContentShrink.bind(this.sizingManager));
 
     // Clean up content resize observer
-    if (this.contentResizeObserver) {
-      this.contentResizeObserver.disconnect();
-      this.contentResizeObserver = null;
-    }
+    // if (this.contentResizeObserver) {
+    //   this.contentResizeObserver.disconnect();
+    //   this.contentResizeObserver = null;
+    // }
   }
 
   /**
@@ -341,9 +353,9 @@ export class WidgetWrapper extends FASTElement {
   /**
    * Handle resize requests from widgets - delegate to sizing manager
    */
-  handleResizeRequest(event: Event): void {
-    this.sizingManager.handleResizeRequest(event);
-  }
+  // handleResizeRequest(event: Event): void {
+  //   this.sizingManager.handleResizeRequest(event);
+  // }
 
   /**
    * Request retry of widget load - delegate to state manager
@@ -376,9 +388,9 @@ export class WidgetWrapper extends FASTElement {
   /**
    * Change widget spans - delegate to sizing manager
    */
-  changeSpans(newColSpan: number, newRowSpan: number, isUserResized: boolean = true, isContentShrink: boolean = false, detail: any = {}): void {
-    this.sizingManager.changeSpans(newColSpan, newRowSpan, isUserResized, isContentShrink, detail);
-  }
+  // changeSpans(newColSpan: number, newRowSpan: number, isUserResized: boolean = true, isContentShrink: boolean = false, detail: any = {}): void {
+  //   this.sizingManager.changeSpans(newColSpan, newRowSpan, isUserResized, isContentShrink, detail);
+  // }
 
   /**
    * Increase column span - delegate to sizing manager
@@ -411,7 +423,7 @@ export class WidgetWrapper extends FASTElement {
   /**
    * Toggle auto-sizing behavior - delegate to sizing manager
    */
-  toggleAutoSize(): void {
-    this.sizingManager.toggleAutoSize();
-  }
+  // toggleAutoSize(): void {
+  //   this.sizingManager.toggleAutoSize();
+  // }
 }

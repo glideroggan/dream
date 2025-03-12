@@ -396,6 +396,7 @@ export class AccountListComponent extends FASTElement {
   handleAccountClick(account: Account) {
     // Toggle expanded state
     this.expandedAccountId = this.expandedAccountId === account.id ? null : account.id;
+    setTimeout(() => this.$emit('content-change'), 50);
     
   }
 

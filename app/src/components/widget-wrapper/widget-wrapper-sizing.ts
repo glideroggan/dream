@@ -161,50 +161,51 @@ export class WidgetSizingManager {
     this.component.setAttribute('colSpan', newColSpan.toString());
 
     // Create event that explicitly preserves the current row span
-    const spanChangeEvent = new CustomEvent('widget-spans-change', {
-      bubbles: true,
-      composed: true,
-      detail: {
-        widgetId: this.component.widgetId,
-        pageType: this.component.pageType,
-        oldColSpan: this.component.colSpan,
-        oldRowSpan: currentRowSpan,
-        colSpan: newColSpan,
-        rowSpan: currentRowSpan, // Important: keep current row span
-        isUserResized: true,
-        source: 'colSpanChangeOnly',
-        preserveRowSpan: true // Add a flag to indicate row span should be preserved
-      }
-    });
+    // const spanChangeEvent = new CustomEvent('widget-spans-change', {
+    //   bubbles: true,
+    //   composed: true,
+    //   detail: {
+    //     widgetId: this.component.widgetId,
+    //     pageType: this.component.pageType,
+    //     oldColSpan: this.component.colSpan,
+    //     oldRowSpan: currentRowSpan,
+    //     colSpan: newColSpan,
+    //     rowSpan: currentRowSpan, // Important: keep current row span
+    //     isUserResized: true,
+    //     source: 'colSpanChangeOnly',
+    //     preserveRowSpan: true // Add a flag to indicate row span should be preserved
+    //   }
+    // });
 
-    // Also update our own classes if we're directly in a grid layout
-    const parentElement = this.component.parentElement;
-    if (parentElement && parentElement.classList.contains('widgets-container')) {
-      // Remove all existing col-span-* classes
-      for (let i = 1; i <= this.component.maxColSpan; i++) {
-        this.component.classList.remove(`col-span-${i}`);
-      }
-      // Add the new col-span class
-      this.component.classList.add(`col-span-${newColSpan}`);
-    }
+    return
+    // // Also update our own classes if we're directly in a grid layout
+    // const parentElement = this.component.parentElement;
+    // if (parentElement && parentElement.classList.contains('widgets-container')) {
+    //   // Remove all existing col-span-* classes
+    //   for (let i = 1; i <= this.component.maxColSpan; i++) {
+    //     this.component.classList.remove(`col-span-${i}`);
+    //   }
+    //   // Add the new col-span class
+    //   this.component.classList.add(`col-span-${newColSpan}`);
+    // }
 
-    // Update parent grid styles directly but ONLY for columns
-    if (parentElement) {
-      // Remove existing column span classes
-      for (let i = 1; i <= this.component.maxColSpan; i++) {
-        parentElement.classList.remove(`col-span-${i}`);
-      }
-      parentElement.classList.add(`col-span-${newColSpan}`);
-      parentElement.style.gridColumn = `span ${newColSpan}`;
-    }
+    // // Update parent grid styles directly but ONLY for columns
+    // if (parentElement) {
+    //   // Remove existing column span classes
+    //   for (let i = 1; i <= this.component.maxColSpan; i++) {
+    //     parentElement.classList.remove(`col-span-${i}`);
+    //   }
+    //   parentElement.classList.add(`col-span-${newColSpan}`);
+    //   parentElement.style.gridColumn = `span ${newColSpan}`;
+    // }
 
-    // Then dispatch the event for the grid to handle
-    this.component.dispatchEvent(spanChangeEvent);
+    // // Then dispatch the event for the grid to handle
+    // // this.component.dispatchEvent(spanChangeEvent);
 
-    // Save the dimensions if needed
-    if (this.component.saveDimensions) {
-      this.component.settingsManager.saveDimensionsToSettings(newColSpan, this.component.rowSpan);
-    }
+    // // Save the dimensions if needed
+    // if (this.component.saveDimensions) {
+    //   this.component.settingsManager.saveDimensionsToSettings(newColSpan, this.component.rowSpan);
+    // }
   }
 
   /**
@@ -232,20 +233,20 @@ export class WidgetSizingManager {
         this.blockResizeEvents(500);
         
         // Create event with complete details matching the column span events
-        const spanChangeEvent = new CustomEvent('widget-spans-change', {
-          bubbles: true,
-          composed: true,
-          detail: {
-            widgetId: this.component.widgetId,
-            pageType: this.component.pageType,
-            oldColSpan: this.component.colSpan,
-            oldRowSpan: oldRowSpan,
-            colSpan: this.component.colSpan,
-            rowSpan: newRowSpan,
-            isUserResized: true,
-            source: 'increaseRowSpan'
-          }
-        });
+        // const spanChangeEvent = new CustomEvent('widget-spans-change', {
+        //   bubbles: true,
+        //   composed: true,
+        //   detail: {
+        //     widgetId: this.component.widgetId,
+        //     pageType: this.component.pageType,
+        //     oldColSpan: this.component.colSpan,
+        //     oldRowSpan: oldRowSpan,
+        //     colSpan: this.component.colSpan,
+        //     rowSpan: newRowSpan,
+        //     isUserResized: true,
+        //     source: 'increaseRowSpan'
+        //   }
+        // });
         
         console.debug(`WidgetWrapper: Dispatching span change for ${this.component.widgetId} with pageType ${this.component.pageType}`);
         
@@ -256,28 +257,29 @@ export class WidgetSizingManager {
         // Update row span classes
         this.updateRowSpanClasses(newRowSpan);
         
+        return
         // Record user resize preference in the resize tracker
-        this.component.resizeTracker.recordUserResize(newRowSpan);
+        // this.component.resizeTracker.recordUserResize(newRowSpan);
         
-        // Notify contained widget about manual resize to prevent auto-sizing
-        const widgetElement = this.component.querySelector('[class*="widget"]');
-        if (widgetElement && typeof (widgetElement as any).setUserResizePreference === 'function') {
-          (widgetElement as any).setUserResizePreference(newRowSpan * (MIN_ROW_HEIGHT + DEFAULT_GRID_GAP));
-        }
+        // // Notify contained widget about manual resize to prevent auto-sizing
+        // const widgetElement = this.component.querySelector('[class*="widget"]');
+        // if (widgetElement && typeof (widgetElement as any).setUserResizePreference === 'function') {
+        //   (widgetElement as any).setUserResizePreference(newRowSpan * (MIN_ROW_HEIGHT + DEFAULT_GRID_GAP));
+        // }
         
-        // Also disable auto-size if not already disabled
-        if (this.component.autoSizeEnabled) {
-          console.debug(`Disabling auto-size after manual resize for ${this.component.widgetId}`);
-          this.component.autoSizeEnabled = false;
-        }
+        // // Also disable auto-size if not already disabled
+        // if (this.component.autoSizeEnabled) {
+        //   console.debug(`Disabling auto-size after manual resize for ${this.component.widgetId}`);
+        //   this.component.autoSizeEnabled = false;
+        // }
         
-        // Then dispatch the event for the grid to handle
-        this.component.dispatchEvent(spanChangeEvent);
+        // // Then dispatch the event for the grid to handle
+        // // this.component.dispatchEvent(spanChangeEvent);
         
-        // Save the dimensions if needed
-        if (this.component.saveDimensions) {
-          this.component.settingsManager.saveDimensionsToSettings(this.component.colSpan, newRowSpan);
-        }
+        // // Save the dimensions if needed
+        // if (this.component.saveDimensions) {
+        //   this.component.settingsManager.saveDimensionsToSettings(this.component.colSpan, newRowSpan);
+        // }
       } catch (error) {
         console.error(`Error dispatching span change event:`, error);
       }
@@ -381,138 +383,153 @@ export class WidgetSizingManager {
   /**
    * Set up observer to monitor content size changes
    */
-  setupContentResizeObserver(): void {
-    if (this.component.contentResizeObserver) {
-      this.component.contentResizeObserver.disconnect();
-    }
+  // setupContentResizeObserver(): void {
+  //   return
+  //   if (this.component.contentResizeObserver) {
+  //     this.component.contentResizeObserver.disconnect();
+  //   }
 
-    this.component.contentResizeObserver = new ResizeObserver(entries => {
-      // Only proceed if auto-size is enabled
-      if (!this.component.enableAutoSize || this.sizeLockActive) return;
+  //   this.component.contentResizeObserver = new ResizeObserver(entries => {
+  //     // Only proceed if auto-size is enabled
+  //     if (!this.component.enableAutoSize || this.sizeLockActive) return;
 
-      const contentElement = entries[0];
-      if (!contentElement) return;
+  //     const contentElement = entries[0];
+  //     if (!contentElement) return;
 
-      const contentRect = contentElement.contentRect;
-      const contentScrollHeight = contentElement.target.scrollHeight;
+  //     const contentRect = contentElement.contentRect;
+  //     const contentScrollHeight = contentElement.target.scrollHeight;
 
-      // More aggressive overflow detection (5px threshold instead of 20px)
-      if (contentScrollHeight > contentRect.height + 5) {
-        // Process immediately without timeout
-        this.handleContentOverflow(contentScrollHeight);
-      }
-    });
+  //     // More aggressive overflow detection (5px threshold instead of 20px)
+  //     if (contentScrollHeight > contentRect.height + 5) {
+  //       // Process immediately without timeout
+  //       this.handleContentOverflow(contentScrollHeight);
+  //     }
+  //   });
 
-    // Immediate observation
-    const contentSlot = this.component.shadowRoot?.querySelector('.widget-content');
-    if (contentSlot) {
-      this.component.contentResizeObserver?.observe(contentSlot);
-      console.debug(`Widget wrapper content observer set up for ${this.component.widgetId}`);
-    }
+  //   // Immediate observation
+  //     const contentSlot = this.component.shadowRoot?.querySelector('.widget-content');
+  //   if (contentSlot) {
+  //     this.component.contentResizeObserver?.observe(contentSlot);
+  //     console.debug(`Widget wrapper content observer set up for ${this.component.widgetId}`);
+  //   }
+  // }
+
+  public handleContentChange(event: Event): void {
+    console.log('Content change detected');
+    const contentElement = event.target as HTMLElement;
+    const contentScrollHeight = contentElement.scrollHeight;
+    const contentHeight = contentElement.clientHeight;
+    console.log(`Content height: ${contentHeight}px, scroll height: ${contentScrollHeight}px`);
+
+    const rowHeight = MIN_ROW_HEIGHT + DEFAULT_GRID_GAP;
+    const neededRows = Math.ceil(contentScrollHeight / rowHeight + 1); // Add 0.5 row buffer
+    console.log(`Content needs ${neededRows} rows`);
+    this.changeSpans(this.component.colSpan, neededRows + 1, false);
   }
 
   /**
    * Handle content overflow by requesting more rows if needed
    */
-  private handleContentOverflow(contentHeight: number): void {
-    // Skip if auto-size is disabled or if manually resized
-    if (!this.component.enableAutoSize ||
-      (this.component.isManuallyResized && !this.component.autoSizeEnabled)) {
-      return;
-    }
+  // private handleContentOverflow(contentHeight: number): void {
+  //   // Skip if auto-size is disabled or if manually resized
+  //   if (!this.component.enableAutoSize ||
+  //     (this.component.isManuallyResized && !this.component.autoSizeEnabled)) {
+  //     return;
+  //   }
 
-    // Calculate how many rows are needed for this content with buffer
-    const rowHeight = MIN_ROW_HEIGHT + DEFAULT_GRID_GAP;
-    const neededRows = Math.ceil(contentHeight / rowHeight + 0.5); // Add 0.5 row buffer
+  //   // Calculate how many rows are needed for this content with buffer
+  //   const rowHeight = MIN_ROW_HEIGHT + DEFAULT_GRID_GAP;
+  //   const neededRows = Math.ceil(contentHeight / rowHeight + 0.5); // Add 0.5 row buffer
 
-    // Get appropriate row span from resize tracker
-    const newRowSpan = this.component.resizeTracker.getExpandedRowSpan(neededRows);
+  //   // Get appropriate row span from resize tracker
+  //   const newRowSpan = this.component.resizeTracker.getExpandedRowSpan(neededRows);
 
-    // Only resize if different from current - be more aggressive with expansion
-    if (newRowSpan > this.component.rowSpan) {
-      console.debug(`Widget ${this.component.widgetId} content overflow detected. ` +
-        `Content height: ${contentHeight}px. Expanding from ${this.component.rowSpan} to ${newRowSpan + 1} rows.`);
+  //   // Only resize if different from current - be more aggressive with expansion
+  //   if (newRowSpan > this.component.rowSpan) {
+  //     console.debug(`Widget ${this.component.widgetId} content overflow detected. ` +
+  //       `Content height: ${contentHeight}px. Expanding from ${this.component.rowSpan} to ${newRowSpan + 1} rows.`);
 
-      // Add one extra row to prevent edge case scrollbars
-      this.changeSpans(this.component.colSpan, newRowSpan + 1, false);
-    }
-  }
+  //     // Add one extra row to prevent edge case scrollbars
+  //     this.changeSpans(this.component.colSpan, newRowSpan + 1, false);
+  //   }
+  // }
 
   /**
    * Handle content shrink events from widgets
    */
-  handleContentShrink(event: Event): void {
-    const customEvent = event as CustomEvent;
-    const { newContentHeight, rowsNeeded } = customEvent.detail;
+  // handleContentShrink(event: Event): void {
+  //   return
+  //   const customEvent = event as CustomEvent;
+  //   const { newContentHeight, rowsNeeded } = customEvent.detail;
 
-    console.debug(`Widget ${this.component.widgetId} received content shrink notification: ${newContentHeight}px (${rowsNeeded} rows needed)`);
+  //   console.debug(`Widget ${this.component.widgetId} received content shrink notification: ${newContentHeight}px (${rowsNeeded} rows needed)`);
 
-    // Skip if auto-size is disabled
-    if (!this.component.autoSizeEnabled) {
-      console.debug(`Widget ${this.component.widgetId} ignoring content shrink - auto-size disabled`);
-      return;
-    }
+  //   // Skip if auto-size is disabled
+  //   if (!this.component.autoSizeEnabled) {
+  //     console.debug(`Widget ${this.component.widgetId} ignoring content shrink - auto-size disabled`);
+  //     return;
+  //   }
 
-    // If we got rows needed directly from the event, use that
-    // Otherwise calculate based on height
-    let neededRows = rowsNeeded;
-    if (!neededRows) {
-      const rowHeight = MIN_ROW_HEIGHT + DEFAULT_GRID_GAP;
-      neededRows = Math.max(Math.ceil(newContentHeight / rowHeight), this.component.minRowSpan);
-    }
+  //   // If we got rows needed directly from the event, use that
+  //   // Otherwise calculate based on height
+  //   let neededRows = rowsNeeded;
+  //   if (!neededRows) {
+  //     const rowHeight = MIN_ROW_HEIGHT + DEFAULT_GRID_GAP;
+  //     neededRows = Math.max(Math.ceil(newContentHeight / rowHeight), this.component.minRowSpan);
+  //   }
 
-    // Add larger buffer to avoid aggressive shrinking (20% instead of 10%)
-    const targetRows = Math.ceil(neededRows * 1.2);
+  //   // Add larger buffer to avoid aggressive shrinking (20% instead of 10%)
+  //   const targetRows = Math.ceil(neededRows * 1.2);
 
-    // Ensure we don't shrink below the minimum
-    const newRowSpan = Math.max(targetRows, this.component.minRowSpan);
+  //   // Ensure we don't shrink below the minimum
+  //   const newRowSpan = Math.max(targetRows, this.component.minRowSpan);
 
-    console.debug(`Widget ${this.component.widgetId} content shrink calculation:
-      Content height: ${newContentHeight}px
-      Content needs ${rowsNeeded} rows
-      Current row span: ${this.component.rowSpan}
-      Target row span: ${newRowSpan}`);
+  //   console.debug(`Widget ${this.component.widgetId} content shrink calculation:
+  //     Content height: ${newContentHeight}px
+  //     Content needs ${rowsNeeded} rows
+  //     Current row span: ${this.component.rowSpan}
+  //     Target row span: ${newRowSpan}`);
 
-    // Only shrink if new size is significantly smaller (at least 20%)
-    if (newRowSpan < this.component.rowSpan * 0.8) {
-      console.debug(`Widget ${this.component.widgetId} shrinking from ${this.component.rowSpan} to ${newRowSpan} rows`);
+  //   // Only shrink if new size is significantly smaller (at least 20%)
+  //   if (newRowSpan < this.component.rowSpan * 0.8) {
+  //     console.debug(`Widget ${this.component.widgetId} shrinking from ${this.component.rowSpan} to ${newRowSpan} rows`);
 
-      // Set the size lock
-      this.sizeLockActive = true;
-      this.sizeLockTargetRows = newRowSpan;
+  //     // Set the size lock
+  //     this.sizeLockActive = true;
+  //     this.sizeLockTargetRows = newRowSpan;
 
-      // Clear any existing size lock timeout
-      if (this.sizeLockTimeoutId !== null) {
-        window.clearTimeout(this.sizeLockTimeoutId);
-      }
+  //     // Clear any existing size lock timeout
+  //     if (this.sizeLockTimeoutId !== null) {
+  //       window.clearTimeout(this.sizeLockTimeoutId);
+  //     }
 
-      // Force immediate DOM update using direct manipulation
-      this.updateRowSpanClasses(newRowSpan);
-      this.changeSpans(this.component.colSpan, newRowSpan, false, true);
-      this.updateParentGridClasses(this.component.colSpan, newRowSpan);
+  //     // Force immediate DOM update using direct manipulation
+  //     this.updateRowSpanClasses(newRowSpan);
+  //     this.changeSpans(this.component.colSpan, newRowSpan, false, true);
+  //     this.updateParentGridClasses(this.component.colSpan, newRowSpan);
 
-      // Use requestAnimationFrame for reliable DOM updates
-      requestAnimationFrame(() => {
-        // Force reflow to ensure DOM is updated
-        void document.body.offsetHeight;
+  //     // Use requestAnimationFrame for reliable DOM updates
+  //     requestAnimationFrame(() => {
+  //       // Force reflow to ensure DOM is updated
+  //       void document.body.offsetHeight;
 
-        // Find and notify parent grid-layout that it needs to update
-        this.triggerGridLayoutUpdate();
+  //       // Find and notify parent grid-layout that it needs to update
+  //       this.triggerGridLayoutUpdate();
 
-        // Release size lock after a short delay
-        this.sizeLockTimeoutId = window.setTimeout(() => {
-          console.debug(`Widget ${this.component.widgetId}: Size lock released after shrink operation`);
-          this.sizeLockActive = false;
-          this.sizeLockTimeoutId = null;
-        }, 200); // Short timeout to prevent oscillation
-      });
-    } else {
-      console.debug(`Widget ${this.component.widgetId} NOT shrinking - difference not significant enough`);
-    }
+  //       // Release size lock after a short delay
+  //       this.sizeLockTimeoutId = window.setTimeout(() => {
+  //         console.debug(`Widget ${this.component.widgetId}: Size lock released after shrink operation`);
+  //         this.sizeLockActive = false;
+  //         this.sizeLockTimeoutId = null;
+  //       }, 200); // Short timeout to prevent oscillation
+  //     });
+  //   } else {
+  //     console.debug(`Widget ${this.component.widgetId} NOT shrinking - difference not significant enough`);
+  //   }
 
-    // Stop propagation since we've handled it
-    event.stopPropagation();
-  }
+  //   // Stop propagation since we've handled it
+  //   event.stopPropagation();
+  // }
 
   /**
    * Block resize events temporarily to prevent oscillation
@@ -596,7 +613,7 @@ export class WidgetSizingManager {
     // Find all possible parent elements that might need updating
     // This helps ensure grid layout updates even with different DOM structures
     const gridItemParent = this.component.parentElement;
-    const gridContainer = this.component.closest('.grid-container') || this.component.closest('grid-layout');
+    // const gridContainer = this.component.closest('.grid-container') || this.component.closest('grid-layout');
 
     // Update immediate parent (usually grid-item)
     if (gridItemParent) {
@@ -616,39 +633,39 @@ export class WidgetSizingManager {
       gridItemParent.style.gridRow = `span ${rowSpan}`;
     }
 
-    console.debug(`Direct grid update: ${colSpan}x${rowSpan} applied to DOM`);
+    console.log(`Direct grid update: ${colSpan}x${rowSpan} applied to DOM`);
   }
 
   /**
    * Toggle auto-sizing behavior
    */
-  toggleAutoSize(): void {
-    // Toggle the state
-    this.component.autoSizeEnabled = !this.component.autoSizeEnabled;
-    console.debug(`Widget ${this.component.widgetId} auto-size ${this.component.autoSizeEnabled ? 'enabled' : 'disabled'}`);
+  // toggleAutoSize(): void {
+  //   // Toggle the state
+  //   this.component.autoSizeEnabled = !this.component.autoSizeEnabled;
+  //   console.debug(`Widget ${this.component.widgetId} auto-size ${this.component.autoSizeEnabled ? 'enabled' : 'disabled'}`);
 
-    if (this.component.autoSizeEnabled) {
-      // Reset user resize preference
-      this.component.isManuallyResized = false;
-      this.component.resizeTracker.resetUserPreference();
+  //   if (this.component.autoSizeEnabled) {
+  //     // Reset user resize preference
+  //     this.component.isManuallyResized = false;
+  //     this.component.resizeTracker.resetUserPreference();
 
-      // Notify contained widget
-      const widgetElement = this.component.querySelector('[class*="widget"]');
-      if (widgetElement && typeof (widgetElement as any).resetUserResizePreference === 'function') {
-        (widgetElement as any).resetUserResizePreference();
-      }
+  //     // Notify contained widget
+  //     const widgetElement = this.component.querySelector('[class*="widget"]');
+  //     if (widgetElement && typeof (widgetElement as any).resetUserResizePreference === 'function') {
+  //       (widgetElement as any).resetUserResizePreference();
+  //     }
 
-      // Check if we need to resize based on current content
-      this.setupContentResizeObserver();
-    } else {
-      // When auto-size is disabled, mark as manually sized to prevent auto-expansion
-      this.component.isManuallyResized = true;
+  //     // Check if we need to resize based on current content
+  //     this.setupContentResizeObserver();
+  //   } else {
+  //     // When auto-size is disabled, mark as manually sized to prevent auto-expansion
+  //     this.component.isManuallyResized = true;
 
-      // Disconnect resize observer when auto-sizing is disabled
-      if (this.component.contentResizeObserver) {
-        this.component.contentResizeObserver.disconnect();
-        this.component.contentResizeObserver = null;
-      }
-    }
-  }
+  //     // Disconnect resize observer when auto-sizing is disabled
+  //     if (this.component.contentResizeObserver) {
+  //       this.component.contentResizeObserver.disconnect();
+  //       this.component.contentResizeObserver = null;
+  //     }
+  //   }
+  // }
 }

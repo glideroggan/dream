@@ -221,6 +221,7 @@ export class SwishWidget extends BaseWidget {
     this.lastTransferDate = "Yesterday";
 
     this.notifyInitialized()
+    setTimeout(() => this.notifyContentChanged(), 50)
   }
 
   private async loadProductData(): Promise<void> {

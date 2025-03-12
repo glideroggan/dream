@@ -1,6 +1,6 @@
 # BUGS
-- something is broken with the grid-layout, its no longer working nice when resizing the window
-- try to see if we can get rid of the observer for wrapper content
+- ✔️something is broken with the grid-layout, its no longer working nice when resizing the window
+- ✔️try to see if we can get rid of the observer for wrapper content
   seems like it is expensive during width changes in the browser
 - why do we have scrollbars when none of the widgets are overflowing?
 - looks like there are some mocks in the loan-service file
@@ -42,6 +42,8 @@ Would be nice to get a bit more things happening, if we could do like in the lif
         - should show a toast
 
 # TODO
+- try to clean up more from the widget-wrapper
+- fix the product service to look like the other services
 - getting time to release
 ## account info
 - account info workflow, needs an empty/default state when no account is selected

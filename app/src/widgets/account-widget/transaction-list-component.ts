@@ -562,6 +562,7 @@ export class TransactionListComponent extends FASTElement {
    */
   setActiveTab(tab: 'completed' | 'upcoming'): void {
     this.activeTab = tab;
+    setTimeout(() => this.$emit('content-change'), 50);
   }
 
   /**
@@ -833,6 +834,7 @@ export class TransactionListComponent extends FASTElement {
         //   this.maxToShow = this.regularTransactions.length;
         // }
       }
+      setTimeout(() => this.$emit('content-change'), 50);
     } catch (error) {
       console.error('Error loading all transactions:', error);
     } finally {

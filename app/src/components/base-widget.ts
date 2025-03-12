@@ -426,32 +426,34 @@ export class BaseWidget extends FASTElement {
    * React to tab or section changes that may affect content height
    * @param callback Optional callback to run after layout update
    */
-  protected handleContentViewChange(callback?: () => void): void {
-    // Update layout after a small delay to allow DOM to render
-    setTimeout(() => {
-      this.checkInitialContentFit();
-      if (callback) callback();
-    }, 50);
-  }
+  // protected handleContentViewChange(callback?: () => void): void {
+  //   return
+  //   // Update layout after a small delay to allow DOM to render
+  //   setTimeout(() => {
+  //     this.checkInitialContentFit();
+  //     if (callback) callback();
+  //   }, 50);
+  // }
 
   /**
    * Notify accordion changes - components can call this after expand/collapse operations
    * @param expanded Whether the accordion is expanded (true) or collapsed (false)
    */
-  public notifyAccordionChange(expanded: boolean): void {
-    // Use requestAnimationFrame instead of setTimeout for visual updates
-    requestAnimationFrame(() => {
-      console.debug(`Accordion ${expanded ? 'expanded' : 'collapsed'}, rechecking content fit`);
+  // public notifyAccordionChange(expanded: boolean): void {
+  //   return
+  //   // Use requestAnimationFrame instead of setTimeout for visual updates
+  //   requestAnimationFrame(() => {
+  //     console.debug(`Accordion ${expanded ? 'expanded' : 'collapsed'}, rechecking content fit`);
       
-      if (expanded) {
-        // For expansion, we need to check if more space is needed - no delay needed
-        this.checkInitialContentFit();
-      } else {
-        // For collapse, trigger shrink calculation immediately 
-        this.recalculateSize();
-      }
-    });
-  }
+  //     if (expanded) {
+  //       // For expansion, we need to check if more space is needed - no delay needed
+  //       this.checkInitialContentFit();
+  //     } else {
+  //       // For collapse, trigger shrink calculation immediately 
+  //       this.recalculateSize();
+  //     }
+  //   });
+  // }
 
   /**
    * New helper method for any widget to signal content changes
@@ -469,28 +471,34 @@ export class BaseWidget extends FASTElement {
     
     console.debug(`Content changed notification: height=${contentHeight}px, container=${containerHeight}px`);
     
+    this.$emit('content-change', {
+      contentHeight: contentHeight,
+      containerHeight: containerHeight
+    });
+
+    return
     // If significantly smaller, try to shrink
-    if (contentHeight < this.lastContentHeight * 0.8) {
-      console.debug(`Content has shrunk significantly, recalculating size`);
-      this.recalculateSize();
-    } 
-    // If larger, check if we need to expand
-    else if (contentHeight > containerHeight) {
-      // Use constants for row calculations
-      const rowHeight = MIN_ROW_HEIGHT + DEFAULT_GRID_GAP;
-      const rowsNeeded = Math.ceil(contentHeight / rowHeight);
+    // if (contentHeight < this.lastContentHeight * 0.8) {
+    //   console.debug(`Content has shrunk significantly, recalculating size`);
+    //   this.recalculateSize();
+    // } 
+    // // If larger, check if we need to expand
+    // else if (contentHeight > containerHeight) {
+    //   // Use constants for row calculations
+    //   const rowHeight = MIN_ROW_HEIGHT + DEFAULT_GRID_GAP;
+    //   const rowsNeeded = Math.ceil(contentHeight / rowHeight);
       
-      // Get current row span
-      const parent = this.closest('widget-wrapper');
-      const currentRowSpan = parent ? parseInt(parent.getAttribute('rowSpan') || '0') : 0;
+    //   // Get current row span
+    //   const parent = this.closest('widget-wrapper');
+    //   const currentRowSpan = parent ? parseInt(parent.getAttribute('rowSpan') || '0') : 0;
       
-      if (rowsNeeded > currentRowSpan) {
-        console.debug(`Content needs more space after change. Requesting ${rowsNeeded} rows`);
-        this.requestMoreRows(rowsNeeded);
-      }
-    }
+    //   if (rowsNeeded > currentRowSpan) {
+    //     console.debug(`Content needs more space after change. Requesting ${rowsNeeded} rows`);
+    //     this.requestMoreRows(rowsNeeded);
+    //   }
+    // }
     
-    // Update our tracking
-    this.lastContentHeight = contentHeight;
+    // // Update our tracking
+    // this.lastContentHeight = contentHeight;
   }
 }
