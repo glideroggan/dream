@@ -8,7 +8,7 @@ export const styles = css`
     height: 100%;
     padding: 16px;
     box-sizing: border-box;
-    font-family: var(--body-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
 
   .loan-header {
@@ -42,21 +42,21 @@ export const styles = css`
   .loan-option {
     display: flex;
     padding: 16px;
-    border: 2px solid var(--neutral-stroke-rest, #ccc);
+    border: 2px solid var(--border-color);
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s ease;
-    background-color: var(--neutral-fill-rest, #f5f5f5);
+    background-color: var(--background-card);
   }
 
   .loan-option:hover {
-    border-color: var(--accent-fill-hover, #0078d4);
-    background-color: var(--neutral-fill-hover, #e8e8e8);
+    border-color: var(--accent-color);
+    background-color: var(--hover-bg);
   }
 
   .loan-option.selected {
-    border-color: var(--accent-fill-rest, #0078d4);
-    background-color: var(--accent-fill-subtle, rgba(0, 120, 212, 0.1));
+    border-color: var(--accent-color);
+    background-color: var(--hover-bg);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   }
 
@@ -83,7 +83,7 @@ export const styles = css`
 
   .loan-option-details {
     font-size: 14px;
-    color: var(--neutral-foreground-hint, #767676);
+    color: var(--secondary-text-color);
     font-weight: 500;
   }
 
@@ -94,8 +94,8 @@ export const styles = css`
   }
 
   .primary-button {
-    background-color: var(--accent-fill-rest, #0078d4);
-    color: var(--accent-foreground-rest, white);
+    background-color: var(--accent-color);
+    color: var(--text-light);
     border: none;
     padding: 10px 20px;
     border-radius: 4px;
@@ -106,19 +106,20 @@ export const styles = css`
   }
 
   .primary-button:hover {
-    background-color: var(--accent-fill-hover, #106ebe);
+    background-color: var(--button-bg);
   }
 
   .primary-button:disabled {
-    background-color: var(--neutral-fill-rest, #e0e0e0);
-    color: var(--neutral-foreground-rest, #999);
+    background-color: var(--inactive-color);
+    color: var(--text-light);
+    opacity: 0.7;
     cursor: not-allowed;
   }
 
   .secondary-button {
     background-color: transparent;
-    color: var(--accent-fill-rest, #0078d4);
-    border: 1px solid var(--accent-fill-rest, #0078d4);
+    color: var(--accent-color);
+    border: 1px solid var(--accent-color);
     padding: 10px 20px;
     border-radius: 4px;
     cursor: pointer;
@@ -127,7 +128,7 @@ export const styles = css`
   }
 
   .secondary-button:hover {
-    background-color: var(--accent-fill-subtle, rgba(0, 120, 212, 0.1));
+    background-color: var(--hover-bg);
   }
 
   .loading-spinner {
@@ -141,8 +142,8 @@ export const styles = css`
   .spinner {
     width: 40px;
     height: 40px;
-    border: 4px solid var(--neutral-fill-rest, #e0e0e0);
-    border-top: 4px solid var(--accent-fill-rest, #0078d4);
+    border: 4px solid var(--border-color);
+    border-top: 4px solid var(--accent-color);
     border-radius: 50%;
     animation: spin 1s linear infinite;
   }
@@ -166,18 +167,18 @@ export const styles = css`
   }
 
   .error-icon {
-    color: var(--error-color, #e74c3c);
+    color: var(--notification-badge-bg);
   }
 
   .success-icon {
-    color: var(--success-color, #2ecc71);
+    color: var(--widget-color);
   }
 
   .error-message {
-    color: var(--error-color, #e74c3c);
+    color: var(--notification-badge-bg);
     margin-top: 8px;
     padding: 8px;
-    background-color: var(--error-subtle, rgba(231, 76, 60, 0.1));
+    background-color: rgba(231, 76, 60, 0.1);
     border-radius: 4px;
   }
 
@@ -188,14 +189,14 @@ export const styles = css`
   .loan-amount-container {
     display: flex;
     align-items: center;
-    border: 1px solid var(--neutral-stroke-rest, #ccc);
+    border: 1px solid var(--border-color);
     border-radius: 4px;
     overflow: hidden;
   }
 
   .currency-symbol {
     padding: 8px 12px;
-    background-color: var(--neutral-fill-rest, #e0e0e0);
+    background-color: var(--hover-bg);
     font-weight: bold;
   }
 
@@ -206,17 +207,19 @@ export const styles = css`
     font-size: 16px;
     width: 100%;
     outline: none;
+    background-color: var(--background-card);
+    color: var(--primary-text-color);
   }
 
   input[type="number"]:focus {
-    background-color: var(--accent-fill-subtle, rgba(0, 120, 212, 0.05));
+    background-color: var(--hover-bg);
   }
 
   .range-limits {
     display: flex;
     justify-content: space-between;
     font-size: 12px;
-    color: var(--neutral-foreground-hint, #767676);
+    color: var(--secondary-text-color);
     margin-top: 4px;
   }
 
@@ -229,27 +232,27 @@ export const styles = css`
 
   .term-option {
     padding: 8px 16px;
-    border: 1px solid var(--neutral-stroke-rest, #ccc);
+    border: 1px solid var(--border-color);
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s;
-    background-color: var(--neutral-fill-rest, #f5f5f5);
+    background-color: var(--background-card);
   }
 
   .term-option:hover {
-    border-color: var(--accent-fill-hover, #106ebe);
-    background-color: var(--neutral-fill-hover, #e8e8e8);
+    border-color: var(--accent-color);
+    background-color: var(--hover-bg);
   }
 
   .term-option.selected {
-    border-color: var(--accent-fill-rest, #0078d4);
-    background-color: var(--accent-fill-subtle, rgba(0, 120, 212, 0.1));
+    border-color: var(--accent-color);
+    background-color: var(--hover-bg);
     font-weight: 500;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   }
 
   .loan-summary {
-    background-color: var(--neutral-layer-1, #f8f9fa);
+    background-color: var(--background-color);
     border-radius: 8px;
     padding: 1rem;
     margin-bottom: 1.5rem;
@@ -260,7 +263,7 @@ export const styles = css`
     display: flex;
     justify-content: space-between;
     padding: 0.6rem 0;
-    border-bottom: 1px solid var(--neutral-stroke-subtle, #eee);
+    border-bottom: 1px solid var(--border-color);
   }
 
   .summary-row:last-child {
@@ -269,11 +272,11 @@ export const styles = css`
 
   .summary-row.highlight {
     font-weight: 600;
-    color: var(--accent-foreground-rest, #0078d4);
+    color: var(--accent-color);
   }
 
   .summary-label {
-    color: var(--neutral-foreground-hint, #767676);
+    color: var(--secondary-text-color);
   }
 
   .loan-purpose-section, .account-select-section {
@@ -284,25 +287,27 @@ export const styles = css`
     display: block;
     margin-bottom: 8px;
     font-weight: 500;
+    color: var(--primary-text-color);
   }
 
   select {
     width: 100%;
     padding: 10px;
-    border: 1px solid var(--neutral-stroke-rest, #ccc);
+    border: 1px solid var(--border-color);
     border-radius: 4px;
     font-size: 16px;
-    background-color: #fff;
+    background-color: var(--background-card);
+    color: var(--primary-text-color);
     outline: none;
   }
 
   select:focus {
-    border-color: var(--accent-fill-rest, #0078d4);
-    box-shadow: 0 0 0 2px var(--accent-fill-subtle, rgba(0, 120, 212, 0.2));
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px var(--hover-bg);
   }
 
   .terms-container {
-    background-color: var(--neutral-layer-1, #f8f9fa);
+    background-color: var(--background-color);
     border-radius: 8px;
     padding: 1rem;
     margin: 1rem 0;
@@ -313,11 +318,12 @@ export const styles = css`
     max-height: 200px;
     overflow-y: auto;
     padding: 0.8rem;
-    border: 1px solid var(--neutral-stroke-subtle, #eee);
-    background-color: #fff;
+    border: 1px solid var(--border-color);
+    background-color: var(--background-card);
     border-radius: 4px;
     margin-bottom: 1rem;
     scrollbar-width: thin;
+    color: var(--primary-text-color);
   }
 
   .terms-content p, .terms-content ul {
@@ -329,28 +335,100 @@ export const styles = css`
     margin: 1.5rem 0 0.5rem;
   }
 
+  /* Custom checkbox implementation */
   .checkbox-container {
     display: flex;
     align-items: center;
     cursor: pointer;
+    margin: 10px 0;
+    position: relative;
   }
 
-  input[type="checkbox"] {
+  /* Hide the native checkbox but keep it accessible */
+  // .checkbox-container input[type="checkbox"] {
+  //   position: relative;
+  //   opacity: 1;
+  //   cursor: pointer;
+  //   height: 25;
+  //   width: 25;
+  // }
+
+  /* Create a custom checkbox */
+  .checkbox-container input[type="checkbox"]{
+    position: relative;
+    display: inline-block;
     width: 18px;
     height: 18px;
-    accent-color: var(--accent-fill-rest, #0078d4);
+    background-color: var(--background-card);
+    border: 2px solid var(--border-color);
+    border-radius: 3px;
+    margin-right: 10px;
+    z-index: 20;
     cursor: pointer;
+    vertical-align: middle;
+    transition: all 0.2s ease;
+  }
+
+  /* Style the checkmark */
+  .custom-checkbox::after {
+    content: "";
+    position: absolute;
+    display: none;
+    left: 5px;
+    top: 2px;
+    width: 5px;
+    height: 10px;
+    border: solid var(--accent-color);
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+
+  /* Show the checkmark when checked */
+  .checkbox-container input:checked ~ .custom-checkbox::after {
+    display: block;
+  }
+
+  /* Style on hover */
+  .checkbox-container:hover .custom-checkbox {
+    border-color: var(--accent-color);
+    background-color: var(--hover-bg);
+  }
+
+  /* Style when focused */
+  .checkbox-container input:focus ~ .custom-checkbox {
+    box-shadow: 0 0 0 2px var(--hover-bg);
   }
 
   .checkbox-label {
-    margin-left: 0.5rem;
     font-size: 0.9rem;
+    cursor: pointer;
+    user-select: none; /* Prevent text selection when clicking */
+    color: var(--primary-text-color);
   }
+
+  /* Make sure scrollbars match the theme */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  // ::-webkit-scrollbar-track {
+  //   background: var(--background-color);
+  // }
+
+  // ::-webkit-scrollbar-thumb {
+  //   background: var(--border-color);
+  //   border-radius: 5px;
+  // }
+
+  // ::-webkit-scrollbar-thumb:hover {
+  //   background: var(--secondary-color);
+  // }
 
   .next-steps {
     text-align: left;
     margin-top: 1.5rem;
-    background-color: var(--neutral-layer-1, #f8f9fa);
+    background-color: var(--background-color);
     padding: 1rem;
     border-radius: 8px;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
@@ -358,7 +436,7 @@ export const styles = css`
 
   .next-steps h4 {
     margin: 0 0 0.5rem 0;
-    color: var(--accent-foreground-rest, #0078d4);
+    color: var(--accent-color);
   }
 
   .next-steps ol {
@@ -400,7 +478,7 @@ export const styles = css`
   }
 
   .live-summary {
-    background-color: var(--neutral-layer-1, #f8f9fa);
+    background-color: var(--background-color, #f8f9fa);
     border-radius: 8px;
     padding: 1rem;
     height: 100%;
@@ -410,7 +488,7 @@ export const styles = css`
   }
 
   .summary-card {
-    background-color: white;
+    background-color: var(--background-card);
     padding: 16px;
     border-radius: 6px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -422,18 +500,18 @@ export const styles = css`
     font-size: 1.1em;
     margin-top: 8px;
     padding-top: 8px;
-    border-top: 2px solid var(--neutral-stroke-subtle, #eee);
+    border-top: 2px solid var(--border-color);
   }
 
   .note {
     font-size: 0.8rem;
-    color: var(--neutral-foreground-hint, #767676);
+    color: var(--secondary-text-color);
     font-style: italic;
   }
 
   .field-hint {
     font-size: 0.8rem;
-    color: var(--neutral-foreground-hint, #767676);
+    color: var(--secondary-text-color);
     margin-top: 4px;
   }
 
@@ -470,7 +548,7 @@ export const styles = css`
   .approval-header {
     grid-row: 1;
     grid-column: 1;
-    background-color: var(--neutral-layer-1, #f8f9fa);
+    background-color: var(--background-color, #f8f9fa);
     border-radius: 8px;
     padding: 16px;
     margin-bottom: 24px;
@@ -513,7 +591,7 @@ export const styles = css`
   }
   
   .live-summary {
-    background-color: var(--neutral-layer-1, #f8f9fa);
+    background-color: var(--background-color, #f8f9fa);
     border-radius: 8px;
     padding: 16px;
     position: sticky;
@@ -533,7 +611,7 @@ export const styles = css`
     justify-content: space-between;
     margin-top: auto;  /* Push to bottom of container */
     padding-top: 16px;
-    border-top: 1px solid var(--neutral-stroke-subtle, #eee);
+    border-top: 1px solid var(--border-color, #eee);
   }
 
   @media (max-width: 768px) {
@@ -558,7 +636,7 @@ export const styles = css`
   .approval-header {
     grid-column: 1;
     grid-row: 1;
-    background-color: var(--neutral-layer-1, #f8f9fa);
+    background-color: var(--widget-bg);
     border-radius: 8px;
     padding: 16px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -583,7 +661,7 @@ export const styles = css`
     position: sticky;
     top: 0;
     height: 100%;
-    background-color: var(--neutral-layer-1, #f8f9fa);
+    background-color: var(--background-color, #f8f9fa);
     border-radius: 8px;
     padding: 16px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -597,7 +675,7 @@ export const styles = css`
     display: flex;
     justify-content: space-between;
     padding-top: 16px;
-    border-top: 1px solid var(--neutral-stroke-subtle, #eee);
+    border-top: 1px solid var(--border-color, #eee);
   }
 
   /* Responsive adjustments */

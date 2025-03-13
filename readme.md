@@ -1,4 +1,5 @@
 # BUGS
+
 - would be nice if forms and forms with several steps could remember their data in the inputs
   especially when the user is navigating back and forth
 - ✔️why do we have scrollbars when none of the widgets are overflowing?
@@ -84,10 +85,6 @@ Would be nice to get a bit more things happening, if we could do like in the lif
 - 🔧can we include some colors?
   ok, this was hard, and failed, lets try again later and commit more often on good changes
   - can we include some fonts?
-#384959: Primary text, headers, footers
-#6A89A7: Secondary elements, inactive states, dividers
-#88BDF2: Interactive elements (buttons, links), highlights, accent
-#BDDDFC: Backgrounds, cards, hover states
 - search should be smart enough to show "new" documents
   - when a document have been created, the search should have it under "new"
 - we need a document widget

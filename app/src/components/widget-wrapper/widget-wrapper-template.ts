@@ -4,65 +4,71 @@ import { WidgetWrapper } from "./widget-wrapper";
 export const template = html<WidgetWrapper>/*html*/`
   <div class="widget-container" state="${x => x.state}">
     <div class="widget-header">
-      ${when(x => x.showSizeControls, html<WidgetWrapper>/*html*/`
-        <div class="widget-size-controls">
-          <!-- Span controls for width and height adjustment -->
-          <div class="span-controls">
-            <div class="span-control-group">
-              <span class="span-label">W:</span>
-              <button 
-                class="span-button"
-                type="button"
-                @click="${(x, c) => { 
-                  console.debug(`Width decrease button clicked for ${x.widgetId}`); 
-                  c.event.preventDefault(); 
-                  x.decreaseColSpan();
-                }}" 
-                title="Decrease width">-</button>
-              <span class="span-value">${x => x.colSpan}</span>
-              <button 
-                class="span-button"
-                type="button"
-                @click="${(x, c) => { 
-                  console.debug(`Width increase button clicked for ${x.widgetId}`); 
-                  c.event.preventDefault();
-                  x.increaseColSpan();
-                }}" 
-                title="Increase width">+</button>
-            </div>
-            <div class="span-control-group">
-              <span class="span-label">H:</span>
-              <button 
-                class="span-button"
-                type="button"
-                @click="${(x, c) => { 
-                  console.debug(`Height decrease button clicked for ${x.widgetId}`); 
-                  c.event.preventDefault();
-                  x.decreaseRowSpan();
-                }}" 
-                title="Decrease height">-</button>
-              <span class="span-value">${x => x.rowSpan}</span>
-              <button 
-                class="span-button"
-                type="button"
-                @click="${(x, c) => { 
-                  console.debug(`Height increase button clicked for ${x.widgetId}`); 
-                  c.event.preventDefault();
-                  x.increaseRowSpan();
-                }}" 
-                title="Increase height">+</button>
+      <div class="widget-header-left">
+        ${when(x => x.showSizeControls, html<WidgetWrapper>/*html*/`
+          <div class="widget-size-controls">
+            <!-- Span controls for width and height adjustment -->
+            <div class="span-controls">
+              <div class="span-control-group">
+                <span class="span-label">W:</span>
+                <button 
+                  class="span-button"
+                  type="button"
+                  @click="${(x, c) => { 
+                    console.debug(`Width decrease button clicked for ${x.widgetId}`); 
+                    c.event.preventDefault(); 
+                    x.decreaseColSpan();
+                  }}" 
+                  title="Decrease width">-</button>
+                <span class="span-value">${x => x.colSpan}</span>
+                <button 
+                  class="span-button"
+                  type="button"
+                  @click="${(x, c) => { 
+                    console.debug(`Width increase button clicked for ${x.widgetId}`); 
+                    c.event.preventDefault();
+                    x.increaseColSpan();
+                  }}" 
+                  title="Increase width">+</button>
+              </div>
+              <div class="span-control-group">
+                <span class="span-label">H:</span>
+                <button 
+                  class="span-button"
+                  type="button"
+                  @click="${(x, c) => { 
+                    console.debug(`Height decrease button clicked for ${x.widgetId}`); 
+                    c.event.preventDefault();
+                    x.decreaseRowSpan();
+                  }}" 
+                  title="Decrease height">-</button>
+                <span class="span-value">${x => x.rowSpan}</span>
+                <button 
+                  class="span-button"
+                  type="button"
+                  @click="${(x, c) => { 
+                    console.debug(`Height increase button clicked for ${x.widgetId}`); 
+                    c.event.preventDefault();
+                    x.increaseRowSpan();
+                  }}" 
+                  title="Increase height">+</button>
+              </div>
             </div>
           </div>
-        </div>
-      `)}
+        `)}
+      </div>
       
-      <div class="widget-title">${x => x.displayName}</div>
+      <div class="widget-header-center">
+        <div class="widget-title">${x => x.displayName}</div>
+      </div>
       
-      ${when(x => !x.hideCloseButton, html<WidgetWrapper>/*html*/`
-        <button class="close-button" @click="${x => x.closeWidget()}" title="Close widget">
-          <span class="close-icon">×</span>
-        </button>
-      `)}
+      <div class="widget-header-right">
+        ${when(x => !x.hideCloseButton, html<WidgetWrapper>/*html*/`
+          <button class="close-button" @click="${x => x.closeWidget()}" title="Close widget">
+            <span class="close-icon">×</span>
+          </button>
+        `)}
+      </div>
     </div>
     
     ${when(x => x.state === 'loading', html<WidgetWrapper>/*html*/`

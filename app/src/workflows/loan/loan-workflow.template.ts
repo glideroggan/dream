@@ -20,7 +20,7 @@ const step1Template = html<LoanWorkflow>/*html*/`
       ${when(x => x.availableLoanProducts.length > 0, html<LoanWorkflow>/*html*/`
         ${repeat(x => x.availableLoanProducts, html<ProductEntity, LoanWorkflow>/*html*/`
           <div class="loan-option ${(product, c) => c.parent.selectedProduct?.id === product.id ? 'selected' : ''}"
-              @click="${(product,c) => c.parent.selectProduct(product)}">
+              @click="${(product, c) => c.parent.selectProduct(product)}">
             <div class="loan-option-icon">${product => getProductIcon(product)}</div>
             <div class="loan-option-content">
               <h3>${product => product.name}</h3>
@@ -231,6 +231,8 @@ const step3Template = html<LoanWorkflow>/*html*/`
   </div>
 `;
 
+//   
+
 // Step 4: Terms and Conditions
 const step4Template = html<LoanWorkflow>/*html*/`
   <div class="loan-content">
@@ -262,10 +264,13 @@ const step4Template = html<LoanWorkflow>/*html*/`
       </div>
       
       <div class="consent-section">
-        <label class="checkbox-container">
-          <input type="checkbox" ?checked="${x => x.agreedToTerms}" @change="${(x, c) => x.updateAgreedToTerms(c.event)}">
+        <div class="checkbox-container">
+          <input type="checkbox" id="termsCheckbox"
+            ?checked="${x => x.agreedToTerms}"
+            @click="${(x, c) => x.toggleTermsAgreement(c.event)}"/>
+          
           <span class="checkbox-label">I have read and agree to the terms and conditions</span>
-        </label>
+        </div>
       </div>
     </div>
     

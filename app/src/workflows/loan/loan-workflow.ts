@@ -1,4 +1,4 @@
-import { customElement, observable } from "@microsoft/fast-element";
+import { customElement, Observable, observable } from "@microsoft/fast-element";
 import { WorkflowBase } from "../workflow-base";
 import { loanService } from "../../services/loan-service";
 import { repositoryService } from "../../services/repository-service";
@@ -52,8 +52,8 @@ export class LoanWorkflow extends WorkflowBase {
   @observable selectedAccountId: string = "";
   
   // Terms agreement
-  @observable agreedToTerms: boolean = false;
-  
+  @observable agreedToTerms:boolean = false
+
   // Application result
   @observable applicationSuccess: boolean = false;
   @observable errorMessage: string = "";
@@ -462,11 +462,30 @@ export class LoanWorkflow extends WorkflowBase {
   }
   
   /**
-   * Update terms agreement checkbox
+   * Toggle terms agreement checkbox
+   */
+  toggleTermsAgreement(event:Event): void {
+    console.log("Terms agreement toggled:", this.agreedToTerms, "Checkbox state updated");
+    // Toggle the state
+    this.agreedToTerms = !this.agreedToTerms;
+    
+    // Force UI update
+    Observable.notify(this, 'agreedToTerms');
+    
+    // Clear error message if applicable
+    if (this.agreedToTerms && this.errorMessage === "Please agree to the terms and conditions.") {
+      this.errorMessage = "";
+    }
+  }
+  
+  /**
+   * Update terms agreement checkbox (keep for compatibility)
    */
   updateAgreedToTerms(event: Event): void {
     const checkbox = event.target as HTMLInputElement;
     this.agreedToTerms = checkbox.checked;
+    Observable.notify(this, 'agreedToTerms');
+    console.log("updateAgreedToTerms called, new state:", this.agreedToTerms);
   }
   
   /**

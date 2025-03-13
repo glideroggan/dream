@@ -69,7 +69,7 @@ const styles = css`
   }
 
   .modal-container {
-    background-color: var(--modal-bg, #ffffff);
+    background-color: var(--background-card);
     border-radius: 8px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     width: var(--modal-width, 500px);
@@ -91,14 +91,14 @@ const styles = css`
     justify-content: space-between;
     align-items: center;
     padding: 16px 20px;
-    border-bottom: 1px solid var(--border-color, #e0e0e0);
+    border-bottom: 1px solid var(--border-color);
   }
 
   .modal-header h3 {
     margin: 0;
     font-size: 18px;
     font-weight: 600;
-    color: var(--heading-color, #333);
+    color: var(--primary-text-color);
   }
 
   .modal-close-button {
@@ -111,14 +111,14 @@ const styles = css`
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    color: var(--text-secondary, #666);
+    color: var(--secondary-text-color);
     font-size: 18px;
     transition: background-color 0.2s, color 0.2s;
   }
 
   .modal-close-button:hover {
-    background-color: var(--hover-bg, rgba(0, 0, 0, 0.05));
-    color: var(--text-primary, #333);
+    background-color: var(--hover-bg);
+    color: var(--primary-text-color);
   }
 
   .modal-body {
@@ -132,7 +132,7 @@ const styles = css`
     justify-content: flex-end;
     gap: 12px;
     padding: 16px 20px;
-    border-top: 1px solid var(--border-color, #e0e0e0);
+    border-top: 1px solid var(--border-color);
   }
 
   .modal-button {
@@ -151,25 +151,26 @@ const styles = css`
   }
 
   .modal-button.primary {
-    background-color: var(--primary-color, #3498db);
-    color: white;
+    background-color: var(--accent-color);
+    color: var(--text-light);
   }
 
   .modal-button.primary:hover:not(:disabled) {
-    background-color: var(--primary-hover, #2980b9);
+    background-color: var(--button-bg);
   }
   
   .modal-button.primary:disabled {
-    background-color: var(--primary-disabled, #95c8ec);
+    opacity: 0.5;
+    background-color: var(--inactive-color);
   }
 
   .modal-button.secondary {
-    background-color: var(--secondary-bg, #f5f5f5);
-    color: var(--text-primary, #333);
+    background-color: var(--hover-bg);
+    color: var(--primary-text-color);
   }
 
   .modal-button.secondary:hover:not(:disabled) {
-    background-color: var(--secondary-hover, #e0e0e0);
+    background-color: var(--divider-color);
   }
 `;
 

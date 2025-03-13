@@ -148,11 +148,31 @@ export const styles = css`
     padding: var(--widget-header-padding);
     display: flex;
     align-items: center;
-    justify-content: space-between;
     border-bottom: 1px solid var(--widget-border-color);
     background-color: var(--widget-header-background);
     height: 40px;
     z-index: 10; /* Keep header above widget content */
+  }
+
+  .widget-header-left, 
+  .widget-header-right {
+    flex: 1;
+    display: flex;
+  }
+
+  .widget-header-left {
+    justify-content: flex-start;
+  }
+
+  .widget-header-right {
+    justify-content: flex-end;
+  }
+
+  .widget-header-center {
+    flex: 0 0 auto;
+    padding: 0 8px;
+    /* Ensure center content doesn't push out too far */
+    max-width: 50%;
   }
 
   .widget-header h3 {
@@ -163,7 +183,6 @@ export const styles = css`
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    flex: 1;
   }
 
   .widget-size-controls {
@@ -204,14 +223,14 @@ export const styles = css`
   }
 
   .widget-title {
-    flex: 1;
     font-size: 1rem;
     font-weight: 600;
-    text-align: left;
+    text-align: center;
     color: var(--widget-title-color);
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+    width: 100%;
   }
 
   /* Close button styles */
