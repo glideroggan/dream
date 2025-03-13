@@ -11,6 +11,9 @@ export interface UserSettings extends Entity {
   language?: string;
   enableNotifications?: boolean;
   paymentContacts: PaymentContact[];
+
+  // Sidebar state
+  sidebarClosed?: boolean;
   
   // Widget preferences by page
   widgetLayout: WidgetsLayout;
@@ -212,6 +215,15 @@ export class SettingsRepository extends LocalStorageRepository<UserSettings> {
   }
 
   /**
+   * 
+   */
+  async updateSettings(updates: Partial<UserSettings>): Promise<void> {
+    let settings = await this.getCurrentSettings();
+    settings = { ...settings, ...updates };
+    await this.update(settings.id, updates);
+  }
+
+  /**
    * Add a new payment contact
    */
   async addPaymentContact(contact: PaymentContact): Promise<void> {
@@ -298,4 +310,6 @@ export class SettingsRepository extends LocalStorageRepository<UserSettings> {
   async updateContactLastUsed(contactId: string): Promise<void> {
     await this.updatePaymentContact(contactId, { lastUsed: new Date() });
   }
+
+  
 }

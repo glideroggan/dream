@@ -41,6 +41,8 @@ Would be nice to get a bit more things happening, if we could do like in the lif
         - should show a toast
 
 # TODO
+- ✔️Lets save the toggle of the sidebar to user settings
+- ✔️Require Signing to complete the kyc workflow
 - try to clean up more from the widget-wrapper
 - fix the product service to look like the other services
 - getting time to release

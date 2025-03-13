@@ -87,7 +87,7 @@ export class UserService {
   /**
    * Get user type of current user
    */
-  public getUserType(): UserType {
+    public getUserType(): UserType {
     const user = this.getCurrentUser();
     return user?.type || UserTypes.DEMO;
   }

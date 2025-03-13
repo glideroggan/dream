@@ -4,6 +4,7 @@ import { getSearchService, SearchResultItem, SearchService } from '../services/s
 import { routerService } from '../services/router-service';
 import { appRoutes, routeIcons, routeMetadata } from '../routes/routes-registry';
 import { UserProfile, UserType, UserTypes } from '../repositories/models/user-models';
+import { repositoryService } from '../services/repository-service';
 
 interface MenuItem {
   id: string;
@@ -374,41 +375,41 @@ const styles = css`
       width: 60px;
     }
     
-    :host(.sidebar-expanded) {
-      width: 250px;
-    }
+    // :host(.sidebar-expanded) {
+    //   width: 250px;
+    // }
     
-    .sidebar {
-      width: 60px;
-    }
+    // .sidebar {
+    //   width: 60px;
+    // }
     
-    .sidebar.expanded {
-      width: 250px;
-    }
+    // .sidebar.expanded {
+    //   width: 250px;
+    // }
     
     /* Change these selectors to match the class we're actually toggling */
-    .sidebar.collapsed .menu-item-label,
-    .sidebar.collapsed .user-details,
-    .sidebar.collapsed .dropdown-indicator {
-      display: none;
-    }
+    // .sidebar.collapsed .menu-item-label,
+    // .sidebar.collapsed .user-details,
+    // .sidebar.collapsed .dropdown-indicator {
+    //   display: none;
+    // }
   
-    .sidebar.collapsed .menu-item-icon {
-      margin-right: 0;
-    }
+    // .sidebar.collapsed .menu-item-icon {
+    //   margin-right: 0;
+    // }
   
-    .sidebar.collapsed .menu-item a {
-      justify-content: center;
-      padding: 12px 0;
-    }
+    // .sidebar.collapsed .menu-item a {
+    //   justify-content: center;
+    //   padding: 12px 0;
+    // }
   
-    .sidebar.collapsed .badge {
-      display: none;
-    }
+    // .sidebar.collapsed .badge {
+    //   display: none;
+    // }
   
-    .sidebar.collapsed .user-info {
-      justify-content: center;
-    }
+    // .sidebar.collapsed .user-info {
+    //   justify-content: center;
+    // }
   }
 `;
 
@@ -436,7 +437,18 @@ export class SidebarComponent extends FASTElement {
     this.clickOutsideHandler = this.handleClickOutside.bind(this);
   }
 
-  connectedCallback(): void {
+  collapsedChanged(): void {
+    // Update host classes to match
+    if (this.collapsed) {
+      this.classList.add('sidebar-collapsed');
+      this.classList.remove('sidebar-expanded');
+    } else {
+      this.classList.remove('sidebar-collapsed');
+      this.classList.remove('sidebar-expanded'); 
+    }
+  }
+
+  async connectedCallback(): Promise<void> {
     super.connectedCallback();
     
     // Initialize menu items from routes
@@ -447,6 +459,12 @@ export class SidebarComponent extends FASTElement {
     
     // Register theme pages with search service
     this.registerThemePagesForSearch();
+
+    // get settings for sidebar state
+    const settingsRepo = repositoryService.getSettingsRepository();
+    const settings = await settingsRepo.getCurrentSettings()
+    this.collapsed = settings.sidebarClosed || false;
+    console.log('Sidebar is ', this.collapsed ? 'collapsed' : 'expanded');
     
     // Add listeners for user login/logout events
     document.addEventListener('user-login', this.loadUserData.bind(this));
@@ -467,7 +485,7 @@ export class SidebarComponent extends FASTElement {
     setTimeout(() => this.updateActiveMenuItem(), 10);
     
     // Set initial collapsed state based on screen width
-    this.checkScreenWidth();
+    // this.checkScreenWidth();
     
     // Listen for window resize events to auto-collapse
     window.addEventListener('resize', this.checkScreenWidth.bind(this));
@@ -658,7 +676,7 @@ export class SidebarComponent extends FASTElement {
     const smallScreen = window.innerWidth < 750; // Adjusted from 730px to 750px
     
     // Update collapsed state based on screen size
-    if (smallScreen !== this.collapsed) {
+    if (smallScreen) {
       this.collapsed = smallScreen;
       
       // Update host classes to match
@@ -670,7 +688,7 @@ export class SidebarComponent extends FASTElement {
         this.classList.remove('sidebar-expanded'); // Not needed on large screens
       }
       
-      this.$emit('sidebar-toggle', { collapsed: this.collapsed });
+      // this.$emit('sidebar-toggle', { collapsed: this.collapsed });
     }
   }
   
@@ -686,14 +704,18 @@ export class SidebarComponent extends FASTElement {
       this.classList.remove('sidebar-expanded');
     } else {
       this.classList.remove('sidebar-collapsed');
+      this.classList.add('sidebar-expanded');
       
       // Only add expanded class if we're on small screen
-      if (window.innerWidth < 750) {
-        this.classList.add('sidebar-expanded');
-      }
+      // if (window.innerWidth < 750) {
+      //   this.classList.add('sidebar-expanded');
+      // }
     }
     
+    const settingsRepo = repositoryService.getSettingsRepository();
+    // Update sidebar collapsed state in user settings
+    settingsRepo.updateSettings({ sidebarClosed: this.collapsed });
     // Trigger the event
-    this.$emit('sidebar-toggle', { collapsed: this.collapsed });
+    // this.$emit('sidebar-toggle', { collapsed: this.collapsed });
   }
 }

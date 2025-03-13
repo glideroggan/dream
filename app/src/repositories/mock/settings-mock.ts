@@ -7,5 +7,6 @@ export const defaultSettings: UserSettings = {
   enableNotifications: true,
   paymentContacts: [],
   widgetLayout: {},
-  autoAddedProducts: {}
+  autoAddedProducts: {},
+  sidebarClosed: false
 };

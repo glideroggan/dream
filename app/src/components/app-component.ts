@@ -12,7 +12,7 @@ const template = html<AppComponent>/*html*/ `
   <div class="app-container ${x => x.sidebarCollapsed ? 'sidebar-collapsed' : ''}">
     <dream-header></dream-header>
     <div class="app-main">
-      <dream-sidebar @sidebar-toggle="${(x, c) => c.parent.handleSidebarToggle(c.event)}"></dream-sidebar>
+      <dream-sidebar></dream-sidebar>
       <main class="main-content">
         <dream-router></dream-router>
       </main>
@@ -48,11 +48,11 @@ const styles = css`
     transition: margin-left 0.3s ease;
   }
   
-  @media (max-width: 730px) {
-    .sidebar-collapsed .main-content {
-      margin-left: 60px;
-    }
-  }
+  // @media (max-width: 730px) {
+  //   .sidebar-collapsed .main-content {
+  //     margin-left: 60px;
+  //   }
+  // }
 `
 
 @customElement({
@@ -105,12 +105,12 @@ export class AppComponent extends FASTElement {
     }
   }
 
-  /**
-   * Handle sidebar toggle events
-   */
-  handleSidebarToggle(event: Event): void {
-    const customEvent = event as CustomEvent;
-    this.sidebarCollapsed = customEvent.detail.collapsed;
-    console.debug(`Sidebar collapsed state changed to: ${this.sidebarCollapsed}`);
-  }
+  // /**
+  //  * Handle sidebar toggle events
+  //  */
+  // handleSidebarToggle(event: Event): void {
+  //   const customEvent = event as CustomEvent;
+  //   this.sidebarCollapsed = customEvent.detail.collapsed;
+  //   console.debug(`Sidebar collapsed state changed to: ${this.sidebarCollapsed}`);
+  // }
 }
