@@ -2,7 +2,6 @@
 - would be nice if forms and forms with several steps could remember their data in the inputs
   especially when the user is navigating back and forth
 - ✔️why do we have scrollbars when none of the widgets are overflowing?
-- looks like there are some mocks in the loan-service file
 - the transaction signing is not so nice, the style of it should improve
 - need toast error when failing to start a workflow
 - when there is only one choice from the search inputs, enter key should select it

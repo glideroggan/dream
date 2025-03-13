@@ -29,7 +29,7 @@ const styles = css`
   }
   
   h2 {
-    color: #2c3e50;
+    color: var(--accent-color);
     margin-top: 0;
     border-bottom: 1px solid #eee;
     padding-bottom: 0.5rem;
@@ -44,7 +44,7 @@ const styles = css`
   }
   
   .info {
-    background-color: #e8f4fc;
+    background-color: var(--background-color);
     border-radius: 4px;
     padding: 1rem;
     margin-top: 1rem;

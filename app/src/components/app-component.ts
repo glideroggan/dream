@@ -44,15 +44,9 @@ const styles = css`
     flex: 1;
     overflow-y: auto;
     position: relative;
-    background-color: #f9f9f9;
+    background-color: var(--background-color);
     transition: margin-left 0.3s ease;
   }
-  
-  // @media (max-width: 730px) {
-  //   .sidebar-collapsed .main-content {
-  //     margin-left: 60px;
-  //   }
-  // }
 `
 
 @customElement({

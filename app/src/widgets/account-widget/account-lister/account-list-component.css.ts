@@ -1,6 +1,62 @@
 import { css } from "@microsoft/fast-element";
 
 export const styles = css`
+  :host {
+    /* Map account-specific variables to global theme */
+    /* Text colors from global theme */
+    --tertiary-text: var(--inactive-color, #999);
+    --secondary-text: var(--secondary-text-color, #666);
+    
+    /* Background colors */
+    --background-light: var(--hover-bg, rgba(0, 0, 0, 0.02));
+    
+    /* Status colors - use widget/global semantic colors */
+    --success-color: var(--widget-success-color, #27ae60);
+    --warning-color: var(--widget-warning-color, #e67e22);
+    --danger-color: var(--widget-error-color, #e74c3c);
+    
+    /* Light backgrounds for status indicators */
+    --success-bg-light: rgba(46, 204, 113, 0.1);
+    --success-border: rgba(46, 204, 113, 0.3);
+    --warning-bg-light: rgba(230, 126, 34, 0.1);
+    --warning-border: rgba(230, 126, 34, 0.3);
+    --warning-border-color: var(--warning-border);
+    --danger-bg-light: rgba(231, 76, 60, 0.1);
+    --danger-border: rgba(231, 76, 60, 0.3);
+    
+    /* Insights specific */
+    --insights-bg: rgba(247, 247, 247, 0.7);
+    --insights-border: rgba(230, 230, 230, 0.5);
+    
+    /* Upcoming transaction colors */
+    --upcoming-color: #9b59b6;
+    --upcoming-bg-light: rgba(247, 247, 255, 0.5);
+  }
+  
+  /* Dark theme overrides */
+  :host-context(body.dark-theme) {
+    --background-light: rgba(255, 255, 255, 0.05);
+    --insights-bg: rgba(40, 40, 40, 0.5);
+    --insights-border: rgba(60, 60, 60, 0.5);
+    --success-bg-light: rgba(46, 204, 113, 0.15);
+    --warning-bg-light: rgba(230, 126, 34, 0.15);
+    --danger-bg-light: rgba(231, 76, 60, 0.15);
+    --upcoming-bg-light: rgba(155, 89, 182, 0.15);
+  }
+  
+  /* Support system theme preference */
+  @media (prefers-color-scheme: dark) {
+    :host-context(body:not(.light-theme-forced):not(.dark-theme)) {
+      --background-light: rgba(255, 255, 255, 0.05);
+      --insights-bg: rgba(40, 40, 40, 0.5);
+      --insights-border: rgba(60, 60, 60, 0.5);
+      --success-bg-light: rgba(46, 204, 113, 0.15);
+      --warning-bg-light: rgba(230, 126, 34, 0.15);
+      --danger-bg-light: rgba(231, 76, 60, 0.15);
+      --upcoming-bg-light: rgba(155, 89, 182, 0.15);
+    }
+  }
+
   .accounts-list {
     display: flex;
     flex-direction: column;
@@ -24,7 +80,7 @@ export const styles = css`
     height: 24px;
     border: 2px solid rgba(0, 0, 0, 0.1);
     border-radius: 50%;
-    border-top-color: var(--widget-primary-color, #3498db);
+    border-top-color: var(--widget-primary-color, var(--accent-color));
     animation: spin 1s ease-in-out infinite;
     margin-bottom: 16px;
   }
@@ -43,13 +99,13 @@ export const styles = css`
   }
   
   .error-message {
-    color: var(--widget-error-color, #e74c3c);
+    color: var(--widget-error-color, var(--notification-badge-bg));
     text-align: center;
     margin-bottom: 16px;
   }
   
   .retry-button {
-    background-color: var(--widget-error-color, #e74c3c);
+    background-color: var(--widget-error-color, var(--notification-badge-bg));
     color: white;
     border: none;
     padding: 8px 16px;
@@ -64,7 +120,7 @@ export const styles = css`
   }
   
   .account-item {
-    border: 1px solid var(--divider-color, #eaeaea);
+    border: 1px solid var(--divider-color);
     border-radius: 6px;
     overflow: hidden;
     transition: all 0.3s ease;
@@ -80,13 +136,13 @@ export const styles = css`
     justify-content: space-between;
     padding: 12px 16px;
     cursor: pointer;
-    background-color: var(--background-light, #f9f9f9);
+    background-color: var(--background-light);
     transition: background-color 0.2s;
     align-items: center;
   }
   
   .account-header:hover {
-    background-color: var(--hover-bg, rgba(0, 0, 0, 0.02));
+    background-color: var(--hover-bg);
   }
   
   .account-info {
@@ -101,7 +157,7 @@ export const styles = css`
   
   .account-type {
     font-size: 12px;
-    color: var(--tertiary-text, #999);
+    color: var(--tertiary-text);
   }
   
   /* Account insights styling */
@@ -118,8 +174,8 @@ export const styles = css`
     font-size: 11px;
     padding: 2px 6px;
     border-radius: 10px;
-    background-color: var(--insights-bg, rgba(247, 247, 247, 0.7));
-    border: 1px solid var(--insights-border, rgba(230, 230, 230, 0.5));
+    background-color: var(--insights-bg);
+    border: 1px solid var(--insights-border);
     max-width: fit-content;
   }
   
@@ -130,7 +186,7 @@ export const styles = css`
   
   .insight-label {
     margin-right: 3px;
-    color: var(--tertiary-text, #999);
+    color: var(--tertiary-text);
   }
   
   .insight-value {
@@ -139,21 +195,21 @@ export const styles = css`
   
   /* Insight color classes */
   .insight-item.success {
-    background-color: var(--success-bg-light, rgba(240, 255, 240, 0.7));
-    border-color: var(--success-border, rgba(46, 204, 113, 0.3));
-    color: var(--success-color, #27ae60);
+    background-color: var(--success-bg-light);
+    border-color: var(--success-border);
+    color: var(--success-color);
   }
   
   .insight-item.warning {
-    background-color: var(--warning-bg-light, rgba(255, 248, 240, 0.7));
-    border-color: var(--warning-border, rgba(230, 126, 34, 0.3));
-    color: var(--warning-color, #e67e22);
+    background-color: var(--warning-bg-light);
+    border-color: var(--warning-border);
+    color: var(--warning-color);
   }
   
   .insight-item.danger {
-    background-color: var(--danger-bg-light, rgba(255, 235, 235, 0.7));
-    border-color: var(--danger-border, rgba(231, 76, 60, 0.3));
-    color: var(--danger-color, #e74c3c);
+    background-color: var(--danger-bg-light);
+    border-color: var(--danger-border);
+    color: var(--danger-color);
   }
   
   .account-balance {
@@ -168,7 +224,7 @@ export const styles = css`
   
   .balance-currency {
     font-size: 12px;
-    color: var(--tertiary-text, #999);
+    color: var(--tertiary-text);
   }
   
   .account-actions {
@@ -186,15 +242,15 @@ export const styles = css`
     justify-content: center;
     border-radius: 50%;
     cursor: pointer;
-    color: var(--secondary-text, #666);
+    color: var(--secondary-text);
   }
   
   .more-button:hover {
-    background-color: var(--hover-bg, rgba(0, 0, 0, 0.05));
+    background-color: var(--hover-bg);
   }
   
   .expanded .account-header {
-    border-bottom: 1px solid var(--divider-color, #eaeaea);
+    border-bottom: 1px solid var(--divider-color);
   }
   
   /* Upcoming transactions summary */
@@ -202,30 +258,30 @@ export const styles = css`
     display: flex;
     align-items: center;
     font-size: 12px;
-    color: var(--upcoming-color, #9b59b6);
-    background-color: var(--upcoming-bg-light, rgba(247, 247, 255, 0.5));
+    color: var(--upcoming-color);
+    background-color: var(--upcoming-bg-light);
     padding: 3px 8px;
     border-radius: 12px;
     width: fit-content;
   }
   
   .upcoming-summary.warning {
-    color: var(--warning-color, #e67e22);
-    background-color: var(--warning-bg-light, rgba(255, 248, 240, 0.7));
-    border: 1px solid var(--warning-border-color, rgba(230, 126, 34, 0.2));
+    color: var(--warning-color);
+    background-color: var(--warning-bg-light);
+    border: 1px solid var(--warning-border-color);
   }
   
   .upcoming-dot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background-color: var(--upcoming-color, #9b59b6);
+    background-color: var(--upcoming-color);
     margin-right: 6px;
     flex-shrink: 0;
   }
   
   .upcoming-summary.warning .upcoming-dot {
-    background-color: var(--warning-color, #e67e22);
+    background-color: var(--warning-color);
   }
   
   .warning-icon {
@@ -255,7 +311,7 @@ export const styles = css`
   
   .account-card-indicator:hover {
     opacity: 1;
-    background-color: var(--hover-bg, rgba(0, 0, 0, 0.05));
+    background-color: var(--hover-bg);
     transform: scale(1.1);
   }
 `;

@@ -4,6 +4,34 @@ export const styles = css`
   :host {
     display: block;
     width: 100%;
+    
+    /* Search-specific overlay and interactive colors */
+    --search-bg: color-mix(in srgb, var(--text-light) 15%, transparent);
+    --search-bg-focused: color-mix(in srgb, var(--text-light) 25%, transparent);
+    --search-text: var(--text-light);
+    --search-placeholder: color-mix(in srgb, var(--text-light) 70%, transparent);
+    --search-icon: color-mix(in srgb, var(--text-light) 80%, transparent);
+    --search-shadow: color-mix(in srgb, var(--text-light) 20%, transparent);
+    --search-dropdown-shadow: color-mix(in srgb, var(--primary-color) 20%, transparent);
+    --search-dropdown-border: color-mix(in srgb, var(--primary-color) 5%, transparent);
+    
+    /* Suggestions dropdown colors derived from theme */
+    --suggestion-icon-bg: var(--background-color);
+    --suggestion-icon-hover: color-mix(in srgb, var(--background-color) 80%, var(--primary-color));
+  }
+  
+  /* Dark theme specific adjustments */
+  :host-context(body.dark-theme) {
+    --suggestion-icon-bg: var(--background-color);
+    --suggestion-icon-hover: color-mix(in srgb, var(--background-color) 70%, var(--accent-color));
+  }
+  
+  /* Support system theme preference */
+  @media (prefers-color-scheme: dark) {
+    :host-context(body:not(.light-theme-forced):not(.dark-theme)) {
+      --suggestion-icon-bg: var(--background-color);
+      --suggestion-icon-hover: color-mix(in srgb, var(--background-color) 70%, var(--accent-color));
+    }
   }
   
   .search-container {
@@ -18,14 +46,14 @@ export const styles = css`
     display: flex;
     align-items: center;
     width: 100%;
-    background-color: color-mix(in srgb, var(--text-light) 15%, transparent);
+    background-color: var(--search-bg);
     border-radius: 6px;
     transition: all 0.2s ease;
   }
   
   .search-input-wrapper:focus-within {
-    background-color: color-mix(in srgb, var(--text-light) 25%, transparent);
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--text-light) 20%, transparent);
+    background-color: var(--search-bg-focused);
+    box-shadow: 0 0 0 2px var(--search-shadow);
   }
   
   .search-icon {
@@ -34,7 +62,7 @@ export const styles = css`
     justify-content: center;
     padding: 0 0.5rem 0 0.75rem;
     font-size: 0.9rem;
-    color: color-mix(in srgb, var(--text-light) 80%, transparent);
+    color: var(--search-icon);
   }
   
   .search-input {
@@ -43,7 +71,7 @@ export const styles = css`
     border: none;
     font-size: 0.9rem;
     background-color: transparent;
-    color: var(--text-light);
+    color: var(--search-text);
     width: 100%;
   }
   
@@ -52,7 +80,7 @@ export const styles = css`
   }
   
   .search-input::placeholder {
-    color: color-mix(in srgb, var(--text-light) 70%, transparent);
+    color: var(--search-placeholder);
   }
   
   .search-clear {
@@ -61,13 +89,13 @@ export const styles = css`
     justify-content: center;
     padding: 0 0.75rem;
     font-size: 1.1rem;
-    color: color-mix(in srgb, var(--text-light) 70%, transparent);
+    color: var(--search-placeholder);
     cursor: pointer;
     transition: color 0.2s;
   }
   
   .search-clear:hover {
-    color: var(--text-light);
+    color: var(--search-text);
   }
   
   .search-loader {
@@ -75,7 +103,7 @@ export const styles = css`
     height: 16px;
     margin-right: 0.75rem;
     border: 2px solid color-mix(in srgb, var(--text-light) 30%, transparent);
-    border-top: 2px solid color-mix(in srgb, var(--text-light) 80%, transparent);
+    border-top: 2px solid var(--search-icon);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
   }
@@ -91,10 +119,10 @@ export const styles = css`
     left: 50%;
     transform: translateX(-50%);
     width: 350px;
-    background: var(--text-light);
+    background: var(--background-card);
     border-radius: 8px;
-    box-shadow: 0 6px 16px color-mix(in srgb, var(--primary-color) 20%, transparent), 
-                0 0 0 1px color-mix(in srgb, var(--primary-color) 5%, transparent);
+    box-shadow: 0 6px 16px var(--search-dropdown-shadow), 
+                0 0 0 1px var(--search-dropdown-border);
     display: none;
     z-index: 100;
     max-height: 450px;
@@ -152,7 +180,7 @@ export const styles = css`
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--background-color);
+    background-color: var(--suggestion-icon-bg);
     border-radius: 8px;
     margin-right: 12px;
     font-size: 18px;
@@ -162,7 +190,7 @@ export const styles = css`
   
   .suggestion-item:hover .suggestion-icon {
     transform: scale(1.05);
-    background-color: color-mix(in srgb, var(--background-color) 80%, var(--primary-color));
+    background-color: var(--suggestion-icon-hover);
   }
   
   .suggestion-content {
@@ -197,21 +225,22 @@ export const styles = css`
     transform: scale(1.05);
   }
   
+  /* Badge styling using global theme variables */
   .suggestion-type.theme {
-    background-color: var(--theme-bg, #e3f2fd);
-    color: var(--theme-color, #0d47a1);
+    background-color: var(--theme-bg);
+    color: var(--theme-color);
     font-weight: 500;
   }
   
   .suggestion-type.widget {
-    background-color: var(--widget-bg, #e8f5e9);
-    color: var(--widget-color, #388e3c);
+    background-color: var(--widget-bg);
+    color: var(--widget-color);
     font-weight: 500;
   }
   
   .suggestion-type.workflow {
-    background-color: var(--workflow-bg, #fff1e6);
-    color: var(--workflow-color, #8f4700);
+    background-color: var(--workflow-bg);
+    color: var(--workflow-color);
     font-weight: 500;
   }
   

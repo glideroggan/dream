@@ -38,6 +38,7 @@ export const basePageStyles = css`
     height: 100%;
     width: 100%;
     overflow: hidden; /* Prevent scrollbars on the host element */
+    background-color: var(--background-color, #f9f9f9);
   }
 
   .content-container {

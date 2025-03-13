@@ -52,13 +52,6 @@ export const template = html<WidgetWrapper>/*html*/`
                 }}" 
                 title="Increase height">+</button>
             </div>
-            <!-- Auto-size toggle button -->
-            <button 
-              class="auto-size-toggle ${x => x.autoSizeEnabled ? 'active' : ''}"
-              type="button"
-              title="${x => x.autoSizeEnabled ? 'Disable auto-sizing' : 'Enable auto-sizing'}">
-              <span class="auto-icon">A</span>
-            </button>
           </div>
         </div>
       `)}

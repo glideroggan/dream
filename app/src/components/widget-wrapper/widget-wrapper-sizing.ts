@@ -422,7 +422,7 @@ export class WidgetSizingManager {
     console.debug(`Content height: ${contentHeight}px, scroll height: ${contentScrollHeight}px`);
 
     const rowHeight = MIN_ROW_HEIGHT + DEFAULT_GRID_GAP;
-    const neededRows = Math.ceil(contentScrollHeight / rowHeight + 1); // Add 0.5 row buffer
+    const neededRows = Math.ceil(contentScrollHeight / rowHeight + 1.5); // Add 0.5 row buffer
     console.debug(`Content needs ${neededRows} rows`);
     this.changeSpans(this.component.colSpan, neededRows + 1, false);
   }

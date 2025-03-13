@@ -131,6 +131,55 @@ const template = html<TransactionListComponent>/*html*/ `
 `;
 
 const styles = css`
+  :host {
+    /* Map transaction-specific variables to global theme */
+    --text-primary: var(--primary-text-color);
+    --text-secondary: var(--secondary-text-color);
+    --text-tertiary: var(--inactive-color);
+    
+    /* Financial status colors - specific to transactions */
+    --deposit-color: var(--widget-success-color, #27ae60);
+    --withdrawal-color: #e67e22;
+    --payment-color: var(--accent-color, #3498db);
+    --transfer-color: #9b59b6;
+    --fee-color: var(--notification-badge-bg, #e74c3c);
+    --interest-color: var(--widget-success-color, #2ecc71);
+    --success-color: var(--widget-success-color, #27ae60);
+    
+    /* UI specific colors */
+    --icon-bg: var(--widget-secondary-color, #f0f0f0);
+    --background-light: rgba(0,0,0,0.02);
+    --upcoming-color: #9b59b6;
+    --upcoming-bg: rgba(247, 247, 255, 0.5);
+    
+    /* Action colors */
+    --view-more-bg: rgba(52, 152, 219, 0.05);
+    --view-more-hover-bg: rgba(52, 152, 219, 0.12);  
+    --view-more-active-bg: rgba(52, 152, 219, 0.2);
+  }
+  
+  /* Apply dark theme adjustments */
+  :host-context(body.dark-theme) {
+    --icon-bg: var(--widget-secondary-color, #2c3e50);
+    --background-light: rgba(255,255,255,0.05);
+    --upcoming-bg: rgba(155, 89, 182, 0.1);
+    --view-more-bg: rgba(52, 152, 219, 0.1);
+    --view-more-hover-bg: rgba(52, 152, 219, 0.2);  
+    --view-more-active-bg: rgba(52, 152, 219, 0.3);
+  }
+
+  /* Support prefers-color-scheme */
+  @media (prefers-color-scheme: dark) {
+    :host-context(body:not(.light-theme-forced):not(.dark-theme)) {
+      --icon-bg: var(--widget-secondary-color, #2c3e50);
+      --background-light: rgba(255,255,255,0.05);
+      --upcoming-bg: rgba(155, 89, 182, 0.1);
+      --view-more-bg: rgba(52, 152, 219, 0.1);
+      --view-more-hover-bg: rgba(52, 152, 219, 0.2);  
+      --view-more-active-bg: rgba(52, 152, 219, 0.3);
+    }
+  }
+
   .transaction-list-container {
     padding: 0;
     display: flex;
@@ -140,7 +189,7 @@ const styles = css`
   .transactions-loading, .transactions-empty {
     padding: 16px;
     text-align: center;
-    color: var(--text-secondary, #666);
+    color: var(--text-secondary);
   }
   
   .transactions-loading {
@@ -155,7 +204,7 @@ const styles = css`
     height: 24px;
     border: 2px solid rgba(0, 0, 0, 0.1);
     border-radius: 50%;
-    border-top-color: var(--primary-color, #3498db);
+    border-top-color: var(--primary-color);
     animation: spin 1s ease-in-out infinite;
     margin-bottom: 8px;
   }
@@ -167,8 +216,8 @@ const styles = css`
   /* Tab Navigation */
   .transaction-tabs {
     display: flex;
-    border-bottom: 1px solid var(--divider-color, #eaeaea);
-    background-color: var(--background-light, #f9f9f9);
+    border-bottom: 1px solid var(--divider-color);
+    background-color: var(--background-color);
   }
   
   .tab-button {
@@ -178,7 +227,7 @@ const styles = css`
     border: none;
     font-size: 14px;
     font-weight: 500;
-    color: var(--text-secondary, #666);
+    color: var(--text-secondary);
     cursor: pointer;
     transition: all 0.2s ease;
     position: relative;
@@ -189,11 +238,11 @@ const styles = css`
   }
   
   .tab-button:hover {
-    background-color: rgba(0, 0, 0, 0.03);
+    background-color: var(--hover-bg, rgba(0, 0, 0, 0.03));
   }
   
   .tab-button.active {
-    color: var(--primary-color, #3498db);
+    color: var(--primary-color);
   }
   
   .tab-button.active::after {
@@ -203,13 +252,13 @@ const styles = css`
     left: 0;
     right: 0;
     height: 2px;
-    background-color: var(--primary-color, #3498db);
+    background-color: var(--primary-color);
   }
   
   .tab-count {
     font-size: 12px;
     background-color: rgba(0, 0, 0, 0.07);
-    color: var(--text-secondary, #666);
+    color: var(--text-secondary);
     border-radius: 12px;
     padding: 2px 8px;
     min-width: 24px;
@@ -228,9 +277,9 @@ const styles = css`
   .group-date-header {
     font-size: 13px;
     font-weight: 500;
-    color: var(--text-secondary, #666);
+    color: var(--text-secondary);
     padding: 8px 16px 4px;
-    background-color: var(--background-light, rgba(0,0,0,0.02));
+    background-color: var(--background-light);
   }
   
   .transaction-list {
@@ -241,7 +290,7 @@ const styles = css`
   .transaction-item {
     display: flex;
     padding: 12px 16px;
-    border-bottom: 1px solid var(--divider-color, #f0f0f0);
+    border-bottom: 1px solid var(--divider-color);
     align-items: center;
   }
   
@@ -250,20 +299,20 @@ const styles = css`
   }
   
   .transaction-item.upcoming {
-    background-color: var(--upcoming-bg, rgba(247, 247, 255, 0.5));
+    background-color: var(--upcoming-bg);
   }
   
   .transaction-date,
   .transaction-time {
     font-size: 12px;
-    color: var(--text-tertiary, #999);
+    color: var(--text-tertiary);
   }
   
   .transaction-meta {
     display: flex;
     gap: 12px;
     font-size: 12px;
-    color: var(--text-tertiary, #999);
+    color: var(--text-tertiary);
   }
   
   .transaction-icon {
@@ -285,13 +334,13 @@ const styles = css`
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--icon-bg, #f0f0f0);
+    background-color: var(--icon-bg);
     color: white;
   }
   
   /* Icons for different transaction types */
   .category-icon.deposit {
-    background-color: var(--deposit-color, #27ae60);
+    background-color: var(--deposit-color);
   }
   .category-icon.deposit::before {
     content: '';
@@ -304,7 +353,7 @@ const styles = css`
   }
   
   .category-icon.withdrawal {
-    background-color: var(--withdrawal-color, #e67e22);
+    background-color: var(--withdrawal-color);
   }
   .category-icon.withdrawal::before {
     content: '';
@@ -317,7 +366,7 @@ const styles = css`
   }
   
   .category-icon.payment {
-    background-color: var(--payment-color, #3498db);
+    background-color: var(--payment-color);
   }
   .category-icon.payment::before {
     content: '$';
@@ -326,7 +375,7 @@ const styles = css`
   }
   
   .category-icon.transfer {
-    background-color: var(--transfer-color, #9b59b6);
+    background-color: var(--transfer-color);
   }
   .category-icon.transfer::before {
     content: '';
@@ -348,7 +397,7 @@ const styles = css`
   }
   
   .category-icon.fee {
-    background-color: var(--fee-color, #e74c3c);
+    background-color: var(--fee-color);
   }
   .category-icon.fee::before {
     content: '%';
@@ -357,7 +406,7 @@ const styles = css`
   }
   
   .category-icon.interest {
-    background-color: var(--interest-color, #2ecc71);
+    background-color: var(--interest-color);
   }
   .category-icon.interest::before {
     content: '+';
@@ -367,14 +416,14 @@ const styles = css`
   
   /* Scheduled icon style */
   .category-icon.scheduled {
-    border: 2px dashed var(--upcoming-color, #9b59b6);
+    border: 2px dashed var(--upcoming-color);
     background-color: rgba(155, 89, 182, 0.2);
   }
   
   .scheduled-icon {
     width: 12px;
     height: 12px;
-    border: 2px solid var(--upcoming-color, #9b59b6);
+    border: 2px solid var(--upcoming-color);
     border-radius: 50%;
     position: relative;
   }
@@ -386,7 +435,7 @@ const styles = css`
     left: 50%;
     height: 6px;
     width: 2px;
-    background: var(--upcoming-color, #9b59b6);
+    background: var(--upcoming-color);
     transform: translate(-50%, -50%);
   }
   
@@ -397,7 +446,7 @@ const styles = css`
     left: 50%;
     height: 2px;
     width: 6px;
-    background: var(--upcoming-color, #9b59b6);
+    background: var(--upcoming-color);
     transform: translate(-1px, -50%);
   }
   
@@ -413,7 +462,7 @@ const styles = css`
   
   .transaction-type {
     font-size: 12px;
-    color: var(--text-tertiary, #999);
+    color: var(--text-tertiary);
   }
   
   .transaction-amount {
@@ -423,17 +472,17 @@ const styles = css`
   }
   
   .transaction-amount.incoming {
-    color: var(--success-color, #27ae60);
+    color: var(--success-color);
   }
   
   .transaction-amount.outgoing {
-    color: var(--text-primary, #333);
+    color: var(--text-primary);
   }
   
   .transaction-balance {
     font-size: 12px;
     font-weight: normal;
-    color: var(--text-tertiary, #999);
+    color: var(--text-tertiary);
     margin-top: 2px;
   }
   
@@ -441,10 +490,10 @@ const styles = css`
     display: block;
     width: 100%;
     padding: 10px;
-    background-color: var(--view-more-bg, rgba(52, 152, 219, 0.05));
+    background-color: var(--view-more-bg);
     border: none;
-    border-top: 1px solid var(--divider-color, #eaeaea);
-    color: var(--primary-color, #3498db);
+    border-top: 1px solid var(--divider-color);
+    color: var(--link-color);
     font-weight: 600;
     cursor: pointer;
     text-align: center;
@@ -455,14 +504,14 @@ const styles = css`
   }
   
   .view-all-button:hover {
-    background-color: var(--view-more-hover-bg, rgba(52, 152, 219, 0.12));
+    background-color: var(--view-more-hover-bg);
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   }
   
   .view-all-button:active {
     transform: translateY(0);
-    background-color: var(--view-more-active-bg, rgba(52, 152, 219, 0.2));
+    background-color: var(--view-more-active-bg);
   }
   
   .view-all-button:hover {

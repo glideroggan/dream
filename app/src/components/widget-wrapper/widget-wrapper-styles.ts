@@ -25,56 +25,95 @@ export const styles = css`
   :host {
     display: block;
     width: 100%;
-    height: auto; /* Changed from 100% to auto to allow expansion */
-    min-height: 100%; /* Keep filling grid cell but allow growth */
-    font-family: var(--font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
-    background-color: var(--widget-bg-color, #fff);
-    border-radius: var(--widget-border-radius, 8px);
-    box-shadow: var(--widget-shadow, 0 2px 8px rgba(0, 0, 0, 0.1));
+    height: auto;
+    min-height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    border-radius: 8px;
     overflow: hidden;
     box-sizing: border-box;
     
-    /* Define color palette that widgets can inherit */
-    --widget-background: #ffffff;
-    --widget-text-color: #333333;
+    /* Widget specific variables with appropriate defaults and global fallbacks */
+    /* Backgrounds and colors - distinct from parent for visual separation */
+    --widget-background: #ffffff; 
     --widget-header-background: #fafafa;
-    --widget-header-text-color: #666666;
-    --widget-border-color: rgba(0,0,0,0.08);
+    --widget-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    
+    /* Text colors - inherit from global theme */
+    --widget-text-color: var(--primary-text-color);
+    --widget-header-text-color: var(--secondary-text-color);
+    --widget-subtle-text: var(--inactive-color);
+    
+    /* Borders and dividers - inherit from global theme */
+    --widget-border-color: var(--border-color, rgba(0,0,0,0.08));
     --widget-border-radius: 8px;
+    --widget-divider-color: var(--divider-color);
     
-    /* Primary actions */
-    --widget-primary-color: #3498db;
-    --widget-primary-hover: #2980b9;
-    --widget-primary-text: #ffffff;
+    /* Primary action colors - inherit from global theme */
+    --widget-primary-color: var(--accent-color);
+    --widget-primary-hover: var(--primary-color);
+    --widget-primary-text: var(--text-light);
     
-    /* Secondary actions */
+    /* Secondary action colors - widget specific with appropriate defaults */
     --widget-secondary-color: #f0f0f0;
     --widget-secondary-hover: #e0e0e0;
-    --widget-secondary-text: #333333;
+    --widget-secondary-text: var(--primary-text-color);
     
-    /* Accent colors for different brand features */
-    --widget-accent-color: var(--widget-primary-color);
-    --widget-accent-hover: var(--widget-primary-hover);
-    --widget-accent-text: var(--widget-primary-text);
+    /* Status colors - use semantic colors from global theme */
+    --widget-success-color: var(--widget-color);
+    --widget-warning-color: var(--workflow-color);
+    --widget-error-color: var(--notification-badge-bg);
+    --widget-success-light: var(--widget-bg);
+    --widget-warning-light: var(--workflow-bg);
+    --widget-error-light: rgba(231, 76, 60, 0.1);
     
-    /* Status colors */
-    --widget-success-color: #27ae60;
-    --widget-warning-color: #f39c12;
-    --widget-error-color: #e74c3c;
+    /* Widget controls - buttons, headers, etc. */
+    --widget-close-color: var(--secondary-text-color, #777);
+    --widget-title-color: var(--primary-text-color, #333);
     
-    /* Light versions for backgrounds */
-    --widget-success-light: #d5f5e3;
-    --widget-warning-light: #fef9e7;
-    --widget-error-light: #fadbd8;
-    
-    /* Dividers and subtle elements */
-    --widget-divider-color: #eaeaea;
-    --widget-subtle-text: #999999;
-    
-    /* Spacing */
+    /* Spacing - widget specific */
     --widget-padding: 16px;
     --widget-header-padding: 0.3rem 0.75rem;
     --widget-content-padding: 1rem;
+    
+    /* Control colors - derive from theme */
+    --size-button-bg: var(--widget-secondary-color, #f0f0f0);
+    --size-button-border: var(--widget-border-color, #ddd);
+    --size-button-color: var(--widget-text-color, #666);
+    --size-button-hover-bg: var(--widget-secondary-hover, #e0e0e0);
+    --size-button-hover-border: var(--widget-border-color, #ccc);
+    --size-button-active-bg: var(--widget-primary-color, #0078d4);
+    --size-button-active-border: var(--widget-primary-color, #0078d4);
+    --size-button-active-color: var(--widget-primary-text, white);
+    
+    /* Apply styles */
+    background-color: var(--widget-background);
+    box-shadow: var(--widget-shadow);
+  }
+
+  /* Apply dark theme styles when body has dark-theme class */
+  :host-context(body.dark-theme) {
+    --widget-background: #243546; /* Slightly lighter than app background for contrast */
+    --widget-header-background: #1e2e3e;
+    --widget-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --widget-secondary-color: #2c3e50;
+    --widget-secondary-hover: #34495e;
+    --widget-error-light: rgba(231, 76, 60, 0.2);
+    --widget-warning-light: rgba(243, 156, 18, 0.2);
+    --widget-success-light: rgba(46, 204, 113, 0.2);
+  }
+
+  /* Support prefers-color-scheme when no explicit theme class is set */
+  @media (prefers-color-scheme: dark) {
+    :host-context(body:not(.light-theme-forced):not(.dark-theme)) {
+      --widget-background: #243546;
+      --widget-header-background: #1e2e3e;
+      --widget-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      --widget-secondary-color: #2c3e50;
+      --widget-secondary-hover: #34495e;
+      --widget-error-light: rgba(231, 76, 60, 0.2);
+      --widget-warning-light: rgba(243, 156, 18, 0.2);
+      --widget-success-light: rgba(46, 204, 113, 0.2);
+    }
   }
 
   /* Generate dynamic span selectors for host element */
@@ -92,7 +131,7 @@ export const styles = css`
     overflow: hidden;
     position: relative;
     background: var(--widget-background);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--widget-shadow);
     box-sizing: border-box;
   }
 
@@ -120,7 +159,7 @@ export const styles = css`
     margin: 0;
     font-size: 0.9rem;
     font-weight: 500;
-    color: var(--widget-header-text-color);
+    color: var(--widget-text-color);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -140,9 +179,9 @@ export const styles = css`
     width: 24px;
     height: 24px;
     border-radius: 4px;
-    background-color: var(--size-button-bg, #f0f0f0);
-    border: 1px solid var(--size-button-border, #ddd);
-    color: var(--size-button-color, #666);
+    background-color: var(--size-button-bg);
+    border: 1px solid var(--size-button-border);
+    color: var(--size-button-color);
     font-size: 12px;
     font-weight: bold;
     padding: 0;
@@ -154,22 +193,22 @@ export const styles = css`
   }
 
   .size-button:hover {
-    background-color: var(--size-button-hover-bg, #e0e0e0);
-    border-color: var(--size-button-hover-border, #ccc);
+    background-color: var(--size-button-hover-bg);
+    border-color: var(--size-button-hover-border);
   }
 
   .size-button-active {
-    background-color: var(--size-button-active-bg, #0078d4);
-    border-color: var(--size-button-active-border, #0078d4);
-    color: var(--size-button-active-color, white);
+    background-color: var(--size-button-active-bg);
+    border-color: var(--size-button-active-border);
+    color: var(--size-button-active-color);
   }
 
   .widget-title {
     flex: 1;
-    font-size: var(--widget-title-size, 1rem);
-    font-weight: var(--widget-title-weight, 600);
+    font-size: 1rem;
+    font-weight: 600;
     text-align: left;
-    color: var(--widget-title-color, #333);
+    color: var(--widget-title-color);
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -195,8 +234,8 @@ export const styles = css`
     padding: 0;
     background: none;
     cursor: pointer;
-    color: var(--widget-close-color, #777);
-    font-size: var(--widget-close-size, 1.2rem);
+    color: var(--widget-close-color);
+    font-size: 1.2rem;
     line-height: 1;
     padding: 0 0 0 8px;
     margin-left: auto;
@@ -204,8 +243,8 @@ export const styles = css`
   
   .close-button:hover {
     opacity: 1;
-    background-color: var(--neutral-layer-3, rgba(0,0,0,0.05));
-    color: var(--widget-close-hover-color, #333);
+    background-color: var(--widget-secondary-hover);
+    color: var(--widget-text-color);
   }
 
   /* Only show close button on hover for cleaner look */
@@ -358,7 +397,7 @@ export const styles = css`
   }
   
   .dismiss-button:hover {
-    background-color: var(--hover-bg, rgba(0, 0, 0, 0.05));
+    background-color: var(--widget-secondary-hover);
   }
   
   .cancel-button {
@@ -369,7 +408,7 @@ export const styles = css`
   }
   
   .cancel-button:hover {
-    background-color: var(--hover-bg, rgba(0, 0, 0, 0.05));
+    background-color: var(--widget-secondary-hover);
   }
 
   .widget-content {
@@ -438,15 +477,16 @@ export const styles = css`
   .timeout-button {
     padding: 0.375rem 0.75rem;
     border-radius: 4px;
-    border: 1px solid #ccc;
-    background-color: #fff;
+    border: 1px solid var(--widget-border-color);
+    background-color: var(--widget-background);
     cursor: pointer;
+    color: var(--widget-text-color);
   }
 
   .timeout-button-wait {
-    background-color: #0078d4;
-    border-color: #0078d4;
-    color: white;
+    background-color: var(--widget-primary-color);
+    border-color: var(--widget-primary-color);
+    color: var(--widget-primary-text);
   }
 
   .timeout-button-wait:hover {
@@ -480,13 +520,13 @@ export const styles = css`
   /* State-based styling */
   .widget-container[state="error"] .widget-header,
   .widget-container[state="import-error"] .widget-header {
-    background-color: var(--widget-error-header-bg, rgba(220, 53, 69, 0.1));
-    border-bottom-color: var(--widget-error-header-border, rgba(220, 53, 69, 0.2));
+    background-color: rgba(220, 53, 69, 0.1);
+    border-bottom-color: rgba(220, 53, 69, 0.2);
   }
 
   .widget-container[state="timeout-warning"] .widget-header {
-    background-color: var(--widget-warning-header-bg, rgba(255, 193, 7, 0.1));
-    border-bottom-color: var(--widget-warning-header-border, rgba(255, 193, 7, 0.2));
+    background-color: rgba(255, 193, 7, 0.1);
+    border-bottom-color: rgba(255, 193, 7, 0.2);
   }
 
   @media (max-width: 300px) {
@@ -519,15 +559,15 @@ export const styles = css`
   .span-control-group {
     display: flex;
     align-items: center;
-    background-color: #f0f0f0;
+    background-color: var(--widget-secondary-color);
     border-radius: 4px;
     padding: 0 2px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--widget-border-color);
   }
 
   .span-label {
     font-size: 10px;
-    color: #555;
+    color: var(--widget-subtle-text);
     padding: 0 2px;
     font-weight: bold;
   }
@@ -537,7 +577,7 @@ export const styles = css`
     width: 18px;
     text-align: center;
     font-weight: 600;
-    color: #333;
+    color: var(--widget-text-color);
   }
 
   .span-button {
@@ -574,9 +614,9 @@ export const styles = css`
     width: 24px;
     height: 20px;
     border-radius: 4px;
-    background-color: #f0f0f0;
-    border: 1px solid #ddd;
-    color: #777;
+    background-color: var(--widget-secondary-color);
+    border: 1px solid var(--widget-border-color);
+    color: var(--widget-text-color);
     font-size: 11px;
     font-weight: bold;
     padding: 0;
@@ -589,17 +629,12 @@ export const styles = css`
   }
   
   .auto-size-toggle:hover {
-    background-color: #e0e0e0;
+    background-color: var(--widget-secondary-hover);
   }
   
   .auto-size-toggle.active {
-    background-color: #0078d4;
-    border-color: #0078d4;
-    color: white;
-  }
-  
-  .auto-icon {
-    font-style: italic;
-    font-weight: bold;
+    background-color: var(--widget-primary-color);
+    border-color: var(--widget-primary-color);
+    color: var(--widget-primary-text);
   }
 `;
