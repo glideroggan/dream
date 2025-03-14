@@ -300,7 +300,7 @@ export class GridLayout extends FASTElement {
    */
   private saveSpansToSettings(pageType: string, widgetId: string, colSpan: number, rowSpan: number): void {
     try {
-      console.log(`GridLayout: Saving dimensions for ${widgetId} on ${pageType}: ${colSpan}x${rowSpan}`);
+      console.debug(`GridLayout: Saving dimensions for ${widgetId} on ${pageType}: ${colSpan}x${rowSpan}`);
       this.settingsRepository.updateWidgetGridDimensions(pageType, widgetId, colSpan, rowSpan)
         .catch(err => console.error('Error saving widget dimensions:', err));
     } catch (error) {

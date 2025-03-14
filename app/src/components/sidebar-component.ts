@@ -466,7 +466,7 @@ export class SidebarComponent extends FASTElement {
     const settingsRepo = repositoryService.getSettingsRepository();
     const settings = await settingsRepo.getCurrentSettings()
     this.collapsed = settings.sidebarClosed || false;
-    console.log('Sidebar is ', this.collapsed ? 'collapsed' : 'expanded');
+    console.debug('Sidebar is ', this.collapsed ? 'collapsed' : 'expanded');
     
     // Add listeners for user login/logout events
     document.addEventListener('user-login', this.loadUserData.bind(this));

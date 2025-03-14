@@ -501,7 +501,7 @@ export class KycWorkflow extends WorkflowBase {
   // handles the signing nested workflow
   public resume(result?: WorkflowResult): void {
 
-    console.log('KYC workflow resumed after nested workflow', result)
+    console.debug('KYC workflow resumed after nested workflow', result)
 
     // Make sure we restore the original UI state - update the modal title and button text
     this.updateTitle("Identity Verification");
@@ -534,7 +534,7 @@ export class KycWorkflow extends WorkflowBase {
         primaryButtonText: "Done"
       })
       const results = (eventResults as any).detail as WorkflowResult;
-      console.log("Signing workflow results:", results);
+      console.debug("Signing workflow results:", results);
       if (results?.success) {
         this.completeKyc();
       }
@@ -553,7 +553,7 @@ export class KycWorkflow extends WorkflowBase {
   }
 
   completeKyc(): void {
-    console.log("KYC verification completed successfully");
+    console.debug("KYC verification completed successfully");
     this.isProcessing = true;
     this.errorMessage = "";
 
@@ -575,7 +575,7 @@ export class KycWorkflow extends WorkflowBase {
       })
       .then(() => {
         // Complete the workflow with success, including the requirement ID if we have it
-        console.log("KYC data saved successfully:", completionData);
+        console.debug("KYC data saved successfully:", completionData);
         this.complete(true, {
           verificationStatus: 'pending',
           level: this.requiredKycLevel,

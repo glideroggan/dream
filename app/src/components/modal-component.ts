@@ -207,14 +207,14 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
     // Register this modal with the workflow manager
     workflowManager.setModalComponent(this);
 
-    const shadowRoot = this.shadowRoot!
-    const getActive = (doc: Document= document) => {
-      let activeDocument = doc.activeElement
-      while (activeDocument?.shadowRoot && activeDocument.shadowRoot.activeElement) {
-        activeDocument = activeDocument.shadowRoot.activeElement
-      }
-      return activeDocument
-    }
+    // const shadowRoot = this.shadowRoot!
+    // const getActive = (doc: Document= document) => {
+    //   let activeDocument = doc.activeElement
+    //   while (activeDocument?.shadowRoot && activeDocument.shadowRoot.activeElement) {
+    //     activeDocument = activeDocument.shadowRoot.activeElement
+    //   }
+    //   return activeDocument
+    // }
     // setInterval(() => {
     //   console.debug('[Modal] ', getActive())
     // }, 1000)

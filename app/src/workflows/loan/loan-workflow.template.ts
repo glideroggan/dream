@@ -3,6 +3,7 @@ import { LoanWorkflow } from "./loan-workflow";
 import { when } from "@microsoft/fast-element";
 import { getProductIcon, getInterestRateDisplay } from "./loan-workflow.helper";
 import { ProductEntity } from "../../repositories/models/product-models";
+import { Account } from "../../repositories/models/account-models";
 
 // Step 1: Choose loan product
 const step1Template = html<LoanWorkflow>/*html*/`
@@ -215,9 +216,9 @@ const step3Template = html<LoanWorkflow>/*html*/`
         ${when(x => x.accounts.length === 0, html<LoanWorkflow>/*html*/`
           <option value="">No eligible accounts found</option>
         `)}
-        ${x => x.accounts.map(account => html<LoanWorkflow>`
-          <option value="${account.id}" ?selected="${account.id === x.selectedAccountId}">
-            ${account.name} - $${x.formatNumber(account.balance)}
+        ${repeat(x => x.accounts, html<Account, LoanWorkflow>/*html*/`
+          <option value="${x => x.id}" ?selected="${(x, c) => x.id === c.parent.selectedAccountId}">
+            ${x => x.name} - $${(x, c) => c.parent.formatNumber(x.balance)}
           </option>
         `)}
       </select>
@@ -226,7 +227,7 @@ const step3Template = html<LoanWorkflow>/*html*/`
     
     <div class="loan-navigation">
       <button @click="${x => x.goToStep('eligibility')}" class="secondary-button">Back</button>
-      <button @click="${x => x.goToStep('terms')}" class="primary-button">Continue</button>
+      <button ?disabled="${x => !x.selectedAccountId}" @click="${x => x.goToStep('terms')}" class="primary-button">Continue</button>
     </div>
   </div>
 `;
@@ -327,16 +328,7 @@ const step5Template = html<LoanWorkflow>/*html*/`
 // Main template combining all steps
 export const template = html<LoanWorkflow>/*html*/`
   <div class="loan-workflow">
-    <!-- Header -->
-    <div class="loan-header">
-      <div class="loan-icon">
-        ${when(x => !x.selectedProduct, html<LoanWorkflow>/*html*/`💰`)}
-        ${when(x => !!x.selectedProduct, html<LoanWorkflow>/*html*/`
-          ${x => getProductIcon(x.selectedProduct)}
-        `)}  
-      </div>
-      <h2>${x => x.headerTitle}</h2>
-    </div>
+    
 
     <!-- Step 1: Choose loan product -->
     ${when(x => x.step === 'select-product', step1Template)}
@@ -348,3 +340,4 @@ export const template = html<LoanWorkflow>/*html*/`
     ${when(x => x.step === 'result', step5Template)}
   </div>
 `;
+

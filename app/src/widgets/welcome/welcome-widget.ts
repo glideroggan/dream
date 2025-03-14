@@ -90,19 +90,19 @@ const styles = css`
   }
   
   h2 {
-    color: var(--heading-color, #2c3e50);
+    color: var(--primary-text-color, #2c3e50);
     margin-top: 0;
     font-size: 1.8em;
   }
   
   h3 {
-    color: var(--subheading-color, #34495e);
+    color: var(--secondary-text-color, #34495e);
     margin-top: 0;
   }
   
   .intro {
     font-size: 1.1em;
-    color: var(--text-color, #333);
+    color: var(--primary-text-color, #333);
     margin-bottom: 20px;
   }
   
@@ -110,7 +110,7 @@ const styles = css`
     display: flex;
     justify-content: center;
     margin-bottom: 20px;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid var(--divider-color, #ddd);
     flex-wrap: wrap; /* Allow tabs to wrap on smaller screens */
   }
   
@@ -121,7 +121,7 @@ const styles = css`
     margin: 0 5px;
     cursor: pointer;
     font-size: 1em;
-    color: var(--text-color, #333);
+    color: var(--primary-text-color, #333);
     border-bottom: 2px solid transparent;
     transition: all 0.2s ease;
   }
@@ -132,7 +132,7 @@ const styles = css`
   }
   
   .tab-button:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: var(--hover-bg, rgba(0, 0, 0, 0.05));
   }
   
   .tab-content {
@@ -154,7 +154,7 @@ const styles = css`
   .feature-illustration {
     height: 120px;
     margin: 15px auto;
-    background-color: #f0f0f0;
+    background-color: var(--background-card, #f0f0f0);
     border-radius: 6px;
     background-position: center;
     background-repeat: no-repeat;
@@ -179,7 +179,7 @@ const styles = css`
   
   .action-button {
     background-color: var(--accent-color, #3498db);
-    color: white;
+    color: var(--text-light, white);
     border: none;
     border-radius: 4px;
     padding: 8px 16px;
@@ -190,7 +190,8 @@ const styles = css`
   }
   
   .action-button:hover {
-    background-color: var(--accent-hover-color, #2980b9);
+    background-color: var(--primary-color, #2980b9);
+    filter: brightness(1.1);
   }
   
   .controls {
@@ -203,7 +204,7 @@ const styles = css`
   
   .dismiss-button {
     background-color: var(--secondary-color, #95a5a6);
-    color: white;
+    color: var(--text-light, white);
     border: none;
     border-radius: 4px;
     padding: 8px 16px;
@@ -213,7 +214,7 @@ const styles = css`
   }
   
   .dismiss-button:hover {
-    background-color: var(--secondary-hover-color, #7f8c8d);
+    background-color: var(--hover-bg, #7f8c8d);
   }
   
   .show-again {
@@ -221,7 +222,7 @@ const styles = css`
     align-items: center;
     gap: 5px;
     font-size: 14px;
-    color: var(--text-color, #333);
+    color: var(--primary-text-color, #333);
   }
   
   [hidden] {

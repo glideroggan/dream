@@ -1,8 +1,8 @@
 # BUGS
-- start saving widgets urls in cache, no need to try to fetch them every time, only those that are not in the cache or have failed
+- why is only the minus button on error-widget triggering resize?
 - cancel button on loan modal on sign step is not hover styled
 - cancel button on the signing workflow is not good in dark mode
-  Lets create a custom checkbox component that we can use
+- ✔️Lets create a custom checkbox component that we can use
 - would be nice if forms and forms with several steps could remember their data in the inputs
   especially when the user is navigating back and forth
 - the transaction signing is not so nice, the style of it should improve
@@ -43,6 +43,8 @@ Would be nice to get a bit more things happening, if we could do like in the lif
         - should show a toast
 
 # TODO
+- start saving widgets urls in cache, no need to try to fetch them every time, only those that are not in the cache or have failed
+- lets save the dark/light mode selection
 - add github build action
 - try to clean up more from the widget-wrapper
 - fix the product service to look like the other services
@@ -55,6 +57,7 @@ Would be nice to get a bit more things happening, if we could do like in the lif
   - create a repo for scheduled transfers
     these would be checked at intervals, and then processed, if "late" then just change created date to when it were supposed to be processed
 ## the loan workflow
+- should the "elegible accounts" have a "create new account" button?
 - doesn't show any of my accounts to deposit the loan into
   - home loan
     - shouldn't have the length of the loan in months, should already be set over a specific time

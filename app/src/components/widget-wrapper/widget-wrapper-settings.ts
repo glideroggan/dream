@@ -60,7 +60,7 @@ export class WidgetSettingsManager {
     }
 
     try {
-      console.log(`Saving dimensions for widget ${this.component.widgetId}: ${colSpan}x${rowSpan}`);
+      console.debug(`Saving dimensions for widget ${this.component.widgetId}: ${colSpan}x${rowSpan}`);
       
       // Save to settings repository
       await this.settingsRepository.updateWidgetGridDimensions(

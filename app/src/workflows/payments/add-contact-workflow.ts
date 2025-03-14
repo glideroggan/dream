@@ -71,11 +71,10 @@ const template = html<AddContactWorkflow>/*html*/`
       
       <div class="form-group checkbox-group">
         <label class="checkbox-container">
-          <input 
-            type="checkbox" 
+          <dream-checkbox
             ?checked="${x => x.isFavorite}"
             @change="${(x, c) => x.handleFavoriteToggle(c.event)}"
-          />
+            ariaLabel="Add to favorites"/>
           <span class="checkbox-text">Add to favorites</span>
         </label>
       </div>
@@ -105,7 +104,7 @@ const styles = css`
   label {
     font-weight: 500;
     font-size: 14px;
-    color: var(--text-secondary, #666);
+    color: var(--secondary-text-color, #666);
   }
   
   input, textarea {
@@ -117,13 +116,13 @@ const styles = css`
   }
   
   input:focus, textarea:focus {
-    border-color: var(--primary-color, #3498db);
+    border-color: var(--accent-color, #3498db);
     outline: none;
     box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
   }
   
   .error-message {
-    color: var(--error-color, #e74c3c);
+    color: var(--notification-badge-bg, #e74c3c);
     font-size: 13px;
   }
   
@@ -191,7 +190,7 @@ export class AddContactWorkflow extends WorkflowBase {
 
     console.debug('[AddContactWorkflow] initialize')
 
-    
+        
     // If we're editing an existing contact, populate the form
     if (params?.contactId) {
       this.existingContactId = params.contactId;
@@ -246,7 +245,8 @@ export class AddContactWorkflow extends WorkflowBase {
   }
   
   handleFavoriteToggle(event: Event): void {
-    this.isFavorite = (event.target as HTMLInputElement).checked;
+    const customEvent = event as CustomEvent;
+    this.isFavorite = customEvent.detail.checked;
   }
   
   handleSubmit(event: Event): void {

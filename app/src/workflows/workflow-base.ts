@@ -137,7 +137,7 @@ export abstract class WorkflowBase extends FASTElement {
     data?: Record<string, any>,
     message?: string
   ): void {
-    console.log(`base workflow complete: ${success}, ${message}`)
+    console.debug(`base workflow complete: ${success}, ${message}`)
     if (this.host) {
       this.host.closeWorkflow({ success, data, message })
     }

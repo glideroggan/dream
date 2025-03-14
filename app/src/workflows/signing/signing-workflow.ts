@@ -653,7 +653,7 @@ export class SigningWorkflow extends WorkflowBase {
    */
   handleClose(): void {
     if (this.signingResult) {
-      console.log("Signing result:", this.signingResult); 
+      console.debug("Signing result:", this.signingResult);
       this.complete(
         this.signingResult.success,
         {
@@ -663,8 +663,11 @@ export class SigningWorkflow extends WorkflowBase {
         this.signingResult.message
       );
     } else {
-      console.log("No signing result available");
-      this.cancel("Signing process was closed");
+      console.debug("No signing result available");
+      // this.cancel("Signing process was closed");
+      this.complete(
+        false, undefined, "Signing process was closed"
+      );
     }
   }
 
