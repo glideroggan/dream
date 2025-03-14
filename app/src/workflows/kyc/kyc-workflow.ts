@@ -6,7 +6,6 @@ import { kycService, KycLevel, KycStatus } from "../../services/kyc-service";
 import "./step1-component";
 import "./step2-component";
 import "./step3-component";
-import { workflowManager } from "../../services/workflow-manager-service";
 import { WorkflowIds } from "../workflow-registry";
 
 export interface PersonalInformation {
@@ -147,7 +146,7 @@ const styles = css`
     left: 50px;
     right: 50px;
     height: 2px;
-    background-color: var(--border-color, #e0e0e0);
+    background-color: var(--divider-color, #e0e0e0);
     z-index: 0;
   }
   
@@ -192,7 +191,7 @@ const styles = css`
   
   .step-content p {
     font-size: 12px;
-    color: var(--text-secondary, #666);
+    color: var(--secondary-text-color, #666);
     margin: 0;
   }
   
@@ -201,11 +200,11 @@ const styles = css`
   }
   
   .error-message {
-    color: var(--error-color, #e74c3c);
+    color: var(--notification-badge-bg, #e74c3c);
     font-size: 14px;
     padding: 10px;
     border-radius: 4px;
-    background-color: var(--error-bg, rgba(231, 76, 60, 0.1));
+    background-color: color-mix(in srgb, var(--notification-badge-bg, #e74c3c) 10%, transparent);
     margin-top: 8px;
   }
   
@@ -214,22 +213,22 @@ const styles = css`
     justify-content: space-between;
     margin-top: 20px;
     padding-top: 16px;
-    border-top: 1px solid var(--border-color, #e0e0e0);
+    border-top: 1px solid var(--divider-color, #e0e0e0);
   }
   
   .back-button {
     padding: 10px 20px;
     border-radius: 4px;
     border: none;
-    background-color: var(--secondary-bg, #f5f5f5);
-    color: var(--text-color, #333);
+    background-color: var(--background-card, #f5f5f5);
+    color: var(--primary-text-color, #333);
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
   }
   
   .back-button:hover:not(:disabled) {
-    background-color: var(--secondary-hover, #e0e0e0);
+    background-color: var(--hover-bg, #e0e0e0);
   }
   
   .next-button {
@@ -237,14 +236,15 @@ const styles = css`
     border-radius: 4px;
     border: none;
     background-color: var(--primary-color, #3498db);
-    color: white;
+    color: var(--text-light, white);
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
   }
   
   .next-button:hover:not(:disabled) {
-    background-color: var(--primary-hover, #2980b9);
+    background-color: var(--accent-color, #2980b9);
+    filter: brightness(1.1);
   }
   
   .next-button:disabled, .back-button:disabled {

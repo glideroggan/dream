@@ -94,7 +94,7 @@ const styles = css`
   label {
     font-weight: 500;
     font-size: 14px;
-    color: var(--text-secondary, #666);
+    color: var(--secondary-text-color, #666);
   }
   
   input[type="text"],
@@ -104,7 +104,7 @@ const styles = css`
     border-radius: 4px;
     font-size: 16px;
     transition: border-color 0.2s;
-    background-color: var(--input-bg, white);
+    background-color: var(--background-color, white);
     width: 100%;
     box-sizing: border-box;
   }
@@ -117,7 +117,7 @@ const styles = css`
   }
   
   .form-section {
-    background-color: var(--section-bg, #f8f9fa);
+    background-color: var(--background-card, #f8f9fa);
     border-radius: 8px;
     padding: 16px;
     border: 1px solid var(--border-color, #e0e0e0);
@@ -126,7 +126,7 @@ const styles = css`
   .form-section h4 {
     margin-top: 0;
     margin-bottom: 16px;
-    color: var(--heading-color, #333);
+    color: var(--primary-text-color, #333);
     font-weight: 600;
     font-size: 18px;
     padding-bottom: 8px;
@@ -137,7 +137,7 @@ const styles = css`
     margin-top: 16px;
   }
   
-  /* Checkbox styles from Swish workflow */
+  /* Checkbox styles */
   .agreement-checkbox-wrapper {
     display: flex;
     align-items: flex-start;
@@ -151,11 +151,11 @@ const styles = css`
   }
   
   .agreement-checkbox-wrapper:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: var(--hover-bg, rgba(0, 0, 0, 0.05));
   }
   
   .agreement-checkbox-wrapper.checked {
-    background-color: rgba(52, 152, 219, 0.05);
+    background-color: color-mix(in srgb, var(--accent-color, #3498db) 5%, transparent);
   }
   
   .custom-checkbox {
@@ -167,7 +167,7 @@ const styles = css`
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: white;
+    background-color: var(--background-color, white);
     transition: all 0.2s;
   }
   
@@ -195,7 +195,7 @@ const styles = css`
   
   .checkbox-label {
     font-size: 14px;
-    color: var(--text-secondary, #666);
+    color: var(--secondary-text-color, #666);
     line-height: 1.4;
   }
 `;
