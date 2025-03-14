@@ -125,6 +125,10 @@ export class MonthlySpendingChart extends FASTElement {
       typeof this.dataPoints[0].essential === 'number' && 
       typeof this.dataPoints[0].discretionary === 'number';
     
+    // Log the data points to help with debugging
+    console.debug('Spending chart data points:', this.dataPoints);
+    console.debug('Has detailed data:', hasDetailedData);
+    
     const data = hasDetailedData ? 
       this.prepareStackedChartData() : 
       this.prepareChartData();
@@ -167,19 +171,26 @@ export class MonthlySpendingChart extends FASTElement {
     const essentialValues = this.dataPoints.map(point => point.essential || 0);
     const discretionaryValues = this.dataPoints.map(point => point.discretionary || 0);
 
+    // Check and log the values to help with debugging
+    console.debug('Monthly spending data:', {
+      months: labels,
+      essential: essentialValues,
+      discretionary: discretionaryValues
+    });
+
     return {
       labels: labels,
       datasets: [
         {
           label: 'Essential',
           data: essentialValues,
-          backgroundColor: '#3498db',
+          backgroundColor: '#3498db', // Use direct color to avoid CSS variable issues
           borderWidth: 0
         },
         {
           label: 'Discretionary',
           data: discretionaryValues,
-          backgroundColor:  '#9b59b6',
+          backgroundColor:  '#9b59b6', // Use direct color to avoid CSS variable issues
           borderWidth: 0
         }
       ]

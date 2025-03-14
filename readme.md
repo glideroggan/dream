@@ -1,14 +1,16 @@
 # BUGS
+- card-details is missing dark mode
 - why is only the minus button on error-widget triggering resize?
-- cancel button on loan modal on sign step is not hover styled
-- cancel button on the signing workflow is not good in dark mode
-- ✔️Lets create a custom checkbox component that we can use
+  pressing the col buttons do nothing, until we do something with the rows buttons
+- ✔️cancel button on loan modal on sign step is not hover styled
+- ✔️cancel button on the signing workflow is not good in dark mode
 - would be nice if forms and forms with several steps could remember their data in the inputs
   especially when the user is navigating back and forth
 - the transaction signing is not so nice, the style of it should improve
+  The message could be clearer and better formatted
 - need toast error when failing to start a workflow
 - when there is only one choice from the search inputs, enter key should select it
-- favorite checkbox doesn't work on add payment contact
+- ✔️favorite checkbox doesn't work on add payment contact
 - need to update net worth after account and transaction changes
 - all the amounts, should be positive, and instead the type of the transaction should be the one that decides if it is showing as a negative value or not
 - the button in the bottom in financial health widget is unstyled
@@ -48,7 +50,7 @@ Would be nice to get a bit more things happening, if we could do like in the lif
 - add github build action
 - try to clean up more from the widget-wrapper
 - fix the product service to look like the other services
-- getting time to release
+- ✔️getting time to release
 ## account info
 - account info workflow, needs an empty/default state when no account is selected
   - the empty state should have a smart dropdown
@@ -58,7 +60,7 @@ Would be nice to get a bit more things happening, if we could do like in the lif
     these would be checked at intervals, and then processed, if "late" then just change created date to when it were supposed to be processed
 ## the loan workflow
 - should the "elegible accounts" have a "create new account" button?
-- doesn't show any of my accounts to deposit the loan into
+- ✔️doesn't show any of my accounts to deposit the loan into
   - home loan
     - shouldn't have the length of the loan in months, should already be set over a specific time
     - shouldn't have a purpose

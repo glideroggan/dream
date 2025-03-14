@@ -496,13 +496,23 @@ export class FinancialHealthWidget extends FASTElement {
     this.totalAssets = 0;
     this.totalLiabilities = 0;
     
-    // For simplicity, we'll consider accounts with positive balances as assets
-    // and accounts with negative balances as liabilities
+    // Consider accounts based on both type and balance
     for (const account of this.accounts) {
-      if (account.balance >= 0) {
-        this.totalAssets += account.balance;
+      const accountType = account.type.toLowerCase();
+      
+      // Credit cards and loans are liabilities regardless of balance sign
+      if (accountType === 'credit' || accountType === 'loan') {
+        // For credit and loan accounts, the balance represents what you owe
+        // Ensure this is added to liabilities (as a positive number)
+        this.totalLiabilities += Math.abs(account.balance);
       } else {
-        this.totalLiabilities -= account.balance; // Convert to positive number for display
+        // For other account types (checking, savings, investment), use the balance sign
+        if (account.balance >= 0) {
+          this.totalAssets += account.balance;
+        } else {
+          // Negative balance on an asset account = overdraft = liability
+          this.totalLiabilities += Math.abs(account.balance);
+        }
       }
     }
     
@@ -517,8 +527,36 @@ export class FinancialHealthWidget extends FASTElement {
     const spendingByMonth: Map<string, { essential: number, discretionary: number }> = new Map();
     const now = new Date();
     
-    // Define essential categories
-    const essentialCategories = ['Rent', 'Mortgage', 'Utilities', 'Groceries', 'Insurance', 'Medical', 'Transportation'];
+    // Expanded list of essential categories for better categorization
+    const essentialCategories = [
+      // Housing related
+      'Rent', 'rent', 'Mortgage', 'mortgage', 'Housing', 'housing', 'Lease', 'lease',
+      
+      // Utilities
+      'Utilities', 'utilities', 'Utility', 'utility', 'Electric', 'electric', 'Water', 'water', 
+      'Gas', 'gas', 'Internet', 'internet', 'Phone', 'phone',
+      
+      // Food necessities
+      'Groceries', 'groceries', 'Grocery', 'grocery',
+      
+      // Insurance
+      'Insurance', 'insurance', 
+      
+      // Healthcare
+      'Medical', 'medical', 'Health', 'health', 'Healthcare', 'healthcare',
+      'Doctor', 'doctor', 'Pharmacy', 'pharmacy',
+      
+      // Transportation
+      'Transportation', 'transportation', 'Transit', 'transit', 'Gas', 'gas',
+      'Fuel', 'fuel', 'Bus', 'bus', 'Train', 'train', 'Subway', 'subway',
+      
+      // Education
+      'Education', 'education', 'Tuition', 'tuition', 'School', 'school',
+      
+      // Debt payments
+      'Debt', 'debt', 'Loan', 'loan', 'Credit Card Payment', 'credit card payment',
+      'Debt Payment', 'debt payment', 'Student Loan', 'student loan'
+    ];
     
     // Initialize with zero values for the last 6 months
     for (let i = 5; i >= 0; i--) {
@@ -537,17 +575,36 @@ export class FinancialHealthWidget extends FASTElement {
           const spendingData = spendingByMonth.get(monthKey)!;
           const amount = Math.abs(transaction.amount);
           
+          // Log transaction for debugging
+          console.debug(`Transaction: ${transaction.description || 'Unnamed'}, Category: ${transaction.category || 'Uncategorized'}, Amount: ${amount}`);
+          
+          // Check if transaction description contains essential keywords, in addition to category
+          const transactionText = [
+            transaction.category || '',
+            transaction.description || ''
+          ].join(' ').toLowerCase();
+          
+          // Improved categorization - check if category or description matches any essential category
+          const isEssential = essentialCategories.some(cat => 
+            transactionText.includes(cat.toLowerCase())
+          );
+          
           // Categorize as essential or discretionary
-          if (transaction.category && essentialCategories.includes(transaction.category)) {
+          if (isEssential) {
             spendingData.essential += amount;
+            console.debug(`Categorized as Essential`);
           } else {
             spendingData.discretionary += amount;
+            console.debug(`Categorized as Discretionary`);
           }
           
           spendingByMonth.set(monthKey, spendingData);
         }
       }
     }
+    
+    // Log the spending breakdown for debugging
+    console.debug('Monthly spending breakdown:', Object.fromEntries(spendingByMonth));
     
     // Convert to array for easier processing
     const spendingArray = Array.from(spendingByMonth.entries());
@@ -571,6 +628,9 @@ export class FinancialHealthWidget extends FASTElement {
         discretionary: values.discretionary
       };
     });
+    
+    // Log the finalized data points to ensure they have essential and discretionary values
+    console.debug('Monthly spending data points:', this.monthlySpendingDataPoints);
     
     // Determine spending trend based on total spending
     if (this.monthlySpending.length >= 2) {

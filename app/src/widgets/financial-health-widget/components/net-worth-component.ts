@@ -263,4 +263,39 @@ export class NetWorthComponent extends FASTElement {
     }
     return `$${value}`;
   }
+
+  // Update the chart generation method to correctly display assets vs liabilities
+  createNetWorthChart() {
+    // Separate account types into assets and liabilities
+    const assetAccounts = this.accountTypeData.filter(account => 
+      !['credit', 'loan'].includes(account.type.toLowerCase())
+    );
+    
+    const liabilityAccounts = this.accountTypeData.filter(account => 
+      ['credit', 'loan'].includes(account.type.toLowerCase())
+    );
+    
+    // Create datasets
+    const datasets = [];
+    
+    // Add assets dataset
+    if (assetAccounts.length > 0) {
+      datasets.push({
+        label: 'Assets',
+        data: assetAccounts.map(account => account.balance),
+        backgroundColor: assetAccounts.map(account => account.color),
+        // ...other chart configuration
+      });
+    }
+    
+    // Add liabilities dataset
+    if (liabilityAccounts.length > 0) {
+      datasets.push({
+        label: 'Liabilities',
+        data: liabilityAccounts.map(account => account.balance),
+        backgroundColor: liabilityAccounts.map(account => account.color),
+        // ...other chart configuration
+      });
+    }
+  }
 }
