@@ -182,7 +182,7 @@ const styles = css`
     width: 100%;
     padding: 12px 16px;
     margin-bottom: 10px;
-    background-color: var(--background-color, #f5f5f5);
+    background-color: var(--background-card, #f5f5f5);
     border: 1px solid var(--border-color, #e0e0e0);
     border-radius: 8px;
     font-size: 16px;
@@ -206,7 +206,7 @@ const styles = css`
   .document-info {
     display: flex;
     align-items: center;
-    background-color: var(--background-color, #f5f5f5);
+    background-color: var(--background-card, #f5f5f5);
     padding: 16px;
     border-radius: 8px;
     margin-bottom: 24px;
@@ -245,22 +245,23 @@ const styles = css`
   
   .confirm-button, .close-button {
     background-color: var(--primary-color, #3498db);
-    color: white;
+    color: var(--text-light, white);
     border: none;
   }
   
   .confirm-button:hover, .close-button:hover {
-    background-color: var(--primary-hover, #2980b9);
+    background-color: var(--secondary-color, #2980b9);
+    filter: brightness(1.1);
   }
   
   .decline-button, .cancel-button {
-    background-color: transparent;
+    background-color: var(--background-card, #f5f5f5);
     border: 1px solid var(--border-color, #e0e0e0);
-    color: var(--text-color, #333);
+    color: var(--primary-text-color, #333);
   }
   
   .decline-button:hover, .cancel-button:hover {
-    background-color: var(--background-color, #f5f5f5);
+    background-color: var(--hover-bg, #f5f5f5);
   }
   
   /* BankID animation styles */
@@ -302,7 +303,7 @@ const styles = css`
     content: '';
     width: 30px;
     height: 50px;
-    background-color: var(--primary-color-light, #a9d0f5);
+    background-color: var(--accent-color, #a9d0f5);
     border-radius: 4px;
   }
   
@@ -331,7 +332,7 @@ const styles = css`
   .progress-bar {
     width: 100%;
     height: 4px;
-    background-color: var(--background-color, #f5f5f5);
+    background-color: var(--background-card, #f5f5f5);
     border-radius: 2px;
     overflow: hidden;
   }
@@ -344,7 +345,7 @@ const styles = css`
   
   .timeout-text {
     font-size: 12px;
-    color: var(--text-secondary, #666);
+    color: var(--secondary-text-color, #666);
     text-align: center;
     margin-top: 8px;
   }
@@ -352,9 +353,9 @@ const styles = css`
   .error-message {
     padding: 12px;
     margin: 16px 0;
-    background-color: var(--error-bg, rgba(231, 76, 60, 0.1));
-    border-left: 4px solid var(--error-color, #e74c3c);
-    color: var(--error-color, #e74c3c);
+    background-color: rgba(231, 76, 60, 0.1);
+    border-left: 4px solid var(--notification-badge-bg, #e74c3c);
+    color: var(--notification-badge-bg, #e74c3c);
     font-size: 14px;
   }
   
@@ -371,13 +372,13 @@ const styles = css`
   }
   
   .result-icon.success {
-    background-color: var(--success-bg, rgba(46, 204, 113, 0.2));
-    color: var(--success-color, #2ecc71);
+    background-color: rgba(46, 204, 113, 0.2);
+    color: #2ecc71;
   }
   
   .result-icon.error {
-    background-color: var(--error-bg, rgba(231, 76, 60, 0.2));
-    color: var(--error-color, #e74c3c);
+    background-color: rgba(231, 76, 60, 0.2);
+    color: var(--notification-badge-bg, #e74c3c);
   }
   
   .result-title {
@@ -390,7 +391,7 @@ const styles = css`
     font-size: 14px;
     text-align: center;
     margin: 0 0 24px 0;
-    color: var(--text-secondary, #666);
+    color: var(--secondary-text-color, #666);
   }
   
   /* Demo controls */
@@ -402,15 +403,15 @@ const styles = css`
   .demo-button {
     padding: 6px 12px;
     font-size: 12px;
-    border: 1px dashed #999;
-    background-color: #f8f8f8;
-    color: #666;
+    border: 1px dashed var(--border-color, #999);
+    background-color: var(--background-card, #f8f8f8);
+    color: var(--secondary-text-color, #666);
     border-radius: 4px;
     cursor: pointer;
   }
   
   .demo-button:hover {
-    background-color: #eee;
+    background-color: var(--hover-bg, #eee);
   }
 `;
 

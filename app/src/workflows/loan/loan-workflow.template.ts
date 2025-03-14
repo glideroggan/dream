@@ -265,9 +265,9 @@ const step4Template = html<LoanWorkflow>/*html*/`
       
       <div class="consent-section">
         <div class="checkbox-container">
-          <input type="checkbox" id="termsCheckbox"
-            ?checked="${x => x.agreedToTerms}"
-            @click="${(x, c) => x.toggleTermsAgreement(c.event)}"/>
+          <dream-checkbox 
+            ?checked="${x => x.agreedToTerms}" 
+            @change="${(x, c) => x.updateAgreedToTerms(c.event)}">
           
           <span class="checkbox-label">I have read and agree to the terms and conditions</span>
         </div>

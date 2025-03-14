@@ -1,5 +1,8 @@
 # BUGS
-
+- cancel button on loan modal on sign step is not hover styled
+- cancel button on the signing workflow is not good in dark mode
+- ✔️checkbox in last step of accounts is not showing a checkmark
+  Lets create a custom checkbox component that we can use
 - would be nice if forms and forms with several steps could remember their data in the inputs
   especially when the user is navigating back and forth
 - ✔️why do we have scrollbars when none of the widgets are overflowing?
