@@ -65,13 +65,19 @@ export class ExpenseCategoriesChart extends FASTElement {
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 5);
     
+    // Process colors to handle CSS variables
+    const processedCategories = topCategories.map(category => ({
+      ...category,
+      processedColor: this.processCssVariable(category.color)
+    }));
+    
     // Prepare data for horizontal stacked bar chart
     const data = {
       labels: ['Expenses'],
-      datasets: topCategories.map(category => ({
+      datasets: processedCategories.map(category => ({
         label: category.category,
         data: [category.amount],
-        backgroundColor: category.color,
+        backgroundColor: category.processedColor,
         borderColor: 'white',
         borderWidth: 0.5,
         barPercentage: 0.8,
@@ -155,5 +161,23 @@ export class ExpenseCategoriesChart extends FASTElement {
       return `$${(value / 1000).toFixed(0)}K`;
     }
     return `$${value}`;
+  }
+
+  /**
+   * Process CSS variable to get actual color value
+   */
+  processCssVariable(color: string): string {
+    if (color.startsWith('var(--')) {
+      try {
+        const varName = color.match(/var\(([^,)]+)/)?.[1];
+        if (varName) {
+          const computedColor = getComputedStyle(document.documentElement).getPropertyValue(varName.trim());
+          return computedColor || color;
+        }
+      } catch (e) {
+        console.error('Error processing CSS variable', e);
+      }
+    }
+    return color;
   }
 }

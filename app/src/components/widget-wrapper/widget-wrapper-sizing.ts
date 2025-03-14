@@ -215,6 +215,7 @@ export class WidgetSizingManager {
     // Explicitly convert to numbers to avoid string concatenation
     const currentRowSpan = Number(this.component.rowSpan);
     const maxRowSpan = Number(this.component.maxRowSpan);
+    console.log('currentRowSpan', currentRowSpan, 'maxRowSpan', maxRowSpan);
 
     if (currentRowSpan < maxRowSpan) {
       const oldRowSpan = currentRowSpan;
@@ -256,6 +257,24 @@ export class WidgetSizingManager {
         
         // Update row span classes
         this.updateRowSpanClasses(newRowSpan);
+
+        const spanChangeEvent = new CustomEvent('widget-spans-change', {
+          bubbles: true,
+          composed: true,
+          detail: {
+            widgetId: this.component.widgetId,
+            pageType: this.component.pageType, // Ensure pageType is always included
+            oldColSpan: this.component.colSpan,
+            oldRowSpan: oldRowSpan,
+            colSpan: this.component.colSpan,
+            rowSpan: newRowSpan,
+            isUserResized: true,
+            source: 'decreaseRowSpan'
+          }
+        });
+        this.component.dispatchEvent(spanChangeEvent);
+
+        
         
         return
         // Record user resize preference in the resize tracker

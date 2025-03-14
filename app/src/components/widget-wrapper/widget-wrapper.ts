@@ -7,7 +7,7 @@ import { WidgetTimeoutHandler } from "./widget-wrapper-timeout";
 import { WidgetStateManager } from "./widget-wrapper-error-handling";
 import { WidgetSizingManager } from "./widget-wrapper-sizing";
 import { WidgetSettingsManager } from "./widget-wrapper-settings";
-import { DEFAULT_COLUMN_SPAN, DEFAULT_ROW_SPAN } from "../../constants/grid-constants";
+import { DEFAULT_COLUMN_SPAN, DEFAULT_ROW_SPAN, MAX_GRID_COLUMNS, MAX_GRID_ROWS } from "../../constants/grid-constants";
 import { WidgetResizeTracker } from "../../utils/resize-tracker";
 
 /**
@@ -43,8 +43,8 @@ export class WidgetWrapper extends FASTElement {
   @attr({ mode: "fromView" }) colSpan: number = DEFAULT_COLUMN_SPAN;
   @attr({ mode: "fromView" }) rowSpan: number = DEFAULT_ROW_SPAN;
   @attr({ mode: "boolean" }) showSizeControls: boolean = true;
-  @attr maxColSpan: number = 30; // MAX_GRID_COLUMNS
-  @attr maxRowSpan: number = 24; // Changed from 12 to 24 to allow taller widgets
+  @attr maxColSpan: number = MAX_GRID_COLUMNS; // MAX_GRID_COLUMNS
+  @attr maxRowSpan: number = MAX_GRID_ROWS; // Changed from 12 to 24 to allow taller widgets
   @attr minColSpan: number = 1;
   @attr minRowSpan: number = 1;
 

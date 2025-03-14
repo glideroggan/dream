@@ -96,7 +96,7 @@ const styles = css`
   
   .summary-label {
     font-weight: 500;
-    color: var(--secondary-text, #666);
+    color: var(--secondary-text-color, #666);
   }
   
   .summary-value {
@@ -104,11 +104,11 @@ const styles = css`
   }
   
   .assets .summary-value {
-    color: var(--success-color, #2ecc71);
+    color: var(--accent-color, #2ecc71);
   }
   
   .liabilities .summary-value {
-    color: var(--error-color, #e74c3c);
+    color: var(--notification-badge-bg, #e74c3c);
   }
 `;
 

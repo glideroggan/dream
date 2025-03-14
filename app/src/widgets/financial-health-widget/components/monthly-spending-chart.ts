@@ -59,15 +59,15 @@ const styles = css`
   }
   
   .trend-info.up {
-    color: var(--error-color, #e74c3c);
+    color: var(--notification-badge-bg, #e74c3c);
   }
   
   .trend-info.down {
-    color: var(--success-color, #2ecc71);
+    color: var(--accent-color, #2ecc71);
   }
   
   .trend-info.flat {
-    color: var(--secondary-text, #666);
+    color: var(--secondary-text-color, #666);
   }
   
   .spending-legend {
@@ -149,6 +149,8 @@ export class MonthlySpendingChart extends FASTElement {
         {
           label: 'Monthly Spending',
           data: values,
+          backgroundColor: '#88BDF2',
+          borderColor: '#3498db',
           tension: 0.4,
           fill: true,
           pointBackgroundColor: '#fff',
@@ -171,13 +173,13 @@ export class MonthlySpendingChart extends FASTElement {
         {
           label: 'Essential',
           data: essentialValues,
-          // backgroundColor: 'var(--primary-color, #3498db)',
+          backgroundColor: '#3498db',
           borderWidth: 0
         },
         {
           label: 'Discretionary',
           data: discretionaryValues,
-          // backgroundColor: 'var(--secondary-color, #9b59b6)',
+          backgroundColor:  '#9b59b6',
           borderWidth: 0
         }
       ]

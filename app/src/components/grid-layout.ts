@@ -318,29 +318,29 @@ export class GridLayout extends FASTElement {
   /**
    * Handle legacy widget size change events (for backward compatibility)
    */
-  private handleWidgetSizeChange(event: Event): void {
-    const customEvent = event as CustomEvent;
-    const { widgetId, newSize } = customEvent.detail;
+  // private handleWidgetSizeChange(event: Event): void {
+  //   const customEvent = event as CustomEvent;
+  //   const { widgetId, newSize } = customEvent.detail;
 
-    console.debug(`GridLayout: Received legacy size change event for widget ${widgetId} to ${newSize}`);
+  //   console.debug(`GridLayout: Received legacy size change event for widget ${widgetId} to ${newSize}`);
 
-    // Map legacy size to column spans
-    const colSpan = sizeToSpanMap[newSize as GridItemSize] || 8;
+  //   // Map legacy size to column spans
+  //   const colSpan = sizeToSpanMap[newSize as GridItemSize] || 8;
 
-    // Create a new spans change event and dispatch it
-    const spansEvent = new CustomEvent('widget-spans-change', {
-      bubbles: true,
-      composed: true,
-      detail: {
-        widgetId,
-        colSpan,
-        rowSpan: 2, // Default to 2 rows for better proportions with the new smaller grid
-        isUserResized: false
-      }
-    });
+  //   // Create a new spans change event and dispatch it
+  //   const spansEvent = new CustomEvent('widget-spans-change', {
+  //     bubbles: true,
+  //     composed: true,
+  //     detail: {
+  //       widgetId,
+  //       colSpan,
+  //       rowSpan: 2, // Default to 2 rows for better proportions with the new smaller grid
+  //       isUserResized: false
+  //     }
+  //   });
 
-    this.dispatchEvent(spansEvent);
-  }
+  //   this.dispatchEvent(spansEvent);
+  // }
 
   /**
    * Add an item to the grid with its metadata

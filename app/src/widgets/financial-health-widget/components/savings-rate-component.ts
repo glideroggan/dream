@@ -69,7 +69,7 @@ const styles = css`
     transform: translate(-50%, -50%);
     font-size: 14px;
     font-weight: bold;
-    color: var(--text-color, #333);
+    color: var(--primary-text-color, #333);
   }
   
   .savings-message {
@@ -90,7 +90,7 @@ const styles = css`
   h5 {
     margin: 0 0 8px 0;
     font-size: 14px;
-    color: var(--secondary-text, #555);
+    color: var(--secondary-text-color, #555);
   }
   
   .goals-list {
@@ -113,7 +113,7 @@ const styles = css`
   
   .goal-label {
     font-size: 13px;
-    color: var(--text-color, #333);
+    color: var(--primary-text-color, #333);
     font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
@@ -123,7 +123,7 @@ const styles = css`
   
   .goal-amount {
     font-size: 12px;
-    color: var(--secondary-text, #666);
+    color: var(--secondary-text-color, #666);
     white-space: nowrap;
   }
   
@@ -143,7 +143,7 @@ const styles = css`
   
   .goal-progress-fill {
     height: 100%;
-    background-color: var(--success-color, #2ecc71);
+    background-color: var(--accent-color, #2ecc71);
     border-radius: 3px;
     transition: width 0.5s ease;
   }
@@ -151,7 +151,7 @@ const styles = css`
   .goal-percentage {
     font-size: 12px;
     font-weight: 600;
-    color: var(--text-color, #333);
+    color: var(--primary-text-color, #333);
     min-width: 36px;
     text-align: right;
   }
@@ -201,10 +201,10 @@ export class SavingsRateComponent extends FASTElement {
     const data = {
       datasets: [{
         data: [this.rate, 100 - this.rate],
-//         backgroundColor: [
-//             this.getSavingsRateColor(),
-//             'var(--divider-color, #eaeaea)'
-//         ],
+        backgroundColor: [
+          this.getSavingsRateColor(),
+          '#eaeaea'
+        ],
         borderWidth: 0,
         cutout: '75%',
         circumference: 360,
@@ -301,13 +301,13 @@ export class SavingsRateComponent extends FASTElement {
 
   getSavingsRateColor(): string {
     if (this.rate >= 20) {
-      return 'var(--success-color, #2ecc71)';
+      return 'var(--accent-color, #2ecc71)';
     } else if (this.rate >= 10) {
       return 'var(--primary-color, #3498db)';
     } else if (this.rate > 0) {
-      return 'var(--warning-color, #f39c12)';
+      return 'var(--secondary-color, #f39c12)';
     } else {
-      return 'var(--error-color, #e74c3c)';
+      return 'var(--notification-badge-bg, #e74c3c)';
     }
   }
 

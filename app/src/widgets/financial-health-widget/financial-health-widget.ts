@@ -24,11 +24,7 @@ const template = html<FinancialHealthWidget>/*html*/ `
   <div class="financial-health-widget">
     <div class="widget-header">
       <h3>Financial Health</h3>
-      <div class="health-score">
-        <div class="score-pill" style="background-color: ${x => x.getHealthScoreColor()}">
-          ${x => x.healthScore}/100
-        </div>
-      </div>
+      <health-score-component score="${x => x.healthScore}"></health-score-component>
     </div>
     
     ${when(x => x.loading, html<FinancialHealthWidget>/*html*/`
@@ -60,7 +56,7 @@ const template = html<FinancialHealthWidget>/*html*/ `
         <div class="panel-row net-worth-savings-row">
           <div class="panel net-worth-panel">
             <h4>Net Worth</h4>
-            <div class="net-worth-value" style="color: ${x => x.netWorth >= 0 ? 'var(--success-color, #2ecc71)' : 'var(--error-color, #e74c3c)'}">
+            <div class="net-worth-value" style="color: ${x => x.netWorth >= 0 ? 'var(--accent-color, #2ecc71)' : 'var(--notification-badge-bg, #e74c3c)'}">
               ${x => x.formatCurrency(x.netWorth)} ${x => x.primaryCurrency}
             </div>
             <div class="net-worth-details">
@@ -122,7 +118,7 @@ const template = html<FinancialHealthWidget>/*html*/ `
 const styles = css`
   .financial-health-widget {
     background: var(--background-color, #ffffff);
-    color: var(--text-color, #333333);
+    color: var(--primary-text-color, #333333);
     border-radius: 8px;
     padding: 0;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -141,12 +137,13 @@ const styles = css`
   h3 {
     margin: 0;
     font-size: 18px;
+    color: var(--primary-text-color, #333333);
   }
   
   h4 {
     margin: 0 0 8px 0;
     font-size: 15px;
-    color: var(--secondary-text, #555);
+    color: var(--secondary-text-color, #555);
   }
   
   .health-content {
@@ -160,7 +157,7 @@ const styles = css`
   
   /* Recommendations banner */
   .recommendations-banner {
-    background-color: var(--background-light, #f0f8ff);
+    background-color: var(--background-card, #f0f8ff);
     border-radius: 6px;
     padding: 10px 12px;
     border-left: 4px solid var(--primary-color, #3498db);
@@ -179,7 +176,7 @@ const styles = css`
   
   .recommendation-count {
     font-size: 12px;
-    color: var(--secondary-text, #666);
+    color: var(--secondary-text-color, #666);
     background-color: var(--background-color, #fff);
     padding: 2px 8px;
     border-radius: 10px;
@@ -196,7 +193,7 @@ const styles = css`
   }
   
   .panel {
-    background-color: var(--background-light, #f9f9f9);
+    background-color: var(--background-card, #f9f9f9);
     border-radius: 6px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     padding: 12px;
@@ -234,15 +231,15 @@ const styles = css`
   }
   
   .detail-label {
-    color: var(--secondary-text, #666);
+    color: var(--secondary-text-color, #666);
   }
   
   .detail-value.positive {
-    color: var(--success-color, #2ecc71);
+    color: var(--accent-color, #2ecc71);
   }
   
   .detail-value.negative {
-    color: var(--error-color, #e74c3c);
+    color: var(--notification-badge-bg, #e74c3c);
   }
   
   .account-types {
@@ -272,16 +269,55 @@ const styles = css`
   
   /* Loading and Error States */
   .loading-state, .error-state {
-    // ...existing code...
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+  }
+  
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--divider-color, #eaeaea);
+    border-top-color: var(--primary-color, #3498db);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+  }
+  
+  .error-message {
+    color: var(--notification-badge-bg, #e74c3c);
+    margin-bottom: 16px;
+  }
+  
+  .retry-button {
+    background-color: var(--primary-color, #3498db);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    cursor: pointer;
   }
   
   /* Widget Footer */
   .widget-footer {
-    // ...existing code...
+    padding: 12px;
+    display: flex;
+    justify-content: flex-end;
+    border-top: 1px solid var(--divider-color, #eaeaea);
   }
   
   .primary-button {
-    // ...existing code...
+    background-color: var(--button-bg, #3498db);
+    color: var(--text-light, white);
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 14px;
   }
   
   /* Responsive adjustments */
@@ -833,11 +869,11 @@ export class FinancialHealthWidget extends FASTElement {
    */
   getHealthScoreColor(): string {
     if (this.healthScore >= 80) {
-      return 'var(--success-color, #2ecc71)';
+      return 'var(--accent-color, #2ecc71)';
     } else if (this.healthScore >= 60) {
-      return 'var(--warning-color, #f39c12)';
+      return 'var(--secondary-color, #f39c12)';
     } else {
-      return 'var(--error-color, #e74c3c)';
+      return 'var(--notification-badge-bg, #e74c3c)';
     }
   }
   

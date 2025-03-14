@@ -38,15 +38,17 @@ const styles = css`
   
   .more-recommendations {
     font-size: 12px;
-    color: var(--primary-color, #3498db);
-    background-color: var(--background-color, #fff);
+    color: var(--accent-color, #3498db);
+    background-color: color-mix(in srgb, var(--background-color) 80%, var(--accent-color) 20%);
+    border: 1px solid var(--border-color, #e0e0e0);
     padding: 2px 8px;
     border-radius: 10px;
     white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   }
   
   .no-recommendations {
-    color: var(--secondary-text, #666);
+    color: var(--secondary-text-color, #666);
     font-style: italic;
     padding: 4px 0;
     font-size: 13px;
