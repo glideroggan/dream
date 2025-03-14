@@ -283,8 +283,7 @@ export class WelcomeWidget extends BaseWidget {
     // Notify parent that we're initialized
     this.notifyInitialized();
     
-    // Check if we need more space using base widget method
-    this.checkInitialContentFit();
+    
     
     // Check if the widget should be shown based on user preference
     this.loadPreferences();
@@ -294,6 +293,8 @@ export class WelcomeWidget extends BaseWidget {
       console.debug('Welcome widget intercepted widget-spans-change event:', (e as CustomEvent).detail);
       // Make sure event continues to propagate up
     });
+    // Check if we need more space using base widget method
+    setTimeout(() => this.checkInitialContentFit(), 50);
   }
   
   setActiveTab(event: Event): void {
@@ -320,7 +321,8 @@ export class WelcomeWidget extends BaseWidget {
     // event.stopPropagation(); - this would be wrong!
     
     // Use base widget method to update layout after tab change
-    this.handleContentViewChange();
+    setTimeout(() => this.checkInitialContentFit(), 50);
+    // this.handleContentViewChange();
   }
   
   showThemeDemo(): void {

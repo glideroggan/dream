@@ -65,7 +65,7 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     module: '@widgets/welcome',
     defaultConfig: { username: 'Guest' },
     colSpan: 16, // Start full width but allow resizing
-    rowSpan: 8, // Increased rows for fixed-height grid
+    rowSpan: 16, // Increased rows for fixed-height grid
     minWidth: 800,
     fullWidth: false,  // Changed from true to false to allow resizing
     searchable: true,
@@ -99,7 +99,7 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     elementName: 'slow-widget',
     module: '@widgets/slow',
     colSpan: 6,
-    rowSpan: 4, // Increased rows for fixed-height grid
+    rowSpan: 10, // Increased rows for fixed-height grid
     minWidth: 300,
     searchable: true,
     keywords: ['slow', 'demo', 'example', 'loading'],
@@ -112,7 +112,7 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     elementName: 'error-widget',
     module: '@widgets/error',
     colSpan: 6,
-    rowSpan: 4, // Increased rows for fixed-height grid
+    rowSpan: 8, // Increased rows for fixed-height grid
     minWidth: 300,
     searchable: true,
     keywords: ['error', 'demo', 'example', 'failure'],

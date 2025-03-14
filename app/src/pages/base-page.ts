@@ -737,7 +737,7 @@ export class BasePage extends FASTElement {
         console.debug(`Using widgets from user settings for ${this.pageType}:`, pageWidgets);
         this.initialWidgets = pageWidgets.join(',');
       } else {
-        console.debug(`No saved widget preferences found for ${this.pageType} page`);
+        console.log(`No saved widget preferences found for ${this.pageType} page`);
       }
     } catch (error) {
       console.error('Error loading user widget preferences:', error);

@@ -1,4 +1,5 @@
 # BUGS
+- start saving widgets urls in cache, no need to try to fetch them every time, only those that are not in the cache or have failed
 - cancel button on loan modal on sign step is not hover styled
 - cancel button on the signing workflow is not good in dark mode
 - ✔️checkbox in last step of accounts is not showing a checkmark

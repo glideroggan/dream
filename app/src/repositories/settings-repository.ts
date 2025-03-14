@@ -196,7 +196,7 @@ export class SettingsRepository extends LocalStorageRepository<UserSettings> {
     // Save updated settings
     await this.update(settings.id, { widgetLayout: settings.widgetLayout });
     
-    console.debug(`Saved widget layout for page ${pageKey}:`, pageWidgets);
+    console.log(`Saved widget layout for page ${pageKey}:`, pageWidgets);
   }
 
   /**

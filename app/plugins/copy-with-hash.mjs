@@ -19,8 +19,8 @@ export function htmlUpdaterPlugin(options) {
           // console.debug('basename: ', scriptHash);
           
           // replace the hash at the end with nothing to get the base name
-          const baseScriptName = '/' + scriptHash.replace(/-[a-zA-Z0-9]{8}\.js/, '.js');
-          scriptHash = '/' + scriptHash;
+          const baseScriptName = scriptHash.replace(/-[a-zA-Z0-9]{8}\.js/, '.js');
+          scriptHash = scriptHash;
           // console.debug('baseScriptName: ', baseScriptName);
           
           // // extract the base name of the script (without hash)

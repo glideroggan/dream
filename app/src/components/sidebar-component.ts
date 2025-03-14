@@ -144,6 +144,7 @@ const styles = css`
     padding: 12px 16px;
     color: var(--text-light);
     text-decoration: none;
+    will-change: transform;
     transition: all 0.2s ease-in-out;
     border-radius: 6px;
     margin: 0 8px;
@@ -160,6 +161,7 @@ const styles = css`
     background-color: var(--accent-color);
     font-weight: 500;
     box-shadow: 0 2px 5px color-mix(in srgb, var(--primary-color) 20%, transparent);
+    will-change: translateX;
     transform: translateX(3px);
   }
   

@@ -1,0 +1,14 @@
+FROM node:lts-alpine AS build
+WORKDIR /usr/src/app
+COPY ./package.json ./yarn.lock ./ ./build.mjs ./
+RUN yarn install --frozen-lockfile
+
+COPY ./src/. .
+COPY ./src/assets ./dist/assets
+
+RUN yarn docker
+
+FROM nginx:alpine-slim
+COPY ./nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /usr/src/app/dist /usr/share/nginx/html
+EXPOSE 80
