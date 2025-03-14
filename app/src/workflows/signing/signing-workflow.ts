@@ -452,7 +452,7 @@ export class SigningWorkflow extends WorkflowBase {
   initialize(params?: Record<string, any>): void {
     // Set initial title and hide footer (we'll use our own buttons)
     this.updateTitle("Sign with BankID");
-    this.updateFooter(true, params?.primaryButtonText || "Sign");
+    this.updateFooter(false, params?.primaryButtonText || "Sign");
 
     // Initialize from parameters
     if (params) {

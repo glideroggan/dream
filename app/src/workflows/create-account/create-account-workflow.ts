@@ -397,7 +397,7 @@ const styles = css`
   .product-info-section {
     margin-top: 12px;
     padding: 16px;
-    background-color: var(--background-color-light, #f8f9fa);
+    background-color: var(--background-color);
     border-radius: 8px;
   }
 
@@ -414,7 +414,7 @@ const styles = css`
 
   .feature-item {
     font-size: 14px;
-    color: var(--text-primary, #333);
+    color: var(--secondary-text-color);
   }
 
   .requirements-section {
