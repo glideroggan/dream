@@ -28,6 +28,10 @@ export const TransactionTypes = {
 export interface Transaction extends Entity {
   fromAccountId: string;
   toAccountId?: string;  // Optional for withdrawals, fees
+  /**
+   * Transaction amount - always stored as a positive number
+   * Direction (debit/credit) is determined by transaction type and account perspective
+   */ 
   amount: number;
   currency: string;
   description?: string;
@@ -40,4 +44,39 @@ export interface Transaction extends Entity {
   fromAccountBalance?: number; // Balance of fromAccount after transaction
   toAccountBalance?: number;   // Balance of toAccount after transaction
   category?: string; // Transaction category for better analytics
+}
+
+/**
+ * Determines if a transaction should be displayed as incoming or outgoing
+ * from the perspective of the specified account
+ * 
+ * @param transaction The transaction to evaluate
+ * @param accountId The ID of the account from whose perspective we're viewing
+ * @returns true if this is an incoming transaction, false if outgoing
+ */
+export function isIncomingTransaction(transaction: Transaction, accountId: string): boolean {
+  // If this is the destination account, it's incoming
+  if (transaction.toAccountId === accountId) {
+    return true;
+  }
+  
+  // If this is the source account, it's outgoing
+  if (transaction.fromAccountId === accountId) {
+    return false;
+  }
+  
+  // Fallback for interest or other special cases where we might not have a matching account ID
+  switch (transaction.type) {
+    case TransactionTypes.INTEREST:
+    case TransactionTypes.DEPOSIT:
+    case TransactionTypes.REFUND:
+      return true;
+    case TransactionTypes.FEE:
+    case TransactionTypes.WITHDRAWAL:
+    case TransactionTypes.PAYMENT:
+      return false;
+    default:
+      // For any other type, default behavior
+      return false;
+  }
 }

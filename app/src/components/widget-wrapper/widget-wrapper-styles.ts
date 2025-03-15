@@ -170,7 +170,7 @@ export const styles = css`
 
   .widget-header-center {
     flex: 0 0 auto;
-    padding: 0 8px;
+    // padding: 0 8px;
     /* Ensure center content doesn't push out too far */
     max-width: 50%;
   }

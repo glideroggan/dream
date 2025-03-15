@@ -565,18 +565,30 @@ export class FinancialHealthWidget extends FASTElement {
       spendingByMonth.set(monthKey, { essential: 0, discretionary: 0 });
     }
     
-    // Calculate spending (only outgoing transactions)
+    // Calculate spending (only consider outgoing transactions)
     for (const transaction of this.transactions) {
-      if (transaction.amount < 0) { // Outgoing transaction
+      // Consider transactions outgoing from checking/savings accounts
+      // This is a spending transaction if it's outgoing from a personal account to an external entity
+      const isSpendingTransaction = (
+        // Must be from a personal account (not marked as external)
+        !transaction.fromAccountId.startsWith('ext-') && 
+        !transaction.fromAccountId.startsWith('external') &&
+        // And either going to an external account or no destination account (withdrawal)
+        (transaction.toAccountId?.startsWith('ext-') || 
+         transaction.toAccountId?.startsWith('external') ||
+         !transaction.toAccountId)
+      );
+      
+      if (isSpendingTransaction) {
         const date = new Date(transaction.createdAt);
         const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
         
         if (spendingByMonth.has(monthKey)) {
           const spendingData = spendingByMonth.get(monthKey)!;
-          const amount = Math.abs(transaction.amount);
+          const amount = transaction.amount; // Already positive
           
           // Log transaction for debugging
-          console.debug(`Transaction: ${transaction.description || 'Unnamed'}, Category: ${transaction.category || 'Uncategorized'}, Amount: ${amount}`);
+          console.debug(`Spending Transaction: ${transaction.description || 'Unnamed'}, Category: ${transaction.category || 'Uncategorized'}, Amount: ${amount}`);
           
           // Check if transaction description contains essential keywords, in addition to category
           const transactionText = [
@@ -680,16 +692,35 @@ export class FinancialHealthWidget extends FASTElement {
       const transactionDate = new Date(transaction.createdAt);
       
       if (transactionDate >= lastMonth) {
-        // Count all income
-        if (transaction.amount > 0) {
+        // Determine if this is income (money coming into a personal account from external source)
+        const isIncome = (
+          !transaction.toAccountId?.startsWith('ext-') && 
+          !transaction.toAccountId?.startsWith('external') &&
+          (transaction.fromAccountId.startsWith('ext-') || 
+           transaction.fromAccountId.startsWith('external'))
+        );
+        
+        // Determine if this is an expense (money going out from a personal account to external)
+        const isExpense = (
+          !transaction.fromAccountId.startsWith('ext-') && 
+          !transaction.fromAccountId.startsWith('external') &&
+          (transaction.toAccountId?.startsWith('ext-') || 
+           transaction.toAccountId?.startsWith('external') || 
+           !transaction.toAccountId)
+        );
+        
+        if (isIncome) {
           this.monthlyIncome += transaction.amount;
-        } else {
-          this.monthlyExpenses += Math.abs(transaction.amount);
-          
-          // If this is a transfer to a savings account, count it as savings
-          if (transaction.toAccountId && savingsAccountIds.includes(transaction.toAccountId)) {
-            savingsTransfers += Math.abs(transaction.amount);
-          }
+        } else if (isExpense) {
+          this.monthlyExpenses += transaction.amount;
+        }
+        
+        // If this is a transfer to a savings account, count it as savings
+        if (transaction.toAccountId && 
+            savingsAccountIds.includes(transaction.toAccountId) &&
+            !transaction.fromAccountId.startsWith('ext-') &&
+            !transaction.fromAccountId.startsWith('external')) {
+          savingsTransfers += transaction.amount;
         }
       }
     }
