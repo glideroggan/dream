@@ -534,12 +534,20 @@ export class ToAccountField extends FASTElement {
    */
   selectItem(item: AutocompleteItem) {
     this.selectedItem = item;
-    this.inputValue = item.displayName;
+    this.inputValue = ''; // Set to empty string to avoid any text showing behind the chip
     this.showDropdown = false;
     this.errorMessage = '';
     
     // Notify parent of selection
     this.dispatchValueChanged(item.id);
+    
+    // Make sure the input is visually hidden by applying a class
+    requestAnimationFrame(() => {
+      const input = this.shadowRoot?.getElementById('toAccountInput') as HTMLInputElement;
+      if (input) {
+        input.blur(); // Remove focus to hide any potential caret
+      }
+    });
   }
   
   /**

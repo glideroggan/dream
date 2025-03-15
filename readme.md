@@ -1,16 +1,10 @@
 # BUGS
 - card-details buttons are wrongly styled in dark mode and light mode
-- card-details is missing dark mode
-- why is only the minus button on error-widget triggering resize?
+- ✔️card-details is missing dark mode
+- ✔️why is only the minus button on error-widget triggering resize?
   pressing the col buttons do nothing, until we do something with the rows buttons
 - ✔️cancel button on loan modal on sign step is not hover styled
 - ✔️cancel button on the signing workflow is not good in dark mode
-- would be nice if forms and forms with several steps could remember their data in the inputs
-  especially when the user is navigating back and forth
-- the transaction signing is not so nice, the style of it should improve
-  The message could be clearer and better formatted
-- need toast error when failing to start a workflow
-- when there is only one choice from the search inputs, enter key should select it
 - ✔️favorite checkbox doesn't work on add payment contact
 - need to update net worth after account and transaction changes
 - all the amounts, should be positive, and instead the type of the transaction should be the one that decides if it is showing as a negative value or not
@@ -46,6 +40,12 @@ Would be nice to get a bit more things happening, if we could do like in the lif
         - should show a toast
 
 # TODO
+- when there is only one choice from the search inputs, enter key should select it
+- need toast error when failing to start a workflow
+- the transaction signing is not so nice, the style of it should improve
+  The message could be clearer and better formatted
+- would be nice if forms and forms with several steps could remember their data in the inputs
+  especially when the user is navigating back and forth
 - start saving widgets urls in cache, no need to try to fetch them every time, only those that are not in the cache or have failed
 - lets save the dark/light mode selection
 - add github build action

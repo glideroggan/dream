@@ -11,7 +11,7 @@ export const styles = css`
   label {
     font-weight: 500;
     font-size: 14px;
-    color: var(--text-secondary, #666);
+    color: var(--secondary-text-color);
   }
   
   .autocomplete-wrapper {
@@ -23,23 +23,26 @@ export const styles = css`
   input {
     width: 100%;
     padding: 10px 12px;
-    border: 1px solid var(--border-color, #e0e0e0);
+    border: 1px solid var(--border-color);
     border-radius: 4px;
     font-size: 16px;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    background-color: var(--input-bg, white);
+    background-color: var(--background-card);
+    color: var(--primary-text-color);
     box-sizing: border-box;
+    position: relative;
+    z-index: 1;
   }
   
   input:focus {
-    border-color: var(--primary-color, #3498db);
+    border-color: var(--accent-color);
     outline: none;
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    box-shadow: 0 0 0 3px rgba(136, 189, 242, 0.2);
   }
   
   .has-error input {
-    border-color: var(--error-color, #e74c3c);
-    background-color: var(--error-bg, rgba(231, 76, 60, 0.05));
+    border-color: var(--error-color);
+    background-color: rgba(231, 76, 60, 0.05);
   }
   
   .selected-item-display {
@@ -57,6 +60,8 @@ export const styles = css`
     padding: 0 8px;
     border-radius: 3px;
     box-sizing: border-box;
+    z-index: 2; /* Add z-index to ensure it's above the input */
+    background-color: var(--background-card); /* Match input background */
   }
   
   .selected-item-display.visible {
@@ -69,11 +74,13 @@ export const styles = css`
     display: flex;
     align-items: center;
     gap: 6px;
-    background-color: var(--chip-bg, #f3f4f6);
+    background-color: var(--hover-bg);
     border-radius: 16px;
     padding: 4px 8px;
     max-width: 100%;
     box-sizing: border-box;
+    /* Make sure the chip is opaque */
+    box-shadow: 0 0 0 1px var(--hover-bg);
   }
   
   .item-badge {
@@ -86,13 +93,13 @@ export const styles = css`
   }
   
   .item-badge.account {
-    background-color: var(--account-color, #3498db);
-    color: white;
+    background-color: var(--accent-color);
+    color: var(--text-light);
   }
   
   .item-badge.contact {
-    background-color: var(--contact-color, #2ecc71);
-    color: white;
+    background-color: var(--success-color);
+    color: var(--text-light);
   }
   
   .item-label {
@@ -100,6 +107,7 @@ export const styles = css`
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    color: var(--primary-text-color);
   }
   
   .clear-button {
@@ -107,7 +115,7 @@ export const styles = css`
     border: none;
     font-size: 18px;
     cursor: pointer;
-    color: var(--text-tertiary, #999);
+    color: var(--inactive-color);
     width: 20px;
     height: 20px;
     display: flex;
@@ -118,7 +126,7 @@ export const styles = css`
   }
   
   .clear-button:hover {
-    color: var(--error-color, #e74c3c);
+    color: var(--error-color);
   }
   
   .autocomplete-dropdown {
@@ -127,10 +135,10 @@ export const styles = css`
     left: 0;
     right: 0;
     margin-top: 4px;
-    background-color: var(--dropdown-bg, white);
-    border: 1px solid var(--border-color, #e0e0e0);
+    background-color: var(--background-card);
+    border: 1px solid var(--border-color);
     border-radius: 4px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     max-height: 300px;
     overflow-y: auto;
     z-index: 100;
@@ -141,9 +149,9 @@ export const styles = css`
   .group-label {
     font-size: 12px;
     font-weight: 500;
-    color: var(--text-tertiary, #999);
+    color: var(--secondary-text-color);
     padding: 8px 12px 4px;
-    background-color: var(--group-bg, #f9f9f9);
+    background-color: var(--background-color);
     position: sticky;
     top: 0;
   }
@@ -165,19 +173,19 @@ export const styles = css`
   }
   
   .autocomplete-item:hover {
-    background-color: var(--highlight-bg, #f5f9fd);
+    background-color: var(--hover-bg);
   }
   
   .autocomplete-item.highlighted,
   .autocomplete-item:focus-visible {
-    background-color: var(--highlight-bg, #f5f9fd);
-    border-left: 3px solid var(--primary-color, #3498db);
+    background-color: var(--hover-bg);
+    border-left: 3px solid var(--accent-color);
   }
   
   /* Add a more distinctive visual cue for keyboard navigation */
   .keyboard-nav .autocomplete-item.highlighted {
-    background-color: var(--highlight-bg-strong, #e3f2fd);
-    border-left: 3px solid var(--primary-color, #3498db);
+    background-color: var(--hover-bg);
+    border-left: 3px solid var(--primary-color);
   }
   
   .autocomplete-item .item-name {
@@ -186,16 +194,17 @@ export const styles = css`
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    color: var(--primary-text-color);
   }
   
   .autocomplete-item .item-details {
     font-size: 13px;
-    color: var(--text-secondary, #666);
+    color: var(--secondary-text-color);
     white-space: nowrap;
   }
   
   .error-message {
-    color: var(--error-color, #e74c3c);
+    color: var(--error-color);
     font-size: 13px;
     margin-top: 4px;
   }
@@ -228,9 +237,9 @@ export const styles = css`
     align-items: center;
     gap: 8px;
     cursor: pointer;
-    border-top: 1px solid var(--border-color, #e0e0e0);
-    background-color: var(--highlight-bg-subtle, #f7f9fc);
-    color: var(--primary-color, #3498db);
+    border-top: 1px solid var(--border-color);
+    background-color: var(--background-color);
+    color: var(--accent-color);
     font-weight: 500;
     transition: background-color 0.15s, border-left 0.15s;
     border-left: 3px solid transparent;
@@ -239,8 +248,8 @@ export const styles = css`
   
   .new-contact-option:hover,
   .new-contact-option:focus-visible {
-    background-color: var(--highlight-bg, #f0f7fd);
-    border-left: 3px solid var(--primary-color, #3498db);
+    background-color: var(--hover-bg);
+    border-left: 3px solid var(--accent-color);
     outline: none;
   }
   
@@ -252,7 +261,7 @@ export const styles = css`
   .no-results {
     padding: 16px;
     text-align: center;
-    color: var(--text-secondary, #666);
+    color: var(--secondary-text-color);
   }
   
   .no-results p {
@@ -260,7 +269,7 @@ export const styles = css`
   }
   
   .add-new-button {
-    background-color: var(--primary-color, #3498db);
+    background-color: var(--accent-color);
     color: white;
     border: none;
     padding: 6px 12px;
@@ -271,6 +280,21 @@ export const styles = css`
   }
   
   .add-new-button:hover {
-    background-color: var(--primary-color-dark, #2980b9);
+    background-color: var(--primary-color-dark);
+  }
+  
+  /* Fix the selector to properly target the input when selected item is visible */
+  .autocomplete-wrapper .selected-item-display.visible ~ input {
+    color: transparent !important;
+    caret-color: transparent !important; /* Hide the caret too */
+    /* Backup approach in case color:transparent doesn't work fully */
+    text-indent: -9999px;
+    text-shadow: 0 0 0 transparent;
+  }
+  
+  /* Make sure clear button is clickable */
+  .item-chip .clear-button {
+    z-index: 3;
+    pointer-events: auto;
   }
 `;
