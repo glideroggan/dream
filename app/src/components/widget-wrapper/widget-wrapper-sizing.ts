@@ -152,6 +152,7 @@ export class WidgetSizingManager {
    */
   private changeColSpanOnly(newColSpan: number): void {
     const currentRowSpan = this.component.rowSpan;
+    const oldColSpan = this.component.colSpan;
 
     // Direct property update first for immediate UI feedback
     this.component.colSpan = newColSpan;
@@ -176,6 +177,23 @@ export class WidgetSizingManager {
     //     preserveRowSpan: true // Add a flag to indicate row span should be preserved
     //   }
     // });
+
+
+    const spanChangeEvent = new CustomEvent('widget-spans-change', {
+      bubbles: true,
+      composed: true,
+      detail: {
+        widgetId: this.component.widgetId,
+        pageType: this.component.pageType, // Ensure pageType is always included
+        oldColSpan: oldColSpan,
+        oldRowSpan: this.component.rowSpan,
+        colSpan: newColSpan,
+        rowSpan: this.component.rowSpan,
+        isUserResized: true,
+        source: 'changeColSpanOnly'
+      }
+    });
+    this.component.dispatchEvent(spanChangeEvent);
 
     return
     // // Also update our own classes if we're directly in a grid layout
