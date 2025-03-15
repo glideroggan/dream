@@ -1,10 +1,24 @@
 import { Loan, LoanStatus, LoanType } from '../models/loan-models';
 import { generateUUID } from '../../utilities/id-generator';
+import { UserType } from '../models/user-models';
 
 /**
  * Generate mock loans for development and testing
  */
-export function generateMockLoans(): Loan[] {
+export function generateMockLoans(userType:UserType): Loan[] {
+  switch (userType) {
+    case 'established':
+    case 'premium':
+    case 'demo':
+      return generateSomeLoans();
+    default:
+      return []
+  }
+
+  
+}
+
+function generateSomeLoans(): Loan[] {
   const now = new Date();
   const mockLoans: Loan[] = [];
   

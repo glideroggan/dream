@@ -1,4 +1,7 @@
 # BUGS
+- loan-workflow creates the loan too early, we need to sign first
+  - it doesn't add it as a product
+  - it also adds the loan 3 times...
 - account-widget is not updated right away when a card have been connected to the account
 - creating an account, does create the product and the account, but in the product the account ID is not set
   Should be added to the metadata
@@ -54,6 +57,7 @@ Would be nice to get a bit more things happening, if we could do like in the lif
 - would be nice if forms and forms with several steps could remember their data in the inputs
   especially when the user is navigating back and forth
 - start saving widgets urls in cache, no need to try to fetch them every time, only those that are not in the cache or have failed
+- get the testing going again
 - lets save the dark/light mode selection
 - add github build action
 - try to clean up more from the widget-wrapper

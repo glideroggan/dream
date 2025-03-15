@@ -1,5 +1,5 @@
 import { customElement, Observable, observable } from "@microsoft/fast-element";
-import { WorkflowBase } from "../workflow-base";
+import { WorkflowBase, WorkflowResult } from "../workflow-base";
 import { loanService } from "../../services/loan-service";
 import { repositoryService } from "../../services/repository-service";
 import { WorkflowIds } from "../workflow-registry";
@@ -11,6 +11,7 @@ import { Account } from "../../repositories/models/account-models";
 import { LoanType, EligibilityResult, LoanDetails } from "../../repositories/models/loan-models";
 import { getProductIcon } from "./loan-workflow.helper";
 import { Product } from "../../repositories/models/product-models";
+import { productRepository } from "../../repositories/product-repository";
 
 @customElement({
   name: "loan-workflow",
@@ -101,8 +102,7 @@ export class LoanWorkflow extends WorkflowBase {
   async loadLoanProducts(): Promise<void> {
     try {
       this.isLoading = true;
-      const productRepo = repositoryService.getUserProductRepository();
-      this.availableLoanProducts = await productRepo.getByEntityType('loan');
+      this.availableLoanProducts = await productRepository.getByEntityType('loan');
       console.debug('Available loan products loaded:', this.availableLoanProducts);
     } catch (error) {
       console.error("Error loading loan products:", error);
@@ -528,6 +528,7 @@ export class LoanWorkflow extends WorkflowBase {
     }
 
     try {
+      // TODO: not sure about this
       // Update loan with selected account if needed
       if (this.loanDetails.accountId !== this.selectedAccountId) {
         await loanService.updateLoanAccount(
@@ -548,9 +549,11 @@ export class LoanWorkflow extends WorkflowBase {
           documentContent: documentContent
         }
       );
+      // NOTE: we never get here?
 
 
       if (signingResult.success) {
+        console.log("Signing completed successfully:", signingResult.data);
         // Store signature ID with loan
         await loanService.updateWithSignature(
           this.loanDetails.id,
@@ -567,13 +570,40 @@ export class LoanWorkflow extends WorkflowBase {
       } else {
         // Signing was cancelled or failed
         console.debug("Signing was not completed:", signingResult.message, this.step);
-        
+
         this.errorMessage = signingResult.message || "Signing was not completed.";
       }
     } catch (error) {
       console.error("Error during signing process:", error);
       this.errorMessage = "An error occurred during the signing process.";
     }
+  }
+
+  override async resume(result?: WorkflowResult): Promise<void> {
+    if (!result) return;
+    const signingResult = (result as any).detail as WorkflowResult;
+    console.log('resume', signingResult)
+
+    if (signingResult.success) {
+      console.log("Signing completed successfully:", signingResult.data);
+      // Store signature ID with loan
+      await loanService.updateWithSignature(
+        this.loanDetails!.id,
+        signingResult.data?.signature || "signed"
+      );
+
+      // Submit the loan application
+      await loanService.submitLoanApplication(this.loanDetails!.id);
+
+      // Show success result
+      this.applicationSuccess = true;
+      this.step = 'result';
+      this.updateHeaderTitle();
+    }
+    else {
+      console.log("Signing was not completed:", signingResult.message, this.step);
+    }
+
   }
 
   /**

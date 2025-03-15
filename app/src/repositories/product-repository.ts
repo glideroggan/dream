@@ -7,14 +7,18 @@ export class ProductRepository {
   private products: Product[] = [];
   private storageKey: string = 'procucts';
 
-  private constructor(private storage: StorageService) {
-    this.loadProducts();
+  // Make constructor public but add isTest parameter with default value
+  public constructor(private storage: StorageService, private isTest = false) {
+    if (!isTest) {
+      this.loadProducts();
 
-    // Initialize with default users if none exist
-    if (this.products.length === 0) {
-      this.initializeDefaultProducts();
+      // Initialize with default users if none exist
+      if (this.products.length === 0) {
+        this.initializeDefaultProducts();
+      }
     }
   }
+  
   /**
    * Get the singleton instance
    */
@@ -23,6 +27,23 @@ export class ProductRepository {
       ProductRepository.instance = new ProductRepository(StorageService.getInstance());
     }
     return ProductRepository.instance;
+  }
+
+  /**
+   * Create a test instance with mocked dependencies
+   */
+  public static createTestInstance(storage: StorageService): ProductRepository {
+    if (!ProductRepository.instance) {
+      ProductRepository.instance = new ProductRepository(storage);
+    }
+    return ProductRepository.instance;
+  }
+
+  /**
+   * Reset the singleton instance (for testing)
+   */
+  public static resetInstance(): void {
+    ProductRepository.instance = undefined!;
   }
 
   async getAll(): Promise<Product[]>{

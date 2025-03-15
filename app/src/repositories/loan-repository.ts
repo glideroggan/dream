@@ -13,7 +13,8 @@ export class LoanRepository extends LocalStorageRepository<Loan> {
    * Initialize with mock data
    */
   protected initializeMockData(): void {
-    const mockLoans = generateMockLoans();
+    const userType = this.userService.getUserType();
+    const mockLoans = generateMockLoans(userType);
     
     mockLoans.forEach(loan => {
       this.createForMocks(loan);
