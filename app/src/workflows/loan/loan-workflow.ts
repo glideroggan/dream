@@ -566,7 +566,7 @@ export class LoanWorkflow extends WorkflowBase {
         this.updateHeaderTitle();
       } else {
         // Signing was cancelled or failed
-        console.log("Signing was not completed:", signingResult.message, this.step);
+        console.debug("Signing was not completed:", signingResult.message, this.step);
         
         this.errorMessage = signingResult.message || "Signing was not completed.";
       }

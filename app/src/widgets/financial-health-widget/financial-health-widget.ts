@@ -17,7 +17,7 @@ import { AccountTypeData, AccountTypeMapItem } from "./components/net-worth-comp
 import { DataPoint } from "./components/monthly-spending-chart";
 import { CategoryExpense } from "./components/expense-categories-chart";
 import { Account } from "../../repositories/models/account-models";
-import { Transaction } from "../../repositories/models/transaction-models";
+import { Transaction, TransactionDirections } from "../../repositories/models/transaction-models";
 
 
 const template = html<FinancialHealthWidget>/*html*/ `
@@ -825,7 +825,7 @@ export class FinancialHealthWidget extends FASTElement {
     
     // Filter for expense transactions in the last month
     for (const transaction of this.transactions) {
-      if (transaction.amount < 0 && new Date(transaction.createdAt) >= lastMonth) {
+      if (transaction.direction == TransactionDirections.DEBIT && new Date(transaction.createdAt) >= lastMonth) {
         const category = transaction.category || 'Other';
         const amount = Math.abs(transaction.amount);
         
@@ -837,10 +837,12 @@ export class FinancialHealthWidget extends FASTElement {
       }
     }
     
+    console.debug('categoryMap', categoryMap.entries());
     // Calculate total expenses
     const totalExpenses = Array.from(categoryMap.values())
       .reduce((sum, amount) => sum + amount, 0);
     
+    console.debug('totalExpenses', totalExpenses);
     // Generate category data for visualization with percentages based on total expenses
     this.expenseCategories = Array.from(categoryMap.entries())
       .map(([category, amount], index) => ({
@@ -850,6 +852,8 @@ export class FinancialHealthWidget extends FASTElement {
         color: this.getCategoryColor(index)
       }))
       .sort((a, b) => b.amount - a.amount); // Sort by amount descending
+
+    console.debug('expenseCategories', this.expenseCategories);
   }
   
   /**

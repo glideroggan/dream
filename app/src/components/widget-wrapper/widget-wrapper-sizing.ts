@@ -233,7 +233,7 @@ export class WidgetSizingManager {
     // Explicitly convert to numbers to avoid string concatenation
     const currentRowSpan = Number(this.component.rowSpan);
     const maxRowSpan = Number(this.component.maxRowSpan);
-    console.log('currentRowSpan', currentRowSpan, 'maxRowSpan', maxRowSpan);
+    console.debug('currentRowSpan', currentRowSpan, 'maxRowSpan', maxRowSpan);
 
     if (currentRowSpan < maxRowSpan) {
       const oldRowSpan = currentRowSpan;

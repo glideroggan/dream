@@ -59,6 +59,8 @@ export class ExpenseCategoriesChart extends FASTElement {
     
     // Only create chart if we have data
     if (this.categories.length === 0) return;
+
+    console.debug('Creating chart with categories:', this.categories);
     
     // Get top categories sorted by amount
     const topCategories = [...this.categories]

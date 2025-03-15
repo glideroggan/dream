@@ -1,4 +1,6 @@
 # BUGS
+- request-card-workflow is not good in light and dark mode
+- ✔️Top Expenses is not showing in Financial Health Widget
 - card-details buttons are wrongly styled in dark mode and light mode
 - ✔️card-details is missing dark mode
 - ✔️why is only the minus button on error-widget triggering resize?
@@ -6,9 +8,9 @@
 - ✔️cancel button on loan modal on sign step is not hover styled
 - ✔️cancel button on the signing workflow is not good in dark mode
 - ✔️favorite checkbox doesn't work on add payment contact
-- need to update net worth after account and transaction changes
-- all the amounts, should be positive, and instead the type of the transaction should be the one that decides if it is showing as a negative value or not
-- the button in the bottom in financial health widget is unstyled
+- ✔️need to update net worth after account and transaction changes
+- ✔️all the amounts, should be positive, and instead the type of the transaction should be the one that decides if it is showing as a negative value or not
+- ✔️the button in the bottom in financial health widget is unstyled
 
 # FEATURES
 - common search dropdown component

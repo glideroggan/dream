@@ -112,32 +112,32 @@ const styles = css`
   
   /* Improved responsive breakpoints to prevent horizontal scrollbars */
   /* First breakpoint for medium screens */
-  @media (max-width: 960px) {
-    ::slotted([class*="col-span-"]) {
-      grid-column: span min(var(--current-col-span, 1), 6);
-    }
-  }
+  // @media (max-width: 960px) {
+  //   ::slotted([class*="col-span-"]) {
+  //     grid-column: span min(var(--current-col-span, 1), 6);
+  //   }
+  // }
   
-  /* Second breakpoint for smaller screens but before sidebar collapse */
-  @media (max-width: 800px) {
-    ::slotted([class*="col-span-"]) {
-      grid-column: span min(var(--current-col-span, 1), 4);
-    }
-  }
+  // /* Second breakpoint for smaller screens but before sidebar collapse */
+  // @media (max-width: 800px) {
+  //   ::slotted([class*="col-span-"]) {
+  //     grid-column: span min(var(--current-col-span, 1), 4);
+  //   }
+  // }
   
-  /* Critical breakpoint for mobile - force full width widgets with 2 column max grid */
-  @media (max-width: 750px) {
-    ::slotted([class*="col-span-"]) {
-      grid-column: 1 / -1 !important; /* Force full width regardless of specified col-span */
-    }
-  }
+  // /* Critical breakpoint for mobile - force full width widgets with 2 column max grid */
+  // @media (max-width: 750px) {
+  //   ::slotted([class*="col-span-"]) {
+  //     grid-column: 1 / -1 !important; /* Force full width regardless of specified col-span */
+  //   }
+  // }
   
-  /* Smallest screens - ensure single column layout */
-  @media (max-width: 500px) {
-    ::slotted(*) {
-      grid-column: 1 / -1 !important;
-    }
-  }
+  // /* Smallest screens - ensure single column layout */
+  // @media (max-width: 500px) {
+  //   ::slotted(*) {
+  //     grid-column: 1 / -1 !important;
+  //   }
+  // }
 `;
 
 // Legacy size mapping to new column spans
@@ -511,20 +511,22 @@ export class GridLayout extends FASTElement {
     // For very small screens, we might want to force specific layouts
     if (containerWidth < 500) {
       adjustedColumnCount = 1; // Force single column for very small devices
-    } else if (containerWidth < 750) {
-      // For small screens, cap at 2 columns regardless of calculation
-      adjustedColumnCount = Math.min(adjustedColumnCount, 2);
-    }
+    } 
+    // else if (containerWidth < 750) {
+    //   // For small screens, cap at 2 columns regardless of calculation
+    //   adjustedColumnCount = Math.min(adjustedColumnCount, 2);
+    // }
     
     // Log why we're using this column count for debugging
     console.debug(`GridLayout: Container width ${containerWidth}px can fit ${maxPossibleColumns} columns at ${this.minColumnWidth}px min width with ${this.gridGap}px gaps`);
     console.debug(`GridLayout: Using ${adjustedColumnCount} columns (limited by ${columnCount} max configured columns)`);
 
     // Calculate column width (minimum is minColumnWidth)
-    const columnWidth = Math.max(
-      this.minColumnWidth,
-      Math.floor((availableWidth - (adjustedColumnCount - 1) * this.gridGap) / adjustedColumnCount)
-    );
+    // const columnWidth = Math.max(
+    //   this.minColumnWidth,
+    //   Math.floor((availableWidth - (adjustedColumnCount - 1) * this.gridGap) / adjustedColumnCount)
+    // );
+    const columnWidth = this.minColumnWidth;
 
     // Set a fixed row height that doesn't change based on content
     const rowHeight = this.minRowHeight;
