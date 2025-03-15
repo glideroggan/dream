@@ -266,6 +266,8 @@ export class SwishWorkflow extends WorkflowBase {
     if (params?.product) {
       this.product = { ...this.product, ...params.product };
     }
+
+    this.setModalWidth("500px");
     
     // Set product image if available
     this.productImage = params?.imageUrl || this.product.imageUrl;

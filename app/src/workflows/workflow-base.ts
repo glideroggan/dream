@@ -55,6 +55,7 @@ export abstract class WorkflowBase extends FASTElement {
    * Updates the modal width based on the current screen size
    */
   private updateModalWidth(): void {
+    return
     const width = this.getModalWidthForScreenSize();
     this.setModalWidth(width);
   }

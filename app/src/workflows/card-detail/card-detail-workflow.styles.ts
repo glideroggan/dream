@@ -15,6 +15,8 @@ export const styles = css`
     gap: 20px;
     width: 100%;
     margin-bottom: 0; /* Remove margin since info-section already has margin */
+    container-type: inline-size;
+    container-name: card-layout; /* Add a named container for explicit targeting */
   }
 
   /* Make card section stay at natural width */
@@ -28,12 +30,53 @@ export const styles = css`
     flex: 1;
   }
 
-  /* Keep all original styling */
+  /* Container query for stacking on smaller container widths - placed early for clarity */
+  @container card-layout (max-width: 600px) {
+    .top-section-container {
+      flex-direction: column !important; /* Use !important to ensure priority */
+    }
+    
+    .card-section {
+      flex: 0 0 auto !important;
+      max-width: 100% !important; /* Allow card to use full width when stacked */
+      min-width: 100% !important;
+      margin-bottom: 15px !important;
+    }
+
+    .credit-card {
+      width: 100% !important; /* Full width when stacked */
+      max-width: 320px !important; /* But maintain reasonable size */
+      margin: 0 auto !important; /* Center the card */
+    }
+  }
+
+  /* Fallback for browsers that don't support container queries */
+  @media (max-width: 768px) {
+    .top-section-container {
+      flex-direction: column;
+    }
+    
+    .card-section {
+      flex: 0 0 auto;
+      max-width: 100%;
+      min-width: 100%;
+      margin-bottom: 15px;
+    }
+
+    .credit-card {
+      width: 100%;
+      max-width: 320px;
+      margin: 0 auto;
+    }
+  }
+
+  /* Updated with theme variables */
   .info-section {
     padding: 15px;
-    background-color: #f8f9fa;
+    background-color: var(--background-card);
     border-radius: 8px;
     margin-bottom: 15px;
+    color: var(--primary-text-color);
   }
 
   .credit-card {
@@ -50,12 +93,12 @@ export const styles = css`
     font-family: 'Arial', sans-serif;
     letter-spacing: 0.5px;
     
-    /* Default credit card background */
+    /* Default credit card background with slight transparency for theme adaptability */
     background: linear-gradient(135deg, #2D3A62, #151E3F);
-    color: white;
+    color: var(--text-light);
   }
 
-  /* Different backgrounds for different card types */
+  /* Different backgrounds for different card types - keeping distinct colors but with theme awareness */
   .credit-card.credit {
     background: linear-gradient(135deg, #5B2D62, #26133F);
   }
@@ -65,7 +108,7 @@ export const styles = css`
   }
 
   .credit-card.expired {
-    background: linear-gradient(135deg, #696969, #404040);
+    background: linear-gradient(135deg, #555555, #303030);
   }
 
   .credit-card.frozen {
@@ -73,7 +116,7 @@ export const styles = css`
   }
 
   .credit-card.lost, .credit-card.stolen {
-    background: linear-gradient(135deg, #A03B3B, #772525);
+    background: linear-gradient(135deg, var(--error-color), #772525);
   }
 
   /* Bank logo styling */
@@ -173,7 +216,7 @@ export const styles = css`
     margin-top: 11px;
   }
 
-  /* Frozen overlay improvement */
+  /* Frozen overlay improvement with theme awareness */
   .frozen-overlay {
     position: absolute;
     top: 0;
@@ -186,7 +229,7 @@ export const styles = css`
     justify-content: center;
     font-size: 32px;
     font-weight: bold;
-    color: #ffffff;
+    color: var(--text-light);
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
     border-radius: 16px;
     letter-spacing: 3px;
@@ -199,16 +242,17 @@ export const styles = css`
     justify-content: space-between;
     margin-bottom: 10px;
     padding-bottom: 5px;
-    border-bottom: 1px solid #e9ecef;
+    border-bottom: 1px solid var(--divider-color);
   }
 
   .detail-label {
-    color: #6c757d;
+    color: var(--secondary-text-color);
     font-weight: 500;
   }
 
   .detail-value {
     font-weight: 600;
+    color: var(--primary-text-color);
   }
 
   .card-status {
@@ -216,7 +260,7 @@ export const styles = css`
     align-items: center;
     justify-content: space-between;
     padding: 8px 12px;
-    background-color: #f8f9fa;
+    background-color: var(--background-card);
     border-radius: 6px;
   }
 
@@ -226,40 +270,35 @@ export const styles = css`
     border-radius: 4px;
   }
 
+  /* Status indicators with theme-aware colors */
   .status-active {
-    background-color: #d4edda;
-    color: #155724;
+    background-color: rgba(var(--success-color, #2ecc71), 0.2);
+    color: var(--success-color, #2ecc71);
   }
 
   .status-frozen {
-    background-color: #d1ecf1;
-    color: #0c5460;
+    background-color: rgba(var(--accent-color, #88BDF2), 0.2);
+    color: var(--accent-color, #88BDF2);
   }
 
   .status-lost, .status-stolen {
-    background-color: #f8d7da;
-    color: #721c24;
+    background-color: rgba(var(--error-color, #e74c3c), 0.2);
+    color: var(--error-color, #e74c3c);
   }
 
   .status-expired {
-    background-color: #e2e3e5;
-    color: #383d41;
-  }
-
-  .info-section {
-    padding: 15px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    margin-bottom: 15px;
+    background-color: rgba(var(--inactive-color, #6A89A7), 0.2);
+    color: var(--inactive-color, #6A89A7);
   }
 
   .type-specific-section {
-    background-color: #e9ecef;
+    background-color: var(--background-color);
+    border: 1px solid var(--divider-color);
   }
 
   .actions-section {
     padding: 15px;
-    background-color: #f8f9fa;
+    background-color: var(--background-card);
     border-radius: 8px;
   }
 
@@ -269,6 +308,7 @@ export const styles = css`
     flex-wrap: wrap;
   }
 
+  /* Action buttons with theme-aware styling */
   .action-button {
     padding: 8px 16px;
     border: none;
@@ -277,7 +317,7 @@ export const styles = css`
     display: flex;
     align-items: center;
     font-weight: 600;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, color 0.2s;
   }
 
   .action-button .icon {
@@ -285,40 +325,60 @@ export const styles = css`
   }
 
   .freeze {
-    background-color: #d1ecf1;
-    color: #0c5460;
+    background-color: rgba(var(--accent-color, #88BDF2), 0.2);
+    color: var(--accent-color, #88BDF2);
+  }
+
+  .freeze:hover {
+    background-color: rgba(var(--accent-color, #88BDF2), 0.3);
   }
 
   .unfreeze {
-    background-color: #d4edda;
-    color: #155724;
+    background-color: rgba(var(--success-color, #2ecc71), 0.2);
+    color: var(--success-color, #2ecc71);
+  }
+
+  .unfreeze:hover {
+    background-color: rgba(var(--success-color, #2ecc71), 0.3);
   }
 
   .report {
-    background-color: #f8d7da;
-    color: #721c24;
+    background-color: rgba(var(--error-color, #e74c3c), 0.2);
+    color: var(--error-color, #e74c3c);
+  }
+
+  .report:hover {
+    background-color: rgba(var(--error-color, #e74c3c), 0.3);
   }
 
   .pin {
-    background-color: #e2e3e5;
-    color: #383d41;
+    background-color: rgba(var(--inactive-color, #6A89A7), 0.2);
+    color: var(--inactive-color, #6A89A7);
+  }
+
+  .pin:hover {
+    background-color: rgba(var(--inactive-color, #6A89A7), 0.3);
   }
 
   .replace {
-    background-color: #d4edda;
-    color: #155724;
+    background-color: rgba(var(--success-color, #2ecc71), 0.2);
+    color: var(--success-color, #2ecc71);
     margin-top: 10px;
+  }
+
+  .replace:hover {
+    background-color: rgba(var(--success-color, #2ecc71), 0.3);
   }
 
   .replacement-message {
     margin-bottom: 10px;
-    color: #6c757d;
+    color: var(--secondary-text-color);
   }
 
   .empty-state {
     text-align: center;
     padding: 40px 20px;
-    color: #6c757d;
+    color: var(--secondary-text-color);
   }
 
   .empty-icon {
@@ -329,5 +389,53 @@ export const styles = css`
   h3, h4 {
     margin-top: 0;
     margin-bottom: 16px;
+    color: var(--primary-text-color);
+  }
+
+  /* Dark mode specific overrides */
+  @media (prefers-color-scheme: dark) {
+    .detail-row {
+      border-bottom-color: var(--divider-color);
+    }
+    
+    /* Ensure better visibility for status backgrounds in dark mode */
+    .status-active {
+      background-color: rgba(46, 204, 113, 0.2);
+    }
+    
+    .status-frozen {
+      background-color: rgba(136, 189, 242, 0.2);
+    }
+    
+    .status-lost, .status-stolen {
+      background-color: rgba(231, 76, 60, 0.2);
+    }
+    
+    .status-expired {
+      background-color: rgba(106, 137, 167, 0.2);
+    }
+  }
+
+  /* Container query for stacking on smaller container widths */
+  @container (max-width: 600px) {
+    .top-section-container {
+      flex-direction: column;
+    }
+    
+    .card-section {
+      flex: 0 0 auto;
+      max-width: 100%; /* Allow card to use full width when stacked */
+      min-width: 100%;
+      margin-bottom: 15px;
+    }
+
+    .credit-card {
+      width: 100%; /* Full width when stacked */
+      max-width: 320px; /* But maintain reasonable size */
+      margin: 0 auto; /* Center the card */
+    }
+    .info-section {
+      min-width: 100%; /* Allow info section to use full width when stacked */
+    }
   }
 `;

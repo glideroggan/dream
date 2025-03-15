@@ -1,4 +1,5 @@
 # BUGS
+- card-details buttons are wrongly styled in dark mode and light mode
 - card-details is missing dark mode
 - why is only the minus button on error-widget triggering resize?
   pressing the col buttons do nothing, until we do something with the rows buttons
