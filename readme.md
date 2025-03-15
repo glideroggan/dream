@@ -1,4 +1,10 @@
 # BUGS
+- account-widget is not updated right away when a card have been connected to the account
+- creating an account, does create the product and the account, but in the product the account ID is not set
+  Should be added to the metadata
+- swish should not be active so fast, it should create a simulation task
+- ✔️add swish-workflow still searchable when having the product
+- ✔️swish-widget was not added after workflow
 - account-info-workflow is not configured for dark and light mode
 - ✔️Adding a new payment contact (favorite), seems to add it twice in the transfer flow
 - request-card-workflow is not good in light and dark mode
@@ -40,6 +46,7 @@ Would be nice to get a bit more things happening, if we could do like in the lif
         - should show a toast
 
 # TODO
+- should fix versioning on the localstorage
 - when there is only one choice from the search inputs, enter key should select it
 - need toast error when failing to start a workflow
 - the transaction signing is not so nice, the style of it should improve

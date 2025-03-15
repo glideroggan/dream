@@ -103,7 +103,7 @@ export class CardWorkflow extends WorkflowBase {
         try {
             // Get card products from service
             const products = await cardService.getCardProducts();
-            console.debug("[loadCardProducts]", products);
+            console.log("[loadCardProducts]", products);
             
             if (products.length > 0) {
                 // Find credit and debit products

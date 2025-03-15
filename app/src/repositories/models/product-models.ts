@@ -1,28 +1,31 @@
-import { Entity } from "../base-repository";
 
 /**
  * Represents the type of entity a product affects or creates
  */
-export enum ProductEntityType {
-  ACCOUNT = "account",
-  LOAN = "loan",
-  INVESTMENT = "investment",
-  INSURANCE = "insurance",
-  CARD = "card",
-  SERVICE = "service"
-}
+export type ProductEntityType = 
+    "account" | "loan" | "investment" | 
+  "insurance" | "card" | "service" | 'credit' | 'debit';
+// export enum ProductEntityType {
+//   ACCOUNT = "account",
+//   LOAN = "loan",
+//   INVESTMENT = "investment",
+//   INSURANCE = "insurance",
+//   CARD = "card",
+//   SERVICE = "service"
+// }
 
 /**
  * Represents a product category
  */
-export enum ProductCategory {
-  BANKING = "banking",
-  LENDING = "lending",
-  INVESTING = "investing",
-  PROTECTION = "protection",
-  PAYMENTS = "payments",
-  SERVICES = "services"
-}
+export type ProductCategory = "banking" | "lending" | "investing" | "protection" | "payments" | "services";
+// export enum ProductCategory {
+//   BANKING = "banking",
+//   LENDING = "lending",
+//   INVESTING = "investing",
+//   PROTECTION = "protection",
+//   PAYMENTS = "payments",
+//   SERVICES = "services"
+// }
 
 /**
  * Base product interface that all product types extend
@@ -30,14 +33,23 @@ export enum ProductCategory {
 export interface BaseProduct {
   id: string;
   name: string;
-  type: string;
+  type: ProductEntityType;
+}
+
+export interface BaseRequirement {
+  type: string
+  value: any
+  description: string
+}
+
+export interface ProductRequirement extends BaseRequirement {
+  type: "kyc" | "income" | "age" | "creditScore" | "residency" | "hasAccount" | "custom";
 }
 
 /**
  * Product interface representing all possible product attributes
  */
 export interface Product extends BaseProduct {
-  type: ProductEntityType;
   category: ProductCategory;
   description?: string;
   features?: string[];
@@ -56,34 +68,12 @@ export interface Product extends BaseProduct {
 /**
  * Product requirement interface for eligibility checks
  */
-export interface ProductRequirement {
-  type: "kyc" | "income" | "age" | "creditScore" | "residency" | "hasAccount" | "custom";
-  value: string | number | boolean;
-  description: string;
-}
+// export interface ProductRequirement {
+//   type: "kyc" | "income" | "age" | "creditScore" | "residency" | "hasAccount" | "custom";
+//   value: string | number | boolean;
+//   description: string;
+// }
 
-/**
- * Event types for product changes
- */
-export type ProductChangeEventType = 'add' | 'remove' | 'update';
-
-/**
- * Event interface for product changes
- */
-export interface ProductChangeEvent {
-  type: ProductChangeEventType;
-  productId: string;
-  product?: Product;
-}
-
-/**
- * Listener type for product changes
- */
-export type ProductChangeListener = (event: ProductChangeEvent) => void;
-
-/**
- * Specific product types
- */
 
 /**
  * Basic account product type
@@ -150,7 +140,7 @@ export function isAccountProduct(product: BaseProduct): product is AccountProduc
  * Check if a product is a payment service product
  */
 export function isPaymentServiceProduct(product: BaseProduct): product is PaymentServiceProduct {
-  return product.type === 'payment-service' && 'features' in product;
+  return product.type === 'service' && 'features' in product;
 }
 
 /**
@@ -163,6 +153,6 @@ export function isInsuranceProduct(product: BaseProduct): product is InsurancePr
 /**
  * Check if a product is a credit card product
  */
-export function isCreditCardProduct(product: BaseProduct): product is CreditCardProduct {
-  return product.type === 'credit-card' && 'cardNumber' in product;
+export function isCardProduct(product: BaseProduct): product is CreditCardProduct {
+  return product.type === 'card' && 'cardNumber' in product;
 }

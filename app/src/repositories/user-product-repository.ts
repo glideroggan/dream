@@ -6,6 +6,8 @@ import { generateProductsForUsers } from './mock/user-products-mock';
 import { ProductCategory, ProductEntityType } from './models/product-models';
 
 export class UserProductRepository extends LocalStorageRepository<UserProduct> {
+  
+  
   constructor(storage: StorageService, userService: UserService) {
     super('user-products', storage, userService);
   }
@@ -13,9 +15,10 @@ export class UserProductRepository extends LocalStorageRepository<UserProduct> {
   /**
    * Initialize current user with mock data
    */
-  protected initializeMockData(): void {
+  protected async initializeMockData(): Promise<void> {
     // TODO: these should be mocked from the actual products that are offered
-    const mockProducts = generateProductsForUsers();
+    const userType = this.userService.getUserType();
+    const mockProducts = await generateProductsForUsers(userType);
     
     mockProducts.forEach(product => {
       this.createForMocks(product);
@@ -43,16 +46,14 @@ export class UserProductRepository extends LocalStorageRepository<UserProduct> {
       
       return await this.update(userProduct.id, updatedProduct) as UserProduct;
     } else {
-      // Create new product entity with required fields
-      const productEntity: Omit<UserProduct, 'id'> = {
-        ...userProduct as any, // Cast to satisfy TypeScript
-        // category: (userProduct as any).category,
-        // type: (userProduct as any).type,
-        addedDate: now,
+      // Create new product entity
+      const newProduct: UserProduct = {
+        ...userProduct,
+        addedDate: userProduct.addedDate || now,
         lastUpdated: now
       };
       
-      return await this.create(productEntity);
+      return await this.create(newProduct);
     }
   }
   
@@ -70,6 +71,10 @@ export class UserProductRepository extends LocalStorageRepository<UserProduct> {
   // async getActive(): Promise<UserProduct[]> {
   //   return this.getActiveProducts();
   // }
+
+  async removeProduct(productId: string): Promise<void> {
+    await this.delete(productId);
+  }
 
   /**
    * Get products by category
@@ -95,7 +100,8 @@ export class UserProductRepository extends LocalStorageRepository<UserProduct> {
    * Get a product by ID
    */
   async getById(id: string): Promise<UserProduct | undefined> {
-    return await super.getById(id);
+    const all = await super.getAll()
+    return all.find(product => product.metadata?.originalProductId === id);
   }
 
   /**
@@ -116,6 +122,11 @@ export class UserProductRepository extends LocalStorageRepository<UserProduct> {
     }
     
     return relatedProducts;
+  }
+
+  async hasProduct(productId: string): Promise<boolean> {
+    const product = await this.getById(productId);
+    return !!product;
   }
   
   /**

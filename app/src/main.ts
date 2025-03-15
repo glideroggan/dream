@@ -1,6 +1,8 @@
+import "./repositories/product-repository"
 import { WorkflowService } from './services/workflow-service';
+
+
 import "./services/user-service"
-// Initialize repository service
 // Import workflow components
 import './services/user-product-service';
 import './workflows/swish-workflow';

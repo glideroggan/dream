@@ -6,10 +6,17 @@ import { Account } from '../repositories/models/account-models';
 import { Card, CardProduct, CardRequirement, CardRequestData, CardServiceResult, CardType } from '../repositories/models/card-models';
 import { ProductEntityType } from '../repositories/models/product-models';
 import { simulationService } from './simulation-service';
+import { ProductRepository } from '../repositories/product-repository';
+import { AccountRepository } from '../repositories/account-repository';
+import { CardRepository } from '../repositories/card-repository';
+import { UserProduct } from '../repositories/models/user-product-models';
+import { generateUUID } from '../utilities/id-generator';
 
 export class CardService {
     private static instance: CardService;
-    private accountRepo = repositoryService.getAccountRepository();
+    private accountRepo: AccountRepository = repositoryService.getAccountRepository();
+    private productRepo: ProductRepository = repositoryService.getProductRepository();
+    private cardRepo: CardRepository = repositoryService.getCardRepository();
     
     private constructor() {
         console.debug("CardService instance created");
@@ -41,21 +48,26 @@ export class CardService {
     async getCardProducts(): Promise<CardProduct[]> {
         try {
             // Using the product repository to get card type products
-            const products = await userProductService.getProductsByEntityType(ProductEntityType.CARD);
-            console.debug("Fetched card products:", products);
+
+            const availableCardProducts = await this.productRepo.getProductsByEntityType<CardProduct>(['debit','credit']);
+            console.log("Fetched card products:", availableCardProducts);
+
+            // TODO: we need to fill these in with actual data from card-model?
+
+            return availableCardProducts;
             
             // Map products to CardProduct interface
-            return products.map(product => ({
-                id: product.id,
-                name: product.name,
-                type: product.id.includes('credit') ? 'credit' : 'debit',
-                description: product.description || '',
-                features: product.features || [],
-                requirements: product.requirements || [],
-                monthlyFee: product.metadata?.monthlyFee || 0,
-                currency: product.metadata?.currency || 'USD',
-                imageUrl: product.metadata?.imageUrl
-            }));
+            // return products.map(product => ({
+            //     id: product.id,
+            //     name: product.name,
+            //     type: product.id.includes('credit') ? 'credit' : 'debit',
+            //     description: product.description || '',
+            //     features: product.features || [],
+            //     requirements: product.requirements || [],
+            //     monthlyFee: product.metadata?.monthlyFee || 0,
+            //     currency: product.metadata?.currency || 'USD',
+            //     imageUrl: product.metadata?.imageUrl
+            // }));
         } catch (error) {
             console.error("Error fetching card products:", error);
             return []
@@ -96,6 +108,7 @@ export class CardService {
                     return userAge >= requirement.value;
                 
                 case "creditScore":
+                    // TODO:
                     // In a real app, we would query a credit service here
                     // For now, let's simulate a credit score check
                     const simulatedScore = 700; // Could be stored in user profile in a real app
@@ -135,20 +148,48 @@ export class CardService {
      * Request a new card
      */
     async requestCard(requestData: CardRequestData): Promise<CardServiceResult> {
+        debugger
+        /**
+         * get the template product for the product that the user is requesting
+         * check if the user already have the product (if it is a product that you can only have once)
+         * check if the user meets the requirements for the product
+         * Create a user product with the product template and the card data
+         * send data down to user product service for creation
+        */
         console.debug("Requesting card with data:", requestData);
         try {
-            console.debug("Processing card request:", requestData);
-            
-            // Check if user already has this card
-            const hasCard = await this.userHasCard(requestData.productId);
-            if (hasCard) {
+            // 1. Get the template product for the card the user is requesting
+            const productTemplate = await this.productRepo.getById(requestData.productId);
+            if (!productTemplate) {
                 return {
                     success: false,
-                    message: "You already have this card"
+                    message: "Card product not found"
                 };
             }
             
-            // For debit cards, verify the linked account exists
+            console.debug("Found product template:", productTemplate);
+            
+            // 2. Check if user already has this card product
+            const hasCard = await userProductService.hasProduct(requestData.productId);
+            if (hasCard) {
+                return {
+                    success: false,
+                    message: "You already have this card product"
+                };
+            }
+            
+            // 3. Check if the user meets requirements for the product
+            if (productTemplate.requirements && productTemplate.requirements.length > 0) {
+                const meetsRequirements = await this.meetsAllRequirements(productTemplate as CardProduct);
+                if (!meetsRequirements) {
+                    return {
+                        success: false,
+                        message: "You don't meet all requirements for this card"
+                    };
+                }
+            }
+            
+            // 4. For debit cards, verify the linked account exists
             if (requestData.cardType === 'debit' && requestData.linkedAccountId) {
                 const account = await this.accountRepo.getById(requestData.linkedAccountId);
                 console.debug("Account back from accountRepo:", account);
@@ -161,35 +202,21 @@ export class CardService {
                 }
             }
             
-            // Get the user's full name for the card
+            // 5. Get the user's full name for the card
             const user = userService.getCurrentUser();
             const cardholderName = user ? `${user.firstName} ${user.lastName}` : 'Card Holder';
             
-            // Add the product to the user's account
-            await userProductService.addProduct({
-                id: requestData.productId,
-                name: requestData.cardType === 'credit' ? 'Credit Card' : 'Debit Card',
-                type: 'card',
-                metadata: {
-                    cardType: requestData.cardType,
-                    linkedAccountId: requestData.linkedAccountId || null,
-                    requestDate: requestData.requestDate,
-                    status: 'processing' // Could be 'processing', 'approved', 'shipped', 'active'
-                }
-            });
-            
-            // Also create the card in the card repository
-            const cardRepo = repositoryService.getCardRepository();
+            // 6. Create the card entity in the card repository first
             const accountId = requestData.linkedAccountId || 'default';
             
             let card: Card;
             if (requestData.cardType === 'credit') {
-                card = await cardRepo.createCreditCard(accountId, {
+                card = await this.cardRepo.createCreditCard(accountId, {
                     cardholderName: cardholderName,
                     status: 'pending'
                 });
             } else {
-                card = await cardRepo.createCardForAccount(accountId, {
+                card = await this.cardRepo.createCardForAccount(accountId, {
                     type: requestData.cardType as CardType,
                     cardholderName: cardholderName,
                     status: 'pending'
@@ -197,16 +224,47 @@ export class CardService {
             }
             
             console.debug("Created new card record:", card);
-
-            // TODO: create a simulation task for the card process
-            // simulationService.addCardRequest(card.id, requestData.productId, requestData.requestDate);
+            
+            const userProductId = `user-product-${generateUUID()}`;
+            // 7. Create a user product based on the template
+            const userProductData = {
+                // Use template information
+                id: userProductId,
+                name: productTemplate.name,
+                type: productTemplate.type,
+                category: productTemplate.category,
+                features: productTemplate.features,
+                requirements: productTemplate.requirements,
+                // Add metadata with card info and original product ID
+                metadata: {
+                    cardId: card.id, // Link to the created card
+                    cardType: requestData.cardType,
+                    linkedAccountId: requestData.linkedAccountId || null,
+                    requestDate: requestData.requestDate,
+                    status: 'processing', // Initial status
+                    originalProductId: productTemplate.id // Store reference to original product
+                }
+            };
+            
+            console.debug("Creating user product with data:", userProductData);
+            
+            // 8. Send data to user product service for creation
+            const userProduct = await userProductService.addProduct(userProductData);
+            
+            if (!userProduct) {
+                console.error("Failed to create user product");
+                throw new Error("Failed to create user product");
+            }
+            
+            // 9. Create a simulation task for the card process
+            simulationService.addTask(userProduct.id);
             
             return {
                 success: true,
                 message: `Your ${requestData.cardType} card request has been submitted successfully`,
                 data: {
                     cardId: card.id,
-                    productId: requestData.productId,
+                    productId: userProduct.id,
                     requestDate: requestData.requestDate,
                     status: 'processing'
                 }

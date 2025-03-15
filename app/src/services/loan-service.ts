@@ -6,7 +6,7 @@ import {
   LoanStatus, 
   LoanApplication, 
   EligibilityResult} from '../repositories/models/loan-models';
-import { ProductEntity, ProductEntityType } from '../repositories/models/product-models';
+import { Product } from '../repositories/models/product-models';
 
 /**
  * Loan service to handle loan operations
@@ -421,9 +421,9 @@ export class LoanService {
   /**
    * Get available loan products
    */
-  async getLoanProducts(): Promise<ProductEntity[]> {
+  async getLoanProducts(): Promise<Product[]> {
     const productRepo = repositoryService.getUserProductRepository();
-    return productRepo.getByEntityType(ProductEntityType.LOAN);
+    return productRepo.getByEntityType('loan');
   }
   
   /**

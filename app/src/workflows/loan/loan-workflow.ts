@@ -9,8 +9,8 @@ import { template } from "./loan-workflow.template";
 import { styles } from "./loan-workflow.styles";
 import { Account } from "../../repositories/models/account-models";
 import { LoanType, EligibilityResult, LoanDetails } from "../../repositories/models/loan-models";
-import { ProductEntity, ProductEntityType } from "../../repositories/models/product-models";
 import { getProductIcon } from "./loan-workflow.helper";
+import { Product } from "../../repositories/models/product-models";
 
 @customElement({
   name: "loan-workflow",
@@ -23,8 +23,8 @@ export class LoanWorkflow extends WorkflowBase {
   @observable headerTitle: string = "Apply for a Loan";
 
   // Available loan products
-  @observable availableLoanProducts: ProductEntity[] = [];
-  @observable selectedProduct: ProductEntity | null = null;
+  @observable availableLoanProducts: Product[] = [];
+  @observable selectedProduct: Product | null = null;
 
   // Loan type selection (for backward compatibility)
   @observable selectedLoanType: LoanType | null = null;
@@ -102,7 +102,7 @@ export class LoanWorkflow extends WorkflowBase {
     try {
       this.isLoading = true;
       const productRepo = repositoryService.getUserProductRepository();
-      this.availableLoanProducts = await productRepo.getByEntityType(ProductEntityType.LOAN);
+      this.availableLoanProducts = await productRepo.getByEntityType('loan');
       console.debug('Available loan products loaded:', this.availableLoanProducts);
     } catch (error) {
       console.error("Error loading loan products:", error);
@@ -149,7 +149,7 @@ export class LoanWorkflow extends WorkflowBase {
   /**
    * Map selected product to loan type
    */
-  private mapProductToLoanType(product: ProductEntity): void {
+  private mapProductToLoanType(product: Product): void {
     // First try to get loan type from metadata
     if (product.metadata?.loanType) {
       this.selectedLoanType = product.metadata.loanType as LoanType;
@@ -163,7 +163,7 @@ export class LoanWorkflow extends WorkflowBase {
   /**
    * Infer loan type from product ID or name
    */
-  private inferLoanTypeFromProduct(product: ProductEntity): LoanType {
+  private inferLoanTypeFromProduct(product: Product): LoanType {
     const id = product.id.toLowerCase();
     const name = product.name.toLowerCase();
 
@@ -233,7 +233,7 @@ export class LoanWorkflow extends WorkflowBase {
   /**
    * Select a loan product
    */
-  selectProduct(product: ProductEntity): void {
+  selectProduct(product: Product): void {
     this.selectedProduct = product;
     this.mapProductToLoanType(product);
     this.updateHeaderTitle();

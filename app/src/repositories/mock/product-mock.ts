@@ -2,14 +2,14 @@ import { Product, ProductCategory, ProductEntityType } from '../models/product-m
 
 export function generateMockProducts(): Product[] {
   const now = new Date().toISOString();
-  
+
   return [
     // Banking products
     {
       id: 'checking-account',
       name: 'Everyday Checking Account',
-      category: ProductCategory.BANKING,
-      type: ProductEntityType.ACCOUNT,
+      category: 'banking',
+      type: 'account',
       description: 'A flexible everyday checking account for your daily banking needs',
       features: [
         'No minimum balance requirements',
@@ -34,8 +34,8 @@ export function generateMockProducts(): Product[] {
     {
       id: 'savings-account',
       name: 'High-Yield Savings Account',
-      category: ProductCategory.BANKING,
-      type: ProductEntityType.ACCOUNT,
+      category: 'banking',
+      type: 'account',
       description: 'Earn competitive interest on your savings',
       features: [
         'Competitive interest rates',
@@ -55,8 +55,8 @@ export function generateMockProducts(): Product[] {
     {
       id: 'isk-account',
       name: 'ISK Investment Account',
-      category: ProductCategory.INVESTING,
-      type: ProductEntityType.ACCOUNT,
+      category: 'investing',
+      type: 'account',
       description: 'Investment Savings Account with tax benefits',
       features: [
         'Tax-advantaged investing',
@@ -80,8 +80,8 @@ export function generateMockProducts(): Product[] {
     {
       id: 'pension-account',
       name: 'Pension Savings Account',
-      category: ProductCategory.INVESTING,
-      type: ProductEntityType.ACCOUNT,
+      category: 'investing',
+      type: 'account',
       description: 'Long-term retirement savings with tax advantages',
       features: [
         'Tax-deferred growth',
@@ -102,13 +102,13 @@ export function generateMockProducts(): Product[] {
         }
       ],
     },
-    
+
     // Lending products
     {
       id: 'personal-loan',
       name: 'Personal Loan',
-      category: ProductCategory.LENDING,
-      type: ProductEntityType.LOAN,
+      category: 'lending',
+      type: 'loan',
       description: 'Flexible financing for your personal needs',
       features: [
         'Competitive fixed rates',
@@ -140,8 +140,8 @@ export function generateMockProducts(): Product[] {
     {
       id: 'home-loan',
       name: 'Home Mortgage',
-      category: ProductCategory.LENDING,
-      type: ProductEntityType.LOAN,
+      category: 'lending',
+      type: 'loan',
       description: 'Finance your dream home with competitive mortgage rates',
       features: [
         'Competitive interest rates',
@@ -177,8 +177,8 @@ export function generateMockProducts(): Product[] {
     {
       id: 'vehicle-loan',
       name: 'Vehicle Loan',
-      category: ProductCategory.LENDING,
-      type: ProductEntityType.LOAN,
+      category: 'lending',
+      type: 'loan',
       description: 'Affordable financing for your new or used vehicle purchase',
       features: [
         'Competitive rates for new and used vehicles',
@@ -209,8 +209,8 @@ export function generateMockProducts(): Product[] {
     {
       id: 'education-loan',
       name: 'Education Loan',
-      category: ProductCategory.LENDING,
-      type: ProductEntityType.LOAN,
+      category: 'lending',
+      type: 'loan',
       description: 'Fund your education with flexible student loans',
       features: [
         'Competitive interest rates',
@@ -241,8 +241,8 @@ export function generateMockProducts(): Product[] {
     {
       id: 'business-loan',
       name: 'Business Loan',
-      category: ProductCategory.LENDING,
-      type: ProductEntityType.LOAN,
+      category: 'lending',
+      type: 'loan',
       description: 'Financing solutions for your business needs',
       features: [
         'Flexible funding for businesses',
@@ -270,13 +270,13 @@ export function generateMockProducts(): Product[] {
         baseInterestRate: 6.5
       },
     },
-    
+
     // Payment products
     {
       id: 'credit-card',
       name: 'Rewards Credit Card',
-      category: ProductCategory.PAYMENTS,
-      type: ProductEntityType.CARD,
+      category: 'payments',
+      type: 'credit',
       description: 'Earn rewards on everyday purchases',
       features: [
         'Earn points on every purchase',
@@ -300,8 +300,8 @@ export function generateMockProducts(): Product[] {
     {
       id: 'debit-card',
       name: 'Standard Debit Card',
-      category: ProductCategory.PAYMENTS, 
-      type: ProductEntityType.CARD,
+      category: 'payments',
+      type: 'debit',
       description: 'Convenient access to your funds with our standard debit card',
       features: [
         'Direct access to your account funds',
@@ -323,13 +323,27 @@ export function generateMockProducts(): Product[] {
         }
       ],
     },
-    
+    {
+      id: "swish-standard",
+      name: "Swish Premium",
+      type: "service",
+      category: "payments",
+      description: "Swish is a modern payment solution that enables instant transfers between accounts with enhanced security features.",
+      features: [
+        "Instant transfers 24/7",
+        "No transaction fees",
+        "Enhanced security with biometric authentication",
+        "Transaction history and insights",
+        "Scheduled payments",
+      ],
+    },
+
     // Services
     {
       id: 'overdraft-protection',
       name: 'Overdraft Protection',
-      category: ProductCategory.SERVICES,
-      type: ProductEntityType.SERVICE,
+      category: 'services',
+      type: 'service',
       description: 'Protect your account from overdraft fees',
       features: [
         'Link to a savings account or credit line',

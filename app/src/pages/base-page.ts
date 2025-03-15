@@ -7,7 +7,7 @@ import {
   Observable
 } from '@microsoft/fast-element';
 import { WidgetDefinition, widgetService } from '../services/widget-service';
-import { getProductService, UserProductService } from '../services/user-product-service';
+import { userProductService, UserProductService } from '../services/user-product-service';
 import {
   getWidgetMinWidth,
   getAutoWidgetsForProduct,
@@ -29,7 +29,7 @@ import { workflowManager } from '../services/workflow-manager-service';
 import { repositoryService } from '../services/repository-service';
 import { UserSettings } from '../repositories/settings-repository';
 import { GridLayout } from '../components/grid-layout';
-import { ProductChangeEvent } from '../repositories/models/product-models';
+import { UserProductChangeEvent } from '../repositories/models/user-product-models';
 
 // Add responsive styles for the base page
 export const basePageStyles = css`
@@ -134,7 +134,7 @@ export class BasePage extends FASTElement {
   protected productChangeUnsubscribe: (() => void) | null = null;
   protected initialWidgets: string = '';
   protected _initialWidgetsLoaded = false;
-  protected productService: UserProductService | null = null;
+  protected userProductService: UserProductService  = userProductService;
   protected settingsRepository = repositoryService.getSettingsRepository();
   protected widgetLoadAttempts: Map<string, number> = new Map();
   protected maxLoadAttempts = 2;
@@ -253,13 +253,12 @@ export class BasePage extends FASTElement {
   }
 
   protected subscribeToProductChanges(): void {
-    this.productService = getProductService();
-    this.productChangeUnsubscribe = this.productService.subscribe(this.handleProductChange.bind(this));
+    this.productChangeUnsubscribe = this.userProductService.subscribe(this.handleProductChange.bind(this));
     setTimeout(() => this.checkForProductWidgets(), 500);
   }
 
-  protected handleProductChange(event: ProductChangeEvent): void {
-    console.debug(`Product ${event.type} event received:`, event.product?.id);
+  protected handleProductChange(event: UserProductChangeEvent): void {
+    console.log(`Product ${event.type} event received:`, event.product?.id);
     const productId = event.productId;
     if (event.type === 'add') {
       this.addWidgetsForProduct(productId);

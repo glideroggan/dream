@@ -4,12 +4,11 @@ import { userProductService } from "../services/user-product-service";
 
 // Import the checkbox primitive
 import "../primitives/checkbox-primitive";
+import { UserProduct } from "../repositories/models/user-product-models";
+import { repositoryService } from "../services/repository-service";
 
-export interface SwishProduct {
-  id: string;
-  name: string;
-  type: string;
-  description: string;
+export interface SwishProduct extends UserProduct {
+  type: "service";
   features: string[];
   price: number;
   currency: string;
@@ -236,32 +235,40 @@ const styles = css`
   styles
 })
 export class SwishWorkflow extends WorkflowBase {
-  @observable product: SwishProduct = {
-    id: "swish-standard", 
-    name: "Swish Premium",
-    type: "payment-service",
-    description: "Swish is a modern payment solution that enables instant transfers between accounts with enhanced security features.",
-    features: [
-      "Instant transfers 24/7",
-      "No transaction fees",
-      "Enhanced security with biometric authentication",
-      "Transaction history and insights",
-      "Scheduled payments",
-    ],
-    price: 9.99,
-    currency: "USD"
-  };
+  // @observable product: SwishProduct = {
+  //   id: "swish-standard", 
+  //   name: "Swish Premium",
+  //   type: "service",
+  //   description: "Swish is a modern payment solution that enables instant transfers between accounts with enhanced security features.",
+  //   features: [
+  //     "Instant transfers 24/7",
+  //     "No transaction fees",
+  //     "Enhanced security with biometric authentication",
+  //     "Transaction history and insights",
+  //     "Scheduled payments",
+  //   ],
+  //   price: 9.99,
+  //   currency: "USD"
+  // };
   
+
   @observable productImage?: string;
   @observable isProductAdded: boolean = false;
   @observable isProductActive: boolean = false;
   @observable agreementChecked: boolean = false;
   @observable showValidationErrors: boolean = false;
   @observable isLoading: boolean = true;
+
+  public product: SwishProduct
   
   async initialize(params?: Record<string, any>): Promise<void> {
     console.debug("Initializing SwishWorkflow with params:", params);
     
+    const productRepo = repositoryService.getProductRepository()
+    const compatibleProducts = await productRepo.getProductsByEntityType<SwishProduct>("service");
+    this.product = compatibleProducts[0];
+    this.product.price = 9.99;
+    this.product.currency = "USD";
     // Override product details if provided in params
     if (params?.product) {
       this.product = { ...this.product, ...params.product };
@@ -381,6 +388,8 @@ export class SwishWorkflow extends WorkflowBase {
       }
       
       // Add the product to user's account
+      // TODO: call requestProductCreation instead
+      debugger
       await userProductService.addProduct({
         id: this.product.id, 
         name: this.product.name,

@@ -1,7 +1,7 @@
 import { workflowService } from '../services/workflow-service';
 import { getSearchService, SearchResultItem } from '../services/search-service';
-import { getProductService } from '../services/user-product-service';
 import { repositoryService } from '../services/repository-service';
+import { userProductService } from '../services/user-product-service';
 
 export interface WorkflowDefinition {
   id: string;
@@ -92,13 +92,12 @@ const workflowDefinitions: WorkflowDefinition[] = [
       console.debug(`Checking if Swish workflow should be hidden (timestamp=${Date.now()})`);
 
       try {
-        const productService = getProductService();
 
         // Force a full refresh before checking
-        await productService.refreshProducts();
+        // await productService.refreshProducts();
 
         // Check for the product
-        const hasSwish = await productService.hasProduct("swish-standard");
+        const hasSwish = await userProductService.hasProduct("swish-standard");
         console.debug(`Swish workflow searchability check result: hasSwish=${hasSwish}, timestamp=${Date.now()}`);
 
         // If user has Swish, the workflow should be disabled (return true)

@@ -1,7 +1,7 @@
 import { customElement, FASTElement, html, css, observable, when } from "@microsoft/fast-element";
-import { getProductService } from "../services/user-product-service";
 import { SwishProduct } from "../workflows/swish-workflow";
 import { BaseWidget } from "../components/base-widget";
+import { userProductService, UserProductService } from "../services/user-product-service";
 
 const template = html<SwishWidget>/*html*/`
   <div class="swish-widget">
@@ -226,9 +226,7 @@ export class SwishWidget extends BaseWidget {
 
   private async loadProductData(): Promise<void> {
     try {
-      const productService = getProductService();
-      // Use the typed getProduct<T> method to get the SwishProduct
-      const swishProduct = await productService.getProduct<SwishProduct>("swish-standard");
+      const swishProduct = await userProductService.getProduct<SwishProduct>("swish-standard");
 
       if (swishProduct) {
         this.swishProduct = swishProduct;

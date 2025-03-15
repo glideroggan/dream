@@ -1,7 +1,6 @@
 import { StorageService } from '../services/storage-service';
-import { Entity } from './base-repository';
 import { createNewUserTemplate, generateMockUsers } from './mock/user-mock';
-import { UserProfile, UserType, UserTypes } from './models/user-models';
+import { UserProfile } from './models/user-models';
 
 export class UserRepository {
   private users: Map<string, UserProfile> = new Map();

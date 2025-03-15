@@ -1,6 +1,6 @@
 import { WidgetDefinition, WidgetService } from '../services/widget-service';
 import { getSearchService, SearchResultItem } from '../services/search-service';
-import { getProductService } from '../services/user-product-service';
+import { userProductService } from '../services/user-product-service';
 
 // Define all available widget IDs
 export const WidgetIds = {
@@ -87,8 +87,7 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     icon: '💸',
     requiresProduct: 'swish-standard',
     searchDisabledCondition: async () => {
-      const productService = getProductService();
-      const hasSwish = await productService.hasProduct("swish-standard");
+      const hasSwish = await userProductService.hasProduct("swish-standard");
       return !hasSwish;
     }
   },
@@ -309,7 +308,10 @@ export function shouldWidgetBeFullWidth(widgetId: string): boolean {
  */
 export function getAutoWidgetsForProduct(productId: string): EnhancedWidgetDefinition[] {
   // Get all widgets that require this product
-  return widgetDefinitions.filter(widget => widget.requiresProduct === productId);
+  return widgetDefinitions.filter(widget => {
+    // If requiresProduct is defined, check if productId contains it
+    return widget.requiresProduct && productId.includes(widget.requiresProduct);
+  });
 }
 
 /**
@@ -326,16 +328,14 @@ export async function isWidgetAvailableForUser(widgetId: string): Promise<boolea
   if (!widget.requiresProduct) return true;
   
   // Check if the user has the required product
-  const productService = getProductService();
-  return await productService.hasProduct(widget.requiresProduct);
+  return await userProductService.hasProduct(widget.requiresProduct);
 }
 
 /**
  * Get all widgets that are available to the user based on their products
  */
 export async function getAllAvailableWidgets(): Promise<EnhancedWidgetDefinition[]> {
-  const productService = getProductService();
-  const userProducts = await productService.getProducts();
+  const userProducts = await userProductService.getProducts();
   const userProductIds = userProducts.map(p => p.id);
   
   return widgetDefinitions.filter(widget => {

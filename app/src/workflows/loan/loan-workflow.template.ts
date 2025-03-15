@@ -2,8 +2,8 @@ import { html, repeat } from "@microsoft/fast-element";
 import { LoanWorkflow } from "./loan-workflow";
 import { when } from "@microsoft/fast-element";
 import { getProductIcon, getInterestRateDisplay } from "./loan-workflow.helper";
-import { ProductEntity } from "../../repositories/models/product-models";
 import { Account } from "../../repositories/models/account-models";
+import { Product } from "../../repositories/models/product-models";
 
 // Step 1: Choose loan product
 const step1Template = html<LoanWorkflow>/*html*/`
@@ -19,7 +19,7 @@ const step1Template = html<LoanWorkflow>/*html*/`
       `)}
       
       ${when(x => x.availableLoanProducts.length > 0, html<LoanWorkflow>/*html*/`
-        ${repeat(x => x.availableLoanProducts, html<ProductEntity, LoanWorkflow>/*html*/`
+        ${repeat(x => x.availableLoanProducts, html<Product, LoanWorkflow>/*html*/`
           <div class="loan-option ${(product, c) => c.parent.selectedProduct?.id === product.id ? 'selected' : ''}"
               @click="${(product, c) => c.parent.selectProduct(product)}">
             <div class="loan-option-icon">${product => getProductIcon(product)}</div>

@@ -7,7 +7,9 @@ export interface TransferResult {
   transactionId?: string;
 }
 
-export type AccountType = 'checking' | 'savings' | 'credit' | 'investment' | 'loan' | 'pension' | 'mortgage' | 'isk';
+export type AccountType = 
+'checking' | 'savings' | 'credit' | 'investment' 
+| 'loan' | 'pension' | 'mortgage' | 'isk';
 
 export interface Account extends Entity {
   name: string;

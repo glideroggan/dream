@@ -1,9 +1,9 @@
-import { ProductEntity } from "../../repositories/models/product-models";
+import { Product } from "../../repositories/models/product-models";
 
 /**
  * Get appropriate icon based on loan product type
  */
-export function getProductIcon(product: ProductEntity | null): string {
+export function getProductIcon(product: Product | null): string {
   if (!product) return '💰';
   
   const id = product.id.toLowerCase();
@@ -20,7 +20,7 @@ export function getProductIcon(product: ProductEntity | null): string {
 /**
  * Get user-friendly interest rate display text from product
  */
-export function getInterestRateDisplay(product: ProductEntity | null): string {
+export function getInterestRateDisplay(product: Product | null): string {
   if (!product) return '';
   
   if (product.metadata?.minRate && product.metadata?.maxRate) {

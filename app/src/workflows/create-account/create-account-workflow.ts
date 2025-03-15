@@ -10,12 +10,13 @@ import {
 import { WorkflowBase, WorkflowResult } from '../workflow-base'
 import { kycService, KycLevel } from '../../services/kyc-service'
 import { repositoryService } from '../../services/repository-service'
-import {UserProductRepository } from '../../repositories/user-product-repository'
 import { Account } from '../../repositories/models/account-models'
-import { ProductEntity, ProductEntityType } from '../../repositories/models/product-models'
+import { Product } from '../../repositories/models/product-models'
+import { ProductRepository } from '../../repositories/product-repository'
+import { userProductService } from '../../services/user-product-service'
 
 // Define account types
-export interface CreateAccountType extends Omit<Account, 'balance'| 'currency'| 'accountNumber'|'isActive'|'createdAt'> {
+export interface CreateAccountType extends Omit<Account, 'balance' | 'currency' | 'accountNumber' | 'isActive' | 'createdAt'> {
   name: string
   description: string
   iconEmoji: string
@@ -27,25 +28,25 @@ export interface CreateAccountType extends Omit<Account, 'balance'| 'currency'| 
 const template = html<CreateAccountWorkflow>/*html*/ `
   <div class="create-account-workflow">
     ${when(
-      (x) => x.isLoading,
-      html`
+  (x) => x.isLoading,
+  html`
         <div class="loading-indicator">
           <div class="spinner"></div>
           <p>Loading available accounts...</p>
         </div>
       `
-    )}
+)}
     
     ${when(
-      (x) => !x.isLoading,
-      html`
+  (x) => !x.isLoading,
+  html`
         <div class="account-types">
           ${repeat(
-            (x) => x.accountTypes,
-            html<CreateAccountType, CreateAccountWorkflow>/*html*/ `
+    (x) => x.accountTypes,
+    html<CreateAccountType, CreateAccountWorkflow>/*html*/ `
               <div
                 class="account-type-card ${(x, c) =>
-                  c.parent.selectedTypeId == x.id ? 'selected' : ''}"
+        c.parent.selectedTypeId == x.id ? 'selected' : ''}"
                 @click="${(x, c) => c.parent.selectAccountType(x.id)}"
               >
                 <div class="account-type-icon">${(x) => x.iconEmoji}</div>
@@ -53,27 +54,27 @@ const template = html<CreateAccountWorkflow>/*html*/ `
                   <h3>${(x) => x.name}</h3>
                   <p>${(x) => x.description}</p>
                   ${when(
-                    (x) => x.requiresKyc,
-                    html`
+          (x) => x.requiresKyc,
+          html`
                       <div class="kyc-badge" title="Requires identity verification">
                         🪪 Verification required
                       </div>
                     `
-                  )}
+        )}
                 </div>
                 <div class="account-type-indicator"></div>
               </div>
             `
-          )}
+  )}
           ${when(
-            (x) => x.accountTypes.length === 0 && !x.isLoading,
-            html`
+    (x) => x.accountTypes.length === 0 && !x.isLoading,
+    html`
               <div class="no-accounts-message">
                 <div class="message-icon">❓</div>
                 <p>No account types are currently available.</p>
               </div>
             `
-          )}
+  )}
         </div>
 
         <div
@@ -104,8 +105,8 @@ const template = html<CreateAccountWorkflow>/*html*/ `
           </div>
 
           ${when(
-            (x) => x.requireIdentificationProcess,
-            html`
+    (x) => x.requireIdentificationProcess,
+    html`
               <div class="kyc-required-notice">
                 <div class="kyc-icon">🪪</div>
                 <div class="kyc-message">
@@ -123,57 +124,57 @@ const template = html<CreateAccountWorkflow>/*html*/ `
                 </div>
               </div>
             `
-          )}
+  )}
           ${when(
-            (x) => x.errorMessage,
-            html` <div class="error-message">${(x) => x.errorMessage}</div> `
-          )}
+    (x) => x.errorMessage,
+    html` <div class="error-message">${(x) => x.errorMessage}</div> `
+  )}
           
           ${when(
-            (x) => x.selectedProductInfo,
-            html`
+    (x) => x.selectedProductInfo,
+    html`
               <div class="product-info-section">
                 <h4>Product Details</h4>
                 <div class="product-features">
                   ${repeat(
-                    (x) => x.selectedProductInfo?.features || [],
-                    html`
+      (x) => x.selectedProductInfo?.features || [],
+      html`
                       <div class="feature-item">✓ ${(x) => x}</div>
                     `
-                  )}
+    )}
                 </div>
                 ${when(
-                  (x) => x.selectedProductInfo?.requirements && x.selectedProductInfo.requirements.length > 0,
-                  html`
+      (x) => x.selectedProductInfo?.requirements && x.selectedProductInfo.requirements.length > 0,
+      html`
                     <div class="requirements-section">
                       <h5>Requirements</h5>
                       <ul class="requirements-list">
                         ${repeat(
-                          (x) => x.selectedProductInfo?.requirements || [],
-                          html`
+        (x) => x.selectedProductInfo?.requirements || [],
+        html`
                             <li>${(x) => x.description}</li>
                           `
-                        )}
+      )}
                       </ul>
                     </div>
                   `
-                )}
+    )}
               </div>
             `
-          )}
+  )}
         </div>
 
         ${when(
-          (x) => x.isCreatingAccount,
-          html`
+    (x) => x.isCreatingAccount,
+    html`
             <div class="loading-indicator">
               <div class="spinner"></div>
               <p>Creating your account...</p>
             </div>
           `
-        )}
+  )}
       `
-    )}
+)}
   </div>
 `
 
@@ -453,14 +454,14 @@ export class CreateAccountWorkflow extends WorkflowBase {
   @observable isCreatingAccount: boolean = false
   @observable kycCompleted: boolean = false
   @observable isLoading: boolean = true
-  @observable selectedProductInfo: ProductEntity | null = null
+  @observable selectedProductInfo: Product | null = null
 
   // Product repository reference
-  private productRepository: UserProductRepository
+  private productRepo: ProductRepository
 
   constructor() {
     super()
-    this.productRepository = repositoryService.getUserProductRepository()
+    this.productRepo = repositoryService.getProductRepository()
   }
 
   get requireIdentificationProcess(): boolean {
@@ -468,19 +469,19 @@ export class CreateAccountWorkflow extends WorkflowBase {
     if (this.kycCompleted) {
       return false;
     }
-    
+
     const selectedType = this.accountTypes.find(
       (t) => t.id === this.selectedTypeId
     )
-    
+
     // Check if the account type requires KYC
     if (!selectedType?.requiresKyc || !selectedType.kycRequirementId) {
       return false;
     }
-    
+
     // Check if the user already meets KYC requirements for this account type
     const meetsKycRequirements = kycService.meetsKycRequirements(selectedType.kycRequirementId);
-    
+
     // Debug output to help diagnose issues
     console.debug(`KYC check for ${selectedType.id} (${selectedType.kycRequirementId}):`, {
       requiresKyc: selectedType.requiresKyc,
@@ -488,7 +489,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
       meetsKycRequirements: meetsKycRequirements,
       kycCompletedInSession: this.kycCompleted
     });
-    
+
     return !meetsKycRequirements;
   }
 
@@ -506,7 +507,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
     this.isLoading = true
     try {
       await this.loadAccountTypesFromProducts()
-      
+
       // Pre-select account type if specified in params
       if (params?.accountType && typeof params.accountType === 'string') {
         const accountType = this.accountTypes.find(
@@ -532,13 +533,13 @@ export class CreateAccountWorkflow extends WorkflowBase {
   private async loadAccountTypesFromProducts(): Promise<void> {
     try {
       // Get account products from repository
-      const accountProducts = await this.productRepository.getByEntityType(ProductEntityType.ACCOUNT)
-      
+      const accountProducts = await this.productRepo.getByEntityType('account')
+
       // Convert products to account types
       this.accountTypes = accountProducts.map(product => {
         // Determine KYC requirements
         const kycRequirement = product.requirements?.find(req => req.type === 'kyc')
-        
+
         return {
           id: product.id,
           name: product.name,
@@ -550,7 +551,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
           kycLevel: kycRequirement?.value === 'enhanced-customer' ? KycLevel.ENHANCED : KycLevel.STANDARD
         }
       })
-      
+
       console.debug('Loaded account types:', this.accountTypes)
     } catch (error) {
       console.error('Error loading account types from products:', error)
@@ -573,20 +574,20 @@ export class CreateAccountWorkflow extends WorkflowBase {
       ]
     }
   }
-  
+
   /**
    * Load product details for the selected account type
    */
   private async loadProductDetails(productId: string): Promise<void> {
     try {
-      const productDetails = await this.productRepository.getById(productId)
+      const productDetails = await this.productRepo.getById(productId)
       this.selectedProductInfo = productDetails || null
     } catch (error) {
       console.error(`Failed to load product details for ${productId}:`, error)
       this.selectedProductInfo = null
     }
   }
-  
+
   /**
    * Map product ID to account type
    */
@@ -597,10 +598,10 @@ export class CreateAccountWorkflow extends WorkflowBase {
       'isk-account': 'isk',
       'pension-account': 'pension'
     }
-    
+
     return mapping[productId] || 'checking'
   }
-  
+
   /**
    * Get appropriate icon for product type
    */
@@ -611,7 +612,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
       'isk-account': '📈',
       'pension-account': '🏖️'
     }
-    
+
     return icons[productId] || '🏦'
   }
 
@@ -633,17 +634,17 @@ export class CreateAccountWorkflow extends WorkflowBase {
         result.data?.verificationStatus === 'approved'
       ) {
         console.debug('KYC workflow completed successfully with status:', result.data.verificationStatus);
-        
+
         // Set kycCompleted to true for this session
         this.kycCompleted = true;
-        
+
         // If we have a selected account type with a KYC requirement
         const selectedType = this.accountTypes.find(t => t.id === this.selectedTypeId);
         if (selectedType?.kycRequirementId) {
           // Double-check that KYC requirements are met (in case KYC service doesn't update immediately)
           const meetsKyc = kycService.meetsKycRequirements(selectedType.kycRequirementId);
           console.debug(`After KYC workflow, user meets requirements for ${selectedType.id}: ${meetsKyc}`);
-          
+
           // If KYC service says requirements aren't met but we know the workflow succeeded,
           // we'll still proceed by using our local kycCompleted flag
         }
@@ -690,7 +691,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
 
     const type = this.accountTypes.find((t) => t.id === id)!
     this.accountName = `My ${type.name.replace(' Account', '')}`
-    
+
     // Load product details for the selected type
     await this.loadProductDetails(id)
 
@@ -734,15 +735,15 @@ export class CreateAccountWorkflow extends WorkflowBase {
     const selectedType = this.accountTypes.find(
       (t) => t.id === this.selectedTypeId
     )
-    
+
     // If KYC is required but not completed and not already verified
-    if (selectedType?.requiresKyc && 
-        !this.kycCompleted && 
-        selectedType.kycRequirementId &&
-        !kycService.meetsKycRequirements(selectedType.kycRequirementId)) {
-      
+    if (selectedType?.requiresKyc &&
+      !this.kycCompleted &&
+      selectedType.kycRequirementId &&
+      !kycService.meetsKycRequirements(selectedType.kycRequirementId)) {
+
       console.debug(`KYC required for ${selectedType.id} but not completed or verified`);
-      
+
       this.notifyValidation(
         false,
         'Identity verification required for this account type'
@@ -751,7 +752,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
       return false
     }
 
-    
+
 
     // If we got here, form is valid
     this.notifyValidation(true)
@@ -792,14 +793,14 @@ export class CreateAccountWorkflow extends WorkflowBase {
     }
 
     const kycLevel = selectedType.kycLevel || KycLevel.STANDARD
-    
+
     // Before starting the workflow, check if user already meets KYC requirements
     // This shouldn't happen since the button shouldn't be shown, but double-check
-    if (selectedType.kycRequirementId && 
-        kycService.meetsKycRequirements(selectedType.kycRequirementId)) {
+    if (selectedType.kycRequirementId &&
+      kycService.meetsKycRequirements(selectedType.kycRequirementId)) {
       console.debug('User already meets KYC requirements, no need to start workflow');
       this.kycCompleted = true;
-      return { 
+      return {
         success: true,
         data: {
           verificationStatus: 'approved'
@@ -825,11 +826,11 @@ export class CreateAccountWorkflow extends WorkflowBase {
         (t) => t.id === this.selectedTypeId
       )
 
-      const needsKyc = selectedType?.requiresKyc && 
-                      selectedType.kycRequirementId &&
-                      !kycService.meetsKycRequirements(selectedType.kycRequirementId) &&
-                      !this.kycCompleted;
-                      
+      const needsKyc = selectedType?.requiresKyc &&
+        selectedType.kycRequirementId &&
+        !kycService.meetsKycRequirements(selectedType.kycRequirementId) &&
+        !this.kycCompleted;
+
       if (needsKyc) {
         // Start KYC workflow
         console.debug('Starting KYC workflow before account creation');
@@ -856,29 +857,38 @@ export class CreateAccountWorkflow extends WorkflowBase {
     this.errorMessage = '';
 
     try {
-      const accountRepo = repositoryService.getAccountRepository();
-
-      const selectedType = this.accountTypes.find(
-        (t) => t.id === this.selectedTypeId
-      )!;
-
-      // Create the account (with zero balance by default)
-      const newAccount = await accountRepo.createAccount({
-        name: this.accountName.trim(),
-        balance: 0,
-        currency: this.currency,
-        type: selectedType.type,
+      debugger
+      console.log('Creating account...', this.selectedTypeId, this.accountName, this.currency);
+      const product = await userProductService.requestProductCreation(this.selectedTypeId, {
+        accountName: this.accountName, currency: this.currency
       });
 
+      // const accountRepo = repositoryService.getAccountRepository();
+
+      // const selectedType = this.accountTypes.find(
+      //   (t) => t.id === this.selectedTypeId
+      // )!;
+
+      // Create the account (with zero balance by default)
+      // const newAccount = await accountRepo.createAccount({
+      //   name: this.accountName.trim(),
+      //   balance: 0,
+      //   currency: this.currency,
+      //   type: selectedType.type,
+      // });
+
       // Check if we need to update the product repository to mark the product as active
-      try {
-        if (this.productRepository.hasActiveProduct) {
-          await this.productRepository.hasActiveProduct(selectedType.id);
-        }
-      } catch (error) {
-        // Non-critical error, just log it
-        console.warn('Failed to mark product as active:', error);
-      }
+      // try {
+      //   if (this.productRepo.hasActiveProduct) {
+      //     await this.productRepo.hasActiveProduct(selectedType.id);
+      //   }
+      // } catch (error) {
+      //   // Non-critical error, just log it
+      //   console.warn('Failed to mark product as active:', error);
+      // }
+
+      const accountRepo = repositoryService.getAccountRepository();
+      const newAccount = await accountRepo.getById(product.metadata?.accountId);
 
       // Complete the workflow with success
       this.complete(
@@ -887,7 +897,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
           account: newAccount,
           created: true,
         },
-        `${selectedType.name} created successfully`
+        `${product.name} created successfully`
       );
     } catch (error) {
       console.error('Failed to create account:', error);
