@@ -7,7 +7,8 @@ import {
   TransactionStatus, 
   TransactionType,
   TransactionStatuses,
-  TransactionTypes 
+  TransactionTypes, 
+  TransactionDirections
 } from './models/transaction-models';
 
 export class TransactionRepository extends LocalStorageRepository<Transaction> {
@@ -126,6 +127,7 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
       fromAccountId,
       toAccountId,
       amount,
+      direction: TransactionDirections.DEBIT,
       currency,
       description,
       status: isCompleted ? TransactionStatuses.COMPLETED : TransactionStatuses.UPCOMING,

@@ -1,169 +1,10 @@
-import { customElement, html, css, observable, attr, when } from "@microsoft/fast-element";
+import { customElement, observable, attr, Observable, FASTElement } from "@microsoft/fast-element";
 import { WorkflowBase } from "../workflow-base";
 import { PaymentContact } from "../../repositories/models/payment-contact";
 import { generateUniqueId } from "../../utilities/id-generator";
 import { paymentContactsService } from "../../services/payment-contacts-service";
-
-const template = html<AddContactWorkflow>/*html*/`
-  <div class="add-contact-workflow">
-    <form @submit="${(x, c) => x.handleSubmit(c.event)}">
-      <div class="form-group">
-        <label for="contactName">Contact Name</label>
-        <input 
-          id="contactName"
-          type="text"
-          value="${x => x.contactName}"
-          @input="${(x, c) => x.handleNameInput(c.event)}"
-          required
-        />
-        ${when(x => x.errors.name, html`<div class="error-message">${x => x.errors.name}</div>`)}
-      </div>
-
-      <div class="form-group">
-        <label for="accountNumber">Account Number</label>
-        <input 
-          id="accountNumber"
-          type="text"
-          value="${x => x.accountNumber}"
-          @input="${(x, c) => x.handleAccountNumberInput(c.event)}"
-          required
-        />
-        ${when(x => x.errors.accountNumber, html`<div class="error-message">${x => x.errors.accountNumber}</div>`)}
-      </div>
-
-      <div class="form-group">
-        <label for="bankName">Bank Name</label>
-        <input 
-          id="bankName"
-          type="text"
-          value="${x => x.bankName}"
-          @input="${(x, c) => x.handleBankNameInput(c.event)}"
-        />
-      </div>
-
-      <div class="form-group">
-        <label for="alias">Alias (Optional)</label>
-        <input 
-          id="alias"
-          type="text"
-          value="${x => x.alias}"
-          @input="${(x, c) => x.handleAliasInput(c.event)}"
-          placeholder="Nickname for this contact"
-        />
-      </div>
-
-      <div class="form-group">
-        <label for="notes">Notes (Optional)</label>
-        <textarea 
-          id="notes"
-          value="${x => x.notes}"
-          @input="${(x, c) => x.handleNotesInput(c.event)}"
-          placeholder="Any additional information"
-          rows="3"
-        ></textarea>
-      </div>
-      
-      ${when(x => x.isFavorite, html`
-        <div class="favorite-badge">
-          <span>★</span> Saved as favorite
-        </div>
-      `)}
-      
-      <div class="form-group checkbox-group">
-        <label class="checkbox-container">
-          <dream-checkbox
-            ?checked="${x => x.isFavorite}"
-            @change="${(x, c) => x.handleFavoriteToggle(c.event)}"
-            ariaLabel="Add to favorites"/>
-          <span class="checkbox-text">Add to favorites</span>
-        </label>
-      </div>
-    </form>
-  </div>
-`;
-
-const styles = css`
-  .add-contact-workflow {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-  
-  form {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-  
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  
-  label {
-    font-weight: 500;
-    font-size: 14px;
-    color: var(--secondary-text-color, #666);
-  }
-  
-  input, textarea {
-    padding: 10px 12px;
-    border: 1px solid var(--border-color, #e0e0e0);
-    border-radius: 4px;
-    font-size: 16px;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  }
-  
-  input:focus, textarea:focus {
-    border-color: var(--accent-color, #3498db);
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
-  }
-  
-  .error-message {
-    color: var(--notification-badge-bg, #e74c3c);
-    font-size: 13px;
-  }
-  
-  .checkbox-group {
-    margin-top: 8px;
-  }
-  
-  .checkbox-container {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-  }
-  
-  .checkbox-text {
-    font-size: 14px;
-  }
-  
-  .favorite-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background-color: rgba(241, 196, 15, 0.1);
-    border: 1px solid rgba(241, 196, 15, 0.3);
-    border-radius: 16px;
-    padding: 4px 12px;
-    font-size: 14px;
-    color: #f39c12;
-    animation: fadeIn 0.3s ease;
-    margin-bottom: 8px;
-  }
-  
-  .favorite-badge span {
-    font-size: 16px;
-  }
-  
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-5px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-`;
+import { template } from "./add-contact-workflow.template";
+import { styles } from "./add-contact-workflow.css";
 
 @customElement({
   name: "add-contact-workflow",
@@ -178,23 +19,46 @@ export class AddContactWorkflow extends WorkflowBase {
   @observable notes: string = '';
   @observable isFavorite: boolean = false;
   @observable errors: Record<string, string> = {};
+
+  // Form input references
+  inputNameElement!: HTMLInputElement;
+  inputAccountElement!: HTMLInputElement;
+  inputBankElement!: HTMLInputElement;
+  inputAliasElement!: HTMLInputElement;
+  textareaNotesElement!: HTMLTextAreaElement;
   
   // If editing an existing contact, store its ID
   @attr existingContactId: string = '';
+
+  // New properties for tabbed interface
+  @observable activeTab: 'add' | 'manage' | 'remove' = 'add';
+  @observable contacts: PaymentContact[] = [];
+  @observable isLoading: boolean = false;
   
-  initialize(params?: Record<string, any>): void {
+  // Delete confirmation
+  @observable showConfirmDialog: boolean = false;
+  @observable contactToDelete: PaymentContact | null = null;
+  
+  // Success message properties
+  @observable showSuccessMessage: boolean = false;
+  @observable successMessage: string = '';
+  private successMessageTimeout: number | null = null;
+  private unsubscribe?: () => void;
+  
+  async initialize(params?: Record<string, any>): Promise<void> {
     console.debug("Initializing AddContactWorkflow with params:", params);
     
-    this.updateTitle("Add Payment Contact");
+    this.updateTitle("Payment Contacts");
     this.updateFooter(true, "Save Contact");
 
-    console.debug('[AddContactWorkflow] initialize')
-
-        
-    // If we're editing an existing contact, populate the form
+    // Set initial tab from params or default to 'add'
+    this.activeTab = (params?.startTab as 'add' | 'manage' | 'remove') || 'add';
+    
+    // If we're editing an existing contact, populate the form and switch to add tab
     if (params?.contactId) {
       this.existingContactId = params.contactId;
       this.loadExistingContact(params.contactId);
+      this.activeTab = 'add';
       this.updateTitle("Edit Payment Contact");
     }
     
@@ -203,7 +67,77 @@ export class AddContactWorkflow extends WorkflowBase {
       this.accountNumber = params.accountNumber;
     }
     
+    // If we're on manage or remove tab, load contacts
+    // if (this.activeTab === 'manage' || this.activeTab === 'remove') {
+    //   this.loadContacts();
+    // }
+
+    await this.loadContacts();
+    
+    
     this.validateForm();
+    this.updateButtonsVisibility();
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    // subscribe to updates from the contact service
+    this.unsubscribe = paymentContactsService.subscribe(this.contactChanged.bind(this));
+  }
+
+  // Clean up any timers when the component is disconnected
+  disconnectedCallback(): void {
+    if (this.successMessageTimeout !== null) {
+      window.clearTimeout(this.successMessageTimeout);
+      this.successMessageTimeout = null;
+    }
+    this.unsubscribe?.();
+    
+    super.disconnectedCallback?.();
+  }
+
+  private async contactChanged(): Promise<void> {
+    console.log('Payment contact changed, reloading contacts...');
+    await this.loadContacts();
+  }
+  
+  setActiveTab(tab: 'add' | 'manage' | 'remove'): void {
+    this.activeTab = tab;
+    
+    // Update the workflow title based on the active tab
+    switch(tab) {
+      case 'add':
+        this.updateTitle(this.existingContactId ? "Edit Payment Contact" : "Add Payment Contact");
+        this.updateFooter(true, this.existingContactId ? "Update Contact" : "Save Contact");
+        break;
+      case 'manage':
+        this.updateTitle("Manage Contacts");
+        this.updateFooter(false);
+        this.loadContacts();
+        break;
+      case 'remove':
+        this.updateTitle("Remove Contacts");
+        this.updateFooter(false);
+        this.loadContacts();
+        break;
+    }
+    
+    this.updateButtonsVisibility();
+  }
+  
+  private async loadContacts(): Promise<void> {
+    // this.isLoading = true;
+    
+    try {
+      this.contacts = await paymentContactsService.getAllContacts();
+      Observable.notify(this, 'contacts');
+      console.log("Loaded contacts:", this.contacts.length);
+
+    } catch (error) {
+      console.error("Failed to load contacts:", error);
+    } finally {
+      this.isLoading = false;
+    }
   }
   
   private async loadExistingContact(contactId: string): Promise<void> {
@@ -219,6 +153,86 @@ export class AddContactWorkflow extends WorkflowBase {
       }
     } catch (error) {
       console.error("Failed to load contact:", error);
+    }
+  }
+  
+  editContact(contact: PaymentContact): void {
+    this.existingContactId = contact.id;
+    this.contactName = contact.name;
+    this.accountNumber = contact.accountNumber;
+    this.bankName = contact.bankName || '';
+    this.alias = contact.alias || '';
+    this.notes = contact.notes || '';
+    this.isFavorite = contact.isFavorite || false;
+    
+    // Switch to add tab in edit mode
+    this.activeTab = 'add';
+    this.updateTitle("Edit Payment Contact");
+    this.updateFooter(true, "Update Contact");
+    this.updateButtonsVisibility();
+  }
+  
+  confirmDeleteContact(contact: PaymentContact): void {
+    this.contactToDelete = contact;
+    this.showConfirmDialog = true;
+  }
+  
+  cancelDelete(): void {
+    this.showConfirmDialog = false;
+    this.contactToDelete = null;
+  }
+  
+  async deleteContact(): Promise<void> {
+    if (!this.contactToDelete) return;
+    
+    try {
+      const contactName = this.contactToDelete.name;
+      await paymentContactsService.deleteContact(this.contactToDelete.id);
+      
+      // Dispatch a custom event for the contact deletion
+      // const contactDeletedEvent = new CustomEvent('contactDeleted', {
+      //   bubbles: true,
+      //   composed: true,
+      //   detail: { contactId: this.contactToDelete.id }
+      // });
+      // this.dispatchEvent(contactDeletedEvent);
+      
+      // Hide the confirmation dialog
+      this.showConfirmDialog = false;
+      this.contactToDelete = null;
+      
+      // Show success message
+      this.showSuccessMessage = true;
+      this.successMessage = `Contact "${contactName}" was removed successfully!`;
+      
+      // Clear any existing timeout
+      if (this.successMessageTimeout !== null) {
+        window.clearTimeout(this.successMessageTimeout);
+      }
+      
+      // Hide success message after a delay
+      this.successMessageTimeout = window.setTimeout(() => {
+        this.showSuccessMessage = false;
+        this.successMessageTimeout = null;
+      }, 4000); // 4 seconds
+      
+      // Reload the contacts list
+      // this.loadContacts();
+      
+    } catch (error) {
+      console.error("Failed to delete contact:", error);
+    }
+  }
+  
+  updateButtonsVisibility(): void {
+    const isAddTab = this.activeTab === 'add';
+    this.updateFooter(isAddTab, isAddTab ? (this.existingContactId ? "Update Contact" : "Save Contact") : "");
+    
+    // Update the workflow validation state
+    if (isAddTab) {
+      this.validateForm();
+    } else {
+      this.notifyValidation(true);
     }
   }
   
@@ -277,7 +291,7 @@ export class AddContactWorkflow extends WorkflowBase {
   }
   
   handlePrimaryAction(): void {
-    if (this.validateForm()) {
+    if (this.activeTab === 'add' && this.validateForm()) {
       this.saveContact();
     }
   }
@@ -296,7 +310,9 @@ export class AddContactWorkflow extends WorkflowBase {
         isFavorite: this.isFavorite
       };
       
-      if (this.existingContactId) {
+      const isUpdate = !!this.existingContactId;
+      
+      if (isUpdate) {
         console.debug("Updating existing contact:", contactData);
         await paymentContactsService.updateContact(contactData);
       } else {
@@ -305,23 +321,82 @@ export class AddContactWorkflow extends WorkflowBase {
       }
       
       // Dispatch a custom event before completing the workflow
-      // This allows parent workflows to react to the new contact
-      const contactCreatedEvent = new CustomEvent('contactCreated', {
-        bubbles: true,
-        composed: true,
-        detail: { contact: contactData }
-      });
-      this.dispatchEvent(contactCreatedEvent);
+      // const eventName = isUpdate ? 'contactUpdated' : 'contactCreated';
+      // const contactEvent = new CustomEvent(eventName, {
+      //   bubbles: true,
+      //   composed: true,
+      //   detail: { contact: contactData }
+      // });
+      // this.dispatchEvent(contactEvent);
       
-      // Complete the workflow with success
-      this.complete(true, {
-        contact: contactData,
-        isNew: !this.existingContactId
-      });
+      // Show success message
+      this.showSuccessMessage = true;
+      this.successMessage = isUpdate 
+        ? `Contact "${contactData.name}" was updated successfully!`
+        : `Contact "${contactData.name}" was added successfully!`;
+      
+      // Clear any existing timeout
+      if (this.successMessageTimeout !== null) {
+        window.clearTimeout(this.successMessageTimeout);
+      }
+      
+      // Hide success message after a delay
+      this.successMessageTimeout = window.setTimeout(() => {
+        this.showSuccessMessage = false;
+        this.successMessageTimeout = null;
+      }, 4000); // 4 seconds
+      
+      // Clear the form if adding a new contact
+      if (!isUpdate) {
+        console.log("Clearing form after adding new contact");
+        this.resetForm();
+      } else {
+        // If updating, switch back to manage tab
+        this.existingContactId = '';
+        this.setActiveTab('manage');
+      }
       
     } catch (error) {
       console.error("Failed to save contact:", error);
-      this.complete(false, undefined, "Failed to save contact");
     }
   }
+  
+  resetForm(): void {
+    // Clear all form inputs directly using refs
+    this.inputNameElement.value = '';
+    this.inputAccountElement.value = '';
+    this.inputBankElement.value = '';
+    this.inputAliasElement.value = '';
+    this.textareaNotesElement.value = '';
+    
+    // Reset observable values to ensure data binding is updated
+    this.contactName = '';
+    this.accountNumber = '';
+    this.bankName = '';
+    this.alias = '';
+    this.notes = '';
+    this.isFavorite = false;
+    
+    // Reset other state
+    this.existingContactId = '';
+    this.errors = {};
+    
+    // Update title back to Add Payment Contact
+    if (this.activeTab === 'add') {
+      this.updateTitle("Add Payment Contact");
+      this.updateFooter(true, "Save Contact");
+    }
+    
+    // Validate to ensure Save button is disabled
+    this.validateForm();
+    
+    // Focus the first input field after reset
+    setTimeout(() => {
+      if (this.inputNameElement) {
+        this.inputNameElement.focus();
+      }
+    }, 0);
+  }
+  
+  
 }

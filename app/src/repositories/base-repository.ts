@@ -137,7 +137,7 @@ export abstract class LocalStorageRepository<T extends Entity> implements Reposi
     const data = Array.from(this.entities.values());
     const key = this.getUserStorageKey();
     this.storage.setItem(key, data);
-    console.debug(`Saved ${data.length} items to ${key}`);
+    console.log(`Saved ${data.length} items to ${key}`);
   }
   
   /**

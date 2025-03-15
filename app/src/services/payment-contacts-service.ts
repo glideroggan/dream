@@ -1,10 +1,11 @@
-import { PaymentContact } from "../repositories/models/payment-contact";
+import { ChangeType, ContactChangeEvent, PaymentContact, PaymentContactChangeListener } from "../repositories/models/payment-contact";
 import { repositoryService } from "./repository-service";
 
 /**
  * Service for managing payment contacts
  */
 export class PaymentContactsService {
+  
   // Static instance for singleton pattern
   private static instance: PaymentContactsService;
   
@@ -12,9 +13,11 @@ export class PaymentContactsService {
   private initialized: boolean = false;
   
   // Event handlers for contact changes
-  private contactAddedHandlers: Array<(contact: PaymentContact) => void> = [];
-  private contactUpdatedHandlers: Array<(contact: PaymentContact) => void> = [];
-  private contactDeletedHandlers: Array<(contactId: string) => void> = [];
+  // private contactAddedHandlers: Array<(contact: PaymentContact) => void> = [];
+  // private contactUpdatedHandlers: Array<(contact: PaymentContact) => void> = [];
+  // private contactDeletedHandlers: Array<(contactId: string) => void> = [];
+
+  private changeListeners: Set<PaymentContactChangeListener> = new Set();
 
   private settingsRepository = repositoryService.getSettingsRepository();
   
@@ -43,11 +46,44 @@ export class PaymentContactsService {
     console.debug("PaymentContactsService initialized with contacts:", this.contacts.length);
   }
   
+  subscribe(listener: PaymentContactChangeListener): () => void {
+    this.changeListeners.add(listener);
+    console.log('Subscribed to payment contact changes');
+    return () => this.unsubscribe(listener);
+  }
+
+  /**
+   * Unsubscribe from product changes
+   * @param listener The callback function to remove
+   */
+  public unsubscribe(listener: PaymentContactChangeListener): void {
+    this.changeListeners.delete(listener);
+    console.debug(`Unsubscribed from contact changes, remaining listeners: ${this.changeListeners.size}`);
+  }
+
+  /**
+  * Notify subscribers about product changes
+  */
+  private notifyContactChange(type: ChangeType, contactId:string, contact?: PaymentContact): void {
+    const event: ContactChangeEvent = { type, contactId, contact };
+    
+    this.changeListeners.forEach(listener => {
+      try {
+        listener(event);
+      } catch (error) {
+        console.error(`Error in payment contact change listener for ${type} event:`, error);
+      }
+    });
+    
+    console.debug(`Notified ${this.changeListeners.size} listeners about ${type} event for contact ${contactId}`);
+  }
+
   /**
    * Get all contacts
    */
   public async getAllContacts(): Promise<PaymentContact[]> {
     await this.ensureInitialized();
+    this.contacts = await this.settingsRepository.getPaymentContacts();
     return [...this.contacts]; // Return a copy to prevent direct modification
   }
   
@@ -76,10 +112,9 @@ export class PaymentContactsService {
     // Save to settings repository
     await this.settingsRepository.addPaymentContact(contact);
     
+    console.log("Contact added:", contact.id, contact.name);
     // Notify listeners
-    this.contactAddedHandlers.forEach(handler => handler(contact));
-    
-    console.debug("Contact added:", contact.id, contact.name);
+    setTimeout(() => this.notifyContactChange('add', contact.id, contact),50);
   }
   
   /**
@@ -100,7 +135,8 @@ export class PaymentContactsService {
     await repositoryService.getSettingsRepository().updatePaymentContact(contact.id, contact);
     
     // Notify listeners
-    this.contactUpdatedHandlers.forEach(handler => handler(contact));
+    // this.contactUpdatedHandlers.forEach(handler => handler(contact));
+    this.notifyContactChange('update', contact.id, contact);
     
     console.debug("Contact updated:", contact.id);
   }
@@ -117,15 +153,16 @@ export class PaymentContactsService {
     }
     
     // Remove from in-memory cache
-    this.contacts.splice(index, 1);
+    // this.contacts.splice(index, 1);
     
     // Remove from settings repository
-    await repositoryService.getSettingsRepository().deletePaymentContact(id);
+    await this.settingsRepository.deletePaymentContact(id);
     
     // Notify listeners
-    this.contactDeletedHandlers.forEach(handler => handler(id));
+    // this.contactDeletedHandlers.forEach(handler => handler(id));
+    setTimeout(() => this.notifyContactChange('remove', id), 50);
     
-    console.debug("Contact deleted:", id);
+    console.log("Contact deleted:", id);
   }
   
   /**
@@ -150,33 +187,33 @@ export class PaymentContactsService {
   /**
    * Add event handler for when a contact is added
    */
-  public onContactAdded(handler: (contact: PaymentContact) => void): () => void {
-    console.debug('onContactAdded')
-    this.contactAddedHandlers.push(handler);
-    return () => {
-      this.contactAddedHandlers = this.contactAddedHandlers.filter(h => h !== handler);
-    };
-  }
+  // public onContactAdded(handler: (contact: PaymentContact) => void): () => void {
+  //   console.debug('onContactAdded')
+  //   this.contactAddedHandlers.push(handler);
+  //   return () => {
+  //     this.contactAddedHandlers = this.contactAddedHandlers.filter(h => h !== handler);
+  //   };
+  // }
   
   /**
    * Add event handler for when a contact is updated
    */
-  public onContactUpdated(handler: (contact: PaymentContact) => void): () => void {
-    this.contactUpdatedHandlers.push(handler);
-    return () => {
-      this.contactUpdatedHandlers = this.contactUpdatedHandlers.filter(h => h !== handler);
-    };
-  }
+  // public onContactUpdated(handler: (contact: PaymentContact) => void): () => void {
+  //   this.contactUpdatedHandlers.push(handler);
+  //   return () => {
+  //     this.contactUpdatedHandlers = this.contactUpdatedHandlers.filter(h => h !== handler);
+  //   };
+  // }
   
   /**
    * Add event handler for when a contact is deleted
    */
-  public onContactDeleted(handler: (contactId: string) => void): () => void {
-    this.contactDeletedHandlers.push(handler);
-    return () => {
-      this.contactDeletedHandlers = this.contactDeletedHandlers.filter(h => h !== handler);
-    };
-  }
+  // public onContactDeleted(handler: (contactId: string) => void): () => void {
+  //   this.contactDeletedHandlers.push(handler);
+  //   return () => {
+  //     this.contactDeletedHandlers = this.contactDeletedHandlers.filter(h => h !== handler);
+  //   };
+  // }
   
   /**
    * Ensure the service is initialized

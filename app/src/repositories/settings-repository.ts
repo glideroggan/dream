@@ -276,8 +276,10 @@ export class SettingsRepository extends LocalStorageRepository<UserSettings> {
    */
   async deletePaymentContact(contactId: string): Promise<void> {
     const settings = await this.getCurrentSettings();
+    console.log('before delete:', settings.paymentContacts)
     
     const updatedContacts = settings.paymentContacts.filter(c => c.id !== contactId);
+    console.log('after delete:', updatedContacts)
     
     // If the same number of contacts, the contact wasn't found
     if (updatedContacts.length === settings.paymentContacts.length) {
