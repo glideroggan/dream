@@ -48,7 +48,7 @@ export class PaymentContactsService {
   
   subscribe(listener: PaymentContactChangeListener): () => void {
     this.changeListeners.add(listener);
-    console.log('Subscribed to payment contact changes');
+    console.debug('Subscribed to payment contact changes');
     return () => this.unsubscribe(listener);
   }
 
@@ -112,7 +112,7 @@ export class PaymentContactsService {
     // Save to settings repository
     await this.settingsRepository.addPaymentContact(contact);
     
-    console.log("Contact added:", contact.id, contact.name);
+    console.debug("Contact added:", contact.id, contact.name);
     // Notify listeners
     setTimeout(() => this.notifyContactChange('add', contact.id, contact),50);
   }
@@ -162,7 +162,7 @@ export class PaymentContactsService {
     // this.contactDeletedHandlers.forEach(handler => handler(id));
     setTimeout(() => this.notifyContactChange('remove', id), 50);
     
-    console.log("Contact deleted:", id);
+    console.debug("Contact deleted:", id);
   }
   
   /**

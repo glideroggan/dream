@@ -97,7 +97,7 @@ export class AddContactWorkflow extends WorkflowBase {
   }
 
   private async contactChanged(): Promise<void> {
-    console.log('Payment contact changed, reloading contacts...');
+    console.debug('Payment contact changed, reloading contacts...');
     await this.loadContacts();
   }
   
@@ -131,7 +131,7 @@ export class AddContactWorkflow extends WorkflowBase {
     try {
       this.contacts = await paymentContactsService.getAllContacts();
       Observable.notify(this, 'contacts');
-      console.log("Loaded contacts:", this.contacts.length);
+      console.debug("Loaded contacts:", this.contacts.length);
 
     } catch (error) {
       console.error("Failed to load contacts:", error);
@@ -348,7 +348,7 @@ export class AddContactWorkflow extends WorkflowBase {
       
       // Clear the form if adding a new contact
       if (!isUpdate) {
-        console.log("Clearing form after adding new contact");
+        console.debug("Clearing form after adding new contact");
         this.resetForm();
       } else {
         // If updating, switch back to manage tab
