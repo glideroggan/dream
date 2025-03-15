@@ -7,7 +7,7 @@ import {
   Observable
 } from '@microsoft/fast-element';
 import { WidgetDefinition, widgetService } from '../services/widget-service';
-import { getProductService, ProductService } from '../services/product-service';
+import { getProductService, UserProductService } from '../services/user-product-service';
 import {
   getWidgetMinWidth,
   getAutoWidgetsForProduct,
@@ -134,7 +134,7 @@ export class BasePage extends FASTElement {
   protected productChangeUnsubscribe: (() => void) | null = null;
   protected initialWidgets: string = '';
   protected _initialWidgetsLoaded = false;
-  protected productService: ProductService | null = null;
+  protected productService: UserProductService | null = null;
   protected settingsRepository = repositoryService.getSettingsRepository();
   protected widgetLoadAttempts: Map<string, number> = new Map();
   protected maxLoadAttempts = 2;

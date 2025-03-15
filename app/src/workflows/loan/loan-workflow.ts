@@ -101,7 +101,7 @@ export class LoanWorkflow extends WorkflowBase {
   async loadLoanProducts(): Promise<void> {
     try {
       this.isLoading = true;
-      const productRepo = repositoryService.getProductRepository();
+      const productRepo = repositoryService.getUserProductRepository();
       this.availableLoanProducts = await productRepo.getByEntityType(ProductEntityType.LOAN);
       console.debug('Available loan products loaded:', this.availableLoanProducts);
     } catch (error) {

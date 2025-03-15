@@ -275,7 +275,7 @@ export class LoanService {
    */
   async applyForLoan(application: LoanApplication): Promise<Loan> {
     const loanRepo = repositoryService.getLoanRepository();
-    const productRepo = repositoryService.getProductRepository();
+    const productRepo = repositoryService.getUserProductRepository();
     
     // Verify the product exists
     const product = await productRepo.getById(application.productId);
@@ -422,7 +422,7 @@ export class LoanService {
    * Get available loan products
    */
   async getLoanProducts(): Promise<ProductEntity[]> {
-    const productRepo = repositoryService.getProductRepository();
+    const productRepo = repositoryService.getUserProductRepository();
     return productRepo.getByEntityType(ProductEntityType.LOAN);
   }
   

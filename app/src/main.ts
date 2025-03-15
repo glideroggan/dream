@@ -2,8 +2,10 @@ import { WorkflowService } from './services/workflow-service';
 import "./services/user-service"
 // Initialize repository service
 // Import workflow components
-import './services/product-service';
+import './services/user-product-service';
 import './workflows/swish-workflow';
+
+
 
 // Extend window interface to include our global properties
 declare global {
@@ -119,3 +121,6 @@ import { getSearchService } from './services/search-service';
 // Signal that widgets are now registered
 console.debug('Application initialized')
 widgetService.emitWidgetsRegistered()
+
+// start any simulation tasks that need to run
+import './services/simulation-service'

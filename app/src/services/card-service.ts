@@ -1,10 +1,11 @@
 import { kycService } from './kyc-service';
-import { productService } from './product-service';
+import { userProductService } from './user-product-service';
 import { userService } from './user-service';
 import { repositoryService } from './repository-service';
 import { Account } from '../repositories/models/account-models';
 import { Card, CardProduct, CardRequirement, CardRequestData, CardServiceResult, CardType } from '../repositories/models/card-models';
 import { ProductEntityType } from '../repositories/models/product-models';
+import { simulationService } from './simulation-service';
 
 export class CardService {
     private static instance: CardService;
@@ -27,7 +28,7 @@ export class CardService {
      */
     async userHasCard(cardId: string): Promise<boolean> {
         try {
-            return await productService.hasProduct(cardId);
+            return await userProductService.hasProduct(cardId);
         } catch (error) {
             console.error(`Error checking if user has card ${cardId}:`, error);
             return false;
@@ -40,7 +41,7 @@ export class CardService {
     async getCardProducts(): Promise<CardProduct[]> {
         try {
             // Using the product repository to get card type products
-            const products = await productService.getProductsByEntityType(ProductEntityType.CARD);
+            const products = await userProductService.getProductsByEntityType(ProductEntityType.CARD);
             console.debug("Fetched card products:", products);
             
             // Map products to CardProduct interface
@@ -165,7 +166,7 @@ export class CardService {
             const cardholderName = user ? `${user.firstName} ${user.lastName}` : 'Card Holder';
             
             // Add the product to the user's account
-            await productService.addProduct({
+            await userProductService.addProduct({
                 id: requestData.productId,
                 name: requestData.cardType === 'credit' ? 'Credit Card' : 'Debit Card',
                 type: 'card',
@@ -196,6 +197,9 @@ export class CardService {
             }
             
             console.debug("Created new card record:", card);
+
+            // TODO: create a simulation task for the card process
+            // simulationService.addCardRequest(card.id, requestData.productId, requestData.requestDate);
             
             return {
                 success: true,

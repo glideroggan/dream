@@ -13,9 +13,14 @@ import {
   ProductChangeListener
 } from '../repositories/models/product-models';
 
-export class ProductService {
+
+/**
+ * User product service
+ * This service handles user-specific product operations
+ */
+export class UserProductService {
   // Static instance for singleton pattern
-  private static instance: ProductService;
+  private static instance: UserProductService;
   
   private products: Product[] = [];
   private initialized = false;
@@ -27,11 +32,11 @@ export class ProductService {
   }
   
   // Singleton accessor
-  public static getInstance(): ProductService {
-    if (!ProductService.instance) {
-      ProductService.instance = new ProductService();
+  public static getInstance(): UserProductService {
+    if (!UserProductService.instance) {
+      UserProductService.instance = new UserProductService();
     }
-    return ProductService.instance;
+    return UserProductService.instance;
   }
   
   /**
@@ -39,7 +44,7 @@ export class ProductService {
    */
   private async ensureRepositoryInitialized(): Promise<void> {
     if (!this.productRepository) {
-      this.productRepository = repositoryService.getProductRepository();
+      this.productRepository = repositoryService.getUserProductRepository();
       await this.loadProductsFromRepository();
     }
   }
@@ -305,7 +310,7 @@ export class ProductService {
    * Get all available products
    */
   async getAllProducts(): Promise<ProductEntity[]> {
-    const repo = repositoryService.getProductRepository();
+    const repo = repositoryService.getUserProductRepository();
     return await repo.getActive();
   }
 
@@ -313,7 +318,7 @@ export class ProductService {
    * Get products by category
    */
   async getProductsByCategory(category: ProductCategory): Promise<ProductEntity[]> {
-    const repo = repositoryService.getProductRepository();
+    const repo = repositoryService.getUserProductRepository();
     return await repo.getByCategory(category);
   }
 
@@ -321,7 +326,7 @@ export class ProductService {
    * Get products by entity type
    */
   async getProductsByEntityType(entityType: ProductEntityType): Promise<ProductEntity[]> {
-    const repo = repositoryService.getProductRepository();
+    const repo = repositoryService.getUserProductRepository();
     return await repo.getByEntityType(entityType);
   }
 
@@ -329,7 +334,7 @@ export class ProductService {
    * Get product by ID
    */
   async getProductById(id: string): Promise<ProductEntity | undefined> {
-    const repo = repositoryService.getProductRepository();
+    const repo = repositoryService.getUserProductRepository();
     return await repo.getById(id);
   }
 
@@ -442,7 +447,7 @@ export class ProductService {
    * Get related products for cross-selling opportunities
    */
   async getRelatedProducts(productId: string): Promise<ProductEntity[]> {
-    const repo = repositoryService.getProductRepository();
+    const repo = repositoryService.getUserProductRepository();
     return await repo.getRelatedProducts(productId);
   }
 
@@ -467,9 +472,9 @@ export class ProductService {
 }
 
 // Export a singleton instance
-export const productService = ProductService.getInstance();
+export const userProductService = UserProductService.getInstance();
 
 // Export a function to get the product service
-export function getProductService(): ProductService {
-  return productService;
-}
+// export function getProductService(): UserProductService {
+//   return userProductService;
+// }

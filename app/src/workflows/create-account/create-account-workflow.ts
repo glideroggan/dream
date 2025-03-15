@@ -10,7 +10,7 @@ import {
 import { WorkflowBase, WorkflowResult } from '../workflow-base'
 import { kycService, KycLevel } from '../../services/kyc-service'
 import { repositoryService } from '../../services/repository-service'
-import {ProductRepository } from '../../repositories/product-repository'
+import {UserProductRepository } from '../../repositories/user-product-repository'
 import { Account } from '../../repositories/models/account-models'
 import { ProductEntity, ProductEntityType } from '../../repositories/models/product-models'
 
@@ -456,11 +456,11 @@ export class CreateAccountWorkflow extends WorkflowBase {
   @observable selectedProductInfo: ProductEntity | null = null
 
   // Product repository reference
-  private productRepository: ProductRepository
+  private productRepository: UserProductRepository
 
   constructor() {
     super()
-    this.productRepository = repositoryService.getProductRepository()
+    this.productRepository = repositoryService.getUserProductRepository()
   }
 
   get requireIdentificationProcess(): boolean {

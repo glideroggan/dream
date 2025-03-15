@@ -1,6 +1,6 @@
 import { workflowService } from '../services/workflow-service';
 import { getSearchService, SearchResultItem } from '../services/search-service';
-import { getProductService } from '../services/product-service';
+import { getProductService } from '../services/user-product-service';
 import { repositoryService } from '../services/repository-service';
 
 export interface WorkflowDefinition {

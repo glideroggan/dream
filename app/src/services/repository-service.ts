@@ -3,7 +3,7 @@ import { UserService } from './user-service';
 import { AccountRepository } from '../repositories/account-repository';
 import { TransactionRepository } from '../repositories/transaction-repository';
 import { SettingsRepository } from '../repositories/settings-repository';
-import { ProductRepository } from '../repositories/product-repository';
+import { UserProductRepository } from '../repositories/user-product-repository';
 
 export class RepositoryService {
   private static instance: RepositoryService;
@@ -11,18 +11,20 @@ export class RepositoryService {
   private accountRepo: AccountRepository;
   private transactionRepo: TransactionRepository;
   private settingsRepo: SettingsRepository;
-  private productRepo: ProductRepository;
+  private userProductRepo: UserProductRepository;
   private cardRepo: CardRepository;
   private loanRepo: LoanRepository
+  private productRepo: ProductRepository;
   
   private constructor(private storage: StorageService, private userService: UserService) {
     // Initialize repositories
     this.transactionRepo = new TransactionRepository(storage, userService);
     this.accountRepo = new AccountRepository(storage, userService, this.transactionRepo);
     this.settingsRepo = new SettingsRepository(storage, userService);
-    this.productRepo = new ProductRepository(storage, userService);
+    this.userProductRepo = new UserProductRepository(storage, userService);
     this.cardRepo = new CardRepository(storage, userService);
     this.loanRepo = new LoanRepository(storage, userService);
+    this.productRepo = new ProductRepository(storage, userService);
   }
   
   public static getInstance(storage: StorageService, userService: UserService): RepositoryService {
@@ -52,6 +54,18 @@ export class RepositoryService {
     return this.settingsRepo;
   }
   
+  /**
+   * Handles the current user's product repository
+   * @returns UserProductRepository
+   */
+  getUserProductRepository(): UserProductRepository {
+    return this.userProductRepo;
+  }
+
+  /**
+   * Handles the overall product repository
+   * @returns ProductRepository
+   */
   getProductRepository(): ProductRepository {
     return this.productRepo;
   }
@@ -62,5 +76,6 @@ import { storageService } from './storage-service';
 import { userService } from './user-service';
 import { CardRepository } from '../repositories/card-repository';
 import { LoanRepository } from '../repositories/loan-repository';
+import { ProductRepository } from '../repositories/product-repository';
 
 export const repositoryService = RepositoryService.getInstance(storageService, userService);

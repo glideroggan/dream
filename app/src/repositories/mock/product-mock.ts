@@ -1,6 +1,6 @@
-import { ProductEntity, ProductCategory, ProductEntityType } from '../models/product-models';
+import { Product, ProductCategory, ProductEntityType } from '../models/product-models';
 
-export function generateMockProducts(): ProductEntity[] {
+export function generateMockProducts(): Product[] {
   const now = new Date().toISOString();
   
   return [
@@ -30,9 +30,6 @@ export function generateMockProducts(): ProductEntity[] {
         }
       ],
       relatedProductIds: ['savings-account', 'overdraft-protection'],
-      active: true,
-      addedDate: now,
-      lastUpdated: now
     },
     {
       id: 'savings-account',
@@ -54,9 +51,6 @@ export function generateMockProducts(): ProductEntity[] {
         }
       ],
       relatedProductIds: ['checking-account', 'cd-account'],
-      active: true,
-      addedDate: now,
-      lastUpdated: now
     },
     {
       id: 'isk-account',
@@ -82,9 +76,6 @@ export function generateMockProducts(): ProductEntity[] {
           description: 'Must be a resident of Sweden'
         }
       ],
-      active: true,
-      addedDate: now,
-      lastUpdated: now
     },
     {
       id: 'pension-account',
@@ -110,9 +101,6 @@ export function generateMockProducts(): ProductEntity[] {
           description: 'Must be at least 18 years old'
         }
       ],
-      active: true,
-      addedDate: now,
-      lastUpdated: now
     },
     
     // Lending products
@@ -148,9 +136,6 @@ export function generateMockProducts(): ProductEntity[] {
         maxTerm: 60,
         baseInterestRate: 5.99
       },
-      active: true,
-      addedDate: now,
-      lastUpdated: now
     },
     {
       id: 'home-loan',
@@ -188,9 +173,6 @@ export function generateMockProducts(): ProductEntity[] {
         maxTerm: 360, // 30 years
         baseInterestRate: 3.49
       },
-      active: true,
-      addedDate: now,
-      lastUpdated: now
     },
     {
       id: 'vehicle-loan',
@@ -223,9 +205,6 @@ export function generateMockProducts(): ProductEntity[] {
         maxTerm: 84,
         baseInterestRate: 4.25
       },
-      active: true,
-      addedDate: now,
-      lastUpdated: now
     },
     {
       id: 'education-loan',
@@ -258,9 +237,6 @@ export function generateMockProducts(): ProductEntity[] {
         maxTerm: 180,
         baseInterestRate: 3.99
       },
-      active: true,
-      addedDate: now,
-      lastUpdated: now
     },
     {
       id: 'business-loan',
@@ -293,9 +269,6 @@ export function generateMockProducts(): ProductEntity[] {
         maxTerm: 120,
         baseInterestRate: 6.5
       },
-      active: true,
-      addedDate: now,
-      lastUpdated: now
     },
     
     // Payment products
@@ -323,9 +296,6 @@ export function generateMockProducts(): ProductEntity[] {
           description: 'Minimum credit score of 670'
         }
       ],
-      active: true,
-      addedDate: now,
-      lastUpdated: now
     },
     {
       id: 'debit-card',
@@ -352,9 +322,6 @@ export function generateMockProducts(): ProductEntity[] {
           description: 'Must have a compatible account'
         }
       ],
-      active: true,
-      addedDate: now,
-      lastUpdated: now
     },
     
     // Services
@@ -378,9 +345,6 @@ export function generateMockProducts(): ProductEntity[] {
         }
       ],
       relatedProductIds: ['checking-account'],
-      active: true,
-      addedDate: now,
-      lastUpdated: now
     }
   ];
 }

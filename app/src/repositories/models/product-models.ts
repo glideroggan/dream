@@ -37,20 +37,6 @@ export interface BaseProduct {
  * Product interface representing all possible product attributes
  */
 export interface Product extends BaseProduct {
-  description?: string;
-  features?: string[];
-  requirements?: any[];
-  relatedProductIds?: string[];
-  metadata?: Record<string, any>;
-  active?: boolean;
-}
-
-/**
- * Product entity interface
- */
-export interface ProductEntity extends Entity, Product {
-  id: string;
-  name: string;
   type: ProductEntityType;
   category: ProductCategory;
   description?: string;
@@ -58,10 +44,14 @@ export interface ProductEntity extends Entity, Product {
   requirements?: ProductRequirement[];
   relatedProductIds?: string[];
   metadata?: Record<string, any>;
-  active: boolean;
-  addedDate: string;
-  lastUpdated: string;
 }
+
+/**
+ * Product entity interface
+ */
+// export interface ProductEntity extends Entity, Product {
+//   name: string;
+// }
 
 /**
  * Product requirement interface for eligibility checks

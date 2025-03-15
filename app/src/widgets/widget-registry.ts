@@ -1,6 +1,6 @@
 import { WidgetDefinition, WidgetService } from '../services/widget-service';
 import { getSearchService, SearchResultItem } from '../services/search-service';
-import { getProductService } from '../services/product-service';
+import { getProductService } from '../services/user-product-service';
 
 // Define all available widget IDs
 export const WidgetIds = {

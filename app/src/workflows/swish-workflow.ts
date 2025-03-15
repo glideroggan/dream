@@ -1,6 +1,6 @@
 import { customElement, html, css, observable, repeat, when } from "@microsoft/fast-element";
 import { WorkflowBase, WorkflowResult } from "./workflow-base";
-import { productService } from "../services/product-service";
+import { userProductService } from "../services/user-product-service";
 
 // Import the checkbox primitive
 import "../primitives/checkbox-primitive";
@@ -280,7 +280,7 @@ export class SwishWorkflow extends WorkflowBase {
     
     try {
       // Check if user already has this product
-      const hasProduct = await productService.hasProduct(this.product.id);
+      const hasProduct = await userProductService.hasProduct(this.product.id);
       
       console.debug(`User already has ${this.product.id}: ${hasProduct}`);
       this.isProductActive = hasProduct;
@@ -370,7 +370,7 @@ export class SwishWorkflow extends WorkflowBase {
     try {
       // Double-check if already added to avoid duplicates
       // This ensures race conditions don't cause duplicate products
-      const alreadyAdded = await productService.hasProduct(this.product.id);
+      const alreadyAdded = await userProductService.hasProduct(this.product.id);
       if (alreadyAdded) {
         this.isProductActive = true;
         this.complete(true, { 
@@ -381,7 +381,7 @@ export class SwishWorkflow extends WorkflowBase {
       }
       
       // Add the product to user's account
-      await productService.addProduct({
+      await userProductService.addProduct({
         id: this.product.id, 
         name: this.product.name,
         type: this.product.type,
