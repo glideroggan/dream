@@ -17,7 +17,7 @@ export class TransactionViewModelHelper {
     const isIncoming = isIncomingTransaction(transaction, accountId);
     
     // For display purposes, we adjust the sign based on direction
-    const displayAmount = isIncoming ? transaction.amount : -transaction.amount;
+    // const displayAmount = isIncoming ? transaction.amount : transaction.amount;
     
     const relevantBalance = isIncoming ? transaction.toAccountBalance : transaction.fromAccountBalance;
     
@@ -27,7 +27,7 @@ export class TransactionViewModelHelper {
       currency: transaction.currency || 'USD',
     });
     
-    const formattedAmount = formatter.format(displayAmount);
+    const formattedAmount = formatter.format(transaction.amount);
     
     // Determine the appropriate CSS class
     const amountClass = isIncoming ? 'incoming' : 'outgoing';
@@ -41,7 +41,7 @@ export class TransactionViewModelHelper {
     // Create view model with display properties
     return {
       ...transaction,
-      amount: displayAmount, // Use the signed amount for the view model
+      amount: transaction.amount, // Use the signed amount for the view model
       isIncoming,
       amountClass,
       formattedAmount,

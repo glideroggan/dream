@@ -25,6 +25,11 @@ export const TransactionTypes = {
   ADJUSTMENT: 'adjustment' as TransactionType
 };
 
+export enum TransactionDirections {
+  DEBIT = 'debit',  // Money going out of the account
+  CREDIT = 'credit' // Money coming into the account
+}
+
 export interface Transaction extends Entity {
   fromAccountId: string;
   toAccountId?: string;  // Optional for withdrawals, fees
@@ -33,6 +38,7 @@ export interface Transaction extends Entity {
    * Direction (debit/credit) is determined by transaction type and account perspective
    */ 
   amount: number;
+  direction: TransactionDirections; // DEBIT or CREDIT
   currency: string;
   description?: string;
   status: TransactionStatus;
