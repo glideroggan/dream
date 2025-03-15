@@ -1,16 +1,8 @@
 # BUGS
+- ✔️Adding a new payment contact (favorite), seems to add it twice in the transfer flow
 - request-card-workflow is not good in light and dark mode
-- ✔️Top Expenses is not showing in Financial Health Widget
 - card-details buttons are wrongly styled in dark mode and light mode
-- ✔️card-details is missing dark mode
-- ✔️why is only the minus button on error-widget triggering resize?
   pressing the col buttons do nothing, until we do something with the rows buttons
-- ✔️cancel button on loan modal on sign step is not hover styled
-- ✔️cancel button on the signing workflow is not good in dark mode
-- ✔️favorite checkbox doesn't work on add payment contact
-- ✔️need to update net worth after account and transaction changes
-- ✔️all the amounts, should be positive, and instead the type of the transaction should be the one that decides if it is showing as a negative value or not
-- ✔️the button in the bottom in financial health widget is unstyled
 
 # FEATURES
 - common search dropdown component
@@ -20,6 +12,7 @@
 
 ## new workflows
 - edit payment contacts
+  Probably should be a combo of the add contact?
   Doesn't need to be a "page", can just be a workflow, showing different buttons for doing things
     - edit
     - add

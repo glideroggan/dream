@@ -81,6 +81,7 @@ export abstract class LocalStorageRepository<T extends Entity> implements Reposi
   }
 
   async update(id: string, data: Partial<T>): Promise<T | undefined> {
+    console.debug('update', id, data)
     const entity = await this._update(id, data);
     if (entity) {
       this.notifySubscribers({ type: 'update', entity });

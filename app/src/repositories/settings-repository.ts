@@ -228,6 +228,7 @@ export class SettingsRepository extends LocalStorageRepository<UserSettings> {
    */
   async addPaymentContact(contact: PaymentContact): Promise<void> {
     const settings = await this.getCurrentSettings();
+    console.debug('contacts:', settings.paymentContacts)
     
     // Generate an ID if not provided
     if (!contact.id) {
@@ -236,6 +237,7 @@ export class SettingsRepository extends LocalStorageRepository<UserSettings> {
     
     // Add the new contact
     const updatedContacts = [...settings.paymentContacts, contact];
+    console.debug('updatedContacts:', updatedContacts)
     
     await this.update(settings.id, {
       paymentContacts: updatedContacts

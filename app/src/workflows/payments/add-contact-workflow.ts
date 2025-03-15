@@ -283,6 +283,7 @@ export class AddContactWorkflow extends WorkflowBase {
   }
   
   private async saveContact(): Promise<void> {
+    console.debug("Saving contact...");
     try {
       const contactData: PaymentContact = {
         id: this.existingContactId || generateUniqueId(),
@@ -296,8 +297,10 @@ export class AddContactWorkflow extends WorkflowBase {
       };
       
       if (this.existingContactId) {
+        console.debug("Updating existing contact:", contactData);
         await paymentContactsService.updateContact(contactData);
       } else {
+        console.debug("Adding new contact:", contactData);
         await paymentContactsService.addContact(contactData);
       }
       

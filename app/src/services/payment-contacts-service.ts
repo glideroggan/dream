@@ -15,6 +15,8 @@ export class PaymentContactsService {
   private contactAddedHandlers: Array<(contact: PaymentContact) => void> = [];
   private contactUpdatedHandlers: Array<(contact: PaymentContact) => void> = [];
   private contactDeletedHandlers: Array<(contactId: string) => void> = [];
+
+  private settingsRepository = repositoryService.getSettingsRepository();
   
   // Private constructor for singleton pattern
   private constructor() {
@@ -67,12 +69,12 @@ export class PaymentContactsService {
     if (this.contacts.some(c => c.id === contact.id)) {
       throw new Error(`Contact with ID ${contact.id} already exists`);
     }
-    
-    // Add to in-memory cache
-    this.contacts.push(contact);
+
+    // Add to in-memory cache (causing us to add duplicates?)
+    // this.contacts.push(contact);
     
     // Save to settings repository
-    await repositoryService.getSettingsRepository().addPaymentContact(contact);
+    await this.settingsRepository.addPaymentContact(contact);
     
     // Notify listeners
     this.contactAddedHandlers.forEach(handler => handler(contact));
@@ -149,6 +151,7 @@ export class PaymentContactsService {
    * Add event handler for when a contact is added
    */
   public onContactAdded(handler: (contact: PaymentContact) => void): () => void {
+    console.debug('onContactAdded')
     this.contactAddedHandlers.push(handler);
     return () => {
       this.contactAddedHandlers = this.contactAddedHandlers.filter(h => h !== handler);
