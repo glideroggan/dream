@@ -79,7 +79,7 @@ export interface Loan extends Entity {
   status: LoanStatus;
   accountId: string;
   signatureId?: string;
-  applicationData?: Record<string, any>;
+  metadata?: Record<string, any>;
 }
 
 // Export Loan type as LoanDetails for convenience (used in loan-workflow)

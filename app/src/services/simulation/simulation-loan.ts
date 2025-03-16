@@ -2,7 +2,7 @@ import { LoanRepository } from "../../repositories/loan-repository";
 import { getNextLoanStatus, getStateDelay, LoanStatus } from "../../repositories/models/loan-models";
 import { simulationRepository, SimulationTask } from "../../repositories/simulation-repository";
 import { repositoryService } from "../repository-service";
-import { TaskResults } from "./simulation-service";
+import { CreateSimulationTask, simulationService, TaskResults } from "./simulation-service";
 
 /**
  * Process a loan application task
@@ -48,8 +48,38 @@ export async function processLoanApplication(task: SimulationTask): Promise<Task
                 task: task,
             }
         case 'approved':
-            // TODO: pay out the loan to the account
-            // create a new recurring task that will create a scheduled payment for paying back the loan
+            const accountId = loan.accountId;
+            // TODO: we should validate that this account exists on this user
+            const accountRepo = repositoryService.getAccountRepository();
+            const account = await accountRepo.getById(accountId);
+            const accountCurrency = account?.currency;
+            const amount = loan.amount;
+            const transactionRepo = repositoryService.getTransactionRepository();
+            // TODO: what if this fails? where should we handle errors?
+            // maybe as a rule, repositories never throws?
+            // payout the money to the account
+            // TODO: should we tie this tranaction somehow to the loan?
+            const transaction = await transactionRepo.fromExternal(accountId, amount, accountCurrency!, 'Loan payout');
+            if (!loan.metadata) {
+                loan.metadata = {}
+            }
+            loan.metadata.payoutTransactionId = transaction.id;
+            loan.metadata.payoutTime = now;
+            loan.metadata.currentlyOwned = amount;
+            // TODO: create a new recurring task that will create a scheduled payment for paying back the loan
+            const recurringTask: CreateSimulationTask = {
+                productId: loan.id,
+                type: 'recurring_payment',
+                metadata: {
+                    amount: loan.monthlyPayment,
+                    currency: accountCurrency,
+                    fromAccountId: accountId,
+                    toAccountId: 'bank',
+                }
+            }
+            // TODO: not to forget, we need to update the loan entity after a recurring payment
+            // so the actual amount still owned is updated
+            await simulationService.createTask(recurringTask)
             return {
                 success: false,
                 task: task,
@@ -64,6 +94,7 @@ export async function processLoanApplication(task: SimulationTask): Promise<Task
             }
         case 'active':
             // TODO: check interest rates? change any related recurring payment tasks?
+            // once being checked here, check also the recurring payment task, and adjust interest rates if needed
             // 
             console.warn('Loan state not yet implemented');
             return {

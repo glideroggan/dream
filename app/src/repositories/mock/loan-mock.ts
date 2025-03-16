@@ -71,7 +71,7 @@ function generateSomeLoans(): Loan[] {
     updatedAt: '2023-01-20T09:15:00Z',
     status: LoanStatus.PENDING_APPROVAL,
     accountId: 'account-3',
-    applicationData: {
+    metadata: {
       vehicleModel: 'Tesla Model 3',
       vehicleYear: 2022,
       creditScore: 730
@@ -111,7 +111,7 @@ function generateSomeLoans(): Loan[] {
     status: LoanStatus.REJECTED,
     accountId: 'acc-2', // Emergency Fund account from account-mock.ts
     signatureId: generateUUID(),
-    applicationData: {
+    metadata: {
       // Additional data explaining rejection
       rejectionReason: 'Requested amount exceeds maximum for personal loan'
     }

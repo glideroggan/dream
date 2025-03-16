@@ -9,6 +9,14 @@ export interface TaskResults {
     error?: string;
 }
 
+export type SupportedTaskType = 'recurring_payment'
+
+export interface CreateSimulationTask {
+    productId: string;
+    type: SupportedTaskType
+    metadata: Record<string, any>
+}
+
 class SimulationService {
     
     private static instance: SimulationService;
@@ -46,22 +54,26 @@ class SimulationService {
         
         console.log("SimulationService initialized with task processor");
     }
-    
+
+    async createTask(task: CreateSimulationTask): Promise<void> {
+        // TODO: take in a task and only add the necessary fields
+        const now = Date.now();
+        let newTask: SimulationTask;
+        switch (task.type) {
+            case 'recurring_payment':
+                // TODO: create a task that have a conditions for the states
+                /**
+                 * 
+                */
+            default:
+                throw new Error(`Unsupported task type: ${task.type}`);
+        }
+    }
+
     /**
      * Add a new task to the simulation queue
      */
     addTask(userProductId: string, type: string = 'loan', initialState: string = 'pending_approval'): void {
-        
-        // const queue = this.getQueue();
-        // const nextTask = this.simulationRepository.getNextTask();
-        
-        // Check if task already exists - using task ID is better as noted in TODO
-        // const existingTask = queue.find(task => task.userProductId === userProductId);
-        // if (existingTask) {
-        //     console.debug(`Task already exists for product ${userProductId}`);
-        //     return;
-        // }
-        
         // Create new task
         const now = Date.now();
         const newTask: SimulationTask = {

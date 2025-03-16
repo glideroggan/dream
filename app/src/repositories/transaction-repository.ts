@@ -109,6 +109,25 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
     );
   }
 
+  async fromExternal(toAccountId:string, amount:number, currency:string, description?:string): Promise<Transaction> {
+    const now = new Date();
+    const transaction: Omit<Transaction, 'id'> = {
+      fromAccountId: 'external',
+      toAccountId,
+      amount,
+      direction: TransactionDirections.CREDIT,
+      currency,
+      description,
+      status: TransactionStatuses.COMPLETED,
+      type: 'deposit',
+      createdAt: now.toISOString(),
+      completedDate: now.toISOString(),
+    };
+
+    return this.create(transaction);
+
+  }
+
   /**
    * Create a new transfer transaction
    */

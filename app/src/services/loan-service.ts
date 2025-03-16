@@ -373,12 +373,12 @@ export class LoanService {
     
     // Add rejection reason to application data
     const applicationData = {
-      ...loan.applicationData,
+      ...loan.metadata,
       rejectionReason: reason || 'Application did not meet approval criteria'
     };
     
     // Update application data
-    await loanRepo.update(loanId, { applicationData });
+    await loanRepo.update(loanId, { metadata: applicationData });
     
     // Update status to rejected
     return loanRepo.updateLoanStatus(loanId, LoanStatus.REJECTED);

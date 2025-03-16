@@ -119,6 +119,7 @@ export class AccountRepository extends LocalStorageRepository<Account> {
     }
   }
 
+  // TODO: shouldn't this be on the transaction repository?
   async externalTransfer(options: {
     fromAccountId: string
     toContactId: string
