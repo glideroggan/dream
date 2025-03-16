@@ -77,7 +77,7 @@ export class UserProductService {
    * @returns The created user product
    */
   async requestProductCreation(productId: string, params: Record<string, any> = {}): Promise<UserProduct> {
-    debugger
+    
     await this.ensureRepositoryInitialized();
     
     // 1. Get the product template from the repository
@@ -342,7 +342,7 @@ export class UserProductService {
    */
   // TODO: should be calling "requestProductCreation" instead
   public async addProduct<T extends Partial<UserProduct>>(product: T): Promise<UserProduct | undefined> {
-    debugger
+    
     await this.ensureRepositoryInitialized();
 
     let userProduct: UserProduct;

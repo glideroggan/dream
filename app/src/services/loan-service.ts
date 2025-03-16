@@ -7,7 +7,7 @@ import {
   LoanApplication, 
   EligibilityResult} from '../repositories/models/loan-models';
 import { Product } from '../repositories/models/product-models';
-import { simulationService } from './simulation-service';
+import { simulationService } from './simulation/simulation-service';
 
 /**
  * Loan service to handle loan operations

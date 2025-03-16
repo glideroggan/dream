@@ -857,7 +857,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
     this.errorMessage = '';
 
     try {
-      debugger
+      
       console.log('Creating account...', this.selectedTypeId, this.accountName, this.currency);
       const product = await userProductService.requestProductCreation(this.selectedTypeId, {
         accountName: this.accountName, currency: this.currency

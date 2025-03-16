@@ -1,8 +1,9 @@
 import "./repositories/product-repository"
 import { WorkflowService } from './services/workflow-service';
 
-
 import "./services/user-service"
+import "./repositories/simulation-repository"
+import "./services/simulation/simulation-service"
 // Import workflow components
 import './services/user-product-service';
 import './workflows/swish-workflow';
@@ -125,4 +126,4 @@ console.debug('Application initialized')
 widgetService.emitWidgetsRegistered()
 
 // start any simulation tasks that need to run
-import './services/simulation-service'
+import './services/simulation/simulation-service'

@@ -6,13 +6,48 @@
 - creating an account, does create the product and the account, but in the product the account ID is not set
   Should be added to the metadata
 - swish should not be active so fast, it should create a simulation task
-- ✔️add swish-workflow still searchable when having the product
-- ✔️swish-widget was not added after workflow
 - account-info-workflow is not configured for dark and light mode
-- ✔️Adding a new payment contact (favorite), seems to add it twice in the transfer flow
 - request-card-workflow is not good in light and dark mode
 - card-details buttons are wrongly styled in dark mode and light mode
   pressing the col buttons do nothing, until we do something with the rows buttons
+
+# simulation structure
+## loan application
+```mermaid
+sequenceDiagram
+participant User
+participant Storage
+participant SimulationSystem
+participant LoanProcessor
+participant BankServices
+
+User->>SimulationSystem: add task to simulation (loan processing)
+SimulationSystem-->>Storage: check for new tasks every 5 s
+SimulationSystem->>LoanProcessor: send data to loan processor
+LoanProcessor-->>BankServices: get data to process
+LoanProcessor->>LoanProcessor: Process state
+```
+
+# Product structure
+List out the product structure
+```mermaid
+flowchart LR
+  products((Products))
+  accounts((Accounts))
+  checking((Checking))
+  isk((ISK))
+  cards((Cards))
+  loans((Loans))
+  savings((Savings))
+  pension((Pension))
+  products --> accounts
+  accounts --> checking
+  accounts --> isk
+  products --> cards
+  products --> loans
+  products --> savings
+  products --> pension
+```
 
 # FEATURES
 - common search dropdown component
@@ -20,20 +55,12 @@
   - search have one
   - add contacts have one
 
-## new workflows
-- ✔️edit payment contacts
-  Probably should be a combo of the add contact?
-  Doesn't need to be a "page", can just be a workflow, showing different buttons for doing things
-    - edit
-    - add
-    - remove
-  Once done, it goes away
 ## interval based tasks
-
 Would be nice to get a bit more things happening, if we could do like in the life cycle service, but for other things, like loan due payments coming in, then it would actually look like a real bank account
+- 🔧loan application sim
 - transaction simulation
-- 🔧create a simulation of card activation by letting the card go through the activation process
-  - 🔧change how products work first
+- create a simulation of card activation by letting the card go through the activation process
+  - ✔️change how products work first
     We first need one product catalog on localstorage
     then we can start with having user_products, as they should be stored in there in the state they are in, and only activated once the state is in the final state
   - create a lifecycleService for cards

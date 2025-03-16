@@ -4,13 +4,11 @@ import { userService } from './user-service';
 import { repositoryService } from './repository-service';
 import { Account } from '../repositories/models/account-models';
 import { Card, CardProduct, CardRequirement, CardRequestData, CardServiceResult, CardType } from '../repositories/models/card-models';
-import { ProductEntityType } from '../repositories/models/product-models';
-import { simulationService } from './simulation-service';
 import { ProductRepository } from '../repositories/product-repository';
 import { AccountRepository } from '../repositories/account-repository';
 import { CardRepository } from '../repositories/card-repository';
-import { UserProduct } from '../repositories/models/user-product-models';
 import { generateUUID } from '../utilities/id-generator';
+import { simulationService } from './simulation/simulation-service';
 
 export class CardService {
     private static instance: CardService;
@@ -148,7 +146,6 @@ export class CardService {
      * Request a new card
      */
     async requestCard(requestData: CardRequestData): Promise<CardServiceResult> {
-        debugger
         /**
          * get the template product for the product that the user is requesting
          * check if the user already have the product (if it is a product that you can only have once)

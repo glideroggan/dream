@@ -265,7 +265,7 @@ export class SwishWorkflow extends WorkflowBase {
     console.debug("Initializing SwishWorkflow with params:", params);
     
     const productRepo = repositoryService.getProductRepository()
-    const compatibleProducts = await productRepo.getProductsByEntityType<SwishProduct>("service");
+    const compatibleProducts = await productRepo.getProductsByEntityType<SwishProduct>(["loan"]);
     this.product = compatibleProducts[0];
     this.product.price = 9.99;
     this.product.currency = "USD";
@@ -389,7 +389,7 @@ export class SwishWorkflow extends WorkflowBase {
       
       // Add the product to user's account
       // TODO: call requestProductCreation instead
-      debugger
+      
       await userProductService.addProduct({
         id: this.product.id, 
         name: this.product.name,
