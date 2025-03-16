@@ -114,6 +114,14 @@ class SimulationService {
             console.debug("No tasks ready for processing");
             return;
         }
+
+        /** TODO: handle tasks that are "late"
+         * What we mean here is that the tasks only run when user is here, so there could be really old tasks, like scheduled transactions/payments
+         * We should handle those as if they were done in the correct time, meaning that if a payment is 3 days late, we still do it, but set the date as 3 days ago
+         * so for the loan example, its actually not working, because of the states
+         * current state: pending, next state approved, which would be a payout...
+         * if pending would just be a few seconds, but we are now 3 days late, then we should have completed that AND the approved state, how do we handle that?
+         * */ 
         
         // Set processing flag
         this.isProcessingQueue = true;

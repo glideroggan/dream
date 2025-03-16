@@ -23,6 +23,47 @@ export enum LoanStatus {
   DEFAULTED = 'defaulted'
 }
 
+/**
+ * Returns the next loan status in the standard workflow,
+ * or null if there is no valid next state or the status is terminal
+ */
+export function getNextLoanStatus(currentStatus: LoanStatus): LoanStatus | null {
+  // Define the standard progression of loan statuses
+  const statusProgression: Record<LoanStatus, LoanStatus | null> = {
+    [LoanStatus.DRAFT]: LoanStatus.PENDING_APPROVAL,
+    [LoanStatus.PENDING_APPROVAL]: LoanStatus.APPROVED,
+    [LoanStatus.APPROVED]: LoanStatus.ACTIVE,
+    [LoanStatus.ACTIVE]: LoanStatus.PAID_OFF,
+    [LoanStatus.PAID_OFF]: null,
+    [LoanStatus.REJECTED]: null,
+    [LoanStatus.DEFAULTED]: null
+  };
+  
+  return statusProgression[currentStatus];
+}
+
+export function getStateDelay(status: LoanStatus, entity: 'loan'): number {
+  switch (status) {
+    case LoanStatus.DRAFT:
+      return 0;
+    case LoanStatus.PENDING_APPROVAL:
+      return 5000;
+    case LoanStatus.APPROVED:
+      return 5000;
+    case LoanStatus.ACTIVE:
+      // TODO: this should be quite high, as it will probably take some time to pay off the loan
+      return 5000;
+    case LoanStatus.PAID_OFF:
+      return 5000;
+    case LoanStatus.REJECTED:
+      return 5000;
+    case LoanStatus.DEFAULTED:
+      return 5000;
+    default:
+      return 0;
+  }
+}
+
 // Loan entity interface
 export interface Loan extends Entity {
   productId: string; // Reference to the product
