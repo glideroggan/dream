@@ -30,6 +30,20 @@ export enum TransactionDirections {
   CREDIT = 'credit' // Money coming into the account
 }
 
+/**
+ * Request type for creating an external transaction
+ * Contains only the required fields for transferring money to an external account
+ */
+export interface ExternalTransactionRequest {
+  fromAccountId: string;
+  amount: number;
+  currency: string;
+  fromAccountBalance: number;
+  description?: string;
+  dueDate?: Date;
+  reference?: string;
+}
+
 export interface Transaction extends Entity {
   fromAccountId: string;
   toAccountId?: string;  // Optional for withdrawals, fees
@@ -50,6 +64,7 @@ export interface Transaction extends Entity {
   fromAccountBalance?: number; // Balance of fromAccount after transaction
   toAccountBalance?: number;   // Balance of toAccount after transaction
   category?: string; // Transaction category for better analytics
+  reference?: string; // Reference to related entities (e.g., loan ID, payment ID)
 }
 
 /**

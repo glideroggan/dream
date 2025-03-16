@@ -2,6 +2,7 @@ import { UserService } from '../services/user-service';
 import { StorageService } from '../services/storage-service';
 import { LocalStorageRepository } from './base-repository';
 import { generateUUID } from '../utilities/id-generator';
+import { SupportedTaskType } from '../services/simulation/simulation-service';
 
 /**
  * Simulation task interface
@@ -14,13 +15,14 @@ import { generateUUID } from '../utilities/id-generator';
 export interface SimulationTask {
   id: string;
   productId: string;
-  type: string;          // 'loan', 'account', etc.
+  type: SupportedTaskType;          // 'loan', 'account', etc.
   currentState: string;  // Current state of the simulation
   nextProcessTime: number; // When to process next
   createdTime: number;
   lastProcessedTime?: number;
   completedSteps: string[];
   status: 'pending' | 'in_progress' | 'completed' | 'stopped';
+  metadata?: Record<string, any>;
 }
 
 /**

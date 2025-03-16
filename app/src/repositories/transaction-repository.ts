@@ -2,14 +2,17 @@ import { Entity, LocalStorageRepository } from './base-repository';
 import { StorageService } from '../services/storage-service';
 import { UserService } from '../services/user-service';
 import { getMockTransactionsByUserType } from './mock/transaction-mock';
-import { 
-  Transaction, 
-  TransactionStatus, 
+import {
+  Transaction,
+  TransactionStatus,
   TransactionType,
   TransactionStatuses,
-  TransactionTypes, 
-  TransactionDirections
+  TransactionTypes,
+  TransactionDirections,
+  ExternalTransactionRequest
 } from './models/transaction-models';
+import { repositoryService } from '../services/repository-service';
+import { generateUniqueId } from '../utilities/id-generator';
 
 export class TransactionRepository extends LocalStorageRepository<Transaction> {
   constructor(storage: StorageService, userService: UserService) {
@@ -85,6 +88,13 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
     return transactions.filter(txn => txn.status === status);
   }
 
+  async find(params: Partial<Transaction>): Promise<Transaction[]> {
+    const transactions = await this.getAll();
+    return transactions.filter(txn => {
+      return Object.keys(params).every(key => txn[key as keyof Transaction] === params[key as keyof Transaction]);
+    });
+  }
+
   /**
    * Get upcoming transactions
    */
@@ -109,11 +119,52 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
     );
   }
 
-  async fromExternal(toAccountId:string, amount:number, currency:string, description?:string): Promise<Transaction> {
+  /**TODO: 
+   * we want to have a type of Transaction that contains the things we need to create an external transaction
+   * we need:
+   * fromAccountId, amount, currency
+   * fromAccountBalance
+   * */  
+  
+  /**
+   * Create a transaction to an external account
+   * @param request The external transaction request data
+   */
+  async toExternal(request: ExternalTransactionRequest): Promise<Transaction> {
+    const { fromAccountId, amount, currency, fromAccountBalance, description, dueDate, reference } = request;
+    
+    const now = new Date();
+    const transaction: Omit<Transaction, 'id'> = {
+      fromAccountId,
+      fromAccountBalance,
+      toAccountId: 'external',
+      amount,
+      direction: TransactionDirections.DEBIT,
+      currency,
+      description,
+      scheduledDate: dueDate && dueDate > now ? dueDate.toISOString() : now.toISOString(),
+      status: dueDate && dueDate > now ? TransactionStatuses.UPCOMING : TransactionStatuses.COMPLETED,
+      type: TransactionTypes.WITHDRAWAL,
+      createdAt: now.toISOString(),
+      completedDate: dueDate && dueDate > now ? undefined : now.toISOString(),
+      reference
+    };
+    
+    return this.create(transaction);
+  }
+
+  async fromExternal(toAccountId: string, amount: number, currency: string, description?: string): Promise<Transaction> {
+    const accounRepo = repositoryService.getAccountRepository();
+    const toAccount = await accounRepo.getById(toAccountId);
+    if (!toAccount) {
+      throw new Error(`Account ${toAccountId} not found`);
+    }
+    toAccount.balance += amount;
     const now = new Date();
     const transaction: Omit<Transaction, 'id'> = {
       fromAccountId: 'external',
       toAccountId,
+      toAccountBalance: toAccount.balance,
       amount,
       direction: TransactionDirections.CREDIT,
       currency,
@@ -122,6 +173,7 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
       type: 'deposit',
       createdAt: now.toISOString(),
       completedDate: now.toISOString(),
+      reference: generateUniqueId('external-deposit')
     };
 
     return this.create(transaction);
@@ -149,6 +201,7 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
       direction: TransactionDirections.DEBIT,
       currency,
       description,
+      
       status: isCompleted ? TransactionStatuses.COMPLETED : TransactionStatuses.UPCOMING,
       type: TransactionTypes.TRANSFER,
       createdAt: now.toISOString(),

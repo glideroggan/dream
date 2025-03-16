@@ -58,6 +58,7 @@ export class AccountRepository extends LocalStorageRepository<Account> {
     return entity
   }
 
+  // TODO: this should be in transaction service
   /**
    * Make a transfer between accounts
    * @returns TransferResult with success status, message, and transaction ID

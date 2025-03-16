@@ -12,10 +12,6 @@ export class PaymentContactsService {
   private contacts: PaymentContact[] = [];
   private initialized: boolean = false;
   
-  // Event handlers for contact changes
-  // private contactAddedHandlers: Array<(contact: PaymentContact) => void> = [];
-  // private contactUpdatedHandlers: Array<(contact: PaymentContact) => void> = [];
-  // private contactDeletedHandlers: Array<(contactId: string) => void> = [];
 
   private changeListeners: Set<PaymentContactChangeListener> = new Set();
 

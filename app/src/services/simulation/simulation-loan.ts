@@ -27,22 +27,14 @@ export async function processLoanApplication(task: SimulationTask): Promise<Task
     switch (currentState) {
         case 'draft':
             // nothing?
-            nextState = getNextLoanStatus(currentState);
-            task.nextProcessTime = now + getStateDelay(nextState!, 'loan');
-            // Update the loan entity via repository
-            ok = await updateProductState(task.productId, nextState!);
-            console.log(`Transitioning loan ${task.productId} from ${task.currentState} to ${nextState}`);
+            ok = await updateNextState(currentState, now, task);
             return {
                 success: ok,
                 task: task,
             }
         case 'pending_approval':
             // nothing?
-            nextState = getNextLoanStatus(currentState);
-            task.nextProcessTime = now + getStateDelay(nextState!, 'loan');
-            // Update the loan entity via repository
-            ok = await updateProductState(task.productId, nextState!);
-            console.log(`Transitioning loan ${task.productId} from ${task.currentState} to ${nextState}`);
+            ok = await updateNextState(currentState, now, task);
             return {
                 success: ok,
                 task: task,
@@ -65,7 +57,7 @@ export async function processLoanApplication(task: SimulationTask): Promise<Task
             }
             loan.metadata.payoutTransactionId = transaction.id;
             loan.metadata.payoutTime = now;
-            loan.metadata.currentlyOwned = amount;
+            loan.metadata.currentlyOwed = amount;
             // TODO: create a new recurring task that will create a scheduled payment for paying back the loan
             const recurringTask: CreateSimulationTask = {
                 productId: loan.id,
@@ -80,10 +72,12 @@ export async function processLoanApplication(task: SimulationTask): Promise<Task
             // TODO: not to forget, we need to update the loan entity after a recurring payment
             // so the actual amount still owned is updated
             await simulationService.createTask(recurringTask)
+
+            // update state
+            ok = await updateNextState(currentState, now, task);
             return {
-                success: false,
+                success: ok,
                 task: task,
-                error: 'Loan payout not yet implemented',
             }
         case 'rejected':
             console.warn('Loan state not yet implemented');
@@ -118,6 +112,15 @@ export async function processLoanApplication(task: SimulationTask): Promise<Task
                 error: 'Unknown loan state',
             }
     }
+}
+
+async function updateNextState(currentState:LoanStatus, now:number, task:SimulationTask): Promise<boolean> {
+    const nextState = getNextLoanStatus(currentState);
+    task.nextProcessTime = now + getStateDelay(nextState!, 'loan');
+    // Update the loan entity via repository
+    const ok = await updateProductState(task.productId, nextState!);
+    console.log(`Transitioning loan ${task.productId} from ${task.currentState} to ${nextState}`);
+    return ok
 }
 
 async function updateProductState(productId: string, state: LoanStatus): Promise<boolean> {

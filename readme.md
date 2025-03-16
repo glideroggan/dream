@@ -76,6 +76,10 @@ Would be nice to get a bit more things happening, if we could do like in the lif
         - should show a toast
 
 # TODO
+- we should have a transaction-service
+- we should have a widget for loans
+  Once you create a loan with the workflow, it should give you the loan-widget
+  where you can see your application, and the status of it
 - should fix versioning on the localstorage
 - when there is only one choice from the search inputs, enter key should select it
 - need toast error when failing to start a workflow

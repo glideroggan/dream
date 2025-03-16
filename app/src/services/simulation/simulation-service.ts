@@ -2,6 +2,7 @@ import { generateUUID } from "../../utilities/id-generator";
 import { simulationRepository, SimulationRepository, SimulationTask } from "../../repositories/simulation-repository";
 import { UserProductRepository } from "../../repositories/user-product-repository";
 import { processLoanApplication } from "./simulation-loan";
+import { processRecurringPayment } from "./simulation-payment";
 
 export interface TaskResults {
     success: boolean;
@@ -9,49 +10,51 @@ export interface TaskResults {
     error?: string;
 }
 
-export type SupportedTaskType = 'recurring_payment'
+export type SupportedTaskType = 'recurring_payment' | 'loan'
 
 export interface CreateSimulationTask {
     productId: string;
     type: SupportedTaskType
+    // TODO: maybe these metadata fields is just a reminder that we can instead use "extends" to create more
+    // specific types for each task type
     metadata: Record<string, any>
 }
 
 class SimulationService {
-    
+
     private static instance: SimulationService;
     private intervalId: number | null = null;
     private readonly QUEUE_KEY = 'simulation_task_queue';
     private readonly PROCESSING_INTERVAL = 5000; // 5 seconds
     private isProcessingQueue = false;
-    
+
     // Dependencies
     private simulationRepository: SimulationRepository;
     private userProductRepository?: UserProductRepository;
-    
+
     private constructor(simulationRepo: SimulationRepository) {
         console.debug("SimulationService instance created");
-        this.simulationRepository = simulationRepo; 
+        this.simulationRepository = simulationRepo;
     }
-    
+
     public static getInstance(): SimulationService {
         if (!SimulationService.instance) {
             SimulationService.instance = new SimulationService(simulationRepository);
         }
         return SimulationService.instance;
     }
-    
+
     async initialize(): Promise<void> {
         // Clear any existing interval to avoid duplicates
         if (this.intervalId) {
             clearInterval(this.intervalId);
         }
-        
+
         // Start the interval to process the queue every 5 seconds
         this.intervalId = window.setInterval(() => {
             this.processQueue();
         }, this.PROCESSING_INTERVAL);
-        
+
         console.log("SimulationService initialized with task processor");
     }
 
@@ -62,18 +65,31 @@ class SimulationService {
         switch (task.type) {
             case 'recurring_payment':
                 // TODO: create a task that have a conditions for the states
-                /**
-                 * 
-                */
+                
+                newTask = {
+                    id: `task_${generateUUID()}`,
+                    productId: task.productId,
+                    type: task.type,
+                    currentState: 'pending',
+                    lastProcessedTime: now,
+                    nextProcessTime: now + 10000, // 10 seconds
+                    createdTime: now,
+                    completedSteps: [],
+                    status: 'pending',
+                    metadata: task.metadata
+                };
+                break;
             default:
                 throw new Error(`Unsupported task type: ${task.type}`);
         }
+        this.simulationRepository.addTask(newTask);
+        console.log(`SimulationService: Added simulation task for product ${task.productId} with initial state ${newTask.currentState}`);
     }
 
     /**
      * Add a new task to the simulation queue
      */
-    addTask(userProductId: string, type: string = 'loan', initialState: string = 'pending_approval'): void {
+    addTask(userProductId: string, type: SupportedTaskType = 'loan', initialState: string = 'pending_approval'): void {
         // Create new task
         const now = Date.now();
         const newTask: SimulationTask = {
@@ -87,15 +103,15 @@ class SimulationService {
             completedSteps: [],
             status: 'pending'
         };
-        
+
         // Add task to queue
         this.simulationRepository.addTask(newTask);
         // queue.push(newTask);
         // this.saveQueue(queue);
-        
+
         console.log(`SimulationService: Added simulation task for product ${userProductId} with initial state ${initialState}`);
     }
-    
+
     /**
      * Remove a task from the queue
      */
@@ -104,13 +120,13 @@ class SimulationService {
         this.simulationRepository.stopTask(userProductId);
         // const queue = this.getQueue();
         // const updatedQueue = queue.filter(task => task.userProductId !== userProductId);
-        
+
         // if (queue.length !== updatedQueue.length) {
         //     this.saveQueue(updatedQueue);
         //     console.log(`SimulationService: Removed task for product ${userProductId}`);
         // }
     }
-    
+
     /**
      */
     private async processQueue(): Promise<void> {
@@ -120,7 +136,7 @@ class SimulationService {
             console.log("Queue processing already in progress, skipping");
             return;
         }
-        
+
         const task = await this.simulationRepository.getNextTaskToProcess();
         if (!task) {
             console.debug("No tasks ready for processing");
@@ -133,21 +149,21 @@ class SimulationService {
          * so for the loan example, its actually not working, because of the states
          * current state: pending, next state approved, which would be a payout...
          * if pending would just be a few seconds, but we are now 3 days late, then we should have completed that AND the approved state, how do we handle that?
-         * */ 
-        
+         * */
+
         // Set processing flag
         this.isProcessingQueue = true;
-        
+
         try {
             // Only process one task at a time as requested in TODO
             const now = Date.now();
-            
+
             console.log(`Processing simulation task: ${task.type} (${task.id})`);
-            
+
             // Check if it's time to process this task
             if (now >= task.nextProcessTime) {
                 const result = await this.processTask(task);
-                
+
                 // If task is not completed, add it back to the end of the queue
                 if (result.success) {
                     // TODO: handle COMPLETED state
@@ -165,105 +181,30 @@ class SimulationService {
             this.isProcessingQueue = false;
         }
     }
-    
+
     /**
      * Process a single task and return updated task or null if completed
      */
     private async processTask(task: SimulationTask): Promise<TaskResults> {
         console.debug(`Processing task: ${task.type} in state ${task.currentState}`);
-        
+
         switch (task.type.toLowerCase()) {
+            case 'recurring_payment':
+                return await processRecurringPayment(task);
             case 'loan':
                 return await processLoanApplication(task);
-                
             case 'account':
                 throw new Error("Account processing not implemented");
-                // return this.processAccountCreation(task);
+            // return this.processAccountCreation(task);
             case 'card':
                 throw new Error("Card processing not implemented");
-                // return this.processCardActivation(task);
+            // return this.processCardActivation(task);
             default:
                 console.error(`Unknown task type: ${task.type}`);
                 throw new Error(`Unknown task type: ${task.type}`);
         }
     }
-    
-    /**
-     * Process an account creation task
-     */
-    // private processAccountCreation(task: SimulationTask): SimulationTask | null {
-    //     // These should eventually come from the account product definition
-    //     const states = ['pending', 'processing', 'active'];
-        
-    //     // Similar implementation to processLoanApplication
-    //     const currentIndex = states.indexOf(task.currentState);
-        
-    //     if (currentIndex === states.length - 1) {
-    //         console.log(`Account ${task.userProductId} is now ${task.currentState}`);
-            
-    //         // Update the actual account entity via repository
-    //         this.updateProductState(task.userProductId, task.currentState);
-            
-    //         // Record completion in simulation repository
-    //         this.updateSimulationStatus(task.userProductId, 'completed', task.currentState);
-            
-    //         return null;
-    //     }
-        
-    //     const nextState = states[currentIndex + 1];
-    //     const now = Date.now();
-        
-    //     // Update the account entity via repository
-    //     this.updateProductState(task.userProductId, nextState);
-        
-    //     // Update simulation status
-    //     this.updateSimulationStatus(task.userProductId, 'in_progress', nextState, task.currentState);
-        
-    //     return {
-    //         ...task,
-    //         currentState: nextState,
-    //         nextStateTime: now + this.getStateDelay(nextState)
-    //     };
-    // }
-    
-    /**
-     * Process a card activation task
-     */
-    // private processCardActivation(task: SimulationTask): SimulationTask | null {
-    //     // These should eventually come from the card product definition
-    //     const states = ['issued', 'shipping', 'delivered', 'activated'];
-        
-    //     // Similar implementation to processLoanApplication
-    //     const currentIndex = states.indexOf(task.currentState);
-        
-    //     if (currentIndex === states.length - 1) {
-    //         console.log(`Card ${task.userProductId} is now ${task.currentState}`);
-            
-    //         // Update the actual card entity via repository
-    //         this.updateProductState(task.userProductId, task.currentState);
-            
-    //         // Record completion in simulation repository
-    //         this.updateSimulationStatus(task.userProductId, 'completed', task.currentState);
-            
-    //         return null;
-    //     }
-        
-    //     const nextState = states[currentIndex + 1];
-    //     const now = Date.now();
-        
-    //     // Update the card entity via repository
-    //     this.updateProductState(task.userProductId, nextState);
-        
-    //     // Update simulation status
-    //     this.updateSimulationStatus(task.userProductId, 'in_progress', nextState, task.currentState);
-        
-    //     return {
-    //         ...task,
-    //         currentState: nextState,
-    //         nextStateTime: now + this.getStateDelay(nextState)
-    //     };
-    // }
-    
+
     /**
      * Update the state of the actual product via repository
      */
@@ -272,7 +213,7 @@ class SimulationService {
             console.warn("UserProductRepository not set, cannot update product state");
             return;
         }
-        
+
         try {
             const product = await this.userProductRepository.getById(productId);
             if (product) {
@@ -282,12 +223,12 @@ class SimulationService {
                     state,
                     lastStateChange: new Date().toISOString()
                 };
-                
+
                 await this.userProductRepository.update(productId, {
                     metadata: updatedMetadata,
                     lastUpdated: new Date().toISOString()
                 });
-                
+
                 console.log(`Updated product ${productId} state to ${state}`);
             } else {
                 console.warn(`Product ${productId} not found, cannot update state`);
@@ -296,7 +237,7 @@ class SimulationService {
             console.error(`Error updating product state:`, error);
         }
     }
-    
+
     /**
      * Update the simulation status in the repository
      */
@@ -310,7 +251,7 @@ class SimulationService {
     //         console.warn("SimulationRepository not set, cannot update simulation status");
     //         return;
     //     }
-        
+
     //     try {
     //         const simulation = await this.simulationRepository.getById(productId);
     //         if (simulation) {
@@ -318,7 +259,7 @@ class SimulationService {
     //             if (completedState && !completedSteps.includes(completedState)) {
     //                 completedSteps.push(completedState);
     //             }
-                
+
     //             await this.simulationRepository.addOrUpdateStatus({
     //                 ...simulation,
     //                 status,
@@ -326,7 +267,7 @@ class SimulationService {
     //                 lastUpdated: Date.now(),
     //                 completedSteps
     //             });
-                
+
     //             console.log(`Updated simulation status for ${productId}: ${status}, state: ${currentState}`);
     //         } else {
     //             console.warn(`Simulation for product ${productId} not found, cannot update status`);
@@ -335,7 +276,7 @@ class SimulationService {
     //         console.error(`Error updating simulation status:`, error);
     //     }
     // }
-    
+
     /**
      * Get the delay time for a specific state (in milliseconds)
      * In the future, these should be defined with the product models
@@ -348,23 +289,23 @@ class SimulationService {
     //         'reviewing': 15000,        // 15 seconds
     //         'approved': 8000,          // 8 seconds
     //         'funding': 12000,          // 12 seconds
-            
+
     //         // Account states
     //         'pending': 8000,           // 8 seconds
     //         'processing': 10000,       // 10 seconds
-            
+
     //         // Card states
     //         'issued': 5000,            // 5 seconds
     //         'shipping': 15000,         // 15 seconds
     //         'delivered': 10000,        // 10 seconds
-            
+
     //         // Default delay
     //         'default': 10000           // 10 seconds
     //     };
-        
+
     //     return delays[state] || delays['default'];
     // }
-    
+
     /**
      * Get the current queue from localStorage
      * Will be replaced with repository usage
@@ -375,11 +316,11 @@ class SimulationService {
             // If we had implemented a queue in the repository, we would use it here
             // For now, we continue with localStorage as a temporary solution
         }
-        
+
         const queueJson = localStorage.getItem(this.QUEUE_KEY);
         return queueJson ? JSON.parse(queueJson) : [];
     }
-    
+
     /**
      * Save the queue to localStorage
      * Will be replaced with repository usage
@@ -389,10 +330,10 @@ class SimulationService {
             // If we had implemented a queue in the repository, we would use it here
             // For now, we continue with localStorage as a temporary solution
         }
-        
+
         localStorage.setItem(this.QUEUE_KEY, JSON.stringify(queue));
     }
-    
+
     /**
      * Clean up resources when service is destroyed
      */
