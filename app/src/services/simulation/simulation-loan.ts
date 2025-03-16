@@ -8,8 +8,6 @@ import { TaskResults } from "./simulation-service";
  * Process a loan application task
  */
 export async function processLoanApplication(task: SimulationTask): Promise<TaskResults> {
-    debugger
-
     // get current state of the loan
     const loanRepo = repositoryService.getLoanRepository();
     const loan = await loanRepo.getById(task.productId);
@@ -55,12 +53,14 @@ export async function processLoanApplication(task: SimulationTask): Promise<Task
             return {
                 success: false,
                 task: task,
+                error: 'Loan payout not yet implemented',
             }
         case 'rejected':
             console.warn('Loan state not yet implemented');
             return {
                 success: false,
                 task: task,
+                error: 'Loan rejection not yet implemented',
             }
         case 'active':
             // TODO: check interest rates? change any related recurring payment tasks?
@@ -69,12 +69,14 @@ export async function processLoanApplication(task: SimulationTask): Promise<Task
             return {
                 success: false,
                 task: task,
+                error: 'Loan activation not yet implemented',
             }
         case 'paid_off':
             console.warn('Loan state not yet implemented');
             return {
                 success: false,
                 task: task,
+                error: 'Loan paid off not yet implemented',
             }
         case 'defaulted':
         default:
@@ -82,6 +84,7 @@ export async function processLoanApplication(task: SimulationTask): Promise<Task
             return {
                 success: false,
                 task: task,
+                error: 'Unknown loan state',
             }
     }
 }
