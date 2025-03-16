@@ -4,7 +4,8 @@ import { TaskResults } from "./simulation-service";
 /**
  * Process a loan application task
  */
-export function processLoanApplication(task: SimulationTask): TaskResults {
+export async function processLoanApplication(task: SimulationTask): Promise<TaskResults> {
+    
     debugger
     // In the future, these states should come from the loan product definition
     const states = ['pending_approval', 'reviewing', 'approved', 'funding', 'active'];

@@ -2,8 +2,8 @@ import "./repositories/product-repository"
 import { WorkflowService } from './services/workflow-service';
 
 import "./services/user-service"
-import "./repositories/simulation-repository"
-import "./services/simulation/simulation-service"
+import { simulationService } from "./services/simulation/simulation-service";
+
 // Import workflow components
 import './services/user-product-service';
 import './workflows/swish-workflow';
@@ -121,9 +121,9 @@ import './components/footer-component'
 import './components/search/search-component'
 import { getSearchService } from './services/search-service';
 
+
 // Signal that widgets are now registered
 console.debug('Application initialized')
 widgetService.emitWidgetsRegistered()
 
-// start any simulation tasks that need to run
-import './services/simulation/simulation-service'
+simulationService.initialize()

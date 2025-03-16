@@ -30,6 +30,7 @@ export class SimulationRepository extends LocalStorageRepository<SimulationTask>
   private static instance: SimulationRepository;
   private constructor(storage: StorageService, userService: UserService) {
     super('simulation-tasks', storage, userService);
+    console.log('Simulation repository initialized');
   }
 
   public static getInstance(
@@ -46,25 +47,6 @@ export class SimulationRepository extends LocalStorageRepository<SimulationTask>
    * Add a task to the simulation queue
    */
   async addTask(task: SimulationTask): Promise<SimulationTask> {
-    // Check if task already exists for this product
-    // const existing = await this.getTaskByProductId(productId);
-    // if (existing) {
-    //   console.log(`Task already exists for product ${productId}`);
-    //   return existing;
-    // }
-    
-    // const now = Date.now();
-    // const task: SimulationTask = {
-    //   id: `task_${generateUUID()}`,
-    //   productId,
-    //   type,
-    //   currentState: initialState,
-    //   nextProcessTime: now + this.getStateDelay(initialState, type),
-    //   createdTime: now,
-    //   completedSteps: [],
-    //   status: 'pending'
-    // };
-    
     const created = await this.create(task);
     console.log(`Created simulation task for product ${task.productId} with initial state ${task.currentState}`);
     return created;
@@ -89,8 +71,17 @@ export class SimulationRepository extends LocalStorageRepository<SimulationTask>
       lastProcessedTime: now
       });
     }
+
+    this.sanitycheck()
     
     return readyTask;
+  }
+
+  async sanitycheck() {
+    console.log('implement sanity check')
+    // TODO: add a sanity check for tasks that are stuck in 'in_progress' state
+    // and have not been updated for a long time
+    // if the lastProcessedTime is more than 5 minutes ago, mark the task as 'pending'
   }
 
   /**

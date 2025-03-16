@@ -3,16 +3,6 @@ import { simulationRepository, SimulationRepository, SimulationTask } from "../.
 import { UserProductRepository } from "../../repositories/user-product-repository";
 import { processLoanApplication } from "./simulation-loan";
 
-// Task interface for simulation queue
-// interface SimulationTask {
-//     id: string;
-//     userProductId: string;
-//     type: string; // 'loan', 'account', etc.
-//     currentState: string;
-//     nextStateTime: number; // Timestamp for when to process the next state
-//     startTime: number;
-//     metadata?: Record<string, any>; // Additional data needed for simulation
-
 export interface TaskResults {
     success: boolean;
     task: SimulationTask;
@@ -43,18 +33,6 @@ class SimulationService {
         return SimulationService.instance;
     }
     
-    // /**
-    //  * Set the repositories needed for simulation
-    //  */
-    // setRepositories(
-    //     simulationRepository: SimulationRepository, 
-    //     userProductRepository: UserProductRepository
-    // ): void {
-    //     this.simulationRepository = simulationRepository;
-    //     this.userProductRepository = userProductRepository;
-    //     console.debug("SimulationService repositories configured");
-    // }
-    
     async initialize(): Promise<void> {
         // Clear any existing interval to avoid duplicates
         if (this.intervalId) {
@@ -66,7 +44,7 @@ class SimulationService {
             this.processQueue();
         }, this.PROCESSING_INTERVAL);
         
-        console.debug("SimulationService initialized with task processor");
+        console.log("SimulationService initialized with task processor");
     }
     
     /**
@@ -122,12 +100,12 @@ class SimulationService {
     }
     
     /**
-     * Process all tasks in the queue
      */
-    private processQueue(): void {
+    private async processQueue(): Promise<void> {
+        console.log("Processing simulation queue...");
         // Prevent concurrent processing
         if (this.isProcessingQueue) {
-            console.debug("Queue processing already in progress, skipping");
+            console.log("Queue processing already in progress, skipping");
             return;
         }
         
@@ -148,24 +126,19 @@ class SimulationService {
             
             // Check if it's time to process this task
             if (now >= task.nextProcessTime) {
-                const result = this.processTask(task);
-                
-                // Create updated queue
-                const updatedQueue = [...remainingTasks];
+                const result = await this.processTask(task);
                 
                 // If task is not completed, add it back to the end of the queue
-                if (result) {
-                    updatedQueue.push(result);
+                if (result.success) {
+                    // TODO: handle COMPLETED state
+                    this.simulationRepository.updateTaskState(task, 'pending')
                 } else {
-                    console.log(`Task ${task.id} completed and removed from queue`);
+                    console.error(`Error processing task ${task.id}: ${result.error}`);
+                    // this.simulationRepository.updateTaskState(task, 'pending');
                 }
-                
-                // Save the updated queue
-                this.saveQueue(updatedQueue);
             } else {
                 // Not time to process yet, put it at the end of the queue
-                console.debug(`Task ${task.id} not ready for processing, rescheduling`);
-                this.saveQueue([...remainingTasks, task]);
+                console.warn(`Task ${task.id} not ready for processing yet`);
             }
         } finally {
             // Clear processing flag
@@ -176,20 +149,13 @@ class SimulationService {
     /**
      * Process a single task and return updated task or null if completed
      */
-    private processTask(task: SimulationTask): SimulationTask | null {
+    private async processTask(task: SimulationTask): Promise<TaskResults> {
         console.debug(`Processing task: ${task.type} in state ${task.currentState}`);
         
         switch (task.type.toLowerCase()) {
             case 'loan':
-                const results = processLoanApplication(task);
-                if (results.success) {
-                    // TODO: should check if the task is completed, because then we can delete it from the repo
-                    // otherwise, lets put it back in the repo
-
-                    this.simulationRepository.updateTaskState(task, 'pending')
-                    
-                    return null;
-                }
+                return await processLoanApplication(task);
+                
             case 'account':
                 throw new Error("Account processing not implemented");
                 // return this.processAccountCreation(task);
@@ -198,7 +164,7 @@ class SimulationService {
                 // return this.processCardActivation(task);
             default:
                 console.error(`Unknown task type: ${task.type}`);
-                return null;
+                throw new Error(`Unknown task type: ${task.type}`);
         }
     }
     
@@ -314,41 +280,41 @@ class SimulationService {
     /**
      * Update the simulation status in the repository
      */
-    private async updateSimulationStatus(
-        productId: string, 
-        status: string,
-        currentState: string,
-        completedState?: string
-    ): Promise<void> {
-        if (!this.simulationRepository) {
-            console.warn("SimulationRepository not set, cannot update simulation status");
-            return;
-        }
+    // private async updateSimulationStatus(
+    //     productId: string, 
+    //     status: string,
+    //     currentState: string,
+    //     completedState?: string
+    // ): Promise<void> {
+    //     if (!this.simulationRepository) {
+    //         console.warn("SimulationRepository not set, cannot update simulation status");
+    //         return;
+    //     }
         
-        try {
-            const simulation = await this.simulationRepository.getById(productId);
-            if (simulation) {
-                const completedSteps = [...simulation.completedSteps];
-                if (completedState && !completedSteps.includes(completedState)) {
-                    completedSteps.push(completedState);
-                }
+    //     try {
+    //         const simulation = await this.simulationRepository.getById(productId);
+    //         if (simulation) {
+    //             const completedSteps = [...simulation.completedSteps];
+    //             if (completedState && !completedSteps.includes(completedState)) {
+    //                 completedSteps.push(completedState);
+    //             }
                 
-                await this.simulationRepository.addOrUpdateStatus({
-                    ...simulation,
-                    status,
-                    currentState,
-                    lastUpdated: Date.now(),
-                    completedSteps
-                });
+    //             await this.simulationRepository.addOrUpdateStatus({
+    //                 ...simulation,
+    //                 status,
+    //                 currentState,
+    //                 lastUpdated: Date.now(),
+    //                 completedSteps
+    //             });
                 
-                console.log(`Updated simulation status for ${productId}: ${status}, state: ${currentState}`);
-            } else {
-                console.warn(`Simulation for product ${productId} not found, cannot update status`);
-            }
-        } catch (error) {
-            console.error(`Error updating simulation status:`, error);
-        }
-    }
+    //             console.log(`Updated simulation status for ${productId}: ${status}, state: ${currentState}`);
+    //         } else {
+    //             console.warn(`Simulation for product ${productId} not found, cannot update status`);
+    //         }
+    //     } catch (error) {
+    //         console.error(`Error updating simulation status:`, error);
+    //     }
+    // }
     
     /**
      * Get the delay time for a specific state (in milliseconds)
