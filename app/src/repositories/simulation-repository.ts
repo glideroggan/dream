@@ -80,7 +80,7 @@ export class SimulationRepository extends LocalStorageRepository<SimulationTask>
   }
 
   async sanitycheck() {
-    console.log('implement sanity check')
+    console.debug('implement sanity check')
     // TODO: add a sanity check for tasks that are stuck in 'in_progress' state
     // and have not been updated for a long time
     // if the lastProcessedTime is more than 5 minutes ago, mark the task as 'pending'
@@ -94,6 +94,7 @@ export class SimulationRepository extends LocalStorageRepository<SimulationTask>
     newState: string, 
     isCompleted: boolean = false
   ): Promise<SimulationTask> {
+    console.log(`Updating task ${task.id} state from ${task.currentState} to ${newState}`);
     // Add the current state to completed steps
     const completedSteps = [...task.completedSteps];
     if (!completedSteps.includes(task.currentState)) {
@@ -102,11 +103,11 @@ export class SimulationRepository extends LocalStorageRepository<SimulationTask>
     
     const now = Date.now();
     const updates: Partial<SimulationTask> = {
+      nextProcessTime: task.nextProcessTime,
       currentState: newState,
       lastProcessedTime: now,
       completedSteps,
       status: isCompleted ? 'completed' : 'pending',
-      // TODO: this is dependent on the product type, so it should not be set here
     };
     
     const updated = await this.update(task.id, updates);

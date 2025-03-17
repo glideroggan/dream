@@ -1,5 +1,6 @@
 import { Entity } from "../base-repository";
 
+// TODO: probably better to have them as union types
 // Loan types available
 export enum LoanType {
   PERSONAL = 'personal',

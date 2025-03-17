@@ -2,6 +2,7 @@ import { LoanRepository } from "../../repositories/loan-repository";
 import { getNextLoanStatus, getStateDelay, LoanStatus } from "../../repositories/models/loan-models";
 import { simulationRepository, SimulationTask } from "../../repositories/simulation-repository";
 import { repositoryService } from "../repository-service";
+import { transactionService } from "../transaction-service";
 import { CreateSimulationTask, simulationService, TaskResults } from "./simulation-service";
 
 /**
@@ -51,7 +52,7 @@ export async function processLoanApplication(task: SimulationTask): Promise<Task
             // maybe as a rule, repositories never throws?
             // payout the money to the account
             // TODO: should we tie this tranaction somehow to the loan?
-            const transaction = await transactionRepo.fromExternal(accountId, amount, accountCurrency!, 'Loan payout');
+            const transaction = await transactionService.createFromExternal(accountId, amount, accountCurrency!, 'Loan payout');
             if (!loan.metadata) {
                 loan.metadata = {}
             }
@@ -90,11 +91,12 @@ export async function processLoanApplication(task: SimulationTask): Promise<Task
             // TODO: check interest rates? change any related recurring payment tasks?
             // once being checked here, check also the recurring payment task, and adjust interest rates if needed
             // 
-            console.warn('Loan state not yet implemented');
+
+            task.nextProcessTime = now + getStateDelay(LoanStatus.ACTIVE, 'loan');
+            console.debug('Loan state not yet implemented');
             return {
-                success: false,
+                success: true,
                 task: task,
-                error: 'Loan activation not yet implemented',
             }
         case 'paid_off':
             console.warn('Loan state not yet implemented');

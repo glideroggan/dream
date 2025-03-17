@@ -32,7 +32,6 @@ export async function processRecurringPayment(task: SimulationTask): Promise<Tas
             task: task
         }
     }
-    debugger
     const lastTransactionReference = task.metadata?.lastTransactionReference;
     if (!lastTransactionReference) {
         // create transaction
@@ -81,14 +80,16 @@ export async function processRecurringPayment(task: SimulationTask): Promise<Tas
 async function createScheduledPayment(task: SimulationTask, loan: Loan): Promise<Transaction> {
     const ref = `${generateUniqueId(`scheduled-payment-${task.id}`)}`;
     const now = Date.now();
+    // TODO: check if this is correct, as we might need to incorporate the interest
     const amount = loan.monthlyPayment;
     const accountId = loan.accountId;
     const accountRepo = repositoryService.getAccountRepository();
     const account = await accountRepo.getById(accountId);
     const accountCurrency = account?.currency;
-    // TODO: calculate the due date, which should be now + 30 days, closest 28th day
+    // calculate the due date, which should be now + 30 days, closest 28th day
     const dueDate = getNextDate(now + 30, 28)
-    const transaction = await transactionService.createTransaction(accountId, amount, accountCurrency!, 'Scheduled payment', dueDate, ref)
+    const transaction = await transactionService.createToExternal(accountId, amount, accountCurrency!, 'Scheduled payment', dueDate, ref)
+    console.log('created scheduled payment', transaction);
 
     // update task with reference
     if (!task.metadata) {

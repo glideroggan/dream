@@ -130,10 +130,10 @@ class SimulationService {
     /**
      */
     private async processQueue(): Promise<void> {
-        console.log("Processing simulation queue...");
+        console.debug("Processing simulation queue...");
         // Prevent concurrent processing
         if (this.isProcessingQueue) {
-            console.log("Queue processing already in progress, skipping");
+            console.debug("Queue processing already in progress, skipping");
             return;
         }
 
@@ -158,7 +158,7 @@ class SimulationService {
             // Only process one task at a time as requested in TODO
             const now = Date.now();
 
-            console.log(`Processing simulation task: ${task.type} (${task.id})`);
+            console.debug(`Processing simulation task: ${task.type} (${task.id})`);
 
             // Check if it's time to process this task
             if (now >= task.nextProcessTime) {
@@ -186,7 +186,7 @@ class SimulationService {
      * Process a single task and return updated task or null if completed
      */
     private async processTask(task: SimulationTask): Promise<TaskResults> {
-        console.debug(`Processing task: ${task.type} in state ${task.currentState}`);
+        console.log(`Processing task: ${task.type} in state ${task.currentState}`);
 
         switch (task.type.toLowerCase()) {
             case 'recurring_payment':

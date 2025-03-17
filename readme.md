@@ -1,4 +1,9 @@
 # BUGS
+- 🔧we have a problem with scheduled/upcoming transactions
+  These shouldn't be part of normal transactions, instead they should be part of a simulation task and have a separate list
+  We can have the transaction repo save two lists, upcoming and completed
+  A simulation task could be going over the upcoming, and if it is time for a transaction, then we will perform it. This way the account balance
+  will be updated in the correct order
 - loan-workflow creates the loan too early, we need to sign first
   - it doesn't add it as a product
   - it also adds the loan 3 times...
@@ -76,7 +81,11 @@ Would be nice to get a bit more things happening, if we could do like in the lif
         - should show a toast
 
 # TODO
-- we should have a transaction-service
+- financial-health-widget is not taking loans into account?
+- financial-health-widget is taking upcoming transactions into account when it comes to Top expenses?
+  as they haven't happen yet, they shouldn't be included
+- scheduled payment should have more info for what is is from, like the loan payment
+- ✔️we should have a transaction-service
 - we should have a widget for loans
   Once you create a loan with the workflow, it should give you the loan-widget
   where you can see your application, and the status of it
