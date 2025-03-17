@@ -14,12 +14,14 @@ export class RepositoryService {
   private userProductRepo: UserProductRepository;
   private cardRepo: CardRepository;
   private loanRepo: LoanRepository
+  private upcomingRepo: UpcomingTransactionRepository;
   // private productRepo: ProductRepository;
   
   private constructor(storage: StorageService, userService: UserService) {
     // Initialize repositories
     // this.productRepo = new ProductRepository(storage);
     this.transactionRepo = new TransactionRepository(storage, userService);
+    this.upcomingRepo = new UpcomingTransactionRepository(storage, userService);
     this.accountRepo = new AccountRepository(storage, userService, this.transactionRepo);
     this.settingsRepo = new SettingsRepository(storage, userService);
     this.userProductRepo = new UserProductRepository(storage, userService);
@@ -33,6 +35,10 @@ export class RepositoryService {
       RepositoryService.instance = new RepositoryService(storage, userService);
     }
     return RepositoryService.instance;
+  }
+
+  getUpcomingTransactionRepository(): UpcomingTransactionRepository {
+    return this.upcomingRepo;
   }
 
   getLoanRepository(): LoanRepository {
@@ -78,5 +84,6 @@ import { userService } from './user-service';
 import { CardRepository } from '../repositories/card-repository';
 import { LoanRepository } from '../repositories/loan-repository';
 import { ProductRepository, productRepository } from '../repositories/product-repository';
+import { UpcomingTransactionRepository } from '../repositories/upcoming-transaction-repo';
 
 export const repositoryService = RepositoryService.getInstance(storageService, userService);

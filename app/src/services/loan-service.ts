@@ -221,7 +221,7 @@ export class LoanService {
    * Submit loan application for approval
    */
   async submitLoanApplication(loanId: string): Promise<Loan> {
-    console.log('Submitting loan application', loanId);
+    console.debug('Submitting loan application', loanId);
     try {
       const loanRepo = repositoryService.getLoanRepository();
       const updatedLoan = await loanRepo.updateLoanStatus(loanId, LoanStatus.PENDING_APPROVAL);
@@ -472,7 +472,7 @@ export class LoanService {
    * Renamed to better match the repository method
    */
   async updateLoanAccount(loanId: string, accountId: string): Promise<Loan | undefined> {
-    console.log('Updating loan account', loanId, accountId);
+    console.debug('Updating loan account', loanId, accountId);
     const loanRepo = repositoryService.getLoanRepository();
     return loanRepo.updateLoanAccount(loanId, accountId);
   }
@@ -482,7 +482,7 @@ export class LoanService {
    * Added to support workflow
    */
   async updateWithSignature(loanId: string, signatureId: string): Promise<Loan | undefined> {
-    console.log('Updating loan with signature', loanId, signatureId);
+    console.debug('Updating loan with signature', loanId, signatureId);
     const loanRepo = repositoryService.getLoanRepository();
     return loanRepo.updateWithSignature(loanId, signatureId);
   }

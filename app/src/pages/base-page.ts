@@ -258,7 +258,7 @@ export class BasePage extends FASTElement {
   }
 
   protected handleProductChange(event: UserProductChangeEvent): void {
-    console.log(`Product ${event.type} event received:`, event.product?.id);
+    console.debug(`Product ${event.type} event received:`, event.product?.id);
     const productId = event.productId;
     if (event.type === 'add') {
       this.addWidgetsForProduct(productId);

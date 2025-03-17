@@ -121,12 +121,12 @@ async function updateNextState(currentState:LoanStatus, now:number, task:Simulat
     task.nextProcessTime = now + getStateDelay(nextState!, 'loan');
     // Update the loan entity via repository
     const ok = await updateProductState(task.productId, nextState!);
-    console.log(`Transitioning loan ${task.productId} from ${task.currentState} to ${nextState}`);
+    console.debug(`Transitioning loan ${task.productId} from ${task.currentState} to ${nextState}`);
     return ok
 }
 
 async function updateProductState(productId: string, state: LoanStatus): Promise<boolean> {
-    console.log(`Updating product ${productId} state to ${state}`);
+    console.debug(`Updating product ${productId} state to ${state}`);
     // TODO: update the state of the loan product in the repository loan-repository.ts
     const loanRepository = repositoryService.getLoanRepository();
 

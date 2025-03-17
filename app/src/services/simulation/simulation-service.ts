@@ -55,7 +55,10 @@ class SimulationService {
             this.processQueue();
         }, this.PROCESSING_INTERVAL);
 
-        console.log("SimulationService initialized with task processor");
+        // TODO: always create a task that will check upcoming transactions processing
+        // maybe this should be in that repo instead?
+
+        console.debug("SimulationService initialized with task processor");
     }
 
     async createTask(task: CreateSimulationTask): Promise<void> {
@@ -83,7 +86,7 @@ class SimulationService {
                 throw new Error(`Unsupported task type: ${task.type}`);
         }
         this.simulationRepository.addTask(newTask);
-        console.log(`SimulationService: Added simulation task for product ${task.productId} with initial state ${newTask.currentState}`);
+        console.debug(`SimulationService: Added simulation task for product ${task.productId} with initial state ${newTask.currentState}`);
     }
 
     /**
@@ -109,7 +112,7 @@ class SimulationService {
         // queue.push(newTask);
         // this.saveQueue(queue);
 
-        console.log(`SimulationService: Added simulation task for product ${userProductId} with initial state ${initialState}`);
+        console.debug(`SimulationService: Added simulation task for product ${userProductId} with initial state ${initialState}`);
     }
 
     /**
@@ -123,7 +126,7 @@ class SimulationService {
 
         // if (queue.length !== updatedQueue.length) {
         //     this.saveQueue(updatedQueue);
-        //     console.log(`SimulationService: Removed task for product ${userProductId}`);
+        //     console.debug(`SimulationService: Removed task for product ${userProductId}`);
         // }
     }
 
@@ -186,7 +189,7 @@ class SimulationService {
      * Process a single task and return updated task or null if completed
      */
     private async processTask(task: SimulationTask): Promise<TaskResults> {
-        console.log(`Processing task: ${task.type} in state ${task.currentState}`);
+        console.debug(`Processing task: ${task.type} in state ${task.currentState}`);
 
         switch (task.type.toLowerCase()) {
             case 'recurring_payment':
@@ -229,7 +232,7 @@ class SimulationService {
                     lastUpdated: new Date().toISOString()
                 });
 
-                console.log(`Updated product ${productId} state to ${state}`);
+                console.debug(`Updated product ${productId} state to ${state}`);
             } else {
                 console.warn(`Product ${productId} not found, cannot update state`);
             }
@@ -268,7 +271,7 @@ class SimulationService {
     //                 completedSteps
     //             });
 
-    //             console.log(`Updated simulation status for ${productId}: ${status}, state: ${currentState}`);
+    //             console.debug(`Updated simulation status for ${productId}: ${status}, state: ${currentState}`);
     //         } else {
     //             console.warn(`Simulation for product ${productId} not found, cannot update status`);
     //         }

@@ -116,7 +116,8 @@ export class AccountListComponent extends FASTElement {
       });
 
       // Load upcoming transactions
-      const upcomingTransactions = await transactionRepo.getUpcoming();
+      const upcomingRepo = repositoryService.getUpcomingTransactionRepository();
+      const upcomingTransactions = await upcomingRepo.getAll();
 
       // Process and cache upcoming transactions by account
       for (const transaction of upcomingTransactions) {
@@ -213,7 +214,7 @@ export class AccountListComponent extends FASTElement {
       if (transactions.length > 0) {
         // Calculate and store total outgoing amount
         const outgoing = transactions.filter(t => !t.isIncoming);
-        const outgoingTotal = outgoing.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+        const outgoingTotal = outgoing.reduce((sum, t) => sum + Math.abs(t.amount!), 0);
         this.outgoingTotalsByAccount.set(accountId, outgoingTotal);
 
         // For each account that has transactions, invalidate the insights cache
@@ -355,7 +356,7 @@ export class AccountListComponent extends FASTElement {
 
     // Add outgoing transactions insight
     if (outgoing.length > 0) {
-      const outgoingTotal = outgoing.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+      const outgoingTotal = outgoing.reduce((sum, t) => sum + Math.abs(t.amount!), 0);
       const closest = this.getClosestTransaction(outgoing);
       const timeframe = this.getTimeframeText(closest.scheduledDate!);
 
@@ -374,7 +375,7 @@ export class AccountListComponent extends FASTElement {
 
     // Add incoming transactions insight
     if (incoming.length > 0) {
-      const incomingTotal = incoming.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+      const incomingTotal = incoming.reduce((sum, t) => sum + Math.abs(t.amount!), 0);
       const closest = this.getClosestTransaction(incoming);
       const timeframe = this.getTimeframeText(closest.scheduledDate!);
 

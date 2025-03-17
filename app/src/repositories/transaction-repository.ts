@@ -98,9 +98,9 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
   /**
    * Get upcoming transactions
    */
-  async getUpcoming(): Promise<Transaction[]> {
-    return this.getByStatus(TransactionStatuses.UPCOMING);
-  }
+  // async getUpcoming(): Promise<Transaction[]> {
+  //   return this.getByStatus(TransactionStatuses.UPCOMING);
+  // }
 
   /**
    * Get completed transactions
@@ -130,92 +130,92 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
    * Create a transaction to an external account
    * @param request The external transaction request data
    */
-  async toExternal(request: ExternalTransactionRequest): Promise<Transaction> {
-    const { fromAccountId, amount, currency, fromAccountBalance, description, dueDate, reference } = request;
+  // async toExternal(request: ExternalTransactionRequest): Promise<Transaction> {
+  //   const { fromAccountId, amount, currency, fromAccountBalance, description, dueDate, reference } = request;
     
-    const now = new Date();
-    const transaction: Omit<Transaction, 'id'> = {
-      fromAccountId,
-      fromAccountBalance,
-      toAccountId: 'external',
-      amount,
-      direction: TransactionDirections.DEBIT,
-      currency,
-      description,
-      scheduledDate: dueDate && dueDate > now ? dueDate.toISOString() : now.toISOString(),
-      status: dueDate && dueDate > now ? TransactionStatuses.UPCOMING : TransactionStatuses.COMPLETED,
-      type: TransactionTypes.WITHDRAWAL,
-      createdAt: now.toISOString(),
-      completedDate: dueDate && dueDate > now ? undefined : now.toISOString(),
-      reference
-    };
+  //   const now = new Date();
+  //   const transaction: Omit<Transaction, 'id'> = {
+  //     fromAccountId,
+  //     fromAccountBalance,
+  //     toAccountId: 'external',
+  //     amount,
+  //     direction: TransactionDirections.DEBIT,
+  //     currency,
+  //     description,
+  //     scheduledDate: dueDate && dueDate > now ? dueDate.toISOString() : now.toISOString(),
+  //     status: dueDate && dueDate > now ? TransactionStatuses.UPCOMING : TransactionStatuses.COMPLETED,
+  //     type: TransactionTypes.WITHDRAWAL,
+  //     createdAt: now.toISOString(),
+  //     completedDate: dueDate && dueDate > now ? undefined : now.toISOString(),
+  //     reference
+  //   };
     
-    return this.create(transaction);
-  }
+  //   return this.create(transaction);
+  // }
 
-  async fromExternal(toAccountId: string, amount: number, currency: string, description?: string): Promise<Transaction> {
-    const accounRepo = repositoryService.getAccountRepository();
-    const toAccount = await accounRepo.getById(toAccountId);
-    if (!toAccount) {
-      throw new Error(`Account ${toAccountId} not found`);
-    }
-    toAccount.balance += amount;
-    const now = new Date();
-    const transaction: Omit<Transaction, 'id'> = {
-      fromAccountId: 'external',
-      toAccountId,
-      toAccountBalance: toAccount.balance,
-      amount,
-      direction: TransactionDirections.CREDIT,
-      currency,
-      description,
-      status: TransactionStatuses.COMPLETED,
-      type: 'deposit',
-      createdAt: now.toISOString(),
-      completedDate: now.toISOString(),
-      reference: generateUniqueId('external-deposit')
-    };
+  // async fromExternal(toAccountId: string, amount: number, currency: string, description?: string): Promise<Transaction> {
+  //   const accounRepo = repositoryService.getAccountRepository();
+  //   const toAccount = await accounRepo.getById(toAccountId);
+  //   if (!toAccount) {
+  //     throw new Error(`Account ${toAccountId} not found`);
+  //   }
+  //   toAccount.balance += amount;
+  //   const now = new Date();
+  //   const transaction: Omit<Transaction, 'id'> = {
+  //     fromAccountId: 'external',
+  //     toAccountId,
+  //     toAccountBalance: toAccount.balance,
+  //     amount,
+  //     direction: TransactionDirections.CREDIT,
+  //     currency,
+  //     description,
+  //     status: TransactionStatuses.COMPLETED,
+  //     type: 'deposit',
+  //     createdAt: now.toISOString(),
+  //     completedDate: now.toISOString(),
+  //     reference: generateUniqueId('external-deposit')
+  //   };
 
-    return this.create(transaction);
+  //   return this.create(transaction);
 
-  }
+  // }
 
   /**
    * Create a new transfer transaction
    */
-  async createTransferTransaction(
-    fromAccountId: string,
-    toAccountId: string,
-    amount: number,
-    currency: string,
-    fromAccountBalance: number,
-    toAccountBalance?: number,
-    description?: string,
-    isCompleted: boolean = true
-  ): Promise<Transaction> {
-    const now = new Date();
-    const transaction: Omit<Transaction, 'id'> = {
-      fromAccountId,
-      toAccountId,
-      amount,
-      direction: TransactionDirections.DEBIT,
-      currency,
-      description,
+  // async createTransferTransaction(
+  //   fromAccountId: string,
+  //   toAccountId: string,
+  //   amount: number,
+  //   currency: string,
+  //   fromAccountBalance: number,
+  //   toAccountBalance?: number,
+  //   description?: string,
+  //   isCompleted: boolean = true
+  // ): Promise<Transaction> {
+  //   const now = new Date();
+  //   const transaction: Omit<Transaction, 'id'> = {
+  //     fromAccountId,
+  //     toAccountId,
+  //     amount,
+  //     direction: TransactionDirections.DEBIT,
+  //     currency,
+  //     description,
       
-      status: isCompleted ? TransactionStatuses.COMPLETED : TransactionStatuses.UPCOMING,
-      type: TransactionTypes.TRANSFER,
-      createdAt: now.toISOString(),
-      fromAccountBalance: fromAccountBalance,
-      toAccountBalance: toAccountBalance
-    };
+  //     status: isCompleted ? TransactionStatuses.COMPLETED : TransactionStatuses.UPCOMING,
+  //     type: TransactionTypes.TRANSFER,
+  //     createdAt: now.toISOString(),
+  //     fromAccountBalance: fromAccountBalance,
+  //     toAccountBalance: toAccountBalance
+  //   };
 
-    // Add the appropriate date based on status
-    if (isCompleted) {
-      transaction.completedDate = now.toISOString();
-    } else {
-      transaction.scheduledDate = now.toISOString();
-    }
+  //   // Add the appropriate date based on status
+  //   if (isCompleted) {
+  //     transaction.completedDate = now.toISOString();
+  //   } else {
+  //     transaction.scheduledDate = now.toISOString();
+  //   }
 
-    return this.create(transaction);
-  }
+  //   return this.create(transaction);
+  // }
 }

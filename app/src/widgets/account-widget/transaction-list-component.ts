@@ -1,9 +1,9 @@
 import { FASTElement, customElement, html, css, observable, repeat, when } from "@microsoft/fast-element";
 import { TransactionViewModelHelper } from "./transaction-view-model-helper";
 import { repositoryService } from "../../services/repository-service";
-import { Transaction } from "../../repositories/models/transaction-models";
+import { Transaction, UpcomingTransaction } from "../../repositories/models/transaction-models";
 
-export interface TransactionViewModel extends Transaction {
+export interface TransactionViewModel extends Partial<UpcomingTransaction> {
   isIncoming: boolean;
   amountClass: string;
   formattedAmount: string;
@@ -62,14 +62,14 @@ const template = html<TransactionListComponent>/*html*/ `
               ${repeat(x => x.visibleRegularTransactions, html<TransactionViewModel>/*html*/`
                 <div class="transaction-item">
                   <div class="transaction-icon">
-                    <div class="category-icon ${x => x.type.toLowerCase()}"></div>
+                    <div class="category-icon ${x => x.type!.toLowerCase()}"></div>
                   </div>
                   <div class="transaction-details">
                     <div class="transaction-description">${x => x.description || 'Transaction'}</div>
                     <div class="transaction-meta">
                       <span class="transaction-type">${x => x.type}</span>
-                      <span class="transaction-time">${x => new Date(x.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                      <span class="transaction-date">${x => new Date(x.createdAt).toLocaleDateString()}</span>
+                      <span class="transaction-time">${x => new Date(x.createdAt!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      <span class="transaction-date">${x => new Date(x.createdAt!).toLocaleDateString()}</span>
                     </div>
                   </div>
                   <div class="transaction-amount ${x => x.amountClass}">
@@ -108,7 +108,7 @@ const template = html<TransactionListComponent>/*html*/ `
                     ${repeat(x => x.transactions, html<TransactionViewModel>/*html*/`
                       <div class="transaction-item upcoming">
                         <div class="transaction-icon">
-                          <div class="category-icon ${x => x.type.toLowerCase()} scheduled"></div>
+                          <div class="category-icon ${x => x.type!.toLowerCase()} scheduled"></div>
                         </div>
                         <div class="transaction-details">
                           <div class="transaction-description">${x => x.description || 'Scheduled Transaction'}</div>
@@ -572,6 +572,7 @@ export class TransactionListComponent extends FASTElement {
   @observable hasMoreUpcomingTransactions: boolean = true;
 
   private transactionRepo = repositoryService.getTransactionRepository();
+  private upcomingTransactionsRepo = repositoryService.getUpcomingTransactionRepository();
   private unsubscribe: () => void;
 
   constructor() {
@@ -632,7 +633,7 @@ export class TransactionListComponent extends FASTElement {
 
       // Get fresh iterators for both types of transactions
       this.regularTransactionIterator = this.transactionRepo.getByAccountIdIterator(this.accountId);
-      this.upcomingTransactionIterator = this.transactionRepo.getByAccountIdIterator(this.accountId);
+      this.upcomingTransactionIterator = this.upcomingTransactionsRepo.getByAccountIdIterator(this.accountId);
 
       // Load initial batches
       await this.loadMoreRegularTransactions();
@@ -700,7 +701,7 @@ export class TransactionListComponent extends FASTElement {
 
         // Sort by date (newest first)
         allTransactions.sort((a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime()
         );
         // Update state in one go
         this.regularTransactions = allTransactions;
@@ -758,8 +759,8 @@ export class TransactionListComponent extends FASTElement {
 
         // Sort by scheduled date (soonest first)
         allTransactions.sort((a, b) => {
-          const dateA = a.scheduledDate ? new Date(a.scheduledDate) : new Date(a.createdAt);
-          const dateB = b.scheduledDate ? new Date(b.scheduledDate) : new Date(b.createdAt);
+          const dateA = a.scheduledDate ? new Date(a.scheduledDate) : new Date(a.createdAt!);
+          const dateB = b.scheduledDate ? new Date(b.scheduledDate) : new Date(b.createdAt!);
           return dateA.getTime() - dateB.getTime();
         });
 

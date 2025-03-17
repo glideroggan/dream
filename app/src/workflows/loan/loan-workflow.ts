@@ -553,7 +553,7 @@ export class LoanWorkflow extends WorkflowBase {
 
 
       if (signingResult.success) {
-        console.log("Signing completed successfully:", signingResult.data);
+        console.debug("Signing completed successfully:", signingResult.data);
         // Store signature ID with loan
         await loanService.updateWithSignature(
           this.loanDetails.id,
@@ -582,10 +582,10 @@ export class LoanWorkflow extends WorkflowBase {
   override async resume(result?: WorkflowResult): Promise<void> {
     if (!result) return;
     const signingResult = (result as any).detail as WorkflowResult;
-    console.log('resume', signingResult)
+    console.debug('resume', signingResult)
 
     if (signingResult.success) {
-      console.log("Signing completed successfully:", signingResult.data);
+      console.debug("Signing completed successfully:", signingResult.data);
       // Store signature ID with loan
       await loanService.updateWithSignature(
         this.loanDetails!.id,
@@ -601,7 +601,7 @@ export class LoanWorkflow extends WorkflowBase {
       this.updateHeaderTitle();
     }
     else {
-      console.log("Signing was not completed:", signingResult.message, this.step);
+      console.debug("Signing was not completed:", signingResult.message, this.step);
     }
 
   }

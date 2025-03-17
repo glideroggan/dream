@@ -6,6 +6,7 @@ import './transfer-toaccount-component';
 import { paymentContactsService } from "../../services/payment-contacts-service";
 import { template } from "./transfer-workflow.template";
 import { styles } from "./transfer-workflow.css";
+import { transactionService } from "../../services/transaction-service";
 
 export interface Account {
   id: string;
@@ -318,41 +319,59 @@ export class TransferWorkflow extends WorkflowBase {
     if (this.toContactId) {
       // This is an external transfer to a contact
       const accountRepo = repositoryService.getAccountRepository();
+      const fromAccount = await accountRepo.getById(this.fromAccountId);
 
-      const result = await accountRepo.externalTransfer({
-        fromAccountId: transferDetails.fromAccountId,
-        toContactId: this.toContactId!,
-        amount: transferDetails.amount,
-        description: transferDetails.description
-      });
+      const transaction = await transactionService.createToContact(
+        this.fromAccountId,
+        this.toContactId,
+        transferDetails.amount,
+        fromAccount!.currency,
+        transferDetails.description,
+        'transfer'
+      )
 
-      if (result.success) {
+      // const result = await accountRepo.externalTransfer({
+      //   fromAccountId: transferDetails.fromAccountId,
+      //   toContactId: this.toContactId!,
+      //   amount: transferDetails.amount,
+      //   description: transferDetails.description
+      // });
+
+      if (transaction) {
           this.complete(true, {
           transfer: transferDetails,
-          transactionId: result.transactionId
+          transactionId: transaction.id
         }, "External transfer initiated successfully");
       } else {
-        this.errorMessage = result.message;
+        this.errorMessage = "An error occurred during the transfer";
         this.notifyValidation(false, this.errorMessage);
       }
     } else {
       // This is an internal transfer between accounts
       const accountRepo = repositoryService.getAccountRepository();
 
-      const result = await accountRepo.transfer(
+      const transaction = await transactionService.createTransfer(
         transferDetails.fromAccountId,
         transferDetails.toAccountId,
         transferDetails.amount,
+        transferDetails.currency,
         transferDetails.description
-      );
+      )
 
-      if (result.success) {
+      // const result = await accountRepo.transfer(
+      //   transferDetails.fromAccountId,
+      //   transferDetails.toAccountId,
+      //   transferDetails.amount,
+      //   transferDetails.description
+      // );
+
+      if (transaction) {
         this.complete(true, {
           transfer: transferDetails,
-          transactionId: result.transactionId
+          transactionId: transaction.id
         }, "Transfer completed successfully");
       } else {
-        this.errorMessage = result.message;
+        this.errorMessage = "An error occurred during the transfer"
         this.notifyValidation(false, this.errorMessage);
       }
     }

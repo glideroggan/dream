@@ -1,4 +1,7 @@
 # BUGS
+- transfer-workflow
+  - is not adding a correct description when doing a transfer to a contact, should say more than just "Transaction"
+- account-transaction-list is not subscribing to upcoming transactions
 - 🔧we have a problem with scheduled/upcoming transactions
   These shouldn't be part of normal transactions, instead they should be part of a simulation task and have a separate list
   We can have the transaction repo save two lists, upcoming and completed
@@ -11,7 +14,9 @@
 - creating an account, does create the product and the account, but in the product the account ID is not set
   Should be added to the metadata
 - swish should not be active so fast, it should create a simulation task
-- account-info-workflow is not configured for dark and light mode
+- account-info-workflow 
+  - is not configured for dark and light mode
+  - is not the right size
 - request-card-workflow is not good in light and dark mode
 - card-details buttons are wrongly styled in dark mode and light mode
   pressing the col buttons do nothing, until we do something with the rows buttons

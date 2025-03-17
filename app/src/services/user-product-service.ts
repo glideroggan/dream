@@ -57,7 +57,7 @@ export class UserProductService {
 
     try {
       const storedProducts = await this.userProductRepository.getActiveProducts();
-      console.log("Loaded products from repository:", storedProducts);
+      console.debug("Loaded products from repository:", storedProducts);
 
       if (storedProducts.length > 0) {
         this.products = storedProducts;
@@ -321,10 +321,10 @@ export class UserProductService {
    */
   public async getProduct<T extends UserProduct = UserProduct>(productId: string): Promise<T | undefined> {
     await this.ensureRepositoryInitialized();
-    console.log('[UserProductService:getProduct] productId', productId, this.products)
+    console.debug('[UserProductService:getProduct] productId', productId, this.products)
     
     const product = this.products.find(p => p.metadata?.originalProductId === productId && p.active);
-    console.log('[UserProductService:getProduct] product', product)
+    console.debug('[UserProductService:getProduct] product', product)
     return product as T | undefined;
   }
 
@@ -476,7 +476,7 @@ export class UserProductService {
       }
     });
 
-    console.log(`Notified ${this.changeListeners.size} listeners about ${type} event for product ${productId}`);
+    console.debug(`Notified ${this.changeListeners.size} listeners about ${type} event for product ${productId}`);
   }
 
   // /**

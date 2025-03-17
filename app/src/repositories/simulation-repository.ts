@@ -32,7 +32,7 @@ export class SimulationRepository extends LocalStorageRepository<SimulationTask>
   private static instance: SimulationRepository;
   private constructor(storage: StorageService, userService: UserService) {
     super('simulation-tasks', storage, userService);
-    console.log('Simulation repository initialized');
+    console.debug('Simulation repository initialized');
   }
 
   public static getInstance(
@@ -50,7 +50,7 @@ export class SimulationRepository extends LocalStorageRepository<SimulationTask>
    */
   async addTask(task: SimulationTask): Promise<SimulationTask> {
     const created = await this.create(task);
-    console.log(`Created simulation task for product ${task.productId} with initial state ${task.currentState}`);
+    console.debug(`Created simulation task for product ${task.productId} with initial state ${task.currentState}`);
     return created;
   }
 
@@ -94,7 +94,7 @@ export class SimulationRepository extends LocalStorageRepository<SimulationTask>
     newState: string, 
     isCompleted: boolean = false
   ): Promise<SimulationTask> {
-    console.log(`Updating task ${task.id} state from ${task.currentState} to ${newState}`);
+    console.debug(`Updating task ${task.id} state from ${task.currentState} to ${newState}`);
     // Add the current state to completed steps
     const completedSteps = [...task.completedSteps];
     if (!completedSteps.includes(task.currentState)) {

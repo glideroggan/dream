@@ -48,7 +48,7 @@ export class CardService {
             // Using the product repository to get card type products
 
             const availableCardProducts = await this.productRepo.getProductsByEntityType<CardProduct>(['debit','credit']);
-            console.log("Fetched card products:", availableCardProducts);
+            console.debug("Fetched card products:", availableCardProducts);
 
             // TODO: we need to fill these in with actual data from card-model?
 

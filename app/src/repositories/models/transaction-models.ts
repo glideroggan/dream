@@ -44,6 +44,10 @@ export interface ExternalTransactionRequest {
   reference?: string;
 }
 
+export interface UpcomingTransaction extends Transaction {
+  scheduledDate: string; // ISO date string for upcoming transactions
+}
+
 export interface Transaction extends Entity {
   fromAccountId: string;
   toAccountId?: string;  // Optional for withdrawals, fees
@@ -58,7 +62,6 @@ export interface Transaction extends Entity {
   status: TransactionStatus;
   type: TransactionType;
   createdAt: string; // ISO date string
-  scheduledDate?: string; // ISO date string for upcoming transactions
   completedDate?: string; // ISO date string for completed transactions
   // New properties for balance tracking
   fromAccountBalance?: number; // Balance of fromAccount after transaction

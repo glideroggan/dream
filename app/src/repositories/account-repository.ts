@@ -63,116 +63,116 @@ export class AccountRepository extends LocalStorageRepository<Account> {
    * Make a transfer between accounts
    * @returns TransferResult with success status, message, and transaction ID
    */
-  async transfer(
-    fromId: string,
-    toId: string,
-    amount: number,
-    description?: string
-  ): Promise<TransferResult> {
-    try {
-      const fromAccount = await this.getById(fromId)
-      const toAccount = await this.getById(toId)
+  // async transfer(
+  //   fromId: string,
+  //   toId: string,
+  //   amount: number,
+  //   description?: string
+  // ): Promise<TransferResult> {
+  //   try {
+  //     const fromAccount = await this.getById(fromId)
+  //     const toAccount = await this.getById(toId)
 
-      if (!fromAccount) {
-        return { success: false, message: 'Source account not found' }
-      }
+  //     if (!fromAccount) {
+  //       return { success: false, message: 'Source account not found' }
+  //     }
 
-      if (!toAccount) {
-        return { success: false, message: 'Destination account not found' }
-      }
+  //     if (!toAccount) {
+  //       return { success: false, message: 'Destination account not found' }
+  //     }
 
-      if (fromAccount.balance < amount) {
-        return { success: false, message: 'Insufficient funds' }
-      }
+  //     if (fromAccount.balance < amount) {
+  //       return { success: false, message: 'Insufficient funds' }
+  //     }
 
-      // Update balances
-      fromAccount.balance -= amount
-      toAccount.balance += amount
+  //     // Update balances
+  //     fromAccount.balance -= amount
+  //     toAccount.balance += amount
 
-      // Save updated accounts
-      await this.update(fromAccount.id, fromAccount)
-      await this.update(toAccount.id, toAccount)
+  //     // Save updated accounts
+  //     await this.update(fromAccount.id, fromAccount)
+  //     await this.update(toAccount.id, toAccount)
 
-      // Create transaction record with updated balances
-      const transactionRepository = repositoryService.getTransactionRepository()
-      console.debug('creating transaction')
-      const transaction = await transactionRepository.createTransferTransaction(
-        fromId,
-        toId,
-        amount,
-        fromAccount.currency,
-        fromAccount.balance, // Include updated balance of source account
-        toAccount.balance, // Include updated balance of destination account
-        description,
-        true
-      )
+  //     // Create transaction record with updated balances
+  //     const transactionRepository = repositoryService.getTransactionRepository()
+  //     console.debug('creating transaction')
+  //     const transaction = await transactionRepository.createTransferTransaction(
+  //       fromId,
+  //       toId,
+  //       amount,
+  //       fromAccount.currency,
+  //       fromAccount.balance, // Include updated balance of source account
+  //       toAccount.balance, // Include updated balance of destination account
+  //       description,
+  //       true
+  //     )
 
-      return {
-        success: true,
-        transactionId: transaction.id,
-      }
-    } catch (error) {
-      console.error('Transfer failed:', error)
-      return {
-        success: false,
-        message: 'An error occurred during the transfer',
-      }
-    }
-  }
+  //     return {
+  //       success: true,
+  //       transactionId: transaction.id,
+  //     }
+  //   } catch (error) {
+  //     console.error('Transfer failed:', error)
+  //     return {
+  //       success: false,
+  //       message: 'An error occurred during the transfer',
+  //     }
+  //   }
+  // }
 
   // TODO: shouldn't this be on the transaction repository?
-  async externalTransfer(options: {
-    fromAccountId: string
-    toContactId: string
-    amount: number
-    description?: string
-  }) {
-    const fromAccount = await this.getById(options.fromAccountId)
-    if (!fromAccount) {
-      return { success: false, message: 'Source account not found' }
-    }
+  // async externalTransfer(options: {
+  //   fromAccountId: string
+  //   toContactId: string
+  //   amount: number
+  //   description?: string
+  // }) {
+  //   const fromAccount = await this.getById(options.fromAccountId)
+  //   if (!fromAccount) {
+  //     return { success: false, message: 'Source account not found' }
+  //   }
 
-    // TODO: we have the contactId, get the data from there
-    const settingsRepository = repositoryService.getSettingsRepository()
-    const contacts = await settingsRepository.getPaymentContacts()
-    const contact = contacts.find((c) => c.id === options.toContactId)
-    if (!contact) {
-      return { success: false, message: 'Destination contact not found' }
-    }
-    const toAccountNumber = contact?.accountNumber
+  //   // TODO: we have the contactId, get the data from there
+  //   const settingsRepository = repositoryService.getSettingsRepository()
+  //   const contacts = await settingsRepository.getPaymentContacts()
+  //   const contact = contacts.find((c) => c.id === options.toContactId)
+  //   if (!contact) {
+  //     return { success: false, message: 'Destination contact not found' }
+  //   }
+  //   const toAccountNumber = contact?.accountNumber
 
-    // validation
-    if (fromAccount.balance < options.amount) {
-      return { success: false, message: 'Insufficient funds' }
-    }
+  //   // validation
+  //   if (fromAccount.balance < options.amount) {
+  //     return { success: false, message: 'Insufficient funds' }
+  //   }
 
-    // update balance
-    fromAccount!.balance -= options.amount
+  //   // update balance
+  //   fromAccount!.balance -= options.amount
 
-    // save updated account
-    await this.update(fromAccount.id, fromAccount)
+  //   // save updated account
+  //   await this.update(fromAccount.id, fromAccount)
 
-    // TODO: we should have the toAccountId, even if it is external
-    // TODO: let the function return an id of the transaction
-    // create transaction record
-    const transactionRepository = repositoryService.getTransactionRepository()
-    await transactionRepository.createTransferTransaction(
-      fromAccount.id,
-      toAccountNumber,
-      options.amount,
-      fromAccount.currency,
-      fromAccount.balance,
-      undefined,
-      options.description,
-      true
-    )
+  //   // TODO: we should have the toAccountId, even if it is external
+  //   // TODO: let the function return an id of the transaction
+  //   // create transaction record
+  //   const transactionRepository = repositoryService.getTransactionRepository()
+  //   await transactionRepository.createTransferTransaction(
+  //     fromAccount.id,
+  //     toAccountNumber,
+  //     options.amount,
+  //     fromAccount.currency,
+  //     fromAccount.balance,
+  //     undefined,
+  //     options.description,
+  //     true
+  //   )
 
-    return {
-      success: true,
-      message: 'External transfer completed successfully',
-      transactionId: 'ext-123',
-    }
-  }
+  //   return {
+  //     success: true,
+  //     message: 'External transfer completed successfully',
+  //     transactionId: 'ext-123',
+  //   }
+  // }
 
   // /**
   //  * Schedule a transfer for future execution
