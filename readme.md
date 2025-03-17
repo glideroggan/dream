@@ -1,12 +1,15 @@
 # BUGS
-- transfer-workflow
-  - is not adding a correct description when doing a transfer to a contact, should say more than just "Transaction"
-- account-transaction-list is not subscribing to upcoming transactions
 - 🔧we have a problem with scheduled/upcoming transactions
+  - start the task to deal with upcoming transactions list
   These shouldn't be part of normal transactions, instead they should be part of a simulation task and have a separate list
   We can have the transaction repo save two lists, upcoming and completed
   A simulation task could be going over the upcoming, and if it is time for a transaction, then we will perform it. This way the account balance
   will be updated in the correct order
+- why isn't established user have any upcoming transactions?
+- transfer-workflow
+  - is not adding a correct description when doing a transfer to a contact, should say more than just "Transaction"
+- account-transaction-list is not subscribing to upcoming transactions
+
 - loan-workflow creates the loan too early, we need to sign first
   - it doesn't add it as a product
   - it also adds the loan 3 times...
