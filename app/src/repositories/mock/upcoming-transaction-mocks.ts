@@ -55,7 +55,7 @@ function generateEstablishedUserTransactions(): UpcomingTransaction[] {
     transactions.push({
         id: generateUUID(),
         fromAccountId: accountIds.checking,
-        toAccountId: accountIds.credit,
+        toAccountId: 'credit card provider',
         amount: 35.00,
         direction: TransactionDirections.DEBIT,
         currency: 'USD',
@@ -66,7 +66,10 @@ function generateEstablishedUserTransactions(): UpcomingTransaction[] {
         scheduledDate: getRelativeDate(now, 7).toISOString(),
         category: 'Debt Payment'
     });
-    return [];
+    return transactions.sort((a, b) => {
+        // Sort by created date (newest first)
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
 }
 
 function generateDemoUserTransactions(): UpcomingTransaction[] {

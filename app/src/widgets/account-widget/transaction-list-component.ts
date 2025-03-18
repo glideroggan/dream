@@ -573,7 +573,8 @@ export class TransactionListComponent extends FASTElement {
 
   private transactionRepo = repositoryService.getTransactionRepository();
   private upcomingTransactionsRepo = repositoryService.getUpcomingTransactionRepository();
-  private unsubscribe: () => void;
+  private unsubscribeTransRepo: () => void;
+  private unsubscribeUpcomingRepo: () => void;
 
   constructor() {
     super();
@@ -589,10 +590,17 @@ export class TransactionListComponent extends FASTElement {
   async connectedCallback(): Promise<void> {
     super.connectedCallback();
 
-    this.unsubscribe = this.transactionRepo.subscribe(event => {
+    this.unsubscribeTransRepo = this.transactionRepo.subscribe(event => {
       console.debug('update transaction', event);
       if (event.type === 'create' || event.type === 'update' || event.type === 'delete') {
         console.debug('loading transactions');
+        this.loadTransactions();
+      }
+    });
+    this.unsubscribeUpcomingRepo = this.upcomingTransactionsRepo.subscribe(event => {
+      console.debug('update transaction', event);
+      if (event.type === 'create' || event.type === 'update' || event.type === 'delete') {
+        console.debug('loading upcoming transactions');
         this.loadTransactions();
       }
     });
@@ -604,7 +612,8 @@ export class TransactionListComponent extends FASTElement {
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.unsubscribe();
+    this.unsubscribeTransRepo();
+    this.unsubscribeUpcomingRepo();
   }
 
   /**
@@ -738,17 +747,12 @@ export class TransactionListComponent extends FASTElement {
           break;
         }
 
-        // Only process upcoming transactions
-        if (result.value.status !== 'upcoming') {
-          i--; // Don't count this iteration
-          continue;
-        }
-
         // Process transaction into view model
         const viewModel = TransactionViewModelHelper.processTransaction(result.value, this.accountId);
 
         // Only add if not already present
         if (!this.upcomingTransactions.some(existing => existing.id === viewModel.id)) {
+          console.log('adding upcoming transaction', viewModel);
           newTransactions.push(viewModel);
         }
       }

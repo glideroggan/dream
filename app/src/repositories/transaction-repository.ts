@@ -1,18 +1,11 @@
-import { Entity, LocalStorageRepository } from './base-repository';
+import { LocalStorageRepository } from './base-repository';
 import { StorageService } from '../services/storage-service';
 import { UserService } from '../services/user-service';
 import { getMockTransactionsByUserType } from './mock/transaction-mock';
 import {
   Transaction,
   TransactionStatus,
-  TransactionType,
-  TransactionStatuses,
-  TransactionTypes,
-  TransactionDirections,
-  ExternalTransactionRequest
-} from './models/transaction-models';
-import { repositoryService } from '../services/repository-service';
-import { generateUniqueId } from '../utilities/id-generator';
+  TransactionStatuses} from './models/transaction-models';
 
 export class TransactionRepository extends LocalStorageRepository<Transaction> {
   constructor(storage: StorageService, userService: UserService) {
