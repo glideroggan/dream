@@ -2,6 +2,7 @@ import {
   Transaction,
   TransactionDirections,
   TransactionType,
+  UpcomingTransaction,
 } from '../repositories/models/transaction-models'
 import {
   paymentContactsService,
@@ -15,11 +16,14 @@ export class TransactionService {
 
   private constructor() {
     // TODO: add a task to the simulation, to process the upcoming transactions
-    simulationService.createTask({
-      productId: 'system-upcoming-processing',
-      type: 'system-upcoming-processing',
-      metadata: {},
-    })
+    const upcomingSystemTask = simulationService.getTaskByType('system-upcoming-processing')
+    if (!upcomingSystemTask) {
+      simulationService.createTask({
+        productId: 'system-upcoming-processing',
+        type: 'system-upcoming-processing',
+        metadata: {},
+      })
+    }
 
     console.debug('TransactionService instance created')
   }
@@ -197,7 +201,7 @@ export class TransactionService {
     description?: string,
     dueDate?: Date,
     reference?: string
-  ): Promise<Transaction> {
+  ): Promise<Transaction | UpcomingTransaction> {
     // validate the account
     const accountRepo = repositoryService.getAccountRepository()
     const fromAccount = await accountRepo.getById(fromAccountId)

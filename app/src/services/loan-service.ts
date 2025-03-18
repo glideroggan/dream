@@ -126,6 +126,7 @@ export class LoanService {
     monthlyPayment: number;
     totalInterest: number;
     interestRate: number;
+    paymentsRemaining: number;
   } {
     // Get base interest rate for loan type
     const baseRate = this.getBaseRate(loanType);
@@ -156,11 +157,15 @@ export class LoanService {
     
     // Calculate total interest
     const totalInterest = (monthlyPayment * term) - amount;
+
+    // how many payments remaining
+    const paymentsRemaining = term;
     
     return {
       monthlyPayment,
       totalInterest,
-      interestRate
+      interestRate,
+      paymentsRemaining
     };
   }
   
@@ -196,11 +201,12 @@ export class LoanService {
       const loanRepo = repositoryService.getLoanRepository();
       
       // Calculate loan details
-      const { monthlyPayment, totalInterest, interestRate } = 
+      const { monthlyPayment, totalInterest, interestRate, paymentsRemaining } = 
         this.calculateLoanDetails(amount, term, loanType);
       
       // Use the repository's dedicated method for creating loan applications
       return loanRepo.createLoanApplication({
+        paymentsRemaining,
         type: loanType,
         amount,
         term,
@@ -234,7 +240,13 @@ export class LoanService {
       // For example: notify approvers, send confirmation email, etc.
 
       // TODO: should start a simulation task here
-      simulationService.addTask(loanId)
+      await simulationService.createTask({
+        productId: loanId,
+        type: 'loan',
+        metadata: {
+
+        },
+      });
       
       console.debug("Loan application submitted:", updatedLoan);
       return updatedLoan;
@@ -289,11 +301,12 @@ export class LoanService {
     }
     
     // Calculate loan details
-    const { interestRate, monthlyPayment, totalInterest } = 
+    const { interestRate, monthlyPayment, totalInterest, paymentsRemaining } = 
       this.calculateLoanDetails(application.amount, application.term, application.type);
     
     // Create loan application using repository
     return loanRepo.createLoanApplication({
+      paymentsRemaining,
       type: application.type,
       amount: application.amount,
       term: application.term,

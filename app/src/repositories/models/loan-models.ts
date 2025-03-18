@@ -53,7 +53,7 @@ export function getStateDelay(status: LoanStatus, entity: 'loan'): number {
       return 5000;
     case LoanStatus.ACTIVE:
       // TODO: this should be quite high, as it will probably take some time to pay off the loan
-      return 5000;
+      return 50000;
     case LoanStatus.PAID_OFF:
       return 5000;
     case LoanStatus.REJECTED:
@@ -68,7 +68,14 @@ export function getStateDelay(status: LoanStatus, entity: 'loan'): number {
 // Loan entity interface
 export interface Loan extends Entity {
   productId: string; // Reference to the product
+  name:string
   type: LoanType;
+  remainingAmount: number;
+  nextPaymentDate: string
+  nextPaymentAmount: number
+  progress: number
+  paymentsMade: number
+  paymentsRemaining: number
   amount: number;
   term: number;
   interestRate: number;

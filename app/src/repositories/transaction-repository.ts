@@ -8,6 +8,7 @@ import {
   TransactionStatuses} from './models/transaction-models';
 
 export class TransactionRepository extends LocalStorageRepository<Transaction> {
+  
   constructor(storage: StorageService, userService: UserService) {
     super('transactions', storage, userService);
   }
@@ -86,6 +87,11 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
     return transactions.filter(txn => {
       return Object.keys(params).every(key => txn[key as keyof Transaction] === params[key as keyof Transaction]);
     });
+  }
+  async getByReference(reference: string): Promise<Transaction | undefined> {
+    const trans = await this.find({ reference });
+    return trans[0]
+    
   }
 
   /**

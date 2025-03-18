@@ -53,6 +53,8 @@ export class LoanRepository extends LocalStorageRepository<Loan> {
    * Create a new loan application with initial data
    */
   async createLoanApplication(data: {
+    name?: string;
+    paymentsRemaining: number;
     type: LoanType;
     amount: number;
     term: number;
@@ -77,6 +79,14 @@ export class LoanRepository extends LocalStorageRepository<Loan> {
       purpose: data.purpose || 'Not specified',
       status: data.status,
       accountId: 'pending' // Will be assigned when approved
+      ,
+      name: data.name || "",
+      remainingAmount: data.amount,
+      nextPaymentDate: "",
+      nextPaymentAmount: data.monthlyPayment, // is this needed?
+      progress: 0,
+      paymentsMade: 0,
+      paymentsRemaining: data.paymentsRemaining
     };
     
     return this.createAccount(loan);

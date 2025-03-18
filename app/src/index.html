@@ -15,6 +15,7 @@
           "@widgets/account": "/widgets/account-widget/account-widget.js",
           "@widgets/welcome": "/widgets/welcome/welcome-widget.js",
           "@widgets/swish": "/widgets/swish-widget.js",
+          "@widgets/loans": "/widgets/loans/loans-widget.js",
           "@widgets/slow": "/widgets/slow-widget/slow-widget.js",
           "@widgets/error": "/widgets/error-widget/error-widget.js",
           "@widgets/financial-health": "/widgets/financial-health-widget/financial-health-widget.js",
@@ -77,6 +78,13 @@
   --notification-badge-text: #ffffff;
   --new-badge-bg: #e74c3c;
   --new-badge-text: #ffffff;
+
+  /* Badge color variables for light theme */
+  --badge-text: #ffffff;
+  --success-badge: #4caf50;
+  --warning-badge: #f39c12;
+  --info-badge: #2196f3;
+  --error-badge: #e74c3c;
   
   /* Explicitly set color-scheme for light mode */
   color-scheme: light;
@@ -118,6 +126,14 @@
   --workflow-bg: #2e251a;
   --theme-color: #64b5f6;
   --theme-bg: #1a2a3e;
+
+  /* Badge color variables for dark theme */
+  --badge-text: #ffffff;
+  --dark-success-color: #2e7d32; /* Darker green for better contrast */
+  --dark-warning-color: #e67e22; /* Adjusted orange */
+  --dark-info-color: #0288d1;   /* Darker blue */
+  --dark-error-color: #d32f2f;  /* Darker red */
+  --dark-badge-text: #ffffff;
   
   /* Explicitly set color-scheme for dark mode */
   color-scheme: dark;
@@ -176,6 +192,14 @@ body {
     --workflow-bg: #2e251a;
     --theme-color: #64b5f6;
     --theme-bg: #1a2a3e;
+
+    /* Badge color variables for auto dark theme */
+    --badge-text: #ffffff;
+    --dark-success-color: #2e7d32;
+    --dark-warning-color: #e67e22;
+    --dark-info-color: #0288d1;
+    --dark-error-color: #d32f2f;
+    --dark-badge-text: #ffffff;
     
     /* Set color-scheme to dark for auto-dark */
     color-scheme: dark;

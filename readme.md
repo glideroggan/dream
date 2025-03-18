@@ -1,8 +1,20 @@
 # BUGS
+- grid-layout
+  - the grid cells doesn't feel like they have a set width, when increasing the window makes the widget wider
+- simulation-loan
+  - currentState doesn't serve a purpose?
+- loan-workflow
+  - the purpose dropdown is empty
+  - sometimes there is an issue where a loan is stuck in "draft" status, we should clean up these when quitting the workflow
+- loan-widget
+  - should subscribe to loan changes
+- system-task is being recreated every time, we should re-create it if we already have it
 - upcoming transaction on the same day shows as 'tomorrow'?
 - transfer-workflow
   - is not adding a correct description when doing a transfer to a contact, should say more than just "Transaction"
-- account-widget is not updated right away when a card have been connected to the account
+- account-widget
+  - is not updating the badge when it comes to upcoming transactions
+  - is not updated right away when a card have been connected to the account
 - creating an account, does create the product and the account, but in the product the account ID is not set
   Should be added to the metadata
 - swish should not be active so fast, it should create a simulation task
@@ -53,6 +65,17 @@ flowchart LR
 - We could move the mocks into their own entrypoints, then we would only download them if needed
 
 # FEATURES
+- ✔️loans-widget
+  - ✔️should show your loan applications
+  - ✔️should show active loans
+  - support minimized view
+- loan-widget
+  - make a payment
+    - needs to recalculate the loan attributes
+    - possibly remove and reschedule the upcoming transaction with new amounts
+- loan-processing
+  - we need to update the loan attributes after a loan-payment is being processed
+
 - common search dropdown component
   Would be nice to just have one component that works
   - search have one
@@ -60,15 +83,15 @@ flowchart LR
 
 ## interval based tasks
 Would be nice to get a bit more things happening, if we could do like in the life cycle service, but for other things, like loan due payments coming in, then it would actually look like a real bank account
-- 🔧loan application sim
-- transaction simulation
+- ✔️loan application sim
+- ✔️transaction simulation
 - create a simulation of card activation by letting the card go through the activation process
   - ✔️change how products work first
     We first need one product catalog on localstorage
     then we can start with having user_products, as they should be stored in there in the state they are in, and only activated once the state is in the final state
   - create a lifecycleService for cards
     - it should save the time of the last step
-    - when active on the site, the simulation should run, start from main
+    - ✔️when active on the site, the simulation should run, start from main
     - steps
       - pending
       - processing

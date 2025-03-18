@@ -254,7 +254,16 @@ export class CardService {
             }
             
             // 9. Create a simulation task for the card process
-            simulationService.addTask(userProduct.id);
+            simulationService.createTask({
+                productId: userProduct.id,
+                type: 'card-processing',
+                metadata: {
+                    cardId: card.id,
+                    cardType: requestData.cardType,
+                    linkedAccountId: requestData.linkedAccountId || null,
+                    requestDate: requestData.requestDate
+                }
+            })
             
             return {
                 success: true,

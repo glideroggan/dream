@@ -14,6 +14,7 @@ const context = await build.context({
         'src/widgets/account-widget/account-widget.ts',
         'src/widgets/swish-widget.ts',
         'src/widgets/financial-health-widget/financial-health-widget.ts',
+        'src/widgets/loans/loans-widget.ts',
         // workflows
         'src/workflows/transfer/transfer-workflow.ts',
         'src/workflows/card-detail/card-detail-workflow.ts',

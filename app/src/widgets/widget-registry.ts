@@ -9,7 +9,8 @@ export const WidgetIds = {
   SWISH: "swish-widget",
   SLOW: "slow-widget",
   ERROR: "error-widget",
-  FINANCIAL_HEALTH: "financial-health"  
+  FINANCIAL_HEALTH: "financial-health",
+  LOANS: "loans-widget",
   // Add more widget IDs here as needed
 };
 
@@ -29,6 +30,20 @@ interface EnhancedWidgetDefinition extends WidgetDefinition {
 
 // Define all available widgets
 const widgetDefinitions: EnhancedWidgetDefinition[] = [
+  {
+    id: WidgetIds.LOANS,
+    name: 'Loans',
+    description: 'View and manage your loans and credit accounts',
+    elementName: 'loans-widget',
+    module: '@widgets/loans',
+    defaultConfig: {},
+    colSpan: 13,
+    rowSpan: 19,
+    minWidth: 380,
+    searchable: true,
+    keywords: ['loans', 'credit', 'mortgage', 'debt', 'borrowing', 'financing'],
+    icon: '💰',
+  },
   {
     id: WidgetIds.FINANCIAL_HEALTH,
     name: 'Financial Health',
@@ -97,7 +112,7 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     description: 'A widget that takes 6 seconds to load',
     elementName: 'slow-widget',
     module: '@widgets/slow',
-    colSpan: 6,
+    colSpan: 7,
     rowSpan: 10, // Increased rows for fixed-height grid
     minWidth: 300,
     searchable: true,
@@ -110,7 +125,7 @@ const widgetDefinitions: EnhancedWidgetDefinition[] = [
     description: 'A widget that fails to initialize',
     elementName: 'error-widget',
     module: '@widgets/error',
-    colSpan: 6,
+    colSpan: 7,
     rowSpan: 8, // Increased rows for fixed-height grid
     minWidth: 300,
     searchable: true,

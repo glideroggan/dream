@@ -2,7 +2,6 @@ import { generateUUID } from "../../utilities/id-generator";
 import { simulationRepository, SimulationRepository, SimulationTask } from "../../repositories/simulation-repository";
 import { UserProductRepository } from "../../repositories/user-product-repository";
 import { processLoanApplication } from "./simulation-loan";
-import { processRecurringPayment } from "./simulation-payment";
 import { processSystemUpcomingProcessing } from "./simulation-upcoming";
 
 export interface TaskResults {
@@ -11,7 +10,7 @@ export interface TaskResults {
     error?: string;
 }
 
-export type SupportedTaskType = 'recurring_payment' | 'loan' | 'system-upcoming-processing'
+export type SupportedTaskType = 'recurring_payment' | 'loan' | 'system-upcoming-processing' | 'card-processing'
 
 export interface CreateSimulationTask {
     productId: string;
@@ -22,6 +21,7 @@ export interface CreateSimulationTask {
 }
 
 class SimulationService {
+    
 
     private static instance: SimulationService;
     private intervalId: number | null = null;
@@ -62,12 +62,31 @@ class SimulationService {
         console.debug("SimulationService initialized with task processor");
     }
 
+    async getTaskByType(type: string):Promise<SimulationTask|undefined> {
+        const tasks = await this.simulationRepository.getAll();
+        return tasks.find(task => task.type === type);    
+    }
+
     async createTask(task: CreateSimulationTask): Promise<void> {
         // TODO: take in a task and only add the necessary fields
         const now = Date.now();
         let newTask: SimulationTask;
         switch (task.type) {
-            case 'system-upcoming-processing':
+            case 'loan':
+                newTask = {
+                    id: `task_${generateUUID()}`,
+                    productId: task.productId,
+                    type: task.type,
+                    currentState: 'pending_approval',
+                    lastProcessedTime: now,
+                    nextProcessTime: now + 10000, // 10 seconds
+                    createdTime: now,
+                    completedSteps: [],
+                    status: 'pending',
+                    metadata: task.metadata
+                };
+                break
+            case 'system-upcoming-processing': // handles upcoming transactions
                 newTask = {
                     id: `task_system_${generateUUID()}`,
                     productId: task.productId,
@@ -81,19 +100,20 @@ class SimulationService {
                     metadata: task.metadata
                 };
                 break
-            case 'recurring_payment':
-                newTask = {
-                    id: `task_${generateUUID()}`,
-                    productId: task.productId,
-                    type: task.type,
-                    currentState: 'pending',
-                    lastProcessedTime: now,
-                    nextProcessTime: now + 10000, // 10 seconds
-                    createdTime: now,
-                    completedSteps: [],
-                    status: 'pending',
-                    metadata: task.metadata
-                };
+            case 'recurring_payment': 
+                throw new Error("The original task should handle this");
+                // newTask = {
+                //     id: `task_${generateUUID()}`,
+                //     productId: task.productId,
+                //     type: task.type,
+                //     currentState: 'pending',
+                //     lastProcessedTime: now,
+                //     nextProcessTime: now + 10000, // 10 seconds
+                //     createdTime: now,
+                //     completedSteps: [],
+                //     status: 'pending',
+                //     metadata: task.metadata
+                // };
                 break;
             default:
                 throw new Error(`Unsupported task type: ${task.type}`);
@@ -105,28 +125,28 @@ class SimulationService {
     /**
      * Add a new task to the simulation queue
      */
-    addTask(userProductId: string, type: SupportedTaskType = 'loan', initialState: string = 'pending_approval'): void {
-        // Create new task
-        const now = Date.now();
-        const newTask: SimulationTask = {
-            id: `task_${generateUUID()}`,
-            productId: userProductId,
-            type,
-            currentState: initialState,
-            lastProcessedTime: now,
-            nextProcessTime: now + this.simulationRepository.getStateDelay(initialState, type),
-            createdTime: now,
-            completedSteps: [],
-            status: 'pending'
-        };
+    // addTask(userProductId: string, type: SupportedTaskType = 'loan', initialState: string = 'pending_approval'): void {
+    //     // Create new task
+    //     const now = Date.now();
+    //     const newTask: SimulationTask = {
+    //         id: `task_${generateUUID()}`,
+    //         productId: userProductId,
+    //         type,
+    //         currentState: initialState,
+    //         lastProcessedTime: now,
+    //         nextProcessTime: now + this.simulationRepository.getStateDelay(initialState, type),
+    //         createdTime: now,
+    //         completedSteps: [],
+    //         status: 'pending'
+    //     };
 
-        // Add task to queue
-        this.simulationRepository.addTask(newTask);
-        // queue.push(newTask);
-        // this.saveQueue(queue);
+    //     // Add task to queue
+    //     this.simulationRepository.addTask(newTask);
+    //     // queue.push(newTask);
+    //     // this.saveQueue(queue);
 
-        console.debug(`SimulationService: Added simulation task for product ${userProductId} with initial state ${initialState}`);
-    }
+    //     console.debug(`SimulationService: Added simulation task for product ${userProductId} with initial state ${initialState}`);
+    // }
 
     /**
      * Remove a task from the queue
@@ -208,7 +228,9 @@ class SimulationService {
             case 'system-upcoming-processing':
                 return await processSystemUpcomingProcessing(task);
             case 'recurring_payment':
-                return await processRecurringPayment(task);
+                // console.warn("Recurring payment processing is not a thing")
+                throw new Error("Recurring payment processing is not a thing")
+                // return await processRecurringPayment(task);
             case 'loan':
                 return await processLoanApplication(task);
             case 'account':

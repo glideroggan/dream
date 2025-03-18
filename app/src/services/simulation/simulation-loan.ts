@@ -1,6 +1,8 @@
 import { LoanRepository } from "../../repositories/loan-repository";
-import { getNextLoanStatus, getStateDelay, LoanStatus } from "../../repositories/models/loan-models";
+import { getNextLoanStatus, getStateDelay, Loan, LoanStatus } from "../../repositories/models/loan-models";
+import { Transaction, UpcomingTransaction } from "../../repositories/models/transaction-models";
 import { simulationRepository, SimulationTask } from "../../repositories/simulation-repository";
+import { generateUniqueId } from "../../utilities/id-generator";
 import { repositoryService } from "../repository-service";
 import { transactionService } from "../transaction-service";
 import { CreateSimulationTask, simulationService, TaskResults } from "./simulation-service";
@@ -41,38 +43,13 @@ export async function processLoanApplication(task: SimulationTask): Promise<Task
                 task: task,
             }
         case 'approved':
-            const accountId = loan.accountId;
-            // TODO: we should validate that this account exists on this user
-            const accountRepo = repositoryService.getAccountRepository();
-            const account = await accountRepo.getById(accountId);
-            const accountCurrency = account?.currency;
-            const amount = loan.amount;
-            const transactionRepo = repositoryService.getTransactionRepository();
-            // TODO: what if this fails? where should we handle errors?
-            // maybe as a rule, repositories never throws?
-            // payout the money to the account
-            // TODO: should we tie this tranaction somehow to the loan?
-            const transaction = await transactionService.createFromExternal(accountId, amount, accountCurrency!, 'Loan payout');
+            const {transactionId, amount} = await doInitialPayout(loan);
             if (!loan.metadata) {
                 loan.metadata = {}
             }
-            loan.metadata.payoutTransactionId = transaction.id;
+            loan.metadata.payoutTransactionId = transactionId;
             loan.metadata.payoutTime = now;
             loan.metadata.currentlyOwed = amount;
-            // TODO: create a new recurring task that will create a scheduled payment for paying back the loan
-            const recurringTask: CreateSimulationTask = {
-                productId: loan.id,
-                type: 'recurring_payment',
-                metadata: {
-                    amount: loan.monthlyPayment,
-                    currency: accountCurrency,
-                    fromAccountId: accountId,
-                    toAccountId: 'bank',
-                }
-            }
-            // TODO: not to forget, we need to update the loan entity after a recurring payment
-            // so the actual amount still owned is updated
-            await simulationService.createTask(recurringTask)
 
             // update state
             ok = await updateNextState(currentState, now, task);
@@ -90,10 +67,50 @@ export async function processLoanApplication(task: SimulationTask): Promise<Task
         case 'active':
             // TODO: check interest rates? change any related recurring payment tasks?
             // once being checked here, check also the recurring payment task, and adjust interest rates if needed
-            // 
+            
+            // TODO: here we will instead do what the previous task would do
+            // update the loan attributes with details of the last completed payment
+            const upcomingRepo = repositoryService.getUpcomingTransactionRepository()
+            const transactionRepo = repositoryService.getTransactionRepository()
+            if (!loan.metadata) {
+                loan.metadata = {}
+            }
+            // first payment
+            if (!loan.metadata.lastTransactionReference) {
+                // first payment, create scheduled payment
+                const scheduledTransaction = await createScheduledPayment(task, loan)
+                loan.metadata.lastTransactionReference = scheduledTransaction.reference;
+                loan.nextPaymentDate = scheduledTransaction.scheduledDate
+                await loanRepo.update(loan.id, loan);
+                task.nextProcessTime = now + getStateDelay(LoanStatus.ACTIVE, 'loan');
+                return {
+                    success: true,
+                    task: task,
+                }
+            }
 
+            // get the last transaction
+            const lastTransaction = await transactionRepo.getByReference(loan.metadata.lastTransactionReference)
+            if (lastTransaction) {
+                // update the loan attributes from last completed transaction
+                loan.metadata.currentlyOwed -= lastTransaction.amount;
+                loan.paymentsMade += 1;
+                loan.paymentsRemaining -= 1;
+                loan.remainingAmount -= lastTransaction.amount;
+                await loanRepo.update(loan.id, loan);
+            } 
+            // TODO: check interest rates and update amounts
+
+            // check if we have already created a new scheduled payment
+            const upcoming = await upcomingRepo.getByReference(loan.metadata.lastTransactionReference)
+            if (!upcoming) {
+                // create a new scheduled payment
+                const scheduledTransaction = await createScheduledPayment(task, loan)
+                loan.metadata.lastTransactionReference = scheduledTransaction.reference;
+                loan.nextPaymentDate = scheduledTransaction.scheduledDate;
+                await loanRepo.update(loan.id, loan);
+            }
             task.nextProcessTime = now + getStateDelay(LoanStatus.ACTIVE, 'loan');
-            console.debug('Loan state not yet implemented');
             return {
                 success: true,
                 task: task,
@@ -114,6 +131,36 @@ export async function processLoanApplication(task: SimulationTask): Promise<Task
                 error: 'Unknown loan state',
             }
     }
+}
+
+function getNextDate(from: number, day: number): Date {
+    const date = new Date(from);
+    date.setDate(day);
+    return date;
+}
+
+async function createScheduledPayment(task: SimulationTask, loan: Loan): Promise<UpcomingTransaction> {
+    const ref = `${generateUniqueId(`scheduled-payment-${task.id}`)}`;
+    const now = Date.now();
+    // TODO: check if this is correct, as we might need to incorporate the interest
+    const amount = loan.monthlyPayment;
+    const accountId = loan.accountId;
+    const accountRepo = repositoryService.getAccountRepository();
+    const account = await accountRepo.getById(accountId);
+    const accountCurrency = account?.currency;
+    // calculate the due date, which should be now + 30 days, closest 28th day
+    const dueDate = getNextDate(now + 30, 28)
+    const transaction = await transactionService.createToExternal(accountId, amount, accountCurrency!, undefined,
+        'payment', 'Loan payment', dueDate, ref)
+    console.debug('created scheduled payment', transaction);
+
+    // update task with reference
+    if (!task.metadata) {
+        task.metadata = {};
+    }
+    task.metadata.lastTransactionReference = transaction.reference;
+    console.debug('Task', task);
+    return transaction as UpcomingTransaction
 }
 
 async function updateNextState(currentState:LoanStatus, now:number, task:SimulationTask): Promise<boolean> {
@@ -138,4 +185,20 @@ async function updateProductState(productId: string, state: LoanStatus): Promise
     loan.status = state;
     await loanRepository.update(productId, loan);
     return true;
+}
+
+async function doInitialPayout(loan: Loan): Promise<{ transactionId: string; amount: number; }> {
+    const accountId = loan.accountId;
+    // TODO: we should validate that this account exists on this user
+    const accountRepo = repositoryService.getAccountRepository();
+    const account = await accountRepo.getById(accountId);
+    const accountCurrency = account?.currency;
+    const amount = loan.amount;
+    // const transactionRepo = repositoryService.getTransactionRepository();
+    // TODO: what if this fails? where should we handle errors?
+    // maybe as a rule, repositories never throws?
+    // payout the money to the account
+    // TODO: should we tie this tranaction somehow to the loan?
+    const transaction = await transactionService.createFromExternal(accountId, amount, accountCurrency!, 'Loan payout');
+    return { transactionId: transaction.id, amount: amount };
 }

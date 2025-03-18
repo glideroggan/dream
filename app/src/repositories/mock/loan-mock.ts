@@ -1,157 +1,268 @@
-import { Loan, LoanStatus, LoanType } from '../models/loan-models';
-import { generateUUID } from '../../utilities/id-generator';
-import { UserType } from '../models/user-models';
+import { Loan, LoanStatus, LoanType } from "../models/loan-models";
 
 /**
- * Generate mock loans for development and testing
+ * Mock loans for testing and development
  */
-export function generateMockLoans(userType:UserType): Loan[] {
-  switch (userType) {
-    case 'established':
-    case 'premium':
-    case 'demo':
-      return generateSomeLoans();
-    default:
-      return []
-  }
-
-  
-}
-
-function generateSomeLoans(): Loan[] {
-  const now = new Date();
-  const mockLoans: Loan[] = [];
-  
-  // Personal loan - active
-  mockLoans.push({
-    id: 'loan-1',
-    productId: 'personal-loan',
-    type: LoanType.PERSONAL,
-    amount: 10000,
-    term: 36, // 3 years in months
-    interestRate: 4.5,
-    monthlyPayment: 298.58,
-    totalInterest: 741.68,
-    purpose: 'Home renovation',
-    createdAt: '2023-05-15T10:00:00Z',
-    updatedAt: '2023-05-15T10:00:00Z',
-    status: LoanStatus.ACTIVE,
-    accountId: 'account-1'
-  });
-  
-  // Home loan - active - connected to home down payment savings account
-  mockLoans.push({
-    id: 'loan-2',
-    productId: 'mortgage-loan',
-    type: LoanType.MORTGAGE,
-    amount: 350000,
-    term: 300, // 25 years in months
-    interestRate: 2.8,
-    monthlyPayment: 1619.33,
-    totalInterest: 135799.68,
-    purpose: 'Home purchase',
-    createdAt: '2022-03-10T14:30:00Z',
-    updatedAt: '2022-03-10T14:30:00Z',
-    status: LoanStatus.ACTIVE,
-    accountId: 'account-2'
-  });
-  
-  // Vehicle loan - pending approval
-  mockLoans.push({
-    id: 'loan-3',
-    productId: 'car-loan',
-    type: LoanType.AUTO,
-    amount: 25000,
-    term: 60, // 5 years in months
-    interestRate: 3.9,
-    monthlyPayment: 459.72,
-    totalInterest: 2583.05,
-    purpose: 'Car purchase',
-    createdAt: '2023-01-20T09:15:00Z',
-    updatedAt: '2023-01-20T09:15:00Z',
-    status: LoanStatus.PENDING_APPROVAL,
-    accountId: 'account-3',
-    metadata: {
-      vehicleModel: 'Tesla Model 3',
-      vehicleYear: 2022,
-      creditScore: 730
+export const mockLoans: Loan[] = [
+    {
+        id: "loan-1",
+        productId: "home-loan",
+        name: "Home Mortgage",
+        type: LoanType.MORTGAGE,
+        amount: 320000,
+        remainingAmount: 275000,
+        interestRate: 3.5,
+        term: 360, // 30 years
+        monthlyPayment: 1450,
+        totalInterest: 202000,
+        nextPaymentDate: "Apr 15, 2023",
+        nextPaymentAmount: 1450,
+        purpose: "Primary residence purchase",
+        status: LoanStatus.ACTIVE,
+        createdAt: "2018-06-12T10:00:00Z",
+        updatedAt: "2023-01-15T08:30:00Z",
+        accountId: "acc-8", // Reference to mortgage account in account-mock.ts
+        progress: 14,
+        paymentsMade: 50, 
+        paymentsRemaining: 310,
+        metadata: {
+            propertyAddress: "123 Main St, Anytown, USA",
+            propertyValue: 400000,
+            loanToValue: 0.8
+        }
+    },
+    {
+        id: "loan-2",
+        productId: "vehicle-loan",
+        name: "Auto Loan",
+        type: LoanType.AUTO,
+        amount: 28000,
+        remainingAmount: 12500,
+        interestRate: 4.2,
+        term: 60, // 5 years
+        monthlyPayment: 518,
+        totalInterest: 3080,
+        nextPaymentDate: "Apr 10, 2023",
+        nextPaymentAmount: 518,
+        purpose: "New vehicle purchase",
+        status: LoanStatus.ACTIVE,
+        createdAt: "2020-08-15T14:30:00Z",
+        updatedAt: "2023-01-10T09:45:00Z", 
+        accountId: "acc-6", // Reference to car loan in account-mock.ts
+        progress: 55,
+        paymentsMade: 33,
+        paymentsRemaining: 27,
+        metadata: {
+            vehicleMake: "Toyota",
+            vehicleModel: "Camry",
+            vehicleYear: 2020,
+            vin: "1HGCM82633A123456"
+        }
+    },
+    {
+        id: "loan-3",
+        productId: "personal-loan",
+        name: "Personal Loan",
+        type: LoanType.PERSONAL,
+        amount: 10000,
+        remainingAmount: 3800,
+        interestRate: 6.8,
+        term: 36, // 3 years
+        monthlyPayment: 320,
+        totalInterest: 1520,
+        nextPaymentDate: "Apr 5, 2023",
+        nextPaymentAmount: 320,
+        purpose: "Debt consolidation",
+        status: LoanStatus.ACTIVE,
+        createdAt: "2021-01-22T09:15:00Z",
+        updatedAt: "2023-02-05T11:20:00Z",
+        accountId: "acc-1", // Connected to checking account for payments
+        progress: 62,
+        paymentsMade: 22,
+        paymentsRemaining: 14,
+        metadata: {
+            originalCreditScore: 720
+        },
+        signatureId: "sig-personal-001"
+    },
+    {
+        id: "loan-4",
+        productId: "business-loan",
+        name: "Business Loan",
+        type: LoanType.BUSINESS,
+        amount: 75000,
+        remainingAmount: 0, // Paid off
+        interestRate: 5.5,
+        term: 60, // 5 years
+        monthlyPayment: 1435,
+        totalInterest: 11100,
+        nextPaymentDate: "N/A",
+        nextPaymentAmount: 0,
+        purpose: "Business expansion",
+        status: LoanStatus.PAID_OFF,
+        createdAt: "2017-05-10T11:20:00Z",
+        updatedAt: "2022-06-15T14:10:00Z",
+        accountId: "acc-1", // Connected to checking account
+        progress: 100,
+        paymentsMade: 60,
+        paymentsRemaining: 0,
+        metadata: {
+            businessName: "Acme Enterprises",
+            businessType: "Sole Proprietorship"
+        },
+        signatureId: "sig-business-001"
+    },
+    {
+        id: "loan-5",
+        productId: "education-loan",
+        name: "Education Loan",
+        type: LoanType.EDUCATION,
+        amount: 45000,
+        remainingAmount: 45000,
+        interestRate: 4.0,
+        term: 120, // 10 years
+        monthlyPayment: 455,
+        totalInterest: 9600,
+        nextPaymentDate: "Pending Approval",
+        nextPaymentAmount: 455,
+        purpose: "Master's degree program",
+        status: LoanStatus.PENDING_APPROVAL,
+        createdAt: "2023-03-01T15:45:00Z",
+        updatedAt: "2023-03-01T15:45:00Z",
+        accountId: "acc-1", // Will be disbursed to checking account
+        progress: 0,
+        paymentsMade: 0,
+        paymentsRemaining: 120,
+        metadata: {
+            institution: "State University",
+            program: "Master of Business Administration",
+            startDate: "2023-09-01"
+        }
+    },
+    {
+        id: "loan-6",
+        productId: "home-loan",
+        name: "Home Renovation",
+        type: LoanType.LINE_OF_CREDIT,
+        amount: 35000,
+        remainingAmount: 22000,
+        interestRate: 7.2,
+        term: 48, // 4 years
+        monthlyPayment: 840,
+        totalInterest: 5320,
+        nextPaymentDate: "Mar 15, 2023", // Past due
+        nextPaymentAmount: 840,
+        purpose: "Kitchen and bath remodel",
+        status: LoanStatus.DEFAULTED,
+        createdAt: "2019-11-05T13:10:00Z",
+        updatedAt: "2023-01-15T10:30:00Z",
+        accountId: "acc-1", // Connected to checking account
+        progress: 65,
+        paymentsMade: 31,
+        paymentsRemaining: 17,
+        metadata: {
+            propertyAddress: "123 Main St, Anytown, USA",
+            contractorName: "ABC Renovations"
+        },
+        signatureId: "sig-heloc-001"
+    },
+    {
+        id: "loan-7",
+        productId: "personal-loan",
+        name: "Wedding Loan",
+        type: LoanType.PERSONAL,
+        amount: 20000,
+        remainingAmount: 20000,
+        interestRate: 5.9,
+        term: 36, // 3 years
+        monthlyPayment: 608,
+        totalInterest: 1888,
+        nextPaymentDate: "Not Started",
+        nextPaymentAmount: 608,
+        purpose: "Wedding expenses",
+        status: LoanStatus.APPROVED,
+        createdAt: "2023-02-15T09:30:00Z",
+        updatedAt: "2023-02-28T14:45:00Z",
+        accountId: "acc-2", // Will be disbursed to savings account
+        progress: 0,
+        paymentsMade: 0,
+        paymentsRemaining: 36,
+        metadata: {
+            weddingDate: "2023-06-15",
+            cosignerPresent: false
+        },
+        signatureId: "sig-personal-002"
+    },
+    {
+        id: "loan-8",
+        productId: "personal-loan",
+        name: "Medical Expenses",
+        type: LoanType.PERSONAL,
+        amount: 15000,
+        remainingAmount: 15000,
+        interestRate: 6.5,
+        term: 24, // 2 years
+        monthlyPayment: 670,
+        totalInterest: 1080,
+        nextPaymentDate: "Not Started",
+        nextPaymentAmount: 670,
+        purpose: "Medical procedure costs",
+        status: LoanStatus.DRAFT,
+        createdAt: "2023-03-10T11:20:00Z",
+        updatedAt: "2023-03-10T11:20:00Z",
+        accountId: "acc-1", // Will be disbursed to checking account
+        progress: 0,
+        paymentsMade: 0,
+        paymentsRemaining: 24,
+        metadata: {
+            medicalProvider: "City Medical Center",
+            procedureDate: "2023-04-15"
+        }
+    },
+    {
+        id: "loan-9",
+        productId: "vehicle-loan",
+        name: "Motorcycle Loan",
+        type: LoanType.AUTO,
+        amount: 12000,
+        remainingAmount: 0,
+        interestRate: 5.0,
+        term: 36, // 3 years
+        monthlyPayment: 360,
+        totalInterest: 960,
+        nextPaymentDate: "N/A",
+        nextPaymentAmount: 0,
+        purpose: "Motorcycle purchase",
+        status: LoanStatus.REJECTED,
+        createdAt: "2022-12-05T10:15:00Z",
+        updatedAt: "2022-12-10T09:30:00Z",
+        accountId: "acc-1",
+        progress: 0,
+        paymentsMade: 0,
+        paymentsRemaining: 36,
+        metadata: {
+            rejectionReason: "Insufficient income",
+            creditScoreAtApplication: 620
+        }
     }
-  });
-  
-  // Education loan - draft
-  mockLoans.push({
-    id: 'loan-4',
-    productId: 'student-loan',
-    type: LoanType.EDUCATION,
-    amount: 15000,
-    term: 120, // 10 years in months
-    interestRate: 3.2,
-    monthlyPayment: 146.43,
-    totalInterest: 2571.70,
-    purpose: 'Education',
-    createdAt: '2021-09-01T08:00:00Z',
-    updatedAt: '2023-02-15T16:40:00Z',
-    status: LoanStatus.ACTIVE,
-    accountId: 'account-4'
-  });
-  
-  // Personal loan - rejected
-  mockLoans.push({
-    id: 'loan_5',
-    productId: 'personal-loan', // Reference to the product
-    type: LoanType.PERSONAL,
-    amount: 75000, // High amount for personal loan
-    term: 60,
-    interestRate: 8.99,
-    monthlyPayment: 1555.21,
-    totalInterest: 18312.60,
-    purpose: 'Business startup',
-    createdAt: new Date(now.getTime() - 45 * 24 * 60 * 60 * 1000).toISOString(), // 45 days ago
-    updatedAt: new Date(now.getTime() - 40 * 24 * 60 * 60 * 1000).toISOString(), // 40 days ago
-    status: LoanStatus.REJECTED,
-    accountId: 'acc-2', // Emergency Fund account from account-mock.ts
-    signatureId: generateUUID(),
-    metadata: {
-      // Additional data explaining rejection
-      rejectionReason: 'Requested amount exceeds maximum for personal loan'
+];
+
+/**
+ * Mock loans for different user types
+ * @param userType The type of user to generate loans for
+ * @returns Array of loans appropriate for the specified user type
+ */
+export function generateMockLoans(userType: string): Loan[] {
+    switch (userType) {
+        case 'established':
+            // Return a subset of loans for established users
+            return mockLoans.slice(0, 4);
+        case 'premium':
+        case 'demo':
+            // Return all loans for premium/demo users
+            return mockLoans;
+        default:
+            // New users have no loans
+            return [];
     }
-  });
-  
-  // Connected to car loan from account-mock.ts (acc-6)
-  mockLoans.push({
-    id: 'loan_6',
-    productId: 'vehicle-loan', // Reference to the product
-    type: LoanType.VEHICLE,
-    amount: 25000,
-    term: 48,
-    interestRate: 4.5,
-    monthlyPayment: 573.15,
-    totalInterest: 2511.20,
-    purpose: 'Previous car purchase',
-    createdAt: new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year ago
-    updatedAt: new Date(now.getTime() - 360 * 24 * 60 * 60 * 1000).toISOString(),
-    status: LoanStatus.ACTIVE,
-    accountId: 'acc-6', // Car Loan account from account-mock.ts
-    signatureId: generateUUID()
-  });
-  
-  // Connected to mortgage from account-mock.ts (acc-8)
-  mockLoans.push({
-    id: 'loan_7',
-    productId: 'home-loan', // Reference to the product
-    type: LoanType.HOME,
-    amount: 400000,
-    term: 360, // 30 years
-    interestRate: 3.5,
-    monthlyPayment: 1796.18,
-    totalInterest: 246625.80,
-    purpose: 'Home mortgage',
-    createdAt: new Date(now.getTime() - 730 * 24 * 60 * 60 * 1000).toISOString(), // 2 years ago
-    updatedAt: new Date(now.getTime() - 725 * 24 * 60 * 60 * 1000).toISOString(),
-    status: LoanStatus.ACTIVE,
-    accountId: 'acc-8', // Mortgage account from account-mock.ts
-    signatureId: generateUUID()
-  });
-  
-  return mockLoans;
 }
