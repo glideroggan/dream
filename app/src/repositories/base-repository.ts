@@ -158,7 +158,10 @@ export abstract class LocalStorageRepository<T extends Entity> implements Reposi
     return Array.from(this.entities.values());
   }
   
-  async getById(id: string): Promise<T | undefined> {
+  async getById(id: string | undefined): Promise<T | undefined> {
+    if (!id) {
+      return undefined;
+    }
     // log content of entntities
     console.debug('entities:', this.entities)
     return this.entities.get(id);

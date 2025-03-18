@@ -3,6 +3,7 @@ import { simulationRepository, SimulationRepository, SimulationTask } from "../.
 import { UserProductRepository } from "../../repositories/user-product-repository";
 import { processLoanApplication } from "./simulation-loan";
 import { processRecurringPayment } from "./simulation-payment";
+import { processSystemUpcomingProcessing } from "./simulation-upcoming";
 
 export interface TaskResults {
     success: boolean;
@@ -10,7 +11,7 @@ export interface TaskResults {
     error?: string;
 }
 
-export type SupportedTaskType = 'recurring_payment' | 'loan'
+export type SupportedTaskType = 'recurring_payment' | 'loan' | 'system-upcoming-processing'
 
 export interface CreateSimulationTask {
     productId: string;
@@ -66,9 +67,21 @@ class SimulationService {
         const now = Date.now();
         let newTask: SimulationTask;
         switch (task.type) {
+            case 'system-upcoming-processing':
+                newTask = {
+                    id: `task_system_${generateUUID()}`,
+                    productId: task.productId,
+                    type: task.type,
+                    currentState: 'pending',
+                    lastProcessedTime: now,
+                    nextProcessTime: now + 10000, // 10 seconds
+                    createdTime: now,
+                    completedSteps: [],
+                    status: 'pending',
+                    metadata: task.metadata
+                };
+                break
             case 'recurring_payment':
-                // TODO: create a task that have a conditions for the states
-                
                 newTask = {
                     id: `task_${generateUUID()}`,
                     productId: task.productId,
@@ -192,6 +205,8 @@ class SimulationService {
         console.debug(`Processing task: ${task.type} in state ${task.currentState}`);
 
         switch (task.type.toLowerCase()) {
+            case 'system-upcoming-processing':
+                return await processSystemUpcomingProcessing(task);
             case 'recurring_payment':
                 return await processRecurringPayment(task);
             case 'loan':
@@ -206,135 +221,6 @@ class SimulationService {
                 console.error(`Unknown task type: ${task.type}`);
                 throw new Error(`Unknown task type: ${task.type}`);
         }
-    }
-
-    /**
-     * Update the state of the actual product via repository
-     */
-    private async updateProductState(productId: string, state: string): Promise<void> {
-        if (!this.userProductRepository) {
-            console.warn("UserProductRepository not set, cannot update product state");
-            return;
-        }
-
-        try {
-            const product = await this.userProductRepository.getById(productId);
-            if (product) {
-                // Update product state in metadata
-                const updatedMetadata = {
-                    ...(product.metadata || {}),
-                    state,
-                    lastStateChange: new Date().toISOString()
-                };
-
-                await this.userProductRepository.update(productId, {
-                    metadata: updatedMetadata,
-                    lastUpdated: new Date().toISOString()
-                });
-
-                console.debug(`Updated product ${productId} state to ${state}`);
-            } else {
-                console.warn(`Product ${productId} not found, cannot update state`);
-            }
-        } catch (error) {
-            console.error(`Error updating product state:`, error);
-        }
-    }
-
-    /**
-     * Update the simulation status in the repository
-     */
-    // private async updateSimulationStatus(
-    //     productId: string, 
-    //     status: string,
-    //     currentState: string,
-    //     completedState?: string
-    // ): Promise<void> {
-    //     if (!this.simulationRepository) {
-    //         console.warn("SimulationRepository not set, cannot update simulation status");
-    //         return;
-    //     }
-
-    //     try {
-    //         const simulation = await this.simulationRepository.getById(productId);
-    //         if (simulation) {
-    //             const completedSteps = [...simulation.completedSteps];
-    //             if (completedState && !completedSteps.includes(completedState)) {
-    //                 completedSteps.push(completedState);
-    //             }
-
-    //             await this.simulationRepository.addOrUpdateStatus({
-    //                 ...simulation,
-    //                 status,
-    //                 currentState,
-    //                 lastUpdated: Date.now(),
-    //                 completedSteps
-    //             });
-
-    //             console.debug(`Updated simulation status for ${productId}: ${status}, state: ${currentState}`);
-    //         } else {
-    //             console.warn(`Simulation for product ${productId} not found, cannot update status`);
-    //         }
-    //     } catch (error) {
-    //         console.error(`Error updating simulation status:`, error);
-    //     }
-    // }
-
-    /**
-     * Get the delay time for a specific state (in milliseconds)
-     * In the future, these should be defined with the product models
-     */
-    // private getStateDelay(state: string): number {
-    //     // Define delays for different states
-    //     const delays: Record<string, number> = {
-    //         // Loan states
-    //         'pending_approval': 10000, // 10 seconds
-    //         'reviewing': 15000,        // 15 seconds
-    //         'approved': 8000,          // 8 seconds
-    //         'funding': 12000,          // 12 seconds
-
-    //         // Account states
-    //         'pending': 8000,           // 8 seconds
-    //         'processing': 10000,       // 10 seconds
-
-    //         // Card states
-    //         'issued': 5000,            // 5 seconds
-    //         'shipping': 15000,         // 15 seconds
-    //         'delivered': 10000,        // 10 seconds
-
-    //         // Default delay
-    //         'default': 10000           // 10 seconds
-    //     };
-
-    //     return delays[state] || delays['default'];
-    // }
-
-    /**
-     * Get the current queue from localStorage
-     * Will be replaced with repository usage
-     */
-    private getQueue(): SimulationTask[] {
-        this.simulationRepository?.getAll
-        if (this.simulationRepository) {
-            // If we had implemented a queue in the repository, we would use it here
-            // For now, we continue with localStorage as a temporary solution
-        }
-
-        const queueJson = localStorage.getItem(this.QUEUE_KEY);
-        return queueJson ? JSON.parse(queueJson) : [];
-    }
-
-    /**
-     * Save the queue to localStorage
-     * Will be replaced with repository usage
-     */
-    private saveQueue(queue: SimulationTask[]): void {
-        if (this.simulationRepository) {
-            // If we had implemented a queue in the repository, we would use it here
-            // For now, we continue with localStorage as a temporary solution
-        }
-
-        localStorage.setItem(this.QUEUE_KEY, JSON.stringify(queue));
     }
 
     /**

@@ -16,6 +16,8 @@ export async function processRecurringPayment(task: SimulationTask): Promise<Tas
      * if it exists in the past, then create a new scheduled transaction for the next payment, counting from that date
      * if it doesn't exists, then create a new scheduled transaction for the next payment
     */
+   console.debug('Processing recurring payment', task);
+   const now = Date.now();
     const loanRepo = repositoryService.getLoanRepository();
     const loan = await loanRepo.getById(task.productId);
     if (!loan) {
@@ -37,7 +39,7 @@ export async function processRecurringPayment(task: SimulationTask): Promise<Tas
         // create transaction
         await createScheduledPayment(task, loan);
         console.debug('Task', task);
-        // TODO: we should return a updated nextProcessTime, as this can be quite far in the future
+        task.nextProcessTime = now + nextTime()
         return {
             success: true,
             task: task,
@@ -48,6 +50,7 @@ export async function processRecurringPayment(task: SimulationTask): Promise<Tas
     const upcoming = await upcomingRepo.getByReference(lastTransactionReference);
     if (upcoming) {
         // do nothing
+        task.nextProcessTime = now + nextTime()
         return {
             success: true,
             task: task,
@@ -90,4 +93,8 @@ function getNextDate(from: number, day: number): Date {
     const date = new Date(from);
     date.setDate(day);
     return date;
+}
+
+function nextTime():number {
+    return 1000 * 60 * 60 // 1 hour
 }
