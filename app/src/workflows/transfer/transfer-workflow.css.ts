@@ -87,4 +87,60 @@ export const styles = css`
   .transfer-actions {
     display: none;
   }
+  
+  /* Scheduling section styles */
+  .schedule-section {
+    margin-top: 8px;
+    border-top: 1px solid var(--border-color, #e0e0e0);
+    padding-top: 16px;
+  }
+  
+  .schedule-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  
+  .schedule-toggle input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    padding: 0;
+  }
+  
+  .schedule-toggle label {
+    font-weight: 500;
+    margin-bottom: 0;
+    cursor: pointer;
+  }
+  
+  .schedule-details {
+    margin-top: 12px;
+    animation: fadeIn 0.3s ease;
+  }
+  
+  .schedule-inputs {
+    display: flex;
+    gap: 16px;
+    max-width: 95%;
+  }
+  
+  .schedule-date-input,
+  .schedule-time-input {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .schedule-date-input input,
+  .schedule-time-input input {
+    width: 100%;
+  }
+  
+  /* Animation for schedule details */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 `;

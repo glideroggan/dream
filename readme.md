@@ -1,8 +1,9 @@
 # BUGS
+- upcoming transaction on the same day shows as 'tomorrow'?
 - ✔️we have a problem with scheduled/upcoming transactions
   - ✔️start the task to deal with upcoming transactions list
-  - ⚒️change the transfer flow to include scheduled transaction
-    - test it
+  - ✔️change the transfer flow to include scheduled transaction
+    - ✔️test it
   These shouldn't be part of normal transactions, instead they should be part of a simulation task and have a separate list
   We can have the transaction repo save two lists, upcoming and completed
   A simulation task could be going over the upcoming, and if it is time for a transaction, then we will perform it. This way the account balance

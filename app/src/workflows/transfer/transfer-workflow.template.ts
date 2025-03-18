@@ -43,6 +43,39 @@ export const template = html<TransferWorkflow>/*html*/`
                @input="${(x, c) => x.handleDescriptionChange(c.event)}" />
       </div>
       
+      <!-- Scheduling Option -->
+      <div class="form-group schedule-section">
+        <div class="schedule-toggle">
+            <dream-checkbox 
+              id="scheduleToggle"
+              ?checked="${x => x.isScheduled}"
+              @change="${(x, c) => x.handleScheduleToggle(c.event)}">
+              <label for="scheduleToggle">Schedule for later</label>
+            </dream-checkbox>
+        </div>
+        
+        ${when(x => x.isScheduled, html`
+          <div class="schedule-details">
+            <div class="schedule-inputs">
+              <div class="schedule-date-input">
+                <label for="scheduleDate">Date</label>
+                <input type="date" id="scheduleDate" 
+                       value="${x => x.scheduleDate}" 
+                       min="${x => new Date().toISOString().split('T')[0]}"
+                       @change="${(x, c) => x.handleScheduleDateChange(c.event)}" />
+              </div>
+              
+              <div class="schedule-time-input">
+                <label for="scheduleTime">Time</label>
+                <input type="time" id="scheduleTime" 
+                       value="${x => x.scheduleTime}" 
+                       @change="${(x, c) => x.handleScheduleTimeChange(c.event)}" />
+              </div>
+            </div>
+          </div>
+        `)}
+      </div>
+      
       ${when(x => x.errorMessage, html`
         <div class="error-message">${x => x.errorMessage}</div>
       `)}

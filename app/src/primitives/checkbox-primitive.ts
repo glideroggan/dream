@@ -1,4 +1,4 @@
-import { FASTElement, customElement, attr, html, css, Observable } from "@microsoft/fast-element";
+import { FASTElement, customElement, attr, html, css } from "@microsoft/fast-element";
 
 const template = html<CheckboxPrimitive>/*html*/`
   <div class="checkbox-wrapper ${x => x.checked ? 'checked' : ''} ${x => x.disabled ? 'disabled' : ''}" 

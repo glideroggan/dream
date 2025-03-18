@@ -23,6 +23,7 @@ export interface TransferDetails {
   amount: number;
   currency: string;
   description?: string;
+  dueDate?: Date;
 }
 
 @customElement({
@@ -42,6 +43,10 @@ export class TransferWorkflow extends WorkflowBase {
   @observable currency: string = "USD";
   @observable description: string = "";
   @observable errorMessage: string | undefined = "";
+
+  @observable isScheduled: boolean = false;
+  @observable scheduleDate: string | undefined = undefined;
+  @observable scheduleTime: string | undefined = undefined;
 
   async initialize(params?: Record<string, any>): Promise<void> {
     console.debug("Initializing TransferWorkflow with params:", params);
@@ -82,6 +87,23 @@ export class TransferWorkflow extends WorkflowBase {
     
     // Listen for contact created events
     this.addEventListener('contactCreated', this.handleContactCreated.bind(this));
+  }
+
+  async handleScheduleToggle(event: Event) {
+    this.isScheduled = !this.isScheduled;
+    this.validateForm();
+  }
+
+  async handleScheduleDateChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    this.scheduleDate = input.value;
+    this.validateForm();
+  }
+
+  async handleScheduleTimeChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    this.scheduleTime = input.value;
+    this.validateForm();
   }
 
   /**
@@ -268,6 +290,16 @@ export class TransferWorkflow extends WorkflowBase {
       return false;
     }
 
+    // TODO: check the scheduled inputs, if toggled
+    if (this.isScheduled) {
+      // Check if a date and time are set
+      if (!this.scheduleDate || !this.scheduleTime) {
+        this.errorMessage = "Please select a date and time for the transfer";
+        this.notifyValidation(false, this.errorMessage);
+        return false;
+      }
+    }
+
     // Reset any invalid states
     this.resetInvalidStates();
 
@@ -310,11 +342,12 @@ export class TransferWorkflow extends WorkflowBase {
       toContactId: this.toContactId,
       amount: this.amount,
       currency: this.currency,
-      description: this.description
+      description: this.description,
+      dueDate: this.isScheduled ? new Date(`${this.scheduleDate}T${this.scheduleTime}`) : undefined
     };
 
+    
     console.debug("Executing transfer:", transferDetails);
-
     // Determine if this is an external transfer (to a contact) or internal transfer
     if (this.toContactId) {
       // This is an external transfer to a contact
@@ -327,15 +360,9 @@ export class TransferWorkflow extends WorkflowBase {
         transferDetails.amount,
         fromAccount!.currency,
         transferDetails.description,
-        'transfer'
+        'transfer',
+        transferDetails.dueDate
       )
-
-      // const result = await accountRepo.externalTransfer({
-      //   fromAccountId: transferDetails.fromAccountId,
-      //   toContactId: this.toContactId!,
-      //   amount: transferDetails.amount,
-      //   description: transferDetails.description
-      // });
 
       if (transaction) {
           this.complete(true, {
@@ -355,15 +382,10 @@ export class TransferWorkflow extends WorkflowBase {
         transferDetails.toAccountId,
         transferDetails.amount,
         transferDetails.currency,
-        transferDetails.description
+        transferDetails.description,
+        undefined,
+        transferDetails.dueDate
       )
-
-      // const result = await accountRepo.transfer(
-      //   transferDetails.fromAccountId,
-      //   transferDetails.toAccountId,
-      //   transferDetails.amount,
-      //   transferDetails.description
-      // );
 
       if (transaction) {
         this.complete(true, {

@@ -16,9 +16,9 @@ export class TransactionService {
   private constructor() {
     // TODO: add a task to the simulation, to process the upcoming transactions
     simulationService.createTask({
-        productId: 'system-upcoming-processing',
-        type: 'system-upcoming-processing',
-        metadata: {},
+      productId: 'system-upcoming-processing',
+      type: 'system-upcoming-processing',
+      metadata: {},
     })
 
     console.debug('TransactionService instance created')
@@ -69,7 +69,8 @@ export class TransactionService {
     amount: number,
     currency: string,
     description?: string,
-    reference?: string
+    reference?: string,
+    dueDate?: Date
   ): Promise<Transaction> {
     const accountRepo = repositoryService.getAccountRepository()
     const fromAccount = await accountRepo.getById(fromAccountId)
@@ -79,6 +80,22 @@ export class TransactionService {
     const toAccount = await accountRepo.getById(toAccountId)
     if (!toAccount) {
       throw new Error(`Account ${toAccountId} not found`)
+    }
+    if (dueDate && dueDate > new Date()) {
+      const upcomingRepo = repositoryService.getUpcomingTransactionRepository()
+      return await upcomingRepo.create({
+        fromAccountId,
+        toAccountId: toAccountId,
+        amount,
+        currency,
+        description,
+        scheduledDate: dueDate.toISOString(),
+        status: 'upcoming',
+        type: 'transfer',
+        createdAt: new Date().toISOString(),
+        direction: TransactionDirections.DEBIT,
+        reference: reference || `transaction-${dueDate.getTime()}`,
+      })
     }
     // update the account balance
     fromAccount.balance -= amount
@@ -105,6 +122,7 @@ export class TransactionService {
     return transaction
   }
 
+  // TODO: we should be able to consolidate the methods for transfers
   async createToContact(
     fromAccountId: string,
     toContactId: string,
