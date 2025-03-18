@@ -39,7 +39,7 @@ export class AccountInfoWorkflow extends WorkflowBase {
   async initialize(params?: Record<string, any>): Promise<void> {
     console.debug('Initializing Account-info-workflow with params:', params)
 
-    // this.updateModalWidth();
+    this.setModalWidth('600px')
     this.updateTitle('Account Details')
 
     if (params?.account) {

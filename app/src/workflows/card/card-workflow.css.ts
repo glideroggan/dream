@@ -22,8 +22,8 @@ export const styles = css`
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    border: 3px solid rgba(0, 0, 0, 0.1);
-    border-top-color: var(--accent-color, #3498db);
+    border: 3px solid var(--inactive-color, rgba(0, 0, 0, 0.1));
+    border-top-color: var(--accent-color);
     animation: spin 1s ease-in-out infinite;
   }
   
@@ -48,19 +48,19 @@ export const styles = css`
     align-items: center;
     padding: 16px;
     border-radius: 8px;
-    border: 1px solid var(--border-color, #ccc);
+    border: 1px solid var(--border-color);
     cursor: pointer;
     transition: all 0.2s;
   }
   
   .card-option:hover {
-    border-color: var(--accent-color, #3498db);
-    background-color: rgba(52, 152, 219, 0.05);
+    border-color: var(--accent-color);
+    background-color: var(--hover-bg);
   }
   
   .card-option.selected {
-    border-color: var(--accent-color, #3498db);
-    background-color: rgba(52, 152, 219, 0.08);
+    border-color: var(--accent-color);
+    background-color: var(--hover-bg);
     box-shadow: 0 2px 6px rgba(52, 152, 219, 0.15);
   }
   
@@ -70,7 +70,7 @@ export const styles = css`
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #f0f0f0;
+    background-color: var(--background-card);
     border-radius: 50%;
     margin-right: 16px;
     font-size: 24px;
@@ -88,7 +88,7 @@ export const styles = css`
   .card-option-details p {
     margin: 0;
     font-size: 14px;
-    color: var(--text-secondary, #666);
+    color: var(--secondary-text-color);
   }
   
   /* Product info styling */
@@ -111,10 +111,10 @@ export const styles = css`
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #f0f0f0;
+    background-color: var(--background-card);
     border-radius: 8px;
     font-size: 24px;
-    color: #666;
+    color: var(--accent-color);
     font-weight: bold;
   }
   
@@ -127,13 +127,13 @@ export const styles = css`
   .product-price {
     font-size: 20px;
     font-weight: 700;
-    color: var(--accent-color, #3498db);
+    color: var(--accent-color);
   }
   
   .product-description {
     font-size: 16px;
     line-height: 1.5;
-    color: var(--text-color, #333);
+    color: var(--primary-text-color);
     margin: 0;
   }
   
@@ -179,20 +179,20 @@ export const styles = css`
   }
   
   .product-requirements li.met {
-    color: #27ae60;
+    color: var(--success-color);
   }
   
   .product-requirements li.unmet {
-    color: #e74c3c;
+    color: var(--error-color);
   }
   
   .check-mark {
-    color: #27ae60;
+    color: var(--success-color);
     font-weight: bold;
   }
   
   .x-mark {
-    color: #e74c3c;
+    color: var(--error-color);
     font-weight: bold;
   }
   
@@ -213,8 +213,9 @@ export const styles = css`
     width: 100%;
     padding: 10px;
     border-radius: 4px;
-    border: 1px solid var(--border-color, #ccc);
-    background-color: #fff;
+    border: 1px solid var(--border-color);
+    background-color: var(--background-color);
+    color: var(--primary-text-color);
     appearance: none;
     font-size: 16px;
   }
@@ -226,11 +227,12 @@ export const styles = css`
     right: 10px;
     font-size: 16px;
     pointer-events: none;
+    color: var(--primary-text-color);
   }
   
   .no-accounts-message {
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
+    background-color: var(--background-card);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 16px;
     margin-top: 16px;
@@ -238,13 +240,13 @@ export const styles = css`
   
   .no-accounts-message p {
     margin: 0 0 12px 0;
-    color: #666;
+    color: var(--secondary-text-color);
   }
   
   .secondary-button {
     background-color: transparent;
-    color: var(--accent-color, #3498db);
-    border: 1px solid var(--accent-color, #3498db);
+    color: var(--accent-color);
+    border: 1px solid var(--accent-color);
     border-radius: 4px;
     padding: 8px 16px;
     font-size: 14px;
@@ -253,12 +255,12 @@ export const styles = css`
   }
   
   .secondary-button:hover {
-    background-color: rgba(52, 152, 219, 0.05);
+    background-color: var(--hover-bg);
   }
   
   .success-message {
-    background-color: #e8f7ee;
-    color: #2ecc71;
+    background-color: var(--widget-bg);
+    color: var(--success-color);
     padding: 12px;
     border-radius: 4px;
     font-weight: 500;
@@ -285,45 +287,45 @@ export const styles = css`
     cursor: pointer;
     user-select: none;
     padding: 8px;
-    background-color: rgba(0, 0, 0, 0.02);
+    background-color: var(--hover-bg);
     border-radius: 4px;
     transition: background-color 0.2s;
   }
   
   .agreement-checkbox-wrapper:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: var(--hover-bg);
   }
   
   .agreement-checkbox-wrapper.checked {
-    background-color: rgba(52, 152, 219, 0.05);
+    background-color: var(--hover-bg);
   }
   
   /* Custom checkbox design */
   .custom-checkbox {
     width: 20px;
     height: 20px;
-    border: 2px solid var(--border-color, #ccc);
+    border: 2px solid var(--border-color);
     border-radius: 3px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: white;
+    background-color: var(--background-color);
     transition: all 0.2s;
   }
   
   .agreement-checkbox-wrapper:hover .custom-checkbox {
-    border-color: var(--accent-color, #3498db);
+    border-color: var(--accent-color);
   }
   
   .agreement-checkbox-wrapper.checked .custom-checkbox {
-    background-color: var(--accent-color, #3498db);
-    border-color: var(--accent-color, #3498db);
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
   }
   
   .checkmark {
     width: 16px;
     height: 16px;
-    fill: white;
+    fill: var(--text-light);
     animation: scale 0.2s ease-in-out;
   }
   
@@ -335,34 +337,34 @@ export const styles = css`
   
   .checkbox-label {
     font-size: 14px;
-    color: var(--text-secondary, #666);
+    color: var(--secondary-text-color);
     line-height: 1.4;
     flex: 1;
   }
   
   .error-message {
-    color: var(--error-color, #e74c3c);
+    color: var(--error-color);
     font-size: 14px;
     margin-top: 6px;
     animation: fadeIn 0.3s ease-in-out;
   }
   
   .already-active-message {
-    background-color: var(--background-color-light, #f8f9fa);
+    background-color: var(--background-card);
     border-radius: 8px;
     padding: 16px;
     display: flex;
     align-items: flex-start;
     gap: 16px;
-    border: 1px solid var(--border-color-light, #eaeaea);
+    border: 1px solid var(--border-color);
   }
   
   .active-icon {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background-color: #2ecc71;
-    color: white;
+    background-color: var(--success-color);
+    color: var(--text-light);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -371,19 +373,19 @@ export const styles = css`
   
   .active-text h4 {
     margin: 0 0 8px 0;
-    color: #2ecc71;
+    color: var(--success-color);
   }
   
   .active-text p {
     margin: 0;
     font-size: 14px;
-    color: var(--text-secondary, #666);
+    color: var(--secondary-text-color);
   }
   
   .requirements-not-met {
-    background-color: #fef2f2;
-    color: #e74c3c;
-    border: 1px solid #fde8e8;
+    background-color: var(--workflow-bg);
+    color: var(--error-color);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 16px;
     margin-top: 8px;
@@ -391,7 +393,7 @@ export const styles = css`
   
   .requirements-not-met h4 {
     margin: 0 0 8px 0;
-    color: #e74c3c;
+    color: var(--error-color);
   }
   
   .requirements-not-met p {

@@ -38,7 +38,7 @@ export const styles = css`
   }
 
   .info-section {
-    background-color: var(--section-bg, #f9f9f9);
+    background-color: var(--background-card);
     border-radius: 6px;
     padding: 16px;
   }
@@ -59,25 +59,25 @@ export const styles = css`
     justify-content: center;
     font-size: 18px;
     font-weight: bold;
-    color: white;
+    color: var(--text-light);
     margin-right: 12px;
-    background-color: var(--primary-color, #3498db);
+    background-color: var(--primary-color);
   }
 
   .account-icon.checking {
-    background-color: #3498db;
+    background-color: var(--accent-color);
   }
 
   .account-icon.savings {
-    background-color: #2ecc71;
+    background-color: var(--success-color);
   }
 
   .account-icon.credit {
-    background-color: #9b59b6;
+    background-color: var(--secondary-color);
   }
 
   .account-icon.investment {
-    background-color: #f1c40f;
+    background-color: var(--warning-color);
   }
 
   .account-title {
@@ -95,7 +95,7 @@ export const styles = css`
 
   .account-type {
     font-size: 14px;
-    color: var(--text-secondary, #666);
+    color: var(--secondary-text-color);
   }
 
   .account-balance {
@@ -105,18 +105,18 @@ export const styles = css`
 
   .balance-label {
     font-size: 14px;
-    color: var(--text-secondary, #666);
+    color: var(--secondary-text-color);
     margin-bottom: 4px;
   }
 
   .balance-amount {
     font-size: 24px;
     font-weight: bold;
-    color: var(--text-primary, #333);
+    color: var(--primary-text-color);
   }
 
   .balance-amount.negative {
-    color: var(--error-color, #e74c3c);
+    color: var(--error-color);
   }
 
   .details-section {
@@ -127,7 +127,7 @@ export const styles = css`
   .details-section h4 {
     margin: 0 0 12px 0;
     font-size: 16px;
-    color: var(--text-primary, #333);
+    color: var(--primary-text-color);
   }
 
   /* Make the detail rows fill the space better */
@@ -145,7 +145,7 @@ export const styles = css`
     justify-content: space-between;
     align-items: center;
     padding: 8px 0;
-    border-bottom: 1px solid var(--divider-color, #eaeaea);
+    border-bottom: 1px solid var(--divider-color);
     flex-wrap: wrap;
     gap: 8px;
   }
@@ -155,7 +155,7 @@ export const styles = css`
   }
 
   .detail-label {
-    color: var(--text-secondary, #666);
+    color: var(--secondary-text-color);
     font-size: 14px;
   }
 
@@ -204,12 +204,12 @@ export const styles = css`
 
   .status.active {
     background-color: rgba(46, 204, 113, 0.2);
-    color: #27ae60;
+    color: var(--success-color);
   }
 
   .status.inactive {
     background-color: rgba(231, 76, 60, 0.2);
-    color: #c0392b;
+    color: var(--error-color);
   }
 
   .actions-section {
@@ -226,7 +226,7 @@ export const styles = css`
     justify-content: center;
     padding: 40px 20px;
     text-align: center;
-    background-color: var(--section-bg, #f9f9f9);
+    background-color: var(--background-card);
     border-radius: 6px;
     min-height: 300px;
   }
@@ -242,7 +242,7 @@ export const styles = css`
   }
 
   .empty-state p {
-    color: var(--text-secondary, #666);
+    color: var(--secondary-text-color);
     margin: 0;
   }
   
@@ -276,10 +276,12 @@ export const styles = css`
   
   .rename-input {
     padding: 4px 8px;
-    border: 1px solid var(--divider-color, #eaeaea);
+    border: 1px solid var(--border-color);
     border-radius: 4px;
     font-size: 16px;
     width: 100%;
+    background-color: var(--background-color);
+    color: var(--primary-text-color);
   }
   
   .rename-actions {
@@ -296,13 +298,13 @@ export const styles = css`
   }
   
   .rename-btn.save {
-    background-color: var(--primary-color, #3498db);
-    color: white;
+    background-color: var(--accent-color);
+    color: var(--text-light);
   }
   
   .rename-btn.cancel {
-    background-color: #eaeaea;
-    color: #333;
+    background-color: var(--inactive-color);
+    color: var(--text-light);
   }
   
   /* Type-specific sections */
@@ -318,10 +320,10 @@ export const styles = css`
   }
   
   .credit-card {
-    background: linear-gradient(135deg, #2c3e50, #3498db);
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
     border-radius: 10px;
     padding: 20px;
-    color: white;
+    color: var(--text-light);
     width: 100%;
     max-width: 300px;
     height: 180px;
@@ -357,14 +359,14 @@ export const styles = css`
   
   .progress-bar {
     height: 12px;
-    background-color: #eaeaea;
+    background-color: var(--inactive-color);
     border-radius: 6px;
     overflow: hidden;
   }
   
   .progress-fill {
     height: 100%;
-    background-color: #2ecc71;
+    background-color: var(--success-color);
   }
   
   .progress-info {
@@ -376,7 +378,7 @@ export const styles = css`
   
   /* Pension projection */
   .pension-projection {
-    background-color: #f1f1f1;
+    background-color: var(--hover-bg);
     border-radius: 8px;
     padding: 16px;
     text-align: center;
@@ -386,7 +388,7 @@ export const styles = css`
   .pension-projection h5 {
     margin: 0 0 8px;
     font-size: 14px;
-    color: var(--text-secondary, #666);
+    color: var(--secondary-text-color);
   }
   
   .projection-amount {
@@ -398,7 +400,7 @@ export const styles = css`
   .projection-note {
     margin: 0;
     font-size: 12px;
-    color: var(--text-secondary, #666);
+    color: var(--secondary-text-color);
   }
   
   /* Mortgage payment breakdown */
@@ -417,7 +419,7 @@ export const styles = css`
   
   .chart-bar {
     height: 24px;
-    background-color: #eaeaea;
+    background-color: var(--inactive-color);
     border-radius: 4px;
     overflow: hidden;
     display: flex;
@@ -425,12 +427,12 @@ export const styles = css`
   
   .interest-portion {
     height: 100%;
-    background-color: #e74c3c;
+    background-color: var(--error-color);
   }
   
   .principal-portion {
     height: 100%;
-    background-color: #2ecc71;
+    background-color: var(--success-color);
   }
   
   .chart-legend {
@@ -456,11 +458,11 @@ export const styles = css`
   }
   
   .legend-color.interest {
-    background-color: #e74c3c;
+    background-color: var(--error-color);
   }
   
   .legend-color.principal {
-    background-color: #2ecc71;
+    background-color: var(--success-color);
   }
   
   /* Investment risk level */
@@ -468,14 +470,15 @@ export const styles = css`
     padding: 2px 8px;
     border-radius: 12px;
     font-size: 12px;
-    background-color: #f1c40f33;
+    background-color: var(--warning-color);
+    background-opacity: 0.2;
   }
   
   .detail-value.positive {
-    color: #27ae60;
+    color: var(--success-color);
   }
   
   .detail-value.negative {
-    color: #e74c3c;
+    color: var(--error-color);
   }
 `
