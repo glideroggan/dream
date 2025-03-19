@@ -6,6 +6,12 @@ export type CardType = 'debit' | 'credit' | 'prepaid' | 'virtual' | 'corporate' 
 export type CardStatus = 'active' | 'blocked' | 'expired' | 'pending' | 'suspended' | 'canceled' | 'frozen' | 'lost' | 'stolen';
 export type CardNetwork = 'visa' | 'mastercard' | 'amex' | 'discover' | 'unionpay' | 'other';
 
+export interface CreditCard extends Card {
+  dueDate?:string 
+  paymentReferenceId?:string
+  creditLimit: number;
+}
+
 // Card entity model
 export interface Card extends Entity {
   // Common card properties
@@ -30,9 +36,6 @@ export interface Card extends Entity {
   digitalWalletEnabled?: boolean;
   fullCardNumberHash?: string; // For secure lookups without storing actual number
 
-  // Credit card specific properties
-  creditLimit?: number;
-  cashAdvanceLimit?: number;
   linkedToApplePay?: boolean;
   linkedToGooglePay?: boolean;
 
