@@ -17,11 +17,11 @@ export class AccountRepository extends LocalStorageRepository<Account> {
   protected async initializeMockData(): Promise<void> {
     // Get user type to determine which mock accounts to use
     const userType = this.userService.getUserType();
-    console.log(`Initializing mock accounts for user type: ${userType}`);
+    console.debug(`Initializing mock accounts for user type: ${userType}`);
     
     // Get appropriate mock accounts based on user type
     const module = await import("@mocks/accounts")
-    console.log('loading mocks dynamically: ', module)
+    console.debug('loading mocks dynamically: ', module)
     
     const accounts = module.getMockAccountsByUserType(userType);
     

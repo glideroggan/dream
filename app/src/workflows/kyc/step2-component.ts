@@ -128,6 +128,8 @@ export class KycStep2Component extends FASTElement {
   constructor() {
     super();
     this.personalInfo = {
+      email: '',
+      phone: '',
       fullName: '',
       dateOfBirth: '',
       nationality: '',

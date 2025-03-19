@@ -1,5 +1,6 @@
 import { html, when } from "@microsoft/fast-element";
 import { CardDetailWorkflow } from "./card-detail-workflow";
+import { CreditCard } from "../../repositories/models/card-models";
 
 export const template = html<CardDetailWorkflow>/*html*/ `
   ${when(
@@ -97,17 +98,13 @@ export const template = html<CardDetailWorkflow>/*html*/ `
         </div>
 
         ${when(
-          (x) => x.card?.type === 'credit',
+          (x) => x.card &&  x.isCreditCard(x.card),
           html<CardDetailWorkflow>/*html*/ `
             <div class="info-section type-specific-section">
               <h4>Credit Card Details</h4>
               <div class="detail-row">
                 <span class="detail-label">Credit Limit</span>
-                <span class="detail-value">$${(x) => x.formatCurrency(x.card?.creditLimit || 0)}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Cash Advance Limit</span>
-                <span class="detail-value">$${(x) => x.formatCurrency(x.card?.cashAdvanceLimit || 0)}</span>
+                <span class="detail-value">$${(x) => x.formatCurrency(((x.card!) as CreditCard).creditLimit || 0)}</span>
               </div>
               <div class="detail-row">
                 <span class="detail-label">Daily Limit</span>

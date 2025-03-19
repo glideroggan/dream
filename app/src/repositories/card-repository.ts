@@ -1,7 +1,7 @@
 import { StorageService } from "../services/storage-service";
 import { UserService } from "../services/user-service";
 import { Entity, LocalStorageRepository } from "./base-repository";
-import { Card, CardStatus, CardType } from "./models/card-models";
+import { Card, CardStatus, CardType, CreditCard } from "./models/card-models";
 
 export class CardRepository extends LocalStorageRepository<Card> {
   constructor(storage: StorageService, userService: UserService) {
@@ -73,13 +73,12 @@ export class CardRepository extends LocalStorageRepository<Card> {
   /**
    * Create a new credit card
    */
-  async createCreditCard(accountId: string, data: Partial<Omit<Card, 'id' | 'accountId' | 'type'>>): Promise<Card> {
+  async createCreditCard(accountId: string, data: Partial<Omit<CreditCard, 'id' | 'accountId' | 'type'>>): Promise<CreditCard> {
     return this.createCardForAccount(accountId, {
       ...data,
       type: 'credit',
       creditLimit: data.creditLimit || 5000,
-      cashAdvanceLimit: data.cashAdvanceLimit || 1000
-    });
+    } as CreditCard) as Promise<CreditCard>;
   }
   
   /**

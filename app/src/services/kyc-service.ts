@@ -1,6 +1,6 @@
+import { EnhancedPersonalInfo } from '../workflows/kyc/kyc-workflow';
 import { storageService, StorageService } from './storage-service';
 import { userService, UserService } from './user-service';
-import { KYCCompletionData } from '../workflows/kyc/kyc-workflow';
 
 /**
  * KYC (Know Your Customer) verification levels
@@ -9,6 +9,7 @@ export enum KycLevel {
   NONE = 'none',
   BASIC = 'basic',
   STANDARD = 'standard',
+  BUSINESS = 'business',
   ENHANCED = 'enhanced'
 }
 
@@ -32,6 +33,12 @@ export interface KycVerificationData {
   lastVerified?: string;
   expiresAt?: string;
   requirements?: Record<string, boolean>;
+}
+
+export interface KYCCompletionData {
+  personalInfo: Partial<EnhancedPersonalInfo>;
+  verificationStatus: 'pending' | 'approved' | 'rejected';
+  uploadedFileName?: string;
 }
 
 /**

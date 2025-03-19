@@ -13,7 +13,7 @@ export class UserService {
     
     // Try to load current user from storage
     this.currentUserId = this.storage.getItem<string>('currentUserId');
-    console.log("UserService initialized, current user ID:", this.currentUserId);
+    console.debug("UserService initialized, current user ID:", this.currentUserId);
   }
   
   public static getInstance(storage: StorageService): UserService {

@@ -11,7 +11,7 @@ export async function processCardActivation(task: SimulationTask): Promise<TaskR
     // get current state of the card
     const userProductsRepo = repositoryService.getUserProductRepository()
     const userProduct = await userProductsRepo.getById(task.productId)
-    // console.log('[processCardActivation]', userProduct)
+    // console.debug('[processCardActivation]', userProduct)
     const cardRepo = repositoryService.getCardRepository();
     if (!userProduct?.metadata?.cardId) {
         return {

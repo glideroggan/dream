@@ -4,7 +4,7 @@ import { cardService } from '../../services/card-service';
 import { repositoryService } from '../../services/repository-service';
 import { template } from './card-detail-workflow.template';
 import { styles } from './card-detail-workflow.styles';
-import { Card } from '../../repositories/models/card-models';
+import { Card, CreditCard } from '../../repositories/models/card-models';
 
 @customElement({
   name: 'card-detail-workflow',
@@ -39,6 +39,10 @@ export class CardDetailWorkflow extends WorkflowBase {
         console.error('Error loading card:', error);
       }
     }
+  }
+
+  isCreditCard(card:Card): card is CreditCard {
+    return card.type === 'credit'
   }
   
   async loadLinkedAccountName(): Promise<void> {
@@ -137,7 +141,7 @@ export class CardDetailWorkflow extends WorkflowBase {
     
     try {
       // Update card status in repository
-      await this.cardRepo.update(this.card.id, {
+      await this.cardRepo.update(this.card.id!, {
         ...this.card,
         status: 'frozen'
       });
@@ -175,7 +179,7 @@ export class CardDetailWorkflow extends WorkflowBase {
     
     try {
       // Update card status in repository
-      await this.cardRepo.update(this.card.id, {
+      await this.cardRepo.update(this.card.id!, {
         ...this.card,
         status: 'active'
       });
@@ -222,7 +226,7 @@ export class CardDetailWorkflow extends WorkflowBase {
     if (result.success) {
       try {
         // Update card status in repository
-        await this.cardRepo.update(this.card.id, {
+        await this.cardRepo.update(this.card.id!, {
           ...this.card,
           status: 'lost'
         });

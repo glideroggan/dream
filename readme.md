@@ -1,4 +1,7 @@
 # BUGS
+- kyc
+  - enchance with more levels
+  - needs signing after each workflow
 - mocks
   - established user have duplicate upcoming transactions
 - grid-layout

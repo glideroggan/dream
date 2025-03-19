@@ -20,7 +20,7 @@ export function generateMockProducts(): Product[] {
       requirements: [
         {
           type: 'kyc',
-          value: 'basic-customer',
+          value: 'basic',
           description: 'Basic identity verification'
         },
         {
@@ -46,7 +46,7 @@ export function generateMockProducts(): Product[] {
       requirements: [
         {
           type: 'kyc',
-          value: 'basic-customer',
+          value: 'basic',
           description: 'Basic identity verification'
         }
       ],
@@ -67,7 +67,7 @@ export function generateMockProducts(): Product[] {
       requirements: [
         {
           type: 'kyc',
-          value: 'isk-account',
+          value: 'standard',
           description: 'Standard identity verification'
         },
         {
@@ -92,7 +92,7 @@ export function generateMockProducts(): Product[] {
       requirements: [
         {
           type: 'kyc',
-          value: 'pension-account',
+          value: 'enhanced',
           description: 'Standard identity verification'
         },
         {
@@ -119,7 +119,7 @@ export function generateMockProducts(): Product[] {
       requirements: [
         {
           type: 'kyc',
-          value: 'basic-customer',
+          value: 'basic',
           description: 'Basic identity verification'
         },
         {
@@ -152,7 +152,7 @@ export function generateMockProducts(): Product[] {
       requirements: [
         {
           type: 'kyc',
-          value: 'enhanced-customer',
+          value: 'enhanced',
           description: 'Enhanced identity verification'
         },
         {
@@ -189,7 +189,7 @@ export function generateMockProducts(): Product[] {
       requirements: [
         {
           type: 'kyc',
-          value: 'basic-customer',
+          value: 'basic',
           description: 'Basic identity verification'
         },
         {
@@ -221,7 +221,7 @@ export function generateMockProducts(): Product[] {
       requirements: [
         {
           type: 'kyc',
-          value: 'basic-customer',
+          value: 'basic',
           description: 'Basic identity verification'
         },
         {
@@ -253,7 +253,7 @@ export function generateMockProducts(): Product[] {
       requirements: [
         {
           type: 'kyc',
-          value: 'business-customer',
+          value: 'business',
           description: 'Business identity verification'
         },
         {
@@ -287,7 +287,7 @@ export function generateMockProducts(): Product[] {
       requirements: [
         {
           type: 'kyc',
-          value: 'enhanced-customer',
+          value: 'enhanced',
           description: 'Enhanced identity verification'
         },
         {
@@ -313,7 +313,7 @@ export function generateMockProducts(): Product[] {
       requirements: [
         {
           type: 'kyc',
-          value: 'basic-customer',
+          value: 'basic',
           description: 'Basic identity verification'
         },
         {
@@ -354,7 +354,7 @@ export function generateMockProducts(): Product[] {
       requirements: [
         {
           type: 'kyc',
-          value: 'basic-customer',
+          value: 'basic',
           description: 'Basic identity verification'
         }
       ],
