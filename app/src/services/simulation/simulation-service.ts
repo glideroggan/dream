@@ -3,6 +3,7 @@ import { simulationRepository, SimulationRepository, SimulationTask } from "../.
 import { UserProductRepository } from "../../repositories/user-product-repository";
 import { processLoanApplication } from "./simulation-loan";
 import { processSystemUpcomingProcessing } from "./simulation-upcoming";
+import { processCardActivation } from "./simulation-card";
 
 export interface TaskResults {
     success: boolean;
@@ -72,6 +73,20 @@ class SimulationService {
         const now = Date.now();
         let newTask: SimulationTask;
         switch (task.type) {
+            case 'card-processing':
+                newTask = {
+                    id: `task_${generateUUID()}`,
+                    productId: task.productId,
+                    type: task.type,
+                    currentState: 'pending',
+                    lastProcessedTime: now,
+                    nextProcessTime: now + 10000, // 10 seconds
+                    createdTime: now,
+                    completedSteps: [],
+                    status: 'pending',
+                    metadata: task.metadata
+                }
+                break
             case 'loan':
                 newTask = {
                     id: `task_${generateUUID()}`,
@@ -123,44 +138,11 @@ class SimulationService {
     }
 
     /**
-     * Add a new task to the simulation queue
-     */
-    // addTask(userProductId: string, type: SupportedTaskType = 'loan', initialState: string = 'pending_approval'): void {
-    //     // Create new task
-    //     const now = Date.now();
-    //     const newTask: SimulationTask = {
-    //         id: `task_${generateUUID()}`,
-    //         productId: userProductId,
-    //         type,
-    //         currentState: initialState,
-    //         lastProcessedTime: now,
-    //         nextProcessTime: now + this.simulationRepository.getStateDelay(initialState, type),
-    //         createdTime: now,
-    //         completedSteps: [],
-    //         status: 'pending'
-    //     };
-
-    //     // Add task to queue
-    //     this.simulationRepository.addTask(newTask);
-    //     // queue.push(newTask);
-    //     // this.saveQueue(queue);
-
-    //     console.debug(`SimulationService: Added simulation task for product ${userProductId} with initial state ${initialState}`);
-    // }
-
-    /**
      * Remove a task from the queue
      */
     removeTask(userProductId: string): void {
         // TODO: for now, we just stop it
         this.simulationRepository.stopTask(userProductId);
-        // const queue = this.getQueue();
-        // const updatedQueue = queue.filter(task => task.userProductId !== userProductId);
-
-        // if (queue.length !== updatedQueue.length) {
-        //     this.saveQueue(updatedQueue);
-        //     console.debug(`SimulationService: Removed task for product ${userProductId}`);
-        // }
     }
 
     /**
@@ -224,7 +206,7 @@ class SimulationService {
     private async processTask(task: SimulationTask): Promise<TaskResults> {
         console.debug(`Processing task: ${task.type} in state ${task.currentState}`);
 
-        switch (task.type.toLowerCase()) {
+        switch (task.type) {
             case 'system-upcoming-processing':
                 return await processSystemUpcomingProcessing(task);
             case 'recurring_payment':
@@ -233,12 +215,12 @@ class SimulationService {
                 // return await processRecurringPayment(task);
             case 'loan':
                 return await processLoanApplication(task);
-            case 'account':
-                throw new Error("Account processing not implemented");
+            // case 'account':
+            //     throw new Error("Account processing not implemented");
             // return this.processAccountCreation(task);
-            case 'card':
-                throw new Error("Card processing not implemented");
-            // return this.processCardActivation(task);
+            case 'card-processing':
+                // throw new Error("Card processing not implemented");
+                return processCardActivation(task);
             default:
                 console.error(`Unknown task type: ${task.type}`);
                 throw new Error(`Unknown task type: ${task.type}`);

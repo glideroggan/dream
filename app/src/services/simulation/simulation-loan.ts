@@ -1,11 +1,10 @@
-import { LoanRepository } from "../../repositories/loan-repository";
 import { getNextLoanStatus, getStateDelay, Loan, LoanStatus } from "../../repositories/models/loan-models";
-import { Transaction, UpcomingTransaction } from "../../repositories/models/transaction-models";
-import { simulationRepository, SimulationTask } from "../../repositories/simulation-repository";
+import { UpcomingTransaction } from "../../repositories/models/transaction-models";
+import { SimulationTask } from "../../repositories/simulation-repository";
 import { generateUniqueId } from "../../utilities/id-generator";
 import { repositoryService } from "../repository-service";
 import { transactionService } from "../transaction-service";
-import { CreateSimulationTask, simulationService, TaskResults } from "./simulation-service";
+import { TaskResults } from "./simulation-service";
 
 /**
  * Process a loan application task

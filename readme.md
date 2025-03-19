@@ -18,10 +18,9 @@
 - creating an account, does create the product and the account, but in the product the account ID is not set
   Should be added to the metadata
 - swish should not be active so fast, it should create a simulation task
-- ✔️request-card-workflow is not good in light and dark mode
 - card-details buttons are wrongly styled in dark mode and light mode
 - widget-wrapper
-  - pressing the col buttons do nothing, until we do something with the rows buttons
+  - 🔧pressing the col buttons do nothing, until we do something with the rows buttons
 
 # simulation structure
 ## loan application
@@ -65,17 +64,17 @@ flowchart LR
 - We could move the mocks into their own entrypoints, then we would only download them if needed
 
 # FEATURES
+- account-widget
+  - clicking on a upcoming transaction should show info about the transaction
+    - if possible, edit, remove, or reschedule
 - ✔️loans-widget
-  - ✔️should show your loan applications
-  - ✔️should show active loans
   - support minimized view
 - loan-widget
   - make a payment
     - needs to recalculate the loan attributes
     - possibly remove and reschedule the upcoming transaction with new amounts
-- loan-processing
-  - we need to update the loan attributes after a loan-payment is being processed
-
+- ✔️loan-processing
+  - ✔️we need to update the loan attributes after a loan-payment is being processed
 - common search dropdown component
   Would be nice to just have one component that works
   - search have one
@@ -83,12 +82,7 @@ flowchart LR
 
 ## interval based tasks
 Would be nice to get a bit more things happening, if we could do like in the life cycle service, but for other things, like loan due payments coming in, then it would actually look like a real bank account
-- ✔️loan application sim
-- ✔️transaction simulation
 - create a simulation of card activation by letting the card go through the activation process
-  - ✔️change how products work first
-    We first need one product catalog on localstorage
-    then we can start with having user_products, as they should be stored in there in the state they are in, and only activated once the state is in the final state
   - create a lifecycleService for cards
     - it should save the time of the last step
     - ✔️when active on the site, the simulation should run, start from main
@@ -144,10 +138,6 @@ Would be nice to get a bit more things happening, if we could do like in the lif
   - when there is more than 1 recommendation, you can't see it
 ## create account workflow
   - it could be wider, so that when selecting an account, you get the description of the account to the right
-## account-widget
-  - transfer button does nothing in widget empty state
-    - fixed with toast?
-  - clicking on a connected card should take you to the card-detail-workflow
 ## card workflow
 - the workflow seems to have some default KYC values, we should make sure we take the KYC data from the service
 ## KYC workflow

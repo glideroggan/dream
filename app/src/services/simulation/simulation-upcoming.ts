@@ -48,7 +48,10 @@ export async function processSystemUpcomingProcessing(task: SimulationTask): Pro
             });
             await upcomingRepo.delete(upcoming.id);
 
-            console.log(`Completed transaction: ${transaction.id}`);
+            console.debug(`Completed transaction: ${transaction.id}`);
+
+            // TODO: should we update related services here? might be better
+            /**//
         }
     }
     

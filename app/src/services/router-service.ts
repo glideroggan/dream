@@ -142,7 +142,7 @@ export class RouterService {
    * Handle route change from hash change event
    */
   private async handleRouteChange(path: string): Promise<void> {
-    console.log(`Hash changed to: ${path}`);
+    console.debug(`Hash changed to: ${path}`);
     // Extract any query parameters
     let cleanPath = path
     let params: Record<string, unknown> = {};
@@ -150,7 +150,7 @@ export class RouterService {
     // TODO: needs work, as we don't have to do it like this
     const hashIndex = path.indexOf('#');
     if (hashIndex >= 0) {
-      console.log('Query parameters found');
+      console.debug('Query parameters found');
       cleanPath = path.substring(hashIndex + 1);
       const queryString = path.substring(hashIndex + 1);
       

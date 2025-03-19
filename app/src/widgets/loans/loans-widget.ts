@@ -517,12 +517,12 @@ export class LoansWidget extends BaseWidget {
     }
 
     toggleLoanDetails(loanId: string): void {
-        console.log(`Toggling loan details for loan ${loanId}`);
+        console.debug(`Toggling loan details for loan ${loanId}`);
         if (this.expandedLoanIds.has(loanId)) {
             this.expandedLoanIds.delete(loanId);
         } else {
             this.expandedLoanIds.add(loanId);
-            console.log(`Expanded loans: ${Array.from(this.expandedLoanIds)}`);
+            console.debug(`Expanded loans: ${Array.from(this.expandedLoanIds)}`);
         }
         Observable.notify(this, 'expandedLoanIds');
 

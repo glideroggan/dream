@@ -752,7 +752,7 @@ export class TransactionListComponent extends FASTElement {
 
         // Only add if not already present
         if (!this.upcomingTransactions.some(existing => existing.id === viewModel.id)) {
-          console.log('adding upcoming transaction', viewModel);
+          console.debug('adding upcoming transaction', viewModel);
           newTransactions.push(viewModel);
         }
       }
