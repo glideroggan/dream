@@ -1,5 +1,4 @@
 import { StorageService } from '../services/storage-service';
-import { createNewUserTemplate, generateMockUsers } from './mock/user-mock';
 import { UserProfile } from './models/user-models';
 
 export class UserRepository {
@@ -39,8 +38,9 @@ export class UserRepository {
   /**
    * Initialize with default users
    */
-  private initializeDefaultUsers(): void {
-    const mockUsers = generateMockUsers();
+  private async initializeDefaultUsers(): Promise<void> {
+    const module = await import("@mocks/user")
+    const mockUsers = module.generateMockUsers();
     
     // Add users to map
     mockUsers.forEach(user => {
@@ -106,15 +106,16 @@ export class UserRepository {
   /**
    * Create a new user with default settings
    */
-  public createNewUser(userData: {
+  public async createNewUser(userData: {
     firstName: string;
     lastName: string;
     email: string;
-  }): UserProfile {
+  }): Promise<UserProfile> {
     const id = `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
     // Use the template to create a consistent new user
-    const newUser = createNewUserTemplate({
+    const module = await import("@mocks/user")
+    const newUser = module.createNewUserTemplate({
       id,
       ...userData
     });

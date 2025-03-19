@@ -144,7 +144,7 @@ export abstract class LocalStorageRepository<T extends Entity> implements Reposi
    * Initialize repository with mock data
    * Override in derived classes
    */
-  protected abstract initializeMockData(): void;
+  protected abstract initializeMockData(): PromiseLike<void>;
   
   /**
    * Generate a unique ID

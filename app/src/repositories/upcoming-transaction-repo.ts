@@ -1,7 +1,6 @@
 import { StorageService } from "../services/storage-service";
 import { UserService } from "../services/user-service";
 import { LocalStorageRepository } from "./base-repository";
-import { getMockUpcomingTransactionsByUserType } from "./mock/upcoming-transaction-mocks";
 import { UpcomingTransaction } from "./models/transaction-models";
 
 
@@ -10,10 +9,11 @@ export class UpcomingTransactionRepository extends LocalStorageRepository<Upcomi
         super('upcoming-transactions', storage, userService);
     }
 
-    protected initializeMockData(): void {
+    protected async initializeMockData(): Promise<void> {
         // Check user type before initializing with mock data
         const userType = this.userService.getUserType();
-        const upcoming = getMockUpcomingTransactionsByUserType(userType);
+        const module = await import("@mocks/upcoming-transaction")
+        const upcoming = module.getMockUpcomingTransactionsByUserType(userType);
 
         // Add mock transactions
         upcoming.forEach(transaction => {

@@ -1,6 +1,10 @@
 # BUGS
+- mocks
+  - established user have duplicate upcoming transactions
 - grid-layout
   - the grid cells doesn't feel like they have a set width, when increasing the window makes the widget wider
+- simulation-card
+  - not completed
 - simulation-loan
   - currentState doesn't serve a purpose?
 - loan-workflow
@@ -23,6 +27,31 @@
   - 🔧pressing the col buttons do nothing, until we do something with the rows buttons
 
 # simulation structure
+## card processing
+```mermaid
+flowchart TB
+  start([Start Card Processing]) --> check_overdraft(Has Overdraft Protection?)
+  check_overdraft -->|Yes| check_due_date
+  check_overdraft -->|No|check_account(Account Overdrawn?)
+  
+  check_account -->|Yes|create_fee[Create Overdraft Fee Payment]
+  check_account -->|No|check_due_date
+  
+  create_fee --> check_due_date[Check Card Due Date]
+  
+  check_due_date -->|Found| check_scheduled(Scheduled Payment Exists?)
+  check_due_date -->|Not Found| set_due_date[Set Due Date]
+  
+  set_due_date --> quit([End])
+  
+  check_scheduled -->|Yes| quit
+  check_scheduled -->|No| evaluate_date(Due Date Soon?)
+  
+  evaluate_date -->|Yes| create_payment[Create Scheduled Payment]
+  evaluate_date -->|No| quit
+  
+  create_payment --> quit
+```
 ## loan application
 ```mermaid
 sequenceDiagram
@@ -61,7 +90,7 @@ flowchart LR
 ```
 
 # PERFORMANCE
-- We could move the mocks into their own entrypoints, then we would only download them if needed
+- ✔️We could move the mocks into their own entrypoints, then we would only download them if needed
 
 # FEATURES
 - account-widget

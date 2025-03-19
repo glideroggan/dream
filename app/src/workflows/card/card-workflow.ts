@@ -50,6 +50,7 @@ export class CardWorkflow extends WorkflowBase {
         this.isLoading = true;
         
         // Setup the workflow UI
+        this.setModalWidth("500px")
         this.updateTitle("Request a New Card");
         
         // Initialize the footer with Continue button but disabled initially

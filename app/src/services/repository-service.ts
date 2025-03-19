@@ -1,9 +1,13 @@
-import { StorageService } from './storage-service';
-import { UserService } from './user-service';
+import { storageService, StorageService } from './storage-service';
+import { userService, UserService } from './user-service';
 import { AccountRepository } from '../repositories/account-repository';
 import { TransactionRepository } from '../repositories/transaction-repository';
 import { SettingsRepository } from '../repositories/settings-repository';
 import { UserProductRepository } from '../repositories/user-product-repository';
+import { CardRepository } from '../repositories/card-repository';
+import { LoanRepository } from '../repositories/loan-repository';
+import { ProductRepository, productRepository } from '../repositories/product-repository';
+import { UpcomingTransactionRepository } from '../repositories/upcoming-transaction-repo';
 
 export class RepositoryService {
   private static instance: RepositoryService;
@@ -79,11 +83,11 @@ export class RepositoryService {
 }
 
 // Create and export singleton instance
-import { storageService } from './storage-service';
-import { userService } from './user-service';
-import { CardRepository } from '../repositories/card-repository';
-import { LoanRepository } from '../repositories/loan-repository';
-import { ProductRepository, productRepository } from '../repositories/product-repository';
-import { UpcomingTransactionRepository } from '../repositories/upcoming-transaction-repo';
+// import { storageService } from './storage-service';
+// import { userService } from './user-service';
+// import { CardRepository } from '../repositories/card-repository';
+// import { LoanRepository } from '../repositories/loan-repository';
+// import { ProductRepository, productRepository } from '../repositories/product-repository';
+// import { UpcomingTransactionRepository } from '../repositories/upcoming-transaction-repo';
 
 export const repositoryService = RepositoryService.getInstance(storageService, userService);

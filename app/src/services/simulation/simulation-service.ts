@@ -117,19 +117,6 @@ class SimulationService {
                 break
             case 'recurring_payment': 
                 throw new Error("The original task should handle this");
-                // newTask = {
-                //     id: `task_${generateUUID()}`,
-                //     productId: task.productId,
-                //     type: task.type,
-                //     currentState: 'pending',
-                //     lastProcessedTime: now,
-                //     nextProcessTime: now + 10000, // 10 seconds
-                //     createdTime: now,
-                //     completedSteps: [],
-                //     status: 'pending',
-                //     metadata: task.metadata
-                // };
-                break;
             default:
                 throw new Error(`Unsupported task type: ${task.type}`);
         }
@@ -210,16 +197,10 @@ class SimulationService {
             case 'system-upcoming-processing':
                 return await processSystemUpcomingProcessing(task);
             case 'recurring_payment':
-                // console.warn("Recurring payment processing is not a thing")
                 throw new Error("Recurring payment processing is not a thing")
-                // return await processRecurringPayment(task);
             case 'loan':
                 return await processLoanApplication(task);
-            // case 'account':
-            //     throw new Error("Account processing not implemented");
-            // return this.processAccountCreation(task);
             case 'card-processing':
-                // throw new Error("Card processing not implemented");
                 return processCardActivation(task);
             default:
                 console.error(`Unknown task type: ${task.type}`);

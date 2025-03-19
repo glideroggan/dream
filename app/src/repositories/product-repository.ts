@@ -1,5 +1,4 @@
 import { StorageService } from "../services/storage-service";
-import { generateMockProducts } from "./mock/product-mock";
 import { Product, ProductEntityType } from "./models/product-models";
 
 export class ProductRepository {
@@ -86,8 +85,9 @@ export class ProductRepository {
   /**
    * Initialize with default users
    */
-  private initializeDefaultProducts(): void {
-    const mockProducts = generateMockProducts();
+  private async initializeDefaultProducts(): Promise<void> {
+    const module = await import("@mocks/product")
+    const mockProducts = module.generateMockProducts();
 
     // Add users to map
     this.products = mockProducts;

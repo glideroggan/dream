@@ -1,10 +1,8 @@
-import { repositoryService } from '../services/repository-service'
 import { StorageService } from '../services/storage-service'
 import { UserService } from '../services/user-service'
 import { LocalStorageRepository } from './base-repository'
 import { TransactionRepository } from './transaction-repository'
-import { getMockAccountsByUserType } from './mock/account-mock'
-import { Account, TransferResult } from './models/account-models'
+import { Account } from './models/account-models'
 
 // Account repository implementation
 export class AccountRepository extends LocalStorageRepository<Account> {
@@ -16,13 +14,16 @@ export class AccountRepository extends LocalStorageRepository<Account> {
     super('accounts', storage, userService)
   }
 
-  protected initializeMockData(): void {
+  protected async initializeMockData(): Promise<void> {
     // Get user type to determine which mock accounts to use
     const userType = this.userService.getUserType();
-    console.debug(`Initializing mock accounts for user type: ${userType}`);
+    console.log(`Initializing mock accounts for user type: ${userType}`);
     
     // Get appropriate mock accounts based on user type
-    const accounts = getMockAccountsByUserType(userType);
+    const module = await import("@mocks/accounts")
+    console.log('loading mocks dynamically: ', module)
+    
+    const accounts = module.getMockAccountsByUserType(userType);
     
     if (accounts.length === 0 && userType === 'new') {
       console.debug('New user detected, starting with empty account list');

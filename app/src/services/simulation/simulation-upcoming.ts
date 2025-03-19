@@ -51,7 +51,8 @@ export async function processSystemUpcomingProcessing(task: SimulationTask): Pro
             console.debug(`Completed transaction: ${transaction.id}`);
 
             // TODO: should we update related services here? might be better
-            /**//
+            /*
+            */
         }
     }
     

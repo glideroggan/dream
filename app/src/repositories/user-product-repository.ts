@@ -2,7 +2,6 @@ import { LocalStorageRepository } from './base-repository';
 import { StorageService } from '../services/storage-service';
 import { UserService } from '../services/user-service';
 import { UserProduct } from './models/user-product-models';
-import { generateProductsForUsers } from './mock/user-products-mock';
 import { ProductCategory, ProductEntityType } from './models/product-models';
 
 export class UserProductRepository extends LocalStorageRepository<UserProduct> {
@@ -18,7 +17,8 @@ export class UserProductRepository extends LocalStorageRepository<UserProduct> {
   protected async initializeMockData(): Promise<void> {
     // TODO: these should be mocked from the actual products that are offered
     const userType = this.userService.getUserType();
-    const mockProducts = await generateProductsForUsers(userType);
+    const module = await import("@mocks/user-products");
+    const mockProducts = await module.generateProductsForUsers(userType);
     
     mockProducts.forEach(product => {
       this.createForMocks(product);
@@ -101,7 +101,8 @@ export class UserProductRepository extends LocalStorageRepository<UserProduct> {
    */
   async getById(id: string): Promise<UserProduct | undefined> {
     const all = await super.getAll()
-    return all.find(product => product.metadata?.originalProductId === id);
+    return all.find(product => product.id === id)
+    // return all.find(product => product.metadata?.originalProductId === id);
   }
 
   /**

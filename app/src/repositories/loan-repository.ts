@@ -1,7 +1,6 @@
 import { StorageService } from "../services/storage-service";
 import { UserService } from "../services/user-service";
 import { Entity, LocalStorageRepository } from "./base-repository";
-import { generateMockLoans } from "./mock/loan-mock";
 import { Loan, LoanStatus, LoanType } from "./models/loan-models";
 
 export class LoanRepository extends LocalStorageRepository<Loan> {
@@ -12,9 +11,10 @@ export class LoanRepository extends LocalStorageRepository<Loan> {
   /**
    * Initialize with mock data
    */
-  protected initializeMockData(): void {
+  protected async initializeMockData(): Promise<void> {
     const userType = this.userService.getUserType();
-    const mockLoans = generateMockLoans(userType);
+    const module = await import("@mocks/loan")
+    const mockLoans = module.generateMockLoans(userType);
     
     mockLoans.forEach(loan => {
       this.createForMocks(loan);

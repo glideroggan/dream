@@ -115,7 +115,7 @@ export class WidgetService {
       return this.moduleLoadPromises.get(id) as Promise<void>;
     }
     
-    console.debug(`Loading widget module: ${id} from ${modulePath}`);
+    console.log(`Loading widget module: ${id} from ${modulePath}`);
     
     // Create a promise to track this module load
     const loadPromise = (async () => {

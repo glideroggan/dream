@@ -3,7 +3,6 @@ import { UserService } from '../services/user-service';
 import { Entity, LocalStorageRepository } from './base-repository';
 import { PaymentContact } from './models/payment-contact';
 import { PageWidgetSettings, WidgetsLayout } from './models/widget-settings';
-import { defaultSettings } from './mock/settings-mock';
 
 export interface UserSettings extends Entity {
   // General preferences
@@ -35,9 +34,10 @@ export class SettingsRepository extends LocalStorageRepository<UserSettings> {
     super('settings', storage, userService);
   }
 
-  protected initializeMockData(): void {
+  protected async initializeMockData(): Promise<void> {
     // Use the default settings as mock data
-    const mockSettings = { ...defaultSettings };
+    const module = await import("@mocks/settings")
+    const mockSettings = { ...module.defaultSettings };
     
     // Add mock settings
     this.createForMocks(mockSettings);
@@ -210,7 +210,9 @@ export class SettingsRepository extends LocalStorageRepository<UserSettings> {
       return settings[0];
     } else {
       // Create a new settings entry with default values
-      return this.create({ ...defaultSettings });
+      // TODO: in two places, we should fix a general function to cache things and import
+      const module = await import("@mocks/settings")
+      return this.create({ ...module.defaultSettings });
     }
   }
 

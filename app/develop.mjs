@@ -15,6 +15,16 @@ const context = await build.context({
         'src/widgets/swish-widget.ts',
         'src/widgets/financial-health-widget/financial-health-widget.ts',
         'src/widgets/loans/loans-widget.ts',
+        // mocks
+        'src/repositories/mock/account-mock.ts',
+        'src/repositories/mock/card-mock.ts',
+        'src/repositories/mock/loan-mock.ts',
+        'src/repositories/mock/product-mock.ts',
+        'src/repositories/mock/settings-mock.ts',
+        'src/repositories/mock/transaction-mock.ts',
+        'src/repositories/mock/upcoming-transaction-mocks.ts',
+        'src/repositories/mock/user-mock.ts',
+        'src/repositories/mock/user-products-mock.ts',
         // workflows
         'src/workflows/transfer/transfer-workflow.ts',
         'src/workflows/card-detail/card-detail-workflow.ts',
@@ -51,6 +61,8 @@ const context = await build.context({
         "@widgets/welcome", "@widgets/account", 
         "@widgets/financial-health",
         "@widgets/swish",
+        // mocks
+        "@mocks/*",
         // workflows
         "@workflows/*",
         // pages

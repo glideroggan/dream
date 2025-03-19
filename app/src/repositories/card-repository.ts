@@ -2,7 +2,6 @@ import { StorageService } from "../services/storage-service";
 import { UserService } from "../services/user-service";
 import { Entity, LocalStorageRepository } from "./base-repository";
 import { Card, CardStatus, CardType } from "./models/card-models";
-import { generateMockCards } from "./mock/card-mock";
 
 export class CardRepository extends LocalStorageRepository<Card> {
   constructor(storage: StorageService, userService: UserService) {
@@ -12,9 +11,10 @@ export class CardRepository extends LocalStorageRepository<Card> {
   /**
    * Initialize with mock data based on user type
    */
-  protected initializeMockData(): void {
+  protected async initializeMockData(): Promise<void> {
     const userType = this.userService.getUserType();
-    const mockCards = generateMockCards(userType);
+    const module = await import("@mocks/card")
+    const mockCards = module.generateMockCards(userType);
     
     mockCards.forEach(card => {
       this.createForMocks(card);
