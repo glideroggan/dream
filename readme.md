@@ -12,7 +12,7 @@
 - simulation-loan
   - currentState doesn't serve a purpose?
 - loan-workflow
-  - 💥the purpose dropdown is empty
+  - ✔️the purpose dropdown is empty
   - sometimes there is an issue where a loan is stuck in "draft" status, we should clean up these when quitting the workflow
 - loan-widget
   - ✔️should subscribe to loan changes
