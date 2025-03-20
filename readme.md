@@ -8,15 +8,16 @@
 - grid-layout
   - the grid cells doesn't feel like they have a set width, when increasing the window makes the widget wider
 - simulation-card
-  - not completed
+  - ✔️not completed
 - simulation-loan
   - currentState doesn't serve a purpose?
 - loan-workflow
-  - the purpose dropdown is empty
+  - 💥the purpose dropdown is empty
   - sometimes there is an issue where a loan is stuck in "draft" status, we should clean up these when quitting the workflow
 - loan-widget
   - ✔️should subscribe to loan changes
   - 💥doesn't gets added automatically when applying for a loan
+  - 💥Due date is formatted wrong
 - system-task is being recreated every time, we should re-create it if we already have it
 - upcoming transaction on the same day shows as 'tomorrow'?
 - transfer-workflow

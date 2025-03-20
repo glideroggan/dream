@@ -145,8 +145,8 @@ const step2Template = html<LoanWorkflow>/*html*/`
           <div class="loan-purpose-section">
             <label for="loanPurpose">Loan Purpose</label>
             <select id="loanPurpose" @change="${(x, c) => x.updateLoanPurpose(c.event)}">
-              ${x => x.getLoanPurposeOptions().map(purpose => html<LoanWorkflow>`
-                <option value="${purpose}" ?selected="${purpose === x.loanPurpose}">${purpose}</option>
+              ${repeat(x => x.getLoanPurposeOptions(), html<string, LoanWorkflow>/*html*/`
+              <option value="${purpose => purpose}" ?selected="${(purpose, c) => purpose === c.parent.loanPurpose}">${purpose => purpose}</option>
               `)}
             </select>
             <div class="field-hint">Please select the primary purpose for this loan</div>
