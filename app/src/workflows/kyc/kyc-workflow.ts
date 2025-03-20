@@ -133,6 +133,27 @@ export class KycWorkflow extends WorkflowBase {
     this.determineKycLevel();
   }
 
+  connectedCallback(): void {
+    super.connectedCallback();
+    // Setup event listeners for components
+    this.addEventListener('kyc-complete', this.handleComponentComplete.bind(this));
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    // Clean up any event listeners if needed
+    this.removeEventListener('kyc-complete', this.handleComponentComplete.bind(this));
+  }
+  
+
+  handleComponentComplete(event: Event): void {
+    const detail = (event as CustomEvent).detail;
+    this.determineKycLevel();
+    if (this.currentKycLevel === this.requiredLevel) {
+      this.complete(true, detail, detail.message || "Identity verification completed");
+    }
+  }
+
   isNeeded(compLevel: KycLevel): boolean {
     const currentLevel = kycService.getCurrentKycLevel();
     const levelValue = (level: KycLevel): number => {
@@ -175,7 +196,7 @@ export class KycWorkflow extends WorkflowBase {
           level: this.currentKycLevel,
           verificationStatus: 'approved',
           kycRequirementId: this.kycRequirementId
-        }, `Already verified at ${this.currentKycLevel} level`);
+        }, `Verified at ${this.currentKycLevel} level`);
         return;
       }
       
@@ -232,8 +253,5 @@ export class KycWorkflow extends WorkflowBase {
     this.cancel("Identity verification cancelled by user");
   }
 
-  disconnectedCallback(): void {
-    super.disconnectedCallback();
-    // Clean up any event listeners if needed
-  }
+  
 }

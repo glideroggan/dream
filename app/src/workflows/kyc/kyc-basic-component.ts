@@ -161,7 +161,12 @@ const styles = css`
   styles
 })
 export class KycBasic extends FASTElement {
-  @observable personalInfo: BasicPersonalInfo
+  @observable personalInfo: BasicPersonalInfo = {
+    fullName: '',
+    email: '',
+    phone: '',
+    dateOfBirth: ''
+  }
   
   @observable errorMessage: string = '';
   @observable consentChecked: boolean = false;

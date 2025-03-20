@@ -595,6 +595,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
     try {
       const productDetails = await this.productRepo.getById(productId)
       this.selectedProductInfo = productDetails || null
+      console.log('Product details:', this.selectedProductInfo)
     } catch (error) {
       console.error(`Failed to load product details for ${productId}:`, error)
       this.selectedProductInfo = null
@@ -631,7 +632,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
 
   // Implement the resume method to handle nested workflow completion
   public resume(result?: WorkflowResult): void {
-    console.debug('Account workflow resumed after nested workflow', result)
+    console.log('Account workflow resumed after nested workflow', result)
 
     // Make sure we restore the original UI state - update the modal title and button text
     this.updateTitle('Create New Account')
@@ -646,7 +647,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
         result.data?.verificationStatus === 'pending' ||
         result.data?.verificationStatus === 'approved'
       ) {
-        console.debug(
+        console.log(
           'KYC workflow completed successfully with status:',
           result.data.verificationStatus
         )
