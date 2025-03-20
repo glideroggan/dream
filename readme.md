@@ -1,24 +1,23 @@
 # BUGS
+- building
+  - centralize the entrypoints so that it can be reused in both dev and prod
+- header
+  - make logo be on the top when in mobile view
 - kyc
-  - ✔️enchance with more levels
-  - ✔️needs signing after each workflow
   - 💥standard and above isn't adding more personal info to the storage
 - mocks
   - established user have duplicate upcoming transactions
 - grid-layout
   - the grid cells doesn't feel like they have a set width, when increasing the window makes the widget wider
 - simulation-card
-  - ✔️not completed
 - simulation-loan
   - currentState doesn't serve a purpose?
 - loan-workflow
-  - ✔️the purpose dropdown is empty
   - sometimes there is an issue where a loan is stuck in "draft" status, we should clean up these when quitting the workflow
 - loan-widget
-  - ✔️should subscribe to loan changes
   - 💥doesn't gets added automatically when applying for a loan
   - 💥Due date is formatted wrong
-- system-task is being recreated every time, we should re-create it if we already have it
+- ✔️system-task is being recreated every time, we should re-create it if we already have it
 - upcoming transaction on the same day shows as 'tomorrow'?
 - transfer-workflow
   - is not adding a correct description when doing a transfer to a contact, should say more than just "Transaction"

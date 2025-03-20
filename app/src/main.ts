@@ -6,7 +6,7 @@ import { simulationService } from "./services/simulation/simulation-service";
 
 // Import workflow components
 import './services/user-product-service';
-import './workflows/swish-workflow';
+// import './workflows/swish-workflow';
 
 
 

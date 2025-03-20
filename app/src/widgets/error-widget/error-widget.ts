@@ -1,4 +1,5 @@
 import { FASTElement, customElement, html, css, attr, observable } from '@microsoft/fast-element';
+import { BaseWidget } from '../../components/base-widget';
 
 const template = html<ErrorWidget>/*html*/`
   <div class="error-widget">
@@ -56,7 +57,7 @@ const styles = css`
   template,
   styles
 })
-export class ErrorWidget extends FASTElement {
+export class ErrorWidget extends BaseWidget {
   @attr title = 'Error Widget';
   @observable config: Record<string, unknown> = {};
 
@@ -66,13 +67,14 @@ export class ErrorWidget extends FASTElement {
     // Simulate initialization error
     setTimeout(() => {
       // Dispatch error event
-      this.dispatchEvent(new ErrorEvent('error', {
-        error: new Error('Widget initialization failed'),
-        message: 'This widget is designed to fail for demonstration purposes',
-        bubbles: true,
-        composed: true
-      }));
-    }, 500);
+      throw new Error('Widget initialization failed');
+      // this.dispatchEvent(new ErrorEvent('error', {
+      //   error: new Error('Widget initialization failed'),
+      //   message: 'This widget is designed to fail for demonstration purposes',
+      //   bubbles: true,
+      //   composed: true
+      // }));
+    }, 1000);
   }
 
   configChanged(): void {

@@ -514,6 +514,7 @@ export const styles = css`
 
   .error-container {
     color: #721c24;
+    overflow: hidden;
   }
 
   .error-icon {

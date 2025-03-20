@@ -15,6 +15,8 @@ const context = await build.context({
         'src/widgets/swish-widget.ts',
         'src/widgets/financial-health-widget/financial-health-widget.ts',
         'src/widgets/loans/loans-widget.ts',
+        // components
+        'src/components/modal-component.ts',
         // mocks
         'src/repositories/mock/account-mock.ts',
         'src/repositories/mock/card-mock.ts',
@@ -61,6 +63,8 @@ const context = await build.context({
         "@widgets/welcome", "@widgets/account", 
         "@widgets/financial-health",
         "@widgets/swish",
+        // components
+        "@components/modal",
         // mocks
         "@mocks/*",
         // workflows

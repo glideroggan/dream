@@ -13,26 +13,41 @@
         "imports": {
           "@microsoft/fast-element": "https://cdn.jsdelivr.net/npm/@microsoft/fast-element@2.1.0/+esm",
           "@chart/js": "https://cdn.jsdelivr.net/npm/chart.js@4.4.8/+esm",
-          "@widgets/account": "./widgets/account-widget/account-widget.js",
-          "@widgets/welcome": "./widgets/welcome/welcome-widget.js",
-          "@widgets/swish": "./widgets/swish-widget.js",
+
+          "@mocks/accounts": "/repositories/mock/account-mock.js",
+          "@mocks/card": "/repositories/mock/card-mock.js",
+          "@mocks/loan": "/repositories/mock/loan-mock.js",
+          "@mocks/product": "/repositories/mock/product-mock.js",
+          "@mocks/settings": "/repositories/mock/settings-mock.js",
+          "@mocks/transaction": "/repositories/mock/transaction-mock.js",
+          "@mocks/upcoming-transaction": "/repositories/mock/upcoming-transaction-mocks.js",
+          "@mocks/user": "/repositories/mock/user-mock.js",
+          "@mocks/user-products": "/repositories/mock/user-products-mock.js",
+
+          "@components/modal": "/components/modal-component.js",
+
+          "@widgets/account": "/widgets/account-widget/account-widget.js",
+          "@widgets/welcome": "/widgets/welcome/welcome-widget.js",
+          "@widgets/swish": "/widgets/swish-widget.js",
           "@widgets/loans": "/widgets/loans/loans-widget.js",
-          "@widgets/slow": "./widgets/slow-widget/slow-widget.js",
-          "@widgets/error": "./widgets/error-widget/error-widget.js",
-          "@widgets/financial-health": "./widgets/financial-health-widget/financial-health-widget.js",
-          "@workflows/card": "./workflows/card/card-workflow.js",
-          "@workflows/card-detail": "./workflows/card-detail/card-detail-workflow.js",
-          "@workflows/transfer": "./workflows/transfer/transfer-workflow.js",
-          "@workflows/loan": "./workflows/loan/loan-workflow.js",
-          "@workflows/signing": "./workflows/signing/signing-workflow.js",
-          "@workflows/create-account": "./workflows/create-account/create-account-workflow.js",
-          "@workflows/swish-workflow": "./workflows/swish-workflow.js",
-          "@workflows/account-info":  "./workflows/account-info/account-info-workflow.js",
-          "@workflows/kyc": "./workflows/kyc/kyc-workflow.js",
-          "@workflows/add-contact-workflow": "./workflows/payments/add-contact-workflow.js",
-          "@pages/dashboard": "./pages/dashboard-page.js",
-          "@pages/investments": "./pages/investments-page.js",
-          "@pages/savings": "./pages/savings-page.js"
+          "@widgets/slow": "/widgets/slow-widget/slow-widget.js",
+          "@widgets/error": "/widgets/error-widget/error-widget.js",
+          "@widgets/financial-health": "/widgets/financial-health-widget/financial-health-widget.js",
+
+          "@workflows/card": "/workflows/card/card-workflow.js",
+          "@workflows/card-detail": "/workflows/card-detail/card-detail-workflow.js",
+          "@workflows/transfer": "/workflows/transfer/transfer-workflow.js",
+          "@workflows/loan": "/workflows/loan/loan-workflow.js",
+          "@workflows/signing": "/workflows/signing/signing-workflow.js",
+          "@workflows/create-account": "/workflows/create-account/create-account-workflow.js",
+          "@workflows/swish-workflow": "/workflows/swish-workflow.js",
+          "@workflows/account-info":  "/workflows/account-info/account-info-workflow.js",
+          "@workflows/kyc": "/workflows/kyc/kyc-workflow.js",
+          "@workflows/add-contact-workflow": "/workflows/payments/add-contact-workflow.js",
+
+          "@pages/dashboard": "/pages/dashboard-page.js",
+          "@pages/investments": "/pages/investments-page.js",
+          "@pages/savings": "/pages/savings-page.js"
         }
       }
     </script>
@@ -61,6 +76,11 @@
   --text-light: #ffffff;
   --border-color: var(--secondary-color);
 
+  /* Financial indicators */
+  --success-color: #2ecc71;
+  --warning-color: #f39c12;
+  --error-color: var(--notification-badge-bg);
+
   /* Badge colors */
   --widget-color: #388e3c;
   --widget-bg: #e8f5e9;
@@ -74,6 +94,13 @@
   --notification-badge-text: #ffffff;
   --new-badge-bg: #e74c3c;
   --new-badge-text: #ffffff;
+
+  /* Badge color variables for light theme */
+  --badge-text: #ffffff;
+  --success-badge: #4caf50;
+  --warning-badge: #f39c12;
+  --info-badge: #2196f3;
+  --error-badge: #e74c3c;
   
   /* Explicitly set color-scheme for light mode */
   color-scheme: light;
@@ -103,6 +130,11 @@
   --text-light: #e7ecf1;
   --border-color: #3a5675;
 
+  /* Financial indicators for dark theme */
+  --success-color: #27ae60; 
+  --warning-color: #e67e22;
+  /* error-color inherits from notification-badge-bg */
+
   /* Badge colors for dark theme */
   --widget-color: #4caf50;
   --widget-bg: #1a2e1c;
@@ -110,6 +142,14 @@
   --workflow-bg: #2e251a;
   --theme-color: #64b5f6;
   --theme-bg: #1a2a3e;
+
+  /* Badge color variables for dark theme */
+  --badge-text: #ffffff;
+  --dark-success-color: #2e7d32; /* Darker green for better contrast */
+  --dark-warning-color: #e67e22; /* Adjusted orange */
+  --dark-info-color: #0288d1;   /* Darker blue */
+  --dark-error-color: #d32f2f;  /* Darker red */
+  --dark-badge-text: #ffffff;
   
   /* Explicitly set color-scheme for dark mode */
   color-scheme: dark;
@@ -168,6 +208,14 @@ body {
     --workflow-bg: #2e251a;
     --theme-color: #64b5f6;
     --theme-bg: #1a2a3e;
+
+    /* Badge color variables for auto dark theme */
+    --badge-text: #ffffff;
+    --dark-success-color: #2e7d32;
+    --dark-warning-color: #e67e22;
+    --dark-info-color: #0288d1;
+    --dark-error-color: #d32f2f;
+    --dark-badge-text: #ffffff;
     
     /* Set color-scheme to dark for auto-dark */
     color-scheme: dark;

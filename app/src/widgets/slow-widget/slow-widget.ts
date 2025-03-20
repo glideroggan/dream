@@ -1,4 +1,5 @@
 import { FASTElement, customElement, html, css, attr, observable } from '@microsoft/fast-element';
+import { BaseWidget } from '../../components/base-widget';
 
 const template = html<SlowWidget>/*html*/`
   <div class="slow-widget">
@@ -73,7 +74,7 @@ const styles = css`
   template,
   styles
 })
-export class SlowWidget extends FASTElement {
+export class SlowWidget extends BaseWidget {
   @attr title = 'Slow Widget';
   @observable config: Record<string, unknown> = {};
   @observable loadingProgress: number = 0;
@@ -119,6 +120,7 @@ export class SlowWidget extends FASTElement {
       bubbles: true,
       composed: true
     }));
+    setTimeout(() => this.notifyContentChanged(), 50);
   }
 
   configChanged(): void {

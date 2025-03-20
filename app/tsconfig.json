@@ -24,7 +24,7 @@
       "@chart/js": ["./node_modules/@chart/js/dist/chart.js.d.ts"],
       "@microsoft/fast-elements": ["./node_modules/@microsoft/fast-elements/dist/fast-elements.d.ts"],
 
-      "@mocks/*": ["./src/repositories/mock/*"],
+      "@mocks/*": ["./src/repositories/mock/*.ts"],
       "@mocks/accounts": ["./src/repositories/mock/account-mock.ts"],
       "@mocks/card": ["./src/repositories/mock/card-mock.ts"],
       "@mocks/loan": ["./src/repositories/mock/loan-mock.ts"],
@@ -34,6 +34,8 @@
       "@mocks/upcoming-transaction": ["./src/repositories/mock/upcoming-transaction-mocks.ts"],
       "@mocks/user-products": ["./src/repositories/mock/user-products-mock.ts"],
       "@mocks/user": ["./src/repositories/mock/user-mock.ts"],
+
+      "@components/modal": ["./src/components/modal-component.ts"],
 
       "@widgets/account": ["./dist/widgets/account-widget/account-widget.d.ts"],
       "@widgets/welcome": ["./dist/widgets/welcome/welcome-widget.d.ts"],

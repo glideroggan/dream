@@ -7,6 +7,7 @@
   "scripts": {
     "dev:cli": "esbuild src/main.ts --bundle --splitting --minify --sourcemap --outdir=dist --loader:.html=text --loader:.svg=text --loader:.eot=text --loader:.ttf=text --loader:.woff=text --loader:.woff2=text --external:@microsoft/fast-element --serve --watch --servedir=./dist --format=esm",
     "dev": "yarn clean && yarn tsc && node ./develop.mjs",
+    "build": "yarn clean && yarn tsc && node ./build.mjs",
     "test": "vitest",
     "test:watch": "vitest watch",
     "docker": "yarn docker:build",

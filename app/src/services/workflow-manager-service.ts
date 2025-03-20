@@ -1,6 +1,5 @@
 import { workflowService } from './workflow-service';
 import { WorkflowResult } from '../workflows/workflow-base';
-import { ModalComponent } from '../components/modal-component';
 
 interface WorkflowState {
   id: string;
@@ -13,11 +12,13 @@ interface WorkflowState {
 export class WorkflowManagerService {
   private static instance: WorkflowManagerService;
   private workflowStack: WorkflowState[] = [];
-  private modalComponent: ModalComponent | null = null;
+  private modalComponent: typeof this.ModalComponent | null = null;
   private isStartingWorkflow: boolean = false; // Add flag to prevent duplicate starts
+  private ModalComponent: any; // Placeholder for the modal component type
   
   // Private constructor for singleton pattern
   private constructor() {
+    this.ModalComponent = typeof import('@components/modal')
     console.debug("WorkflowManagerService instance created");
   }
 
@@ -33,7 +34,7 @@ export class WorkflowManagerService {
   /**
    * Set the modal component that will be used to display workflows
    */
-  public setModalComponent(modal: ModalComponent): void {
+  public setModalComponent(modal: typeof this.ModalComponent): void {
     this.modalComponent = modal;
     
     // Listen for workflow completion events from the modal

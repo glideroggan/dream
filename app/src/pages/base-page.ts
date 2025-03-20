@@ -17,7 +17,6 @@ import {
   getWidgetColumnSpan,
   getWidgetRowSpan
 } from '../widgets/widget-registry';
-import { ModalComponent } from '../components/modal-component';
 import { createWidgetWrapper } from '../utils/widget-helper';
 import { getSearchService } from '../services/search-service';
 
@@ -122,6 +121,8 @@ export const baseContentTemplate = html<BasePage>/*html*/ `
   </div>
 `;
 
+export const imports = async (url: string) => await import(url)
+
 export class BasePage extends FASTElement {
   // At the start of the class, add a static styles property
   static styles = basePageStyles;
@@ -148,6 +149,8 @@ export class BasePage extends FASTElement {
   private boundHandleDismissWidget: EventListener;
   private boundHandleCancelWidget: EventListener;
 
+  
+
   constructor() {
     super();
     // Create bound handlers once to ensure we can remove the same function references
@@ -160,8 +163,9 @@ export class BasePage extends FASTElement {
     this.boundHandleCancelWidget = this.handleCancelWidget.bind(this);
   }
 
-  protected get modal(): ModalComponent | null {
-    return this.shadowRoot?.getElementById('workflowModal') as ModalComponent | null;
+  protected get modal(): any | null {
+    const ModalType = imports("@components/modal")
+    return this.shadowRoot?.getElementById('workflowModal') as typeof ModalType | null;
   }
 
   connectedCallback(): void {
