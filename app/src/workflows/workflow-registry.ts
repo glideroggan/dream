@@ -30,10 +30,22 @@ export const WorkflowIds = {
   LOAN: "loan", // Add loan workflow ID
   CARD: "card", // Add card workflow ID
   CARD_DETAIL: "card-detail", // Add card detail workflow ID
+  EDIT_TRANSACTION: "edit-transaction", 
 };
 
 // Define all available workflows
 const workflowDefinitions: WorkflowDefinition[] = [
+  {
+    id: WorkflowIds.EDIT_TRANSACTION,
+    name: "Edit Transaction",
+    description: "Edit or modify upcoming transaction details",
+    elementName: "edit-upcoming-workflow",
+    module: "@workflows/edit-upcoming-workflow",
+    icon: "✏️",
+    searchable: false,
+    popular: false,
+    keywords: ['edit transaction', 'modify transaction', 'update transaction', 'change transaction', 'transaction details'],
+  },
   {
     id: WorkflowIds.CARD,
     name: "Apply for Card",

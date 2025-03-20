@@ -235,23 +235,6 @@ const styles = css`
   styles
 })
 export class SwishWorkflow extends WorkflowBase {
-  // @observable product: SwishProduct = {
-  //   id: "swish-standard", 
-  //   name: "Swish Premium",
-  //   type: "service",
-  //   description: "Swish is a modern payment solution that enables instant transfers between accounts with enhanced security features.",
-  //   features: [
-  //     "Instant transfers 24/7",
-  //     "No transaction fees",
-  //     "Enhanced security with biometric authentication",
-  //     "Transaction history and insights",
-  //     "Scheduled payments",
-  //   ],
-  //   price: 9.99,
-  //   currency: "USD"
-  // };
-  
-
   @observable productImage?: string;
   @observable isProductAdded: boolean = false;
   @observable isProductActive: boolean = false;

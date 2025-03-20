@@ -46,6 +46,7 @@ export interface ExternalTransactionRequest {
 
 export interface UpcomingTransaction extends Transaction {
   scheduledDate: string; // ISO date string for upcoming transactions
+  canBeEdited: boolean; // Flag to indicate if the transaction can be edited
 }
 
 export interface Transaction extends Entity {

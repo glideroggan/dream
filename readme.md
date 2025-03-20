@@ -1,4 +1,6 @@
 # BUGS
+- edit-upcoming-workflow
+  - needs validation on the changes
 - building
   - centralize the entrypoints so that it can be reused in both dev and prod
 - header
@@ -17,11 +19,12 @@
 - loan-widget
   - 💥doesn't gets added automatically when applying for a loan
   - 💥Due date is formatted wrong
-- ✔️system-task is being recreated every time, we should re-create it if we already have it
 - upcoming transaction on the same day shows as 'tomorrow'?
 - transfer-workflow
   - is not adding a correct description when doing a transfer to a contact, should say more than just "Transaction"
 - account-widget
+  - 🗑️clean up the css in transaction-list
+  - needs better feedback that you can click an upcoming transaction
   - is not updating the badge when it comes to upcoming transactions
   - is not updated right away when a card have been connected to the account
 - creating an account, does create the product and the account, but in the product the account ID is not set
@@ -93,9 +96,6 @@ flowchart LR
   products --> savings
   products --> pension
 ```
-
-# PERFORMANCE
-- ✔️We could move the mocks into their own entrypoints, then we would only download them if needed
 
 # FEATURES
 - account-widget

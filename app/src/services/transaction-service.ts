@@ -89,6 +89,7 @@ export class TransactionService {
       const upcomingRepo = repositoryService.getUpcomingTransactionRepository()
       return await upcomingRepo.create({
         fromAccountId,
+        canBeEdited: true,
         toAccountId: toAccountId,
         amount,
         currency,
@@ -152,6 +153,7 @@ export class TransactionService {
       const upcomingRepo = repositoryService.getUpcomingTransactionRepository()
       return await upcomingRepo.create({
         fromAccountId,
+        canBeEdited: true,
         toAccountId: contact.accountNumber || 'external',
         amount,
         currency,
@@ -213,6 +215,7 @@ export class TransactionService {
       const upcomingRepo = repositoryService.getUpcomingTransactionRepository()
       return await upcomingRepo.create({
         fromAccountId,
+        canBeEdited: false,
         toAccountId: toAccountId || 'external',
         amount,
         currency,

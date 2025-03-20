@@ -38,6 +38,7 @@ const context = await build.context({
         'src/workflows/account-info/account-info-workflow.ts',
         'src/workflows/signing/signing-workflow.ts',
         'src/workflows/loan/loan-workflow.ts',
+        'src/workflows/edit-upcoming-workflow.ts',
         // pages
         'src/pages/dashboard-page.ts',
         'src/pages/investments-page.ts',

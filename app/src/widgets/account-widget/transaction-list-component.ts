@@ -2,9 +2,13 @@ import { FASTElement, customElement, html, css, observable, repeat, when } from 
 import { TransactionViewModelHelper } from "./transaction-view-model-helper";
 import { repositoryService } from "../../services/repository-service";
 import { Transaction, UpcomingTransaction } from "../../repositories/models/transaction-models";
+import { workflowManager } from "../../services/workflow-manager-service";
+import { WorkflowIds } from "../../workflows/workflow-registry";
 
 export interface TransactionViewModel extends Partial<UpcomingTransaction> {
+  id: string
   isIncoming: boolean;
+  canBeEdited?: boolean;
   amountClass: string;
   formattedAmount: string;
   formattedBalance?: string;
@@ -100,13 +104,13 @@ const template = html<TransactionListComponent>/*html*/ `
           
           ${when(x => x.upcomingTransactions.length > 0, html<TransactionListComponent>/*html*/`
             <div class="transaction-groups">
-              ${repeat(x => x.upcomingGroups, html<TransactionGroup, TransactionListComponent>/*html*/`
+              ${repeat(x => x.upcomingGroups, html<TransactionGroup>/*html*/`
                 <div class="transaction-group">
                   <div class="group-date-header">${x => x.displayDate}</div>
                   
                   <div class="transaction-list">
                     ${repeat(x => x.transactions, html<TransactionViewModel>/*html*/`
-                      <div class="transaction-item upcoming">
+                      <div class="transaction-item upcoming" @click="${(x, c) => c.parentContext.parent.showDetails(x)}">
                         <div class="transaction-icon">
                           <div class="category-icon ${x => x.type!.toLowerCase()} scheduled"></div>
                         </div>
@@ -616,6 +620,13 @@ export class TransactionListComponent extends FASTElement {
     this.unsubscribeUpcomingRepo();
   }
 
+  async showDetails(transaction: TransactionViewModel): Promise<void> {
+    console.log('Show details for transaction:', transaction); 
+    await workflowManager.startWorkflow(WorkflowIds.EDIT_TRANSACTION, {
+      transactionId: transaction.id
+    })
+  }
+
   /**
    * Set the active tab
    */
@@ -771,6 +782,7 @@ export class TransactionListComponent extends FASTElement {
         // Update state in one go
         this.upcomingTransactions = allTransactions;
         this.upcomingGroups = this.groupUpcomingByDate(this.upcomingTransactions);
+        console.log('upcomingTransactions', this.upcomingTransactions.length, this.hasMoreUpcomingTransactions);
       }
 
     } catch (error) {

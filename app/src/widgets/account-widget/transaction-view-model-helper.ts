@@ -1,4 +1,4 @@
-import { Transaction, isIncomingTransaction } from "../../repositories/models/transaction-models";
+import { Transaction, UpcomingTransaction, isIncomingTransaction } from "../../repositories/models/transaction-models";
 import { TransactionViewModel } from "./transaction-list-component";
 
 /**
@@ -38,6 +38,18 @@ export class TransactionViewModelHelper {
       formattedBalance = formatter.format(relevantBalance);
     }
     
+    if (this.isUpcoming(transaction)) {
+      // For upcoming transactions, we may want to show a different style or message
+      return {
+        ...transaction,
+        amount: transaction.amount, // Use the signed amount for the view model
+        isIncoming,
+        amountClass,
+        formattedAmount,
+        formattedBalance,
+      };
+    }
+
     // Create view model with display properties
     return {
       ...transaction,
@@ -47,6 +59,10 @@ export class TransactionViewModelHelper {
       formattedAmount,
       formattedBalance
     };
+  }
+
+  static isUpcoming(transaction: Transaction): transaction is UpcomingTransaction {
+    return transaction.status === 'upcoming';
   }
   
   /**
