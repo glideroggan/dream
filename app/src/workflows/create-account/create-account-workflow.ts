@@ -58,7 +58,7 @@ const template = html<CreateAccountWorkflow>/*html*/ `
                   <h3>${(x) => x.name}</h3>
                   <p>${(x) => x.description}</p>
                   ${when(
-                    (x) => x.requiresKyc,
+                    (x, c) => c.parent.kycLevelReached(x),
                     html`
                       <div
                         class="kyc-badge"
@@ -468,6 +468,32 @@ export class CreateAccountWorkflow extends WorkflowBase {
     this.productRepo = repositoryService.getProductRepository()
   }
 
+  kycLevelReached(item:CreateAccountType): boolean {
+    const selectedType = item
+
+    // Check if the account type requires KYC
+    if (!selectedType?.requiresKyc || !selectedType.kycRequirementId) {
+      return false
+    }
+
+    // Check if the user already meets KYC requirements for this account type
+    const meetsKycRequirements = kycService.meetsKycRequirements(
+      selectedType.kycRequirementId
+    )
+
+    // Debug output to help diagnose issues
+    // console.debug(
+    //   `KYC check for ${selectedType.id} (${selectedType.kycRequirementId}):`,
+    //   {
+    //     requiresKyc: selectedType.requiresKyc,
+    //     kycRequirementId: selectedType.kycRequirementId,
+    //     meetsKycRequirements: meetsKycRequirements,
+    //   }
+    // )
+
+    return !meetsKycRequirements
+  }
+
   get requireIdentificationProcess(): boolean {
     const selectedType = this.accountTypes.find(
       (t) => t.id === this.selectedTypeId
@@ -595,7 +621,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
     try {
       const productDetails = await this.productRepo.getById(productId)
       this.selectedProductInfo = productDetails || null
-      console.log('Product details:', this.selectedProductInfo)
+      console.debug('Product details:', this.selectedProductInfo)
     } catch (error) {
       console.error(`Failed to load product details for ${productId}:`, error)
       this.selectedProductInfo = null
@@ -632,7 +658,8 @@ export class CreateAccountWorkflow extends WorkflowBase {
 
   // Implement the resume method to handle nested workflow completion
   public resume(result?: WorkflowResult): void {
-    console.log('Account workflow resumed after nested workflow', result)
+    console.debug('Account workflow resumed after nested workflow', result)
+    result = (result as any).detail
 
     // Make sure we restore the original UI state - update the modal title and button text
     this.updateTitle('Create New Account')
@@ -647,7 +674,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
         result.data?.verificationStatus === 'pending' ||
         result.data?.verificationStatus === 'approved'
       ) {
-        console.log(
+        console.debug(
           'KYC workflow completed successfully with status:',
           result.data.verificationStatus
         )
@@ -672,7 +699,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
         // Re-validate form now that KYC is completed
         if (this.validateForm()) {
           // Create account now that KYC is done
-          this.createAccount()
+          // this.createAccount()
         }
       } else {
         this.errorMessage = 'Identity verification process incomplete'
@@ -832,6 +859,7 @@ export class CreateAccountWorkflow extends WorkflowBase {
       }
     }
 
+    console.debug('Starting nested KYC workflow...')
     // Start the KYC workflow and wait for its result
     return await this.startNestedWorkflow(WorkflowIds.KYC, {
       kycLevel,
@@ -855,22 +883,22 @@ export class CreateAccountWorkflow extends WorkflowBase {
         selectedType.kycRequirementId &&
         !kycService.meetsKycRequirements(selectedType.kycRequirementId)
 
-      if (needsKyc) {
-        // Start KYC workflow
-        console.debug('Starting KYC workflow before account creation')
-        this.errorMessage = 'Starting identity verification...'
-        const kycResult = await this.initiateKycWorkflow()
+      // if (needsKyc) {
+      //   // Start KYC workflow
+      //   console.debug('Starting KYC workflow before account creation')
+      //   this.errorMessage = 'Starting identity verification...'
+      //   const kycResult = await this.initiateKycWorkflow()
 
-        // If KYC was successful, we'll continue in the resume method
-        // The workflow system will automatically call resume() with the KYC result
-        if (!kycResult.success) {
-          this.errorMessage =
-            kycResult.message || 'Identity verification was cancelled'
-        }
+      //   // If KYC was successful, we'll continue in the resume method
+      //   // The workflow system will automatically call resume() with the KYC result
+      //   if (!kycResult.success) {
+      //     this.errorMessage =
+      //       kycResult.message || 'Identity verification was cancelled'
+      //   }
 
-        // Always return early here - don't try to create account yet
-        return
-      }
+      //   // Always return early here - don't try to create account yet
+      //   return
+      // }
 
       // For other validation failures, just return
       return
@@ -894,30 +922,6 @@ export class CreateAccountWorkflow extends WorkflowBase {
           currency: this.currency,
         }
       )
-
-      // const accountRepo = repositoryService.getAccountRepository();
-
-      // const selectedType = this.accountTypes.find(
-      //   (t) => t.id === this.selectedTypeId
-      // )!;
-
-      // Create the account (with zero balance by default)
-      // const newAccount = await accountRepo.createAccount({
-      //   name: this.accountName.trim(),
-      //   balance: 0,
-      //   currency: this.currency,
-      //   type: selectedType.type,
-      // });
-
-      // Check if we need to update the product repository to mark the product as active
-      // try {
-      //   if (this.productRepo.hasActiveProduct) {
-      //     await this.productRepo.hasActiveProduct(selectedType.id);
-      //   }
-      // } catch (error) {
-      //   // Non-critical error, just log it
-      //   console.warn('Failed to mark product as active:', error);
-      // }
 
       const accountRepo = repositoryService.getAccountRepository()
       const newAccount = await accountRepo.getById(product.metadata?.accountId)

@@ -449,6 +449,8 @@ export class SigningWorkflow extends WorkflowBase {
   private countdownInterval: number | null = null;
   private expiryTime: Date | null = null;
 
+  private data: Record<string, any> = {};
+
   initialize(params?: Record<string, any>): void {
     // Set initial title and hide footer (we'll use our own buttons)
     this.updateTitle("Sign with BankID");
@@ -459,6 +461,7 @@ export class SigningWorkflow extends WorkflowBase {
       if (params.message) this.message = params.message;
       if (params.documentName) this.documentName = params.documentName;
       if (params.documentHash) this.documentHash = params.documentHash;
+      if (params.data) this.data = params.data;
     }
 
     // Notify the host that form validation is valid (since we use our own buttons)
@@ -658,7 +661,8 @@ export class SigningWorkflow extends WorkflowBase {
         this.signingResult.success,
         {
           signature: this.signingResult.signature,
-          documentHash: this.signingResult.documentHash
+          documentHash: this.signingResult.documentHash,
+          data: this.data
         },
         this.signingResult.message
       );

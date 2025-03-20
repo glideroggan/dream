@@ -446,6 +446,7 @@ export class ModalComponent extends FASTElement implements WorkflowHost {
       // Store reference to the workflow
       this.activeWorkflow = workflowElement as WorkflowBase;
 
+      // TODO: shouldn't these be in the workflow base? or manager?
       // Set up event listener for validation events
       workflowElement.addEventListener('workflowValidation', this.boundHandleWorkflowValidation);
 

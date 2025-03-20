@@ -4,11 +4,12 @@ import { PersonalInformation } from "./kyc-workflow";
 const template = html<KycStep3Component>/*html*/`
   <div class="form-section">
     <h4>Address Information</h4>
-    <div class="form-group">
+    <div class="form-group ${x => x.errors.addressLine1 ? 'invalid' : ''}">
       <label for="addressLine1">Address Line 1</label>
       <input type="text" id="addressLine1" placeholder="Street address"
             :value="${x => x?.personalInfo.addressLine1}"
             @input="${(x, c) => x.handleTextInput('addressLine1', c.event)}" />
+      ${x => x.errors.addressLine1 ? html`<div class="error-message">${x => x.errors.addressLine1}</div>` : ''}
     </div>
 
     <div class="form-group">
@@ -19,22 +20,24 @@ const template = html<KycStep3Component>/*html*/`
     </div>
 
     <div class="form-row">
-      <div class="form-group">
+      <div class="form-group ${x => x.errors.city ? 'invalid' : ''}">
         <label for="city">City</label>
         <input type="text" id="city" placeholder="City"
               :value="${x => x?.personalInfo.city}"
               @input="${(x, c) => x.handleTextInput('city', c.event)}" />
+        ${x => x.errors.city ? html`<div class="error-message">${x => x.errors.city}</div>` : ''}
       </div>
 
-      <div class="form-group">
+      <div class="form-group ${x => x.errors.postalCode ? 'invalid' : ''}">
         <label for="postalCode">Postal Code</label>
         <input type="text" id="postalCode" placeholder="Postal Code"
               :value="${x => x?.personalInfo.postalCode}"
               @input="${(x, c) => x.handleTextInput('postalCode', c.event)}" />
+        ${x => x.errors.postalCode ? html`<div class="error-message">${x => x.errors.postalCode}</div>` : ''}
       </div>
     </div>
 
-    <div class="form-group">
+    <div class="form-group ${x => x.errors.country ? 'invalid' : ''}">
       <label for="country">Country</label>
       <select id="country" 
               :value="${x => x?.personalInfo.country}"
@@ -47,10 +50,10 @@ const template = html<KycStep3Component>/*html*/`
         <option value="DE">Germany</option>
         <option value="FR">France</option>
       </select>
+      ${x => x.errors.country ? html`<div class="error-message">${x => x.errors.country}</div>` : ''}
     </div>
     
-    <div class="disclaimer">
-      <!-- Use the agreement-checkbox approach from the Swish workflow -->
+    <div class="disclaimer ${x => x.errors.consent ? 'invalid' : ''}">
       <div class="agreement-checkbox-wrapper ${x => x.consentChecked ? 'checked' : ''}" 
            @click="${x => x.toggleConsent()}">
         <div class="custom-checkbox">
@@ -64,6 +67,7 @@ const template = html<KycStep3Component>/*html*/`
           I confirm that all information provided is accurate and I consent to having my identity verified.
         </span>
       </div>
+      ${x => x.errors.consent ? html`<div class="error-message">${x => x.errors.consent}</div>` : ''}
     </div>
   </div>
 `;
@@ -198,6 +202,31 @@ const styles = css`
     color: var(--secondary-text-color, #666);
     line-height: 1.4;
   }
+  
+  .form-group.invalid input,
+  .form-group.invalid select {
+    border-color: var(--error-color, #e74c3c);
+    background-color: var(--error-bg-color, rgba(231, 76, 60, 0.05));
+  }
+  
+  .error-message {
+    color: var(--error-color, #e74c3c);
+    font-size: 12px;
+    margin-top: 4px;
+    font-weight: 500;
+  }
+  
+  .form-group.invalid label {
+    color: var(--error-color, #e74c3c);
+  }
+  
+  .disclaimer.invalid .agreement-checkbox-wrapper {
+    background-color: var(--error-bg-color, rgba(231, 76, 60, 0.05));
+  }
+  
+  .disclaimer.invalid .custom-checkbox {
+    border-color: var(--error-color, #e74c3c);
+  }
 `;
 
 @customElement({
@@ -208,22 +237,24 @@ const styles = css`
 export class KycStep3Component extends FASTElement {
   @observable personalInfo: PersonalInformation;
   @observable consentChecked: boolean = false;
+  @observable errors: Record<string, string> = {};
+  @observable isValid: boolean = false;
   
   constructor() {
     super();
     this.personalInfo = {
-      email: '',
-      phone: '',
-      fullName: '',
-      dateOfBirth: '',
-      nationality: '',
-      idType: '',
-      idNumber: '',
-      addressLine1: '',
-      addressLine2: '',
-      city: '',
-      postalCode: '',
-      country: ''
+      addressLine1: this.personalInfo?.addressLine1 || '',
+      addressLine2: this.personalInfo?.addressLine2 || '',
+      city: this.personalInfo?.city || '',
+      country: this.personalInfo?.country || '',
+      idType: this.personalInfo?.idType || '',
+      idNumber: this.personalInfo?.idNumber || '',
+      fullName: this.personalInfo?.fullName || '',
+      email: this.personalInfo?.email || '',
+      phone: this.personalInfo?.phone || '',
+      dateOfBirth: this.personalInfo?.dateOfBirth || '',
+      nationality: this.personalInfo?.nationality || '',
+      postalCode: this.personalInfo?.postalCode || ''
     };
   }
   
@@ -246,12 +277,17 @@ export class KycStep3Component extends FASTElement {
       [field]: input.value
     };
     
+    // Validate the form
+    this.validateForm();
+    
     // Dispatch event to parent
     this.dispatchEvent(new CustomEvent('field-changed', {
       detail: {
         field,
         value: input.value,
-        personalInfo: this.personalInfo
+        personalInfo: this.personalInfo,
+        isValid: this.isValid,
+        errors: this.errors
       },
       bubbles: true,
       composed: true
@@ -264,13 +300,76 @@ export class KycStep3Component extends FASTElement {
   toggleConsent(): void {
     this.consentChecked = !this.consentChecked;
     
+    // Validate form after toggling consent
+    this.validateForm();
+    
     // Dispatch event to parent
     this.dispatchEvent(new CustomEvent('consent-changed', {
       detail: {
-        checked: this.consentChecked
+        checked: this.consentChecked,
+        isValid: this.isValid,
+        errors: this.errors
       },
       bubbles: true,
       composed: true
     }));
+  }
+  
+  validateForm() {
+    const newErrors: Record<string, string> = {};
+    
+    // Validate Address Line 1
+    if (!this.personalInfo.addressLine1 || this.personalInfo.addressLine1.trim() === '') {
+      newErrors.addressLine1 = 'Address is required';
+    } else if (this.personalInfo.addressLine1.length < 5) {
+      newErrors.addressLine1 = 'Please enter a complete address';
+    }
+    
+    // Validate City
+    if (!this.personalInfo.city || this.personalInfo.city.trim() === '') {
+      newErrors.city = 'City is required';
+    }
+    
+    // Validate Postal Code
+    if (!this.personalInfo.postalCode || this.personalInfo.postalCode.trim() === '') {
+      newErrors.postalCode = 'Postal code is required';
+    } else {
+      // Different validation based on country
+      if (this.personalInfo.country === 'US' && !/^\d{5}(-\d{4})?$/.test(this.personalInfo.postalCode)) {
+        newErrors.postalCode = 'US postal code should be 5 digits or ZIP+4 format';
+      } else if (this.personalInfo.country === 'CA' && !/^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/.test(this.personalInfo.postalCode)) {
+        newErrors.postalCode = 'Canadian postal code format: A1A 1A1';
+      } else if (this.personalInfo.country === 'UK' && !/^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/i.test(this.personalInfo.postalCode)) {
+        newErrors.postalCode = 'UK postal code format is invalid';
+      }
+    }
+    
+    // Validate Country
+    if (!this.personalInfo.country) {
+      newErrors.country = 'Please select a country';
+    }
+    
+    // Validate Consent
+    if (!this.consentChecked) {
+      newErrors.consent = 'You must agree to the terms to proceed';
+    }
+    
+    // Update errors state
+    this.errors = newErrors;
+    
+    // Update overall validity
+    this.isValid = Object.keys(newErrors).length === 0;
+    
+    // Notify parent about validation status
+    this.dispatchEvent(new CustomEvent('validation-changed', {
+      detail: {
+        isValid: this.isValid,
+        errors: this.errors
+      },
+      bubbles: true,
+      composed: true
+    }));
+    
+    return this.isValid;
   }
 }

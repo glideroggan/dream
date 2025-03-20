@@ -4,7 +4,7 @@ import { PersonalInformation } from "./kyc-workflow";
 const template = html<KycStep2Component>/*html*/`
   <div class="form-section">
     <h4>Identity Verification</h4>
-    <div class="form-group">
+    <div class="form-group ${x => x.errors.idType ? 'invalid' : ''}">
       <label for="idType">ID Type</label>
       <select id="idType" 
               :value="${x => x.personalInfo.idType}"
@@ -14,16 +14,18 @@ const template = html<KycStep2Component>/*html*/`
         <option value="drivers_license">Driver's License</option>
         <option value="national_id">National ID Card</option>
       </select>
+      ${x => x.errors.idType ? html`<div class="error-message">${x => x.errors.idType}</div>` : ''}
     </div>
 
-    <div class="form-group">
+    <div class="form-group ${x => x.errors.idNumber ? 'invalid' : ''}">
       <label for="idNumber">ID Number</label>
       <input type="text" id="idNumber" placeholder="Enter your ID number"
              :value="${x => x.personalInfo.idNumber}"
              @input="${(x, c) => x.handleTextInput('idNumber', c.event)}" />
+      ${x => x.errors.idNumber ? html`<div class="error-message">${x => x.errors.idNumber}</div>` : ''}
     </div>
 
-    <div class="form-group">
+    <div class="form-group ${x => x.errors.document ? 'invalid' : ''}">
       <label>ID Document Upload</label>
       <div class="document-upload">
         <button class="upload-button" @click="${x => x.fakeDocumentUpload()}">
@@ -31,6 +33,7 @@ const template = html<KycStep2Component>/*html*/`
         </button>
         <span class="file-name">${x => x.uploadedFileName || 'No file selected'}</span>
       </div>
+      ${x => x.errors.document ? html`<div class="error-message">${x => x.errors.document}</div>` : ''}
     </div>
   </div>
 `;
@@ -114,6 +117,28 @@ const styles = css`
     color: var(--secondary-text-color, #666);
     font-style: italic;
   }
+  
+  .form-group.invalid input,
+  .form-group.invalid select {
+    border-color: var(--error-color, #e74c3c);
+    background-color: var(--error-bg-color, rgba(231, 76, 60, 0.05));
+  }
+  
+  .error-message {
+    color: var(--error-color, #e74c3c);
+    font-size: 12px;
+    margin-top: 4px;
+    font-weight: 500;
+  }
+  
+  .form-group.invalid label {
+    color: var(--error-color, #e74c3c);
+  }
+  
+  .form-group.invalid .upload-button {
+    border-color: var(--error-color, #e74c3c);
+    background-color: var(--error-bg-color, rgba(231, 76, 60, 0.05));
+  }
 `;
 
 @customElement({
@@ -124,22 +149,24 @@ const styles = css`
 export class KycStep2Component extends FASTElement {
   @observable personalInfo: PersonalInformation;
   @observable uploadedFileName: string = '';
+  @observable errors: Record<string, string> = {};
+  @observable isValid: boolean = false;
   
   constructor() {
     super();
     this.personalInfo = {
-      email: '',
-      phone: '',
-      fullName: '',
-      dateOfBirth: '',
-      nationality: '',
-      idType: '',
-      idNumber: '',
-      addressLine1: '',
-      addressLine2: '',
-      city: '',
-      postalCode: '',
-      country: ''
+      addressLine1: this.personalInfo?.addressLine1 || '',
+      addressLine2: this.personalInfo?.addressLine2 || '',
+      city: this.personalInfo?.city || '',
+      country: this.personalInfo?.country || '',
+      idType: this.personalInfo?.idType || '',
+      idNumber: this.personalInfo?.idNumber || '',
+      fullName: this.personalInfo?.fullName || '',
+      email: this.personalInfo?.email || '',
+      phone: this.personalInfo?.phone || '',
+      dateOfBirth: this.personalInfo?.dateOfBirth || '',
+      nationality: this.personalInfo?.nationality || '',
+      postalCode: this.personalInfo?.postalCode || ''
     };
   }
   
@@ -162,12 +189,17 @@ export class KycStep2Component extends FASTElement {
       [field]: input.value
     };
     
+    // Validate the form
+    this.validateForm();
+    
     // Dispatch event to parent
     this.dispatchEvent(new CustomEvent('field-changed', {
       detail: {
         field,
         value: input.value,
-        personalInfo: this.personalInfo
+        personalInfo: this.personalInfo,
+        isValid: this.isValid,
+        errors: this.errors
       },
       bubbles: true,
       composed: true
@@ -181,13 +213,82 @@ export class KycStep2Component extends FASTElement {
     // Set a fake file name
     this.uploadedFileName = "id_document.jpg";
     
+    // Clear document error if it exists
+    if (this.errors.document) {
+      const { document, ...remainingErrors } = this.errors;
+      this.errors = remainingErrors;
+    }
+    
+    // Re-validate the form
+    this.validateForm();
+    
     // Notify parent component
     this.dispatchEvent(new CustomEvent('document-uploaded', {
       detail: {
-        fileName: this.uploadedFileName
+        fileName: this.uploadedFileName,
+        isValid: this.isValid,
+        errors: this.errors
       },
       bubbles: true,
       composed: true
     }));
+  }
+  
+  validateForm() {
+    const newErrors: Record<string, string> = {};
+    
+    // Validate ID Type
+    if (!this.personalInfo.idType) {
+      newErrors.idType = 'Please select an ID type';
+    }
+    
+    // Validate ID Number based on ID type
+    if (!this.personalInfo.idNumber) {
+      newErrors.idNumber = 'ID number is required';
+    } else {
+      // Add specific validation based on ID type
+      switch (this.personalInfo.idType) {
+        case 'passport':
+          if (!/^[A-Z0-9]{6,9}$/i.test(this.personalInfo.idNumber)) {
+            newErrors.idNumber = 'Passport number should be 6-9 alphanumeric characters';
+          }
+          break;
+        case 'drivers_license':
+          if (this.personalInfo.idNumber.length < 5) {
+            newErrors.idNumber = 'Driver\'s license number is too short';
+          }
+          break;
+        case 'national_id':
+          if (!/^[0-9]{6,12}$/.test(this.personalInfo.idNumber)) {
+            newErrors.idNumber = 'National ID should be 6-12 digits';
+          }
+          break;
+      }
+    }
+    
+    // Validate Document Upload
+    if (!this.uploadedFileName) {
+      newErrors.document = 'Please upload your ID document';
+    }
+    
+    // Update errors state
+    this.errors = newErrors;
+
+    console.debug("Validation errors:", this.errors);
+    
+    // Update overall validity
+    this.isValid = Object.keys(newErrors).length === 0;
+    
+    // Notify parent about validation status
+    this.dispatchEvent(new CustomEvent('validation-changed', {
+      detail: {
+        isValid: this.isValid,
+        errors: this.errors
+      },
+      bubbles: true,
+      composed: true
+    }));
+    
+    return this.isValid;
   }
 }

@@ -1,11 +1,12 @@
-import { customElement, html, css, observable, when } from "@microsoft/fast-element";
+import { customElement, html, css, observable, when, Observable, volatile } from "@microsoft/fast-element";
 import { WorkflowBase, WorkflowResult } from "../workflow-base";
-import { kycService, KycLevel } from "../../services/kyc-service";
+import { kycService, KycLevel, KycStatus } from "../../services/kyc-service";
 
 // Import components for different KYC levels
 import "./kyc-basic-component";
 import "./kyc-standard-component";
 import "./kyc-enhanced-component";
+import { WorkflowIds } from "../workflow-registry";
 
 export interface BasicPersonalInfo {
   fullName: string;
@@ -46,14 +47,16 @@ const template = html<KycWorkflow>/*html*/ `
       <kyc-basic 
         id="kyc-component" 
         :kycRequirementId="${x => x.kycRequirementId}" 
+        :personalInfo="${x => x.personalInfo}"
         :requiredReason="${x => x.requiredReason}">
       </kyc-basic>
     `)}
 
     ${when(x => !x.isLoading && x.isNeeded(KycLevel.STANDARD), html<KycWorkflow>/*html*/`
       <kyc-standard 
-        id="kyc-component" 
+        id="kyc-component"         
         :kycRequirementId="${x => x.kycRequirementId}" 
+        :personalInfo="${x => x.personalInfo}"
         :requiredReason="${x => x.requiredReason}">
       </kyc-standard>
     `)}
@@ -62,6 +65,7 @@ const template = html<KycWorkflow>/*html*/ `
       <kyc-enhanced 
         id="kyc-component" 
         :kycRequirementId="${x => x.kycRequirementId}" 
+        :personalInfo="${x => x.personalInfo}"
         :requiredReason="${x => x.requiredReason}">
       </kyc-enhanced>
     `)}
@@ -110,11 +114,12 @@ export class KycWorkflow extends WorkflowBase {
   @observable kycRequirementId: string | undefined = undefined;
   @observable requiredReason: string = "";
   @observable currentKycLevel: KycLevel = KycLevel.NONE;
+  personalInfo: Partial<EnhancedPersonalInfo> = {};
 
   initialize(params?: Record<string, any>): void {
     // Common workflow initialization
     this.updateTitle("Identity Verification");
-    this.updateFooter(true, "Cancel");
+    this.updateFooter(true, "Complete");
     
     // Get parameters
     if (params?.kycLevel) {
@@ -130,28 +135,92 @@ export class KycWorkflow extends WorkflowBase {
     }
 
     // Start the process
-    this.determineKycLevel();
+    this.determineKycLevel(false);
   }
 
   connectedCallback(): void {
     super.connectedCallback();
     // Setup event listeners for components
-    this.addEventListener('kyc-complete', this.handleComponentComplete.bind(this));
+    this.addEventListener('step-complete', this.handleComponentComplete.bind(this));
+    this.addEventListener('request-signing-workflow', this.handleRequestSigningWorkflow.bind(this));
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
     // Clean up any event listeners if needed
-    this.removeEventListener('kyc-complete', this.handleComponentComplete.bind(this));
+    this.removeEventListener('step-complete', this.handleComponentComplete.bind(this));
+    this.removeEventListener('request-signing-workflow', this.handleRequestSigningWorkflow.bind(this));
+  }
+
+  async handleRequestSigningWorkflow(event: Event): Promise<void> {
+    const detail = (event as CustomEvent).detail;
+    // TODO: we should validate the whole thing first before starting the signing workflow
+    console.debug("Request signing workflow event received", detail);
+    await this.startNestedWorkflow(WorkflowIds.SIGNING, 
+      {
+        message: detail.message,
+        documentName: detail.documentName,
+        data: detail.data,
+      }
+    )
+  }
+
+  override async resume(result?: WorkflowResult): Promise<void> {
+    console.debug("KYC workflow resumed with result:", result);
+    const kycResults = (result as any).detail
+    // should be after a signing event
+    this.personalInfo = {
+      ...this.personalInfo,
+      ...kycResults.data
+    }
+    if (kycResults.success) {
+      // TODO: we need to save the data from the active component
+      // which could be either enhanced or standard
+      const completionData = {
+        personalInfo: this.personalInfo,
+        verificationStatus: 'pending' as const,
+        // uploadedFileName: this.uploadedFileName
+      };
+      
+      // Save to KYC service
+      await kycService.saveKycVerificationData(completionData, KycLevel.STANDARD);
+      await kycService.updateKycStatus(KycStatus.PENDING, KycLevel.STANDARD);
+
+      await this.determineKycLevel(true)
+    } else {
+      this.cancel(result?.message || "Identity verification cancelled");
+    }
   }
   
 
-  handleComponentComplete(event: Event): void {
+  async handleComponentComplete(event: Event): Promise<void> {
+    this.isLoading = true;
+    console.debug("Component step-complete event received", event);
     const detail = (event as CustomEvent).detail;
-    this.determineKycLevel();
+    this.personalInfo = {
+      ...this.personalInfo,
+      ...detail.personalInfo
+    }
+    this.determineKycLevel(false);
     if (this.currentKycLevel === this.requiredLevel) {
+
+      const kycData = {
+              personalInfo: detail.personalInfo,
+              verificationStatus: 'pending' as const
+            };
+            
+      // Save to KYC service
+      await kycService.saveKycVerificationData(kycData, KycLevel.BASIC);
+            
+      // Update KYC status
+      await kycService.updateKycStatus(KycStatus.PENDING, KycLevel.BASIC);
+
       this.complete(true, detail, detail.message || "Identity verification completed");
     }
+    Observable.notify(this, 'loading')
+    this.isNeeded(KycLevel.BASIC)
+    const that = this
+    setTimeout(() => that.isLoading = false, 0)
   }
 
   isNeeded(compLevel: KycLevel): boolean {
@@ -178,25 +247,29 @@ export class KycWorkflow extends WorkflowBase {
       levelValue(compLevel) === levelValue(currentLevel) + 1;
 
     // Return true only if this is the exact next level needed
+    console.debug(`Is ${compLevel} needed? ${isNextRequired}`);
 
     return isNextRequired
 
   }
 
-  async determineKycLevel(): Promise<void> {
+  async determineKycLevel(complete:boolean): Promise<void> {
     try {
       // Get current KYC level
       this.currentKycLevel = kycService.getCurrentKycLevel();
-      console.log(`Current KYC level: ${this.currentKycLevel}, Required: ${this.requiredLevel}`);
+      console.debug(`Current KYC level: ${this.currentKycLevel}, Required: ${this.requiredLevel}`);
       
       // Check if user already meets the required level
       if (this.isKycLevelSufficient(this.currentKycLevel)) {
-        // Auto-complete the workflow if the user already has sufficient verification
-        this.complete(true, {
-          level: this.currentKycLevel,
-          verificationStatus: 'approved',
-          kycRequirementId: this.kycRequirementId
-        }, `Verified at ${this.currentKycLevel} level`);
+        if (complete) {
+          // Auto-complete the workflow if the user already has sufficient verification
+          this.complete(true, {
+            level: this.currentKycLevel,
+            verificationStatus: 'approved',
+            kycRequirementId: this.kycRequirementId
+          }, `Verified at ${this.currentKycLevel} level`);
+        }
+        
         return;
       }
       
@@ -225,16 +298,16 @@ export class KycWorkflow extends WorkflowBase {
     return levelValue(currentLevel) >= levelValue(this.requiredLevel);
   }
 
-  setupEventListeners(): void {
-    // Use setTimeout to ensure component is rendered
-    setTimeout(() => {
-      const kycComponent = this.shadowRoot?.getElementById('kyc-component');
-      if (kycComponent) {
-        kycComponent.addEventListener('kyc-complete', this.handleKycComplete.bind(this));
-        kycComponent.addEventListener('kyc-cancel', this.handleKycCancel.bind(this));
-      }
-    }, 0);
-  }
+  // setupEventListeners(): void {
+  //   // Use setTimeout to ensure component is rendered
+  //   setTimeout(() => {
+  //     const kycComponent = this.shadowRoot?.getElementById('kyc-component');
+  //     if (kycComponent) {
+  //       kycComponent.addEventListener('kyc-complete', this.handleKycComplete.bind(this));
+  //       kycComponent.addEventListener('kyc-cancel', this.handleKycCancel.bind(this));
+  //     }
+  //   }, 0);
+  // }
 
   handleKycComplete(event: Event): void {
     const detail = (event as CustomEvent).detail;
@@ -249,8 +322,16 @@ export class KycWorkflow extends WorkflowBase {
   }
 
   public handlePrimaryAction(): void {
-    // Cancel the workflow when user clicks the footer cancel button
-    this.cancel("Identity verification cancelled by user");
+    console.debug("Primary action clicked");
+
+    // TODO: get the data from the "flows"
+
+
+    this.complete(true, {
+      level: this.currentKycLevel,
+      verificationStatus: 'approved',
+      kycRequirementId: this.kycRequirementId
+    }, `Verified at ${this.currentKycLevel} level`);
   }
 
   

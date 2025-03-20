@@ -217,6 +217,9 @@ export abstract class WorkflowBase extends FASTElement {
     console.debug(`Starting nested workflow: ${workflowId}`)
     // Prevent multiple nested workflows from starting
     if (this._currentNestedWorkflowPromise) {
+      console.warn(
+        'Nested workflow already in progress, returning existing promise'
+      )
       return this._currentNestedWorkflowPromise
     }
 

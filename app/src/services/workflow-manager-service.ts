@@ -38,6 +38,7 @@ export class WorkflowManagerService {
     
     // Listen for workflow completion events from the modal
     modal.addEventListener('workflowComplete', ((event: CustomEvent) => {
+      event.stopPropagation();
       console.debug('[workflowManager] workflowComplete event received:', event.detail);
       const result = event.detail as WorkflowResult;
       this.workflowComplete(result);
@@ -162,6 +163,7 @@ export class WorkflowManagerService {
    * Resume a paused workflow
    */
   public async resumeWorkflow(result?: WorkflowResult): Promise<void> {
+    console.debug('[workflowManager] - resuming workflow', result);
     // Dispatch transition start event
     // document.dispatchEvent(new CustomEvent('workflow-transition-start', {
     //   bubbles: true,

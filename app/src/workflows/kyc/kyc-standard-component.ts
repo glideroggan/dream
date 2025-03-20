@@ -50,7 +50,8 @@ const template = html<KycStandard>/*html*/ `
         ${when(x => x.currentStep === 1, html<KycStandard>/*html*/`
           <kyc-step1 
             :personalInfo="${x => x.personalInfo}"
-            @field-changed="${(x, c) => x.handleFieldChanged(c.event)}">
+            @field-changed="${(x, c) => x.handleFieldChanged(c.event)}"
+            @validation-changed="${(x, c) => x.validateCurrentStep(c.event as CustomEvent)}">
           </kyc-step1>
         `)}
         
@@ -60,7 +61,8 @@ const template = html<KycStandard>/*html*/ `
             :personalInfo="${x => x.personalInfo}"
             :uploadedFileName="${x => x.uploadedFileName}"
             @field-changed="${(x, c) => x.handleFieldChanged(c.event)}"
-            @document-uploaded="${(x, c) => x.handleDocumentUploaded(c.event)}">
+            @document-uploaded="${(x, c) => x.handleDocumentUploaded(c.event)}"
+            @validation-changed="${(x, c) => x.validateCurrentStep(c.event as CustomEvent)}">
           </kyc-step2>
         `)}
         
@@ -70,7 +72,8 @@ const template = html<KycStandard>/*html*/ `
             :personalInfo="${x => x.personalInfo}"
             :consentChecked="${x => x.consentChecked}"
             @field-changed="${(x, c) => x.handleFieldChanged(c.event)}"
-            @consent-changed="${(x, c) => x.handleConsentChanged(c.event)}">
+            @consent-changed="${(x, c) => x.handleConsentChanged(c.event)}"
+            @validation-changed="${(x, c) => x.validateCurrentStep(c.event as CustomEvent)}">
           </kyc-step3>
         `)}
       </div>
@@ -263,34 +266,46 @@ export class KycStandard extends FASTElement {
   @observable kycRequirementId: string | undefined;
   @observable requiredReason: string = '';
   
-  connectedCallback(): void {
+  async connectedCallback(): Promise<void> {
     super.connectedCallback();
-    this.validateCurrentStep();
+    // load current KYC
+    await this.loadKycData();
+    // this.validateCurrentStep();
+  }
+  async loadKycData() {
+    const savedInfo = await kycService.getPersonal()
+    // merge data from savedInfo and what we already have
+    this.personalInfo = { ...this.personalInfo, ...savedInfo };
   }
   
   handleFieldChanged(event: Event): void {
-    // ...existing code...
-    this.validateCurrentStep();
+    // populate personalInfo based on event details
+    const customEvent = event as CustomEvent;
+    this.personalInfo = {
+      ...this.personalInfo,
+      [customEvent.detail.field]: customEvent.detail.value
+    }
+
+
+    // this.validateCurrentStep();
   }
   
   handleDocumentUploaded(event: Event): void {
-    // ...existing code...
-    this.validateCurrentStep();
+    // this.validateCurrentStep();
   }
   
   handleConsentChanged(event: Event): void {
-    // ...existing code...
-    this.validateCurrentStep();
+    // this.validateCurrentStep();
   }
   
-  validateCurrentStep(): void {
-    // ...existing validation code...
+  validateCurrentStep(event:CustomEvent): void {
+    this.isCurrentStepValid = event.detail.isValid;   
   }
   
   handleBack(): void {
     if (this.currentStep > 1 && !this.isProcessing) {
       this.currentStep--;
-      this.validateCurrentStep();
+      // this.validateCurrentStep();
     }
   }
   
@@ -300,13 +315,14 @@ export class KycStandard extends FASTElement {
     if (this.currentStep < 3) {
       // Move to the next step
       this.currentStep++;
-      this.validateCurrentStep();
+      // this.validateCurrentStep();
+      this.isCurrentStepValid = false
     } else {
       // On the final step, get signing and complete
       await this.completeVerification();
     }
   }
-  
+
   async completeVerification(): Promise<void> {
     this.isProcessing = true;
     
@@ -317,35 +333,12 @@ export class KycStandard extends FASTElement {
         composed: true,
         detail: {
           message: "Please sign to confirm your identity verification",
-          documentName: "Standard KYC Verification"
+          documentName: "Standard KYC Verification",
+          data: this.personalInfo
         }
       });
       
       this.dispatchEvent(signingEvent);
-      
-      // Create completion data
-      const completionData = {
-        personalInfo: this.personalInfo,
-        verificationStatus: 'pending' as const,
-        uploadedFileName: this.uploadedFileName
-      };
-      
-      // Save to KYC service
-      await kycService.saveKycVerificationData(completionData, KycLevel.STANDARD);
-      await kycService.updateKycStatus(KycStatus.PENDING, KycLevel.STANDARD);
-      
-      // Notify parent workflow of completion
-      this.dispatchEvent(new CustomEvent('kyc-complete', {
-        bubbles: true,
-        composed: true,
-        detail: {
-          level: KycLevel.STANDARD,
-          verificationStatus: 'pending',
-          kycRequirementId: this.kycRequirementId,
-          personalInfo: this.personalInfo,
-          message: "Standard identity verification submitted successfully"
-        }
-      }));
       
     } catch (error) {
       console.error("Error completing standard KYC verification:", error);

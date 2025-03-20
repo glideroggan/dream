@@ -30,6 +30,7 @@ export interface KycVerificationData {
   userId: string;
   level: KycLevel;
   status: KycStatus;
+  personal?: Partial<EnhancedPersonalInfo>;
   lastVerified?: string;
   expiresAt?: string;
   requirements?: Record<string, boolean>;
@@ -45,6 +46,7 @@ export interface KYCCompletionData {
  * Service for managing KYC verification processes
  */
 export class KycService {
+  
   private static instance: KycService;
   private storage: StorageService;
   private userService: UserService;
@@ -72,6 +74,20 @@ export class KycService {
       KycService.instance = new KycService(storage, userService);
     }
     return KycService.instance;
+  }
+
+  async getPersonal(): Promise<Partial<EnhancedPersonalInfo>> {
+    const userId = this.userService.getCurrentUser()?.id;
+    if (!userId) {
+      console.warn('Cannot get personal info: No current user');
+      return {};
+    }
+    
+    // Load KYC data from storage
+    this.loadKycDataFromStorage();
+    
+    // Return personal info if available
+    return this.currentUserKycData?.personal || {};
   }
   
   /**
@@ -149,12 +165,16 @@ export class KycService {
    * Check if the user meets a specific KYC requirement
    */
   public meetsKycRequirements(requirementId: string): boolean {
-    // First check from cache for performance
-    if (this.kycRequirementCache.has(requirementId)) {
-      const result = this.kycRequirementCache.get(requirementId) || false;
-      console.debug(`KYC requirement check (from cache) for ${requirementId}: ${result}`);
-      return result;
-    }
+    // // First check from cache for performance
+    // if (this.kycRequirementCache.has(requirementId)) {
+    //   const result = this.kycRequirementCache.get(requirementId) || false;
+    //   console.debug(`KYC requirement check (from cache) for ${requirementId}: ${result}`);
+    //   return result;
+    // }
+
+    // TODO: fix this, we should either always use a service when saving/manipulating data
+    // or the service _needs_ to subscribe to data changes from the store
+    this.loadKycDataFromStorage(); // Ensure we have the latest data loaded
     
     // If not in cache, check from current user's KYC data
     const meetsRequirement = !!this.currentUserKycData?.requirements?.[requirementId];
@@ -226,6 +246,7 @@ export class KycService {
    * This should be called after a successful verification process
    */
   public async saveKycVerificationData(data: KYCCompletionData, level: KycLevel): Promise<void> {
+    console.debug('Saving KYC verification data:', data, level);
     const userId = this.userService.getCurrentUser()?.id;
     if (!userId) {
       console.warn('Cannot save KYC verification data: No current user');
@@ -240,6 +261,7 @@ export class KycService {
         userId,
         level: KycLevel.NONE,
         status: KycStatus.NONE,
+        personal: data.personalInfo,
         requirements: {}
       };
     }
@@ -251,19 +273,19 @@ export class KycService {
     
     // Set appropriate requirements as met based on the level
     if (level === KycLevel.BASIC || level === KycLevel.STANDARD || level === KycLevel.ENHANCED) {
-      this.currentUserKycData.requirements['basic-customer'] = true;
-      this.kycRequirementCache.set('basic-customer', true);
+      this.currentUserKycData.requirements['basic'] = true;
+      this.kycRequirementCache.set('basic', true);
     }
     
     if (level === KycLevel.STANDARD || level === KycLevel.ENHANCED) {
       // Add specific product KYC requirements (typical ones)
-      this.currentUserKycData.requirements['standard-customer'] = true;
+      this.currentUserKycData.requirements['standard'] = true;
       this.currentUserKycData.requirements['isk-account'] = true;
       this.currentUserKycData.requirements['pension-account'] = true;
       this.currentUserKycData.requirements['loan-applicant'] = true;
       
       // Update cache
-      this.kycRequirementCache.set('standard-customer', true);
+      this.kycRequirementCache.set('standard', true);
       this.kycRequirementCache.set('isk-account', true);
       this.kycRequirementCache.set('pension-account', true);
       this.kycRequirementCache.set('loan-applicant', true);
@@ -272,11 +294,11 @@ export class KycService {
     }
     
     if (level === KycLevel.ENHANCED) {
-      this.currentUserKycData.requirements['enhanced-customer'] = true;
+      this.currentUserKycData.requirements['enhanced'] = true;
       this.currentUserKycData.requirements['mortgage-applicant'] = true;
       
       // Update cache
-      this.kycRequirementCache.set('enhanced-customer', true);
+      this.kycRequirementCache.set('enhanced', true);
       this.kycRequirementCache.set('mortgage-applicant', true);
       
       console.debug('Set enhanced KYC requirements as met');

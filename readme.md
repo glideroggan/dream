@@ -1,7 +1,8 @@
 # BUGS
 - kyc
-  - enchance with more levels
-  - needs signing after each workflow
+  - ✔️enchance with more levels
+  - ✔️needs signing after each workflow
+  - 💥standard and above isn't adding more personal info to the storage
 - mocks
   - established user have duplicate upcoming transactions
 - grid-layout
@@ -14,7 +15,8 @@
   - the purpose dropdown is empty
   - sometimes there is an issue where a loan is stuck in "draft" status, we should clean up these when quitting the workflow
 - loan-widget
-  - should subscribe to loan changes
+  - ✔️should subscribe to loan changes
+  - 💥doesn't gets added automatically when applying for a loan
 - system-task is being recreated every time, we should re-create it if we already have it
 - upcoming transaction on the same day shows as 'tomorrow'?
 - transfer-workflow
