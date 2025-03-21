@@ -14,352 +14,366 @@
           "@microsoft/fast-element": "https://cdn.jsdelivr.net/npm/@microsoft/fast-element@2.1.0/+esm",
           "@chart/js": "https://cdn.jsdelivr.net/npm/chart.js@4.4.8/+esm",
 
-          "@mocks/accounts": "/repositories/mock/account-mock.js",
-          "@mocks/card": "/repositories/mock/card-mock.js",
-          "@mocks/loan": "/repositories/mock/loan-mock.js",
-          "@mocks/product": "/repositories/mock/product-mock.js",
-          "@mocks/settings": "/repositories/mock/settings-mock.js",
-          "@mocks/transaction": "/repositories/mock/transaction-mock.js",
-          "@mocks/upcoming-transaction": "/repositories/mock/upcoming-transaction-mocks.js",
-          "@mocks/user": "/repositories/mock/user-mock.js",
-          "@mocks/user-products": "/repositories/mock/user-products-mock.js",
+          "@mocks/accounts": "./repositories/mock/account-mock.js",
+          "@mocks/card": "./repositories/mock/card-mock.js",
+          "@mocks/loan": "./repositories/mock/loan-mock.js",
+          "@mocks/product": "./repositories/mock/product-mock.js",
+          "@mocks/settings": "./repositories/mock/settings-mock.js",
+          "@mocks/transaction": "./repositories/mock/transaction-mock.js",
+          "@mocks/upcoming-transaction": "./repositories/mock/upcoming-transaction-mocks.js",
+          "@mocks/user": "./repositories/mock/user-mock.js",
+          "@mocks/user-products": "./repositories/mock/user-products-mock.js",
 
-          "@components/modal": "/components/modal-component.js",
+          "@components/modal": "./components/modal-component.js",
 
-          "@widgets/account": "/widgets/account-widget/account-widget.js",
-          "@widgets/welcome": "/widgets/welcome/welcome-widget.js",
-          "@widgets/swish": "/widgets/swish-widget.js",
-          "@widgets/loans": "/widgets/loans/loans-widget.js",
-          "@widgets/slow": "/widgets/slow-widget/slow-widget.js",
-          "@widgets/error": "/widgets/error-widget/error-widget.js",
-          "@widgets/financial-health": "/widgets/financial-health-widget/financial-health-widget.js",
+          "@widgets/account": "./widgets/account-widget/account-widget.js",
+          "@widgets/welcome": "./widgets/welcome/welcome-widget.js",
+          "@widgets/swish": "./widgets/swish-widget.js",
+          "@widgets/loans": "./widgets/loans/loans-widget.js",
+          "@widgets/slow": "./widgets/slow-widget/slow-widget.js",
+          "@widgets/error": "./widgets/error-widget/error-widget.js",
+          "@widgets/financial-health": "./widgets/financial-health-widget/financial-health-widget.js",
 
-          "@workflows/card": "/workflows/card/card-workflow.js",
-          "@workflows/card-detail": "/workflows/card-detail/card-detail-workflow.js",
-          "@workflows/transfer": "/workflows/transfer/transfer-workflow.js",
-          "@workflows/loan": "/workflows/loan/loan-workflow.js",
-          "@workflows/signing": "/workflows/signing/signing-workflow.js",
-          "@workflows/create-account": "/workflows/create-account/create-account-workflow.js",
-          "@workflows/swish-workflow": "/workflows/swish-workflow.js",
-          "@workflows/account-info":  "/workflows/account-info/account-info-workflow.js",
-          "@workflows/kyc": "/workflows/kyc/kyc-workflow.js",
-          "@workflows/add-contact-workflow": "/workflows/payments/add-contact-workflow.js",
+          "@workflows/card": "./workflows/card/card-workflow.js",
+          "@workflows/card-detail": "./workflows/card-detail/card-detail-workflow.js",
+          "@workflows/transfer": "./workflows/transfer/transfer-workflow.js",
+          "@workflows/loan": "./workflows/loan/loan-workflow.js",
+          "@workflows/signing": "./workflows/signing/signing-workflow.js",
+          "@workflows/create-account": "./workflows/create-account/create-account-workflow.js",
+          "@workflows/swish-workflow": "./workflows/swish-workflow.js",
+          "@workflows/account-info":  "./workflows/account-info/account-info-workflow.js",
+          "@workflows/kyc": "./workflows/kyc/kyc-workflow.js",
+          "@workflows/add-contact-workflow": "./workflows/payments/add-contact-workflow.js",
+          "@workflows/edit-upcoming-workflow": "./workflows/edit-upcoming-workflow.js",
 
-          "@pages/dashboard": "/pages/dashboard-page.js",
-          "@pages/investments": "/pages/investments-page.js",
-          "@pages/savings": "/pages/savings-page.js"
+          "@pages/dashboard": "./pages/dashboard-page.js",
+          "@pages/investments": "./pages/investments-page.js",
+          "@pages/savings": "./pages/savings-page.js"
         }
       }
-    </script>
+  </script>
+  <link rel=preconnect href="https://cdn.jsdelivr.net">
+
   <style>
     /* Root theme variables */
-:root {
-  /* Base theme colors */
-  --primary-color: #384959;
-  --secondary-color: #6A89A7;
-  --accent-color: #88BDF2;
-  --background-color: #F8FAFD;
+    :root {
+      /* Base theme colors */
+      --primary-color: #384959;
+      --secondary-color: #6A89A7;
+      --accent-color: #88BDF2;
+      --background-color: #F8FAFD;
 
-  /* Semantic color variants */
-  --primary-text-color: var(--primary-color);
-  --secondary-text-color: var(--secondary-color);
-  --header-bg: var(--primary-color);
-  --footer-bg: var(--primary-color);
-  --sidebar-bg: var(--primary-color);
-  --divider-color: var(--secondary-color);
-  --inactive-color: var(--secondary-color);
-  --button-bg: var(--accent-color);
-  --link-color: var(--accent-color);
-  --highlight-color: var(--accent-color);
-  --background-card: var(--background-color);
-  --hover-bg: rgba(136, 189, 242, 0.1);
-  --text-light: #ffffff;
-  --border-color: var(--secondary-color);
+      /* Semantic color variants */
+      --primary-text-color: var(--primary-color);
+      --secondary-text-color: var(--secondary-color);
+      --header-bg: var(--primary-color);
+      --footer-bg: var(--primary-color);
+      --sidebar-bg: var(--primary-color);
+      --divider-color: var(--secondary-color);
+      --inactive-color: var(--secondary-color);
+      --button-bg: var(--accent-color);
+      --link-color: var(--accent-color);
+      --highlight-color: var(--accent-color);
+      --background-card: var(--background-color);
+      --hover-bg: rgba(136, 189, 242, 0.1);
+      --text-light: #ffffff;
+      --border-color: var(--secondary-color);
 
-  /* Financial indicators */
-  --success-color: #2ecc71;
-  --warning-color: #f39c12;
-  --error-color: var(--notification-badge-bg);
+      /* Financial indicators */
+      --success-color: #2ecc71;
+      --warning-color: #f39c12;
+      --error-color: var(--notification-badge-bg);
 
-  /* Badge colors */
-  --widget-color: #388e3c;
-  --widget-bg: #e8f5e9;
-  --workflow-color: #8f4700;
-  --workflow-bg: #fff1e6;
-  --theme-color: #0d47a1;
-  --theme-bg: #e3f2fd;
+      /* Badge colors */
+      --widget-color: #388e3c;
+      --widget-bg: #e8f5e9;
+      --workflow-color: #8f4700;
+      --workflow-bg: #fff1e6;
+      --theme-color: #0d47a1;
+      --theme-bg: #e3f2fd;
 
-  /* Notification badges */
-  --notification-badge-bg: #e74c3c;
-  --notification-badge-text: #ffffff;
-  --new-badge-bg: #e74c3c;
-  --new-badge-text: #ffffff;
+      /* Notification badges */
+      --notification-badge-bg: #e74c3c;
+      --notification-badge-text: #ffffff;
+      --new-badge-bg: #e74c3c;
+      --new-badge-text: #ffffff;
 
-  /* Badge color variables for light theme */
-  --badge-text: #ffffff;
-  --success-badge: #4caf50;
-  --warning-badge: #f39c12;
-  --info-badge: #2196f3;
-  --error-badge: #e74c3c;
-  
-  /* Explicitly set color-scheme for light mode */
-  color-scheme: light;
-}
+      /* Badge color variables for light theme */
+      --badge-text: #ffffff;
+      --success-badge: #4caf50;
+      --warning-badge: #f39c12;
+      --info-badge: #2196f3;
+      --error-badge: #e74c3c;
 
-/* Dark theme colors */
-.dark-theme {
-  /* Base theme colors - inverted */
-  --primary-color: #1e2e3e;
-  --secondary-color: #4a6885;
-  --accent-color: #5a94d8;
-  --background-color: #1a222e;
+      /* Explicitly set color-scheme for light mode */
+      color-scheme: light;
+    }
 
-  /* Semantic color variants */
-  --primary-text-color: #e0e6ed;
-  --secondary-text-color: #a7c0db;
-  --header-bg: #101820;
-  --footer-bg: #101820;
-  --sidebar-bg: #101820;
-  --divider-color: #3a5675;
-  --inactive-color: #567697;
-  --button-bg: #5a94d8;
-  --link-color: #88BDF2;
-  --highlight-color: #88BDF2;
-  --background-card: #243546;
-  --hover-bg: rgba(136, 189, 242, 0.2);
-  --text-light: #e7ecf1;
-  --border-color: #3a5675;
+    /* Dark theme colors */
+    .dark-theme {
+      /* Base theme colors - inverted */
+      --primary-color: #1e2e3e;
+      --secondary-color: #4a6885;
+      --accent-color: #5a94d8;
+      --background-color: #1a222e;
 
-  /* Financial indicators for dark theme */
-  --success-color: #27ae60; 
-  --warning-color: #e67e22;
-  /* error-color inherits from notification-badge-bg */
+      /* Semantic color variants */
+      --primary-text-color: #e0e6ed;
+      --secondary-text-color: #a7c0db;
+      --header-bg: #101820;
+      --footer-bg: #101820;
+      --sidebar-bg: #101820;
+      --divider-color: #3a5675;
+      --inactive-color: #567697;
+      --button-bg: #5a94d8;
+      --link-color: #88BDF2;
+      --highlight-color: #88BDF2;
+      --background-card: #243546;
+      --hover-bg: rgba(136, 189, 242, 0.2);
+      --text-light: #e7ecf1;
+      --border-color: #3a5675;
 
-  /* Badge colors for dark theme */
-  --widget-color: #4caf50;
-  --widget-bg: #1a2e1c;
-  --workflow-color: #ffb74d;
-  --workflow-bg: #2e251a;
-  --theme-color: #64b5f6;
-  --theme-bg: #1a2a3e;
+      /* Financial indicators for dark theme */
+      --success-color: #27ae60;
+      --warning-color: #e67e22;
+      /* error-color inherits from notification-badge-bg */
 
-  /* Badge color variables for dark theme */
-  --badge-text: #ffffff;
-  --dark-success-color: #2e7d32; /* Darker green for better contrast */
-  --dark-warning-color: #e67e22; /* Adjusted orange */
-  --dark-info-color: #0288d1;   /* Darker blue */
-  --dark-error-color: #d32f2f;  /* Darker red */
-  --dark-badge-text: #ffffff;
-  
-  /* Explicitly set color-scheme for dark mode */
-  color-scheme: dark;
-}
+      /* Badge colors for dark theme */
+      --widget-color: #4caf50;
+      --widget-bg: #1a2e1c;
+      --workflow-color: #ffb74d;
+      --workflow-bg: #2e251a;
+      --theme-color: #64b5f6;
+      --theme-bg: #1a2a3e;
 
-/* Forced light theme */
-.light-theme-forced {
-  /* Light theme variables remain as root */
-  color-scheme: light !important;
-}
+      /* Badge color variables for dark theme */
+      --badge-text: #ffffff;
+      --dark-success-color: #2e7d32;
+      /* Darker green for better contrast */
+      --dark-warning-color: #e67e22;
+      /* Adjusted orange */
+      --dark-info-color: #0288d1;
+      /* Darker blue */
+      --dark-error-color: #d32f2f;
+      /* Darker red */
+      --dark-badge-text: #ffffff;
 
-/* Forced light theme elements */
-.light-theme-forced * {
-  color-scheme: light !important;
-}
+      /* Explicitly set color-scheme for dark mode */
+      color-scheme: dark;
+    }
 
-body {
-  margin: 0;
-  padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  color: var(--primary-text-color);
-  transition: background-color 0.3s ease;
-  background-color: var(--background-color);
-}
+    /* Forced light theme */
+    .light-theme-forced {
+      /* Light theme variables remain as root */
+      color-scheme: light !important;
+    }
 
-/* System theme preference detection */
-@media (prefers-color-scheme: dark) {
-  /* Auto apply dark theme when system prefers dark */
-  body:not(.light-theme-forced) {
-    background-color: var(--background-color);
-  }
+    /* Forced light theme elements */
+    .light-theme-forced * {
+      color-scheme: light !important;
+    }
 
-  body:not(.light-theme-forced):not(.dark-theme) {
-    /* Apply dark theme automatically */
-    --primary-color: #1e2e3e;
-    --secondary-color: #4a6885;
-    --accent-color: #5a94d8;
-    --background-color: #1a222e;
-    --primary-text-color: #e0e6ed;
-    --secondary-text-color: #a7c0db;
-    --header-bg: #101820;
-    --footer-bg: #101820;
-    --sidebar-bg: #101820;
-    --divider-color: #3a5675;
-    --inactive-color: #567697;
-    --button-bg: #5a94d8;
-    --link-color: #88BDF2;
-    --highlight-color: #88BDF2;
-    --background-card: #243546;
-    --hover-bg: rgba(136, 189, 242, 0.2);
-    --text-light: #e7ecf1;
-    --border-color: #3a5675;
-    --widget-color: #4caf50;
-    --widget-bg: #1a2e1c;
-    --workflow-color: #ffb74d;
-    --workflow-bg: #2e251a;
-    --theme-color: #64b5f6;
-    --theme-bg: #1a2a3e;
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--primary-text-color);
+      transition: background-color 0.3s ease;
+      background-color: var(--background-color);
+    }
 
-    /* Badge color variables for auto dark theme */
-    --badge-text: #ffffff;
-    --dark-success-color: #2e7d32;
-    --dark-warning-color: #e67e22;
-    --dark-info-color: #0288d1;
-    --dark-error-color: #d32f2f;
-    --dark-badge-text: #ffffff;
-    
-    /* Set color-scheme to dark for auto-dark */
-    color-scheme: dark;
-  }
-}
+    /* System theme preference detection */
+    @media (prefers-color-scheme: dark) {
 
-/* ========== SCROLLBAR STYLING ========== */
+      /* Auto apply dark theme when system prefers dark */
+      body:not(.light-theme-forced) {
+        background-color: var(--background-color);
+      }
 
-/* Base scrollbar styling for WebKit/Blink */
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
+      body:not(.light-theme-forced):not(.dark-theme) {
+        /* Apply dark theme automatically */
+        --primary-color: #1e2e3e;
+        --secondary-color: #4a6885;
+        --accent-color: #5a94d8;
+        --background-color: #1a222e;
+        --primary-text-color: #e0e6ed;
+        --secondary-text-color: #a7c0db;
+        --header-bg: #101820;
+        --footer-bg: #101820;
+        --sidebar-bg: #101820;
+        --divider-color: #3a5675;
+        --inactive-color: #567697;
+        --button-bg: #5a94d8;
+        --link-color: #88BDF2;
+        --highlight-color: #88BDF2;
+        --background-card: #243546;
+        --hover-bg: rgba(136, 189, 242, 0.2);
+        --text-light: #e7ecf1;
+        --border-color: #3a5675;
+        --widget-color: #4caf50;
+        --widget-bg: #1a2e1c;
+        --workflow-color: #ffb74d;
+        --workflow-bg: #2e251a;
+        --theme-color: #64b5f6;
+        --theme-bg: #1a2a3e;
 
-::-webkit-scrollbar-track {
-  background-color: #f0f0f0;
-}
+        /* Badge color variables for auto dark theme */
+        --badge-text: #ffffff;
+        --dark-success-color: #2e7d32;
+        --dark-warning-color: #e67e22;
+        --dark-info-color: #0288d1;
+        --dark-error-color: #d32f2f;
+        --dark-badge-text: #ffffff;
 
-::-webkit-scrollbar-thumb {
-  background-color: #c1c1c1;
-  border-radius: 5px;
-}
+        /* Set color-scheme to dark for auto-dark */
+        color-scheme: dark;
+      }
+    }
 
-::-webkit-scrollbar-thumb:hover {
-  background-color: #a8a8a8;
-}
+    /* ========== SCROLLBAR STYLING ========== */
 
-/* Dark theme scrollbars */
-.dark-theme::-webkit-scrollbar-track {
-  background-color: #1a222e;
-}
+    /* Base scrollbar styling for WebKit/Blink */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
 
-.dark-theme::-webkit-scrollbar-thumb {
-  background-color: #3a5675;
-}
+    ::-webkit-scrollbar-track {
+      background-color: #f0f0f0;
+    }
 
-.dark-theme::-webkit-scrollbar-thumb:hover {
-  background-color: #4a6885;
-}
+    ::-webkit-scrollbar-thumb {
+      background-color: #c1c1c1;
+      border-radius: 5px;
+    }
 
-/* System preference dark scrollbars */
-@media (prefers-color-scheme: dark) {
-  body:not(.light-theme-forced)::-webkit-scrollbar-track {
-    background-color: #1a222e;
-  }
-  
-  body:not(.light-theme-forced)::-webkit-scrollbar-thumb {
-    background-color: #3a5675;
-  }
-  
-  body:not(.light-theme-forced)::-webkit-scrollbar-thumb:hover {
-    background-color: #4a6885;
-  }
-}
+    ::-webkit-scrollbar-thumb:hover {
+      background-color: #a8a8a8;
+    }
 
-/* Forced light theme scrollbars */
-.light-theme-forced::-webkit-scrollbar-track {
-  background-color: #f0f0f0 !important;
-}
+    /* Dark theme scrollbars */
+    .dark-theme::-webkit-scrollbar-track {
+      background-color: #1a222e;
+    }
 
-.light-theme-forced::-webkit-scrollbar-thumb {
-  background-color: #c1c1c1 !important;
-  border-radius: 5px !important;
-}
+    .dark-theme::-webkit-scrollbar-thumb {
+      background-color: #3a5675;
+    }
 
-.light-theme-forced::-webkit-scrollbar-thumb:hover {
-  background-color: #a8a8a8 !important;
-}
+    .dark-theme::-webkit-scrollbar-thumb:hover {
+      background-color: #4a6885;
+    }
 
-/* Firefox scrollbar styling */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #c1c1c1 #f0f0f0; /* thumb track */
-}
+    /* System preference dark scrollbars */
+    @media (prefers-color-scheme: dark) {
+      body:not(.light-theme-forced)::-webkit-scrollbar-track {
+        background-color: #1a222e;
+      }
 
-.dark-theme * {
-  scrollbar-color: #3a5675 #1a222e !important; /* dark theme scrollbars */
-}
+      body:not(.light-theme-forced)::-webkit-scrollbar-thumb {
+        background-color: #3a5675;
+      }
 
-@media (prefers-color-scheme: dark) {
-  body:not(.light-theme-forced) * {
-    scrollbar-color: #3a5675 #1a222e !important; /* system dark scrollbars */
-  }
-}
+      body:not(.light-theme-forced)::-webkit-scrollbar-thumb:hover {
+        background-color: #4a6885;
+      }
+    }
 
-.light-theme-forced * {
-  scrollbar-color: #c1c1c1 #f0f0f0 !important; /* forced light scrollbars */
-}
+    /* Forced light theme scrollbars */
+    .light-theme-forced::-webkit-scrollbar-track {
+      background-color: #f0f0f0 !important;
+    }
 
-/* ========== CHECKBOX STYLING ========== */
+    .light-theme-forced::-webkit-scrollbar-thumb {
+      background-color: #c1c1c1 !important;
+      border-radius: 5px !important;
+    }
 
-/* Base checkbox styling */
-input[type="checkbox"] {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 18px;
-  height: 18px;
-  border: 1px solid #c1c1c1;  /* Default light border */
-  border-radius: 3px;
-  background-color: white;    /* Default light background */
-  cursor: pointer;
-  position: relative;
-  display: inline-block;
-  vertical-align: text-bottom;
-  transition: all 0.2s ease;
-}
+    .light-theme-forced::-webkit-scrollbar-thumb:hover {
+      background-color: #a8a8a8 !important;
+    }
 
-input[type="checkbox"]:checked {
-  background-color: var(--accent-color);
-  border-color: var(--accent-color);
-}
+    /* Firefox scrollbar styling */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: #c1c1c1 #f0f0f0;
+      /* thumb track */
+    }
 
-input[type="checkbox"]:checked::after {
-  content: "";
-  position: absolute;
-  left: 6px;
-  top: 2px;
-  width: 4px;
-  height: 9px;
-  border: solid white;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-  display: block;
-}
+    .dark-theme * {
+      scrollbar-color: #3a5675 #1a222e !important;
+      /* dark theme scrollbars */
+    }
 
-/* Dark theme checkboxes */
-.dark-theme input[type="checkbox"] {
-  background-color: #243546;
-  border-color: #3a5675;
-}
+    @media (prefers-color-scheme: dark) {
+      body:not(.light-theme-forced) * {
+        scrollbar-color: #3a5675 #1a222e !important;
+        /* system dark scrollbars */
+      }
+    }
 
-/* System preference dark checkboxes */
-@media (prefers-color-scheme: dark) {
-  body:not(.light-theme-forced) input[type="checkbox"] {
-    background-color: #243546;
-    border-color: #3a5675;
-  }
-}
+    .light-theme-forced * {
+      scrollbar-color: #c1c1c1 #f0f0f0 !important;
+      /* forced light scrollbars */
+    }
 
-/* Forced light theme checkboxes */
-.light-theme-forced input[type="checkbox"] {
-  background-color: white !important;
-  border-color: #c1c1c1 !important;
-}
+    /* ========== CHECKBOX STYLING ========== */
+
+    /* Base checkbox styling */
+    input[type="checkbox"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border: 1px solid #c1c1c1;
+      /* Default light border */
+      border-radius: 3px;
+      background-color: white;
+      /* Default light background */
+      cursor: pointer;
+      position: relative;
+      display: inline-block;
+      vertical-align: text-bottom;
+      transition: all 0.2s ease;
+    }
+
+    input[type="checkbox"]:checked {
+      background-color: var(--accent-color);
+      border-color: var(--accent-color);
+    }
+
+    input[type="checkbox"]:checked::after {
+      content: "";
+      position: absolute;
+      left: 6px;
+      top: 2px;
+      width: 4px;
+      height: 9px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+      display: block;
+    }
+
+    /* Dark theme checkboxes */
+    .dark-theme input[type="checkbox"] {
+      background-color: #243546;
+      border-color: #3a5675;
+    }
+
+    /* System preference dark checkboxes */
+    @media (prefers-color-scheme: dark) {
+      body:not(.light-theme-forced) input[type="checkbox"] {
+        background-color: #243546;
+        border-color: #3a5675;
+      }
+    }
+
+    /* Forced light theme checkboxes */
+    .light-theme-forced input[type="checkbox"] {
+      background-color: white !important;
+      border-color: #c1c1c1 !important;
+    }
   </style>
 </head>
 
