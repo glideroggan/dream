@@ -1,5 +1,5 @@
 import { FASTElement, customElement, html, css, attr, observable } from '@microsoft/fast-element';
-import { BaseWidget } from '../../components/base-widget';
+import { BaseWidget } from '../components/base-widget';
 
 const template = html<ErrorWidget>/*html*/`
   <div class="error-widget">

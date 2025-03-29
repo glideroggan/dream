@@ -16,29 +16,29 @@ export class AccountRepository extends LocalStorageRepository<Account> {
 
   protected async initializeMockData(): Promise<void> {
     // Get user type to determine which mock accounts to use
-    const userType = this.userService.getUserType();
-    console.debug(`Initializing mock accounts for user type: ${userType}`);
+    // const userType = this.userService.getUserType();
+    // console.debug(`Initializing mock accounts for user type: ${userType}`);
     
-    // Get appropriate mock accounts based on user type
-    const module = await import("@mocks/accounts")
-    console.debug('loading mocks dynamically: ', module)
+    // // Get appropriate mock accounts based on user type
+    // const module = await import("@mocks/accounts")
+    // console.debug('loading mocks dynamically: ', module)
     
-    const accounts = module.getMockAccountsByUserType(userType);
+    // const accounts = module.getMockAccountsByUserType(userType);
     
-    if (accounts.length === 0 && userType === 'new') {
-      console.debug('New user detected, starting with empty account list');
-      return; // Return without saving anything to storage
-    }
+    // if (accounts.length === 0 && userType === 'new') {
+    //   console.debug('New user detected, starting with empty account list');
+    //   return; // Return without saving anything to storage
+    // }
     
-    // Add mock accounts
-    accounts.forEach((account) => {
-      this.createForMocks(account);
-    });
+    // // Add mock accounts
+    // accounts.forEach((account) => {
+    //   this.createForMocks(account);
+    // });
     
-    // Save to storage
-    this.saveToStorage();
+    // // Save to storage
+    // this.saveToStorage();
     
-    console.debug(`Initialized ${accounts.length} mock accounts for ${userType} user`);
+    // console.debug(`Initialized ${accounts.length} mock accounts for ${userType} user`);
   }
 
   async createAccount(

@@ -1,5 +1,5 @@
 import { FASTElement, customElement, html, css, attr, observable } from '@microsoft/fast-element';
-import { BaseWidget } from '../../components/base-widget';
+import { BaseWidget } from '../components/base-widget';
 
 const template = html<SlowWidget>/*html*/`
   <div class="slow-widget">
@@ -85,17 +85,18 @@ export class SlowWidget extends BaseWidget {
     super.connectedCallback();
 
     // Start the loading progress simulation
-    this.loadInterval = window.setInterval(() => {
-      if (this.loadingProgress < 100) {
-        // Increment by approximately 1.67% every 100ms to reach 100% in 6 seconds
-        this.loadingProgress += 1.67;
+    // this.loadInterval = window.setInterval(() => {
+    //   if (this.loadingProgress < 100) {
+    //     // Increment by approximately 1.67% every 100ms to reach 100% in 6 seconds
+    //     this.loadingProgress += 1.67;
         
-        if (this.loadingProgress >= 100) {
-          this.loadingProgress = 100;
-          this.completeLoading();
-        }
-      }
-    }, 100);
+    //     if (this.loadingProgress >= 100) {
+    //       this.loadingProgress = 100;
+    //       this.completeLoading();
+    //     }
+    //   }
+    // }, 100);
+    this.completeLoading(); 
   }
   
   disconnectedCallback(): void {

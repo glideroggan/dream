@@ -36,16 +36,16 @@ export class SettingsRepository extends LocalStorageRepository<UserSettings> {
 
   protected async initializeMockData(): Promise<void> {
     // Use the default settings as mock data
-    const module = await import("@mocks/settings")
-    const mockSettings = { ...module.defaultSettings };
+    // const module = await import("@mocks/settings")
+    // const mockSettings = { ...module.defaultSettings };
     
-    // Add mock settings
-    this.createForMocks(mockSettings);
+    // // Add mock settings
+    // this.createForMocks(mockSettings);
     
-    // Save to storage
-    this.saveToStorage();
+    // // Save to storage
+    // this.saveToStorage();
     
-    console.debug('Initialized settings with default mock data');
+    // console.debug('Initialized settings with default mock data');
   }
 
   async removeWidgetFromLayout(pageType: string, widgetId: string): Promise<void> {
@@ -211,9 +211,10 @@ export class SettingsRepository extends LocalStorageRepository<UserSettings> {
     } else {
       // Create a new settings entry with default values
       // TODO: in two places, we should fix a general function to cache things and import
-      const module = await import("@mocks/settings")
-      return this.create({ ...module.defaultSettings });
+      // const module = await import("@mocks/settings")
+      // return this.create({ ...module.defaultSettings });
     }
+    return {} as UserSettings; // Return an empty object if no settings found
   }
 
   /**

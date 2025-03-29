@@ -12,16 +12,16 @@ export class CardRepository extends LocalStorageRepository<Card> {
    * Initialize with mock data based on user type
    */
   protected async initializeMockData(): Promise<void> {
-    const userType = this.userService.getUserType();
-    const module = await import("@mocks/card")
-    const mockCards = module.generateMockCards(userType);
+    // const userType = this.userService.getUserType();
+    // const module = await import("@mocks/card")
+    // const mockCards = module.generateMockCards(userType);
     
-    mockCards.forEach(card => {
-      this.createForMocks(card);
-    });
+    // mockCards.forEach(card => {
+    //   this.createForMocks(card);
+    // });
     
-    this.saveToStorage();
-    console.debug(`Initialized ${mockCards.length} mock cards for ${userType} user`);
+    // this.saveToStorage();
+    // console.debug(`Initialized ${mockCards.length} mock cards for ${userType} user`);
   }
   
   /**

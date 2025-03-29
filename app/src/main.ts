@@ -1,11 +1,11 @@
-import "./repositories/product-repository"
+// import "./repositories/product-repository"
 import { WorkflowService } from './services/workflow-service';
 
-import "./services/user-service"
-import { simulationService } from "./services/simulation/simulation-service";
+// import "./services/user-service"
+// import { simulationService } from "./services/simulation/simulation-service";
 
 // Import workflow components
-import './services/user-product-service';
+// import './services/user-product-service';
 // import './workflows/swish-workflow';
 
 
@@ -31,20 +31,20 @@ console.debug('Main.ts started executing - before imports');
 
 // Import base services first
 import { WidgetDefinition, widgetService } from './services/widget-service'
-import { storageService } from './services/storage-service';
-import { userService } from './services/user-service';
-import { repositoryService } from './services/repository-service';
+// import { storageService } from './services/storage-service';
+// import { userService } from './services/user-service';
+// import { repositoryService } from './services/repository-service';
 
 // Initialize storage and user services early
-window.storageService = storageService;
-window.userService = userService;
+// window.storageService = storageService;
+// window.userService = userService;
 
 // Check if this is the first time running the app (no currentUserId in storage)
-if (!storageService.getItem('currentUserId')) {
-  console.debug('First-time run detected, setting initial user to new-user');
-  // Default to new-user for first-time users
-  storageService.setItem('currentUserId', 'new-user');
-}
+// if (!storageService.getItem('currentUserId')) {
+//   console.debug('First-time run detected, setting initial user to new-user');
+//   // Default to new-user for first-time users
+//   storageService.setItem('currentUserId', 'new-user');
+// }
 
 console.debug('Storage and user services initialized');
 
@@ -53,38 +53,38 @@ window.widgetService = widgetService
 console.debug('Widget service initialized', widgetService);
 
 // Add the money function to window that actually adds money to the first account
-window.addMoney = async (amount: number) => {
-  try {
-    // Get account repository
-    const accountRepo = repositoryService.getAccountRepository();
+// window.addMoney = async (amount: number) => {
+//   try {
+//     // Get account repository
+//     const accountRepo = repositoryService.getAccountRepository();
     
-    // Get user's accounts
-    const accounts = await accountRepo.getAll();
+//     // Get user's accounts
+//     const accounts = await accountRepo.getAll();
     
-    if (accounts.length === 0) {
-      console.error("No accounts found to add money to");
-      return false;
-    }
+//     if (accounts.length === 0) {
+//       console.error("No accounts found to add money to");
+//       return false;
+//     }
     
-    // Find a checking account, or use the first account
-    const targetAccount = accounts.find(acc => acc.type === 'checking') || accounts[0];
+//     // Find a checking account, or use the first account
+//     const targetAccount = accounts.find(acc => acc.type === 'checking') || accounts[0];
     
-    // Update the balance
-    const updatedAccount = {
-      ...targetAccount,
-      balance: targetAccount.balance + amount
-    };
+//     // Update the balance
+//     const updatedAccount = {
+//       ...targetAccount,
+//       balance: targetAccount.balance + amount
+//     };
     
-    // Save the updated account
-    await accountRepo.update(targetAccount.id, updatedAccount);
+//     // Save the updated account
+//     await accountRepo.update(targetAccount.id, updatedAccount);
     
-    console.debug(`Added $${amount} to account ${targetAccount.name}. New balance: $${updatedAccount.balance}`);
-    return true;
-  } catch (error) {
-    console.error("Failed to add money:", error);
-    return false;
-  }
-};
+//     console.debug(`Added $${amount} to account ${targetAccount.name}. New balance: $${updatedAccount.balance}`);
+//     return true;
+//   } catch (error) {
+//     console.error("Failed to add money:", error);
+//     return false;
+//   }
+// };
 
 // Import registries that register with search service
 import { registerAllWidgets } from './widgets/widget-registry';
@@ -126,4 +126,4 @@ import { getSearchService } from './services/search-service';
 console.debug('Application initialized')
 widgetService.emitWidgetsRegistered()
 
-simulationService.initialize()
+// simulationService.initialize()

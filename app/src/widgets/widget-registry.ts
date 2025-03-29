@@ -4,13 +4,8 @@ import { userProductService } from '../services/user-product-service';
 
 // Define all available widget IDs
 export const WidgetIds = {
-  ACCOUNT: "account",
-  WELCOME: "welcome",
-  SWISH: "swish-widget",
   SLOW: "slow-widget",
   ERROR: "error-widget",
-  FINANCIAL_HEALTH: "financial-health",
-  LOANS: "loans-widget",
   // Add more widget IDs here as needed
 };
 
@@ -30,82 +25,82 @@ interface EnhancedWidgetDefinition extends WidgetDefinition {
 
 // Define all available widgets
 const widgetDefinitions: EnhancedWidgetDefinition[] = [
-  {
-    id: WidgetIds.LOANS,
-    name: 'Loans',
-    description: 'View and manage your loans and credit accounts',
-    elementName: 'loans-widget',
-    module: '@widgets/loans',
-    defaultConfig: {},
-    colSpan: 13,
-    rowSpan: 19,
-    minWidth: 380,
-    searchable: true,
-    keywords: ['loans', 'credit', 'mortgage', 'debt', 'borrowing', 'financing'],
-    icon: '💰',
-  },
-  {
-    id: WidgetIds.FINANCIAL_HEALTH,
-    name: 'Financial Health',
-    description: 'Analyze your financial health with personalized insights and recommendations',
-    elementName: 'financial-health-widget',
-    module: '@widgets/financial-health',
-    defaultConfig: {},
-    colSpan: 13,
-    rowSpan: 26,
-    minWidth: 380,
-    searchable: true,
-    keywords: ['financial health', 'net worth', 'savings rate', 'spending trends', 'recommendations', 'financial advisor'],
-    icon: '📊'
-  },
-  {
-    id: WidgetIds.ACCOUNT,
-    name: 'Account Balances',
-    description: 'Displays user account balances and details',
-    elementName: 'account-widget',
-    module: '@widgets/account',
-    defaultConfig: {},
-    colSpan: 12,
-    rowSpan: 5,
-    minWidth: 380,
-    searchable: true,
-    keywords: ['accounts', 'checking account', 'savings account', 'bank accounts', 'money', 'balance'],
-    icon: '🏦'
-  },
-  {
-    id: WidgetIds.WELCOME,
-    name: 'Welcome Widget',
-    description: 'Welcome message and getting started information',
-    elementName: 'welcome-widget',
-    module: '@widgets/welcome',
-    defaultConfig: { username: 'Guest' },
-    colSpan: 16, // Start full width but allow resizing
-    rowSpan: 16, // Increased rows for fixed-height grid
-    minWidth: 800,
-    fullWidth: false,  // Changed from true to false to allow resizing
-    searchable: true,
-    keywords: ['welcome', 'introduction', 'guide', 'getting started', 'help'],
-    icon: '👋'
-  },
-  {
-    id: WidgetIds.SWISH,
-    name: 'Swish Payment',
-    description: 'Quick access to Swish transfers and payment history',
-    elementName: 'swish-widget',
-    module: '@widgets/swish',
-    defaultConfig: {},
-    colSpan: 8,
-    rowSpan: 5, // Increased rows for fixed-height grid
-    minWidth: 340,
-    searchable: true,
-    keywords: ['payment', 'transfer', 'swish', 'money', 'send money'],
-    icon: '💸',
-    requiresProduct: 'swish-standard',
-    searchDisabledCondition: async () => {
-      const hasSwish = await userProductService.hasProduct("swish-standard");
-      return !hasSwish;
-    }
-  },
+  // {
+  //   id: WidgetIds.LOANS,
+  //   name: 'Loans',
+  //   description: 'View and manage your loans and credit accounts',
+  //   elementName: 'loans-widget',
+  //   module: '@widgets/loans',
+  //   defaultConfig: {},
+  //   colSpan: 13,
+  //   rowSpan: 19,
+  //   minWidth: 380,
+  //   searchable: true,
+  //   keywords: ['loans', 'credit', 'mortgage', 'debt', 'borrowing', 'financing'],
+  //   icon: '💰',
+  // },
+  // {
+  //   id: WidgetIds.FINANCIAL_HEALTH,
+  //   name: 'Financial Health',
+  //   description: 'Analyze your financial health with personalized insights and recommendations',
+  //   elementName: 'financial-health-widget',
+  //   module: '@widgets/financial-health',
+  //   defaultConfig: {},
+  //   colSpan: 13,
+  //   rowSpan: 26,
+  //   minWidth: 380,
+  //   searchable: true,
+  //   keywords: ['financial health', 'net worth', 'savings rate', 'spending trends', 'recommendations', 'financial advisor'],
+  //   icon: '📊'
+  // },
+  // {
+  //   id: WidgetIds.ACCOUNT,
+  //   name: 'Account Balances',
+  //   description: 'Displays user account balances and details',
+  //   elementName: 'account-widget',
+  //   module: '@widgets/account',
+  //   defaultConfig: {},
+  //   colSpan: 12,
+  //   rowSpan: 5,
+  //   minWidth: 380,
+  //   searchable: true,
+  //   keywords: ['accounts', 'checking account', 'savings account', 'bank accounts', 'money', 'balance'],
+  //   icon: '🏦'
+  // },
+  // {
+  //   id: WidgetIds.WELCOME,
+  //   name: 'Welcome Widget',
+  //   description: 'Welcome message and getting started information',
+  //   elementName: 'welcome-widget',
+  //   module: '@widgets/welcome',
+  //   defaultConfig: { username: 'Guest' },
+  //   colSpan: 16, // Start full width but allow resizing
+  //   rowSpan: 16, // Increased rows for fixed-height grid
+  //   minWidth: 800,
+  //   fullWidth: false,  // Changed from true to false to allow resizing
+  //   searchable: true,
+  //   keywords: ['welcome', 'introduction', 'guide', 'getting started', 'help'],
+  //   icon: '👋'
+  // },
+  // {
+  //   id: WidgetIds.SWISH,
+  //   name: 'Swish Payment',
+  //   description: 'Quick access to Swish transfers and payment history',
+  //   elementName: 'swish-widget',
+  //   module: '@widgets/swish',
+  //   defaultConfig: {},
+  //   colSpan: 8,
+  //   rowSpan: 5, // Increased rows for fixed-height grid
+  //   minWidth: 340,
+  //   searchable: true,
+  //   keywords: ['payment', 'transfer', 'swish', 'money', 'send money'],
+  //   icon: '💸',
+  //   requiresProduct: 'swish-standard',
+  //   searchDisabledCondition: async () => {
+  //     const hasSwish = await userProductService.hasProduct("swish-standard");
+  //     return !hasSwish;
+  //   }
+  // },
   {
     id: WidgetIds.SLOW,
     name: 'Slow Loading Widget',
