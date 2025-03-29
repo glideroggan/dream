@@ -59,16 +59,16 @@ export class BaseWidget extends FASTElement {
 
   protected initialized: boolean = false;
   protected error: Error | null = null;
-  protected resizeObserver: ResizeObserver | null = null;
-  protected currentHeight: number = 0;
-  protected currentRowSpan: number = 0;
-  protected contentSizingTimer: number | null = null;
+  // protected resizeObserver: ResizeObserver | null = null;
+  // protected currentHeight: number = 0;
+  // protected currentRowSpan: number = 0;
+  // protected contentSizingTimer: number | null = null;
 
   // New properties to track content size
-  protected lastContentHeight: number = 0;
-  protected maxContentHeight: number = 0;
-  protected userResizedHeight: number | null = null;
-  protected isFirstSizeCheck: boolean = true;
+  // protected lastContentHeight: number = 0;
+  // protected maxContentHeight: number = 0;
+  // protected userResizedHeight: number | null = null;
+  // protected isFirstSizeCheck: boolean = true;
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -85,10 +85,10 @@ export class BaseWidget extends FASTElement {
     // this.resizeObserver.observe(this);
 
     // Signal that we've connected to the DOM
-    this.dispatchEvent(new CustomEvent('widget-connected', {
-      bubbles: true,
-      composed: true
-    }));
+    // this.dispatchEvent(new CustomEvent('widget-connected', {
+    //   bubbles: true,
+    //   composed: true
+    // }));
 
     // Get current rowSpan from parent wrapper if available
     this.queryCurrentSpans();
@@ -129,13 +129,13 @@ export class BaseWidget extends FASTElement {
    */
   private queryCurrentSpans(): void {
     // Find parent widget wrapper
-    const parent = this.closest('widget-wrapper');
-    if (parent) {
-      const rowSpan = parseInt(parent.getAttribute('rowSpan') || '0');
-      if (rowSpan > 0) {
-        this.currentRowSpan = rowSpan;
-      }
-    }
+    // const parent = this.closest('widget-wrapper');
+    // if (parent) {
+    //   const rowSpan = parseInt(parent.getAttribute('rowSpan') || '0');
+    //   if (rowSpan > 0) {
+    //     this.currentRowSpan = rowSpan;
+    //   }
+    // }
   }
 
   /**
@@ -143,58 +143,58 @@ export class BaseWidget extends FASTElement {
    */
   protected checkContentFit(entry: ResizeObserverEntry): void {
     // Replace debounce with immediate action when possible
-    if (this.contentSizingTimer !== null) {
-      window.clearTimeout(this.contentSizingTimer);
-    }
+    // if (this.contentSizingTimer !== null) {
+    //   window.clearTimeout(this.contentSizingTimer);
+    // }
 
-    // Use requestAnimationFrame instead of setTimeout for visual updates
-    requestAnimationFrame(() => {
-      const contentHeight = entry.target.scrollHeight;
-      const containerHeight = entry.contentRect.height;
+    // // Use requestAnimationFrame instead of setTimeout for visual updates
+    // requestAnimationFrame(() => {
+    //   const contentHeight = entry.target.scrollHeight;
+    //   const containerHeight = entry.contentRect.height;
 
-      // Get current row span from parent wrapper
-      const parent = this.closest('widget-wrapper');
-      const currentRowSpan = parent ? parseInt(parent.getAttribute('rowSpan') || '0') : 0;
+    //   // Get current row span from parent wrapper
+    //   const parent = this.closest('widget-wrapper');
+    //   const currentRowSpan = parent ? parseInt(parent.getAttribute('rowSpan') || '0') : 0;
 
-      // Calculate row height and add additional buffer for borders/padding
-      const rowHeight = MIN_ROW_HEIGHT + DEFAULT_GRID_GAP;
+    //   // Calculate row height and add additional buffer for borders/padding
+    //   const rowHeight = MIN_ROW_HEIGHT + DEFAULT_GRID_GAP;
 
-      // Use ceiling and add a small buffer to prevent scrollbars (extra 0.2 rows)
-      const rowsNeeded = Math.ceil(contentHeight / rowHeight);
+    //   // Use ceiling and add a small buffer to prevent scrollbars (extra 0.2 rows)
+    //   const rowsNeeded = Math.ceil(contentHeight / rowHeight);
 
-      console.debug(`Content fit check: content=${contentHeight}px (${rowsNeeded} rows needed), ` +
-        `container=${containerHeight}px (${currentRowSpan} rows allocated)`);
+    //   console.debug(`Content fit check: content=${contentHeight}px (${rowsNeeded} rows needed), ` +
+    //     `container=${containerHeight}px (${currentRowSpan} rows allocated)`);
 
-      // Keep track of content height changes
-      const previousHeight = this.lastContentHeight;
-      this.lastContentHeight = contentHeight;
+    //   // Keep track of content height changes
+    //   const previousHeight = this.lastContentHeight;
+    //   this.lastContentHeight = contentHeight;
 
-      // Update maximum observed content height if this is larger
-      if (contentHeight > this.maxContentHeight) {
-        this.maxContentHeight = contentHeight;
-      }
+    //   // Update maximum observed content height if this is larger
+    //   if (contentHeight > this.maxContentHeight) {
+    //     this.maxContentHeight = contentHeight;
+    //   }
 
-      // Don't expand if user has manually set a smaller height
-      const shouldExpand = this.userResizedHeight === null || contentHeight <= this.userResizedHeight;
+    //   // Don't expand if user has manually set a smaller height
+    //   const shouldExpand = this.userResizedHeight === null || contentHeight <= this.userResizedHeight;
 
-      // If content needs more rows than allocated - be more aggressive with expansion
-      if (shouldExpand && (rowsNeeded > currentRowSpan || this.isFirstSizeCheck)) {
-        this.isFirstSizeCheck = false;
+    //   // If content needs more rows than allocated - be more aggressive with expansion
+    //   if (shouldExpand && (rowsNeeded > currentRowSpan || this.isFirstSizeCheck)) {
+    //     this.isFirstSizeCheck = false;
 
-        if (rowsNeeded > currentRowSpan) {
-          console.debug(`Content needs more rows: ${rowsNeeded} vs ${currentRowSpan} allocated`);
-          // Add 1 more row than calculated to avoid edge case scrollbars
-          this.requestMoreRows(rowsNeeded + 1);
-        }
-      }
-      // If content has shrunk significantly (at least 2 rows and 25% difference)
-      else if (contentHeight < previousHeight * 0.8 &&
-        currentRowSpan > rowsNeeded + 1 &&
-        rowsNeeded < currentRowSpan * 0.75) {
-        console.debug(`Content has shrunk significantly to ${rowsNeeded} rows vs ${currentRowSpan} allocated`);
-        this.notifyContentShrink(contentHeight, rowsNeeded);
-      }
-    });
+    //     if (rowsNeeded > currentRowSpan) {
+    //       console.debug(`Content needs more rows: ${rowsNeeded} vs ${currentRowSpan} allocated`);
+    //       // Add 1 more row than calculated to avoid edge case scrollbars
+    //       this.requestMoreRows(rowsNeeded + 1);
+    //     }
+    //   }
+    //   // If content has shrunk significantly (at least 2 rows and 25% difference)
+    //   else if (contentHeight < previousHeight * 0.8 &&
+    //     currentRowSpan > rowsNeeded + 1 &&
+    //     rowsNeeded < currentRowSpan * 0.75) {
+    //     console.debug(`Content has shrunk significantly to ${rowsNeeded} rows vs ${currentRowSpan} allocated`);
+    //     this.notifyContentShrink(contentHeight, rowsNeeded);
+    //   }
+    // });
   }
 
   /**
@@ -231,33 +231,33 @@ export class BaseWidget extends FASTElement {
    * @param rowsNeeded The calculated number of rows needed for this content
    */
   protected notifyContentShrink(newHeight: number, rowsNeeded?: number): void {
-    const parent = this.closest('widget-wrapper');
-    if (parent) {
-      // Calculate rows if not provided
-      if (rowsNeeded === undefined) {
-        const rowHeight = 38;
-        rowsNeeded = Math.ceil(newHeight / rowHeight);
-      }
+    // const parent = this.closest('widget-wrapper');
+    // if (parent) {
+    //   // Calculate rows if not provided
+    //   if (rowsNeeded === undefined) {
+    //     const rowHeight = 38;
+    //     rowsNeeded = Math.ceil(newHeight / rowHeight);
+    //   }
 
-      // Dispatch an event with row calculation
-      const event = new CustomEvent('widget-content-shrink', {
-        bubbles: true,
-        composed: true,
-        detail: {
-          newContentHeight: newHeight,
-          rowsNeeded: rowsNeeded,
-          previousMax: this.maxContentHeight,
-          reason: 'content-shrink'
-        }
-      });
+    //   // Dispatch an event with row calculation
+    //   const event = new CustomEvent('widget-content-shrink', {
+    //     bubbles: true,
+    //     composed: true,
+    //     detail: {
+    //       newContentHeight: newHeight,
+    //       rowsNeeded: rowsNeeded,
+    //       previousMax: this.maxContentHeight,
+    //       reason: 'content-shrink'
+    //     }
+    //   });
 
-      parent.dispatchEvent(event);
+    //   parent.dispatchEvent(event);
 
-      // Reset the max height tracking
-      if (newHeight < this.maxContentHeight * 0.6) {
-        this.maxContentHeight = newHeight;
-      }
-    }
+    //   // Reset the max height tracking
+    //   if (newHeight < this.maxContentHeight * 0.6) {
+    //     this.maxContentHeight = newHeight;
+    //   }
+    // }
   }
 
   /**
@@ -265,45 +265,45 @@ export class BaseWidget extends FASTElement {
    * Helps widget understand the user's size preference
    */
   public setUserResizePreference(height: number): void {
-    this.userResizedHeight = height;
-    console.debug(`Widget user resize preference set: ${height}px`);
+    // this.userResizedHeight = height;
+    // console.debug(`Widget user resize preference set: ${height}px`);
   }
 
   /**
    * Reset user resize preference (e.g., when user clicks "auto size")
    */
   public resetUserResizePreference(): void {
-    this.userResizedHeight = null;
-    console.debug('Widget user resize preference reset to auto');
+    // this.userResizedHeight = null;
+    // console.debug('Widget user resize preference reset to auto');
 
-    // Check if we need to resize based on current content
-    this.checkInitialContentFit();
+    // // Check if we need to resize based on current content
+    // this.checkInitialContentFit();
   }
 
   /**
    * Request more rows from the parent widget-wrapper
    */
   protected requestMoreRows(newRowSpan: number): void {
-    if (newRowSpan <= this.currentRowSpan) return;
+    // if (newRowSpan <= this.currentRowSpan) return;
 
-    // Find parent widget wrapper
-    const parent = this.closest('widget-wrapper');
-    if (parent) {
-      // Update our tracking
-      this.currentRowSpan = newRowSpan;
+    // // Find parent widget wrapper
+    // const parent = this.closest('widget-wrapper');
+    // if (parent) {
+    //   // Update our tracking
+    //   this.currentRowSpan = newRowSpan;
 
-      // Dispatch an event requesting a row span change
-      const event = new CustomEvent('widget-request-resize', {
-        bubbles: true,
-        composed: true,
-        detail: {
-          rowSpan: newRowSpan,
-          reason: 'content-overflow'
-        }
-      });
+    //   // Dispatch an event requesting a row span change
+    //   const event = new CustomEvent('widget-request-resize', {
+    //     bubbles: true,
+    //     composed: true,
+    //     detail: {
+    //       rowSpan: newRowSpan,
+    //       reason: 'content-overflow'
+    //     }
+    //   });
 
-      parent.dispatchEvent(event);
-    }
+    //   parent.dispatchEvent(event);
+    // }
   }
 
   /**
@@ -412,14 +412,14 @@ export class BaseWidget extends FASTElement {
    * Call this after significant content changes or tab switches
    */
   protected updateContentLayout(): void {
-    if (this.contentSizingTimer !== null) {
-      window.clearTimeout(this.contentSizingTimer);
-    }
+    // if (this.contentSizingTimer !== null) {
+    //   window.clearTimeout(this.contentSizingTimer);
+    // }
 
-    // Debounce to avoid multiple calls
-    this.contentSizingTimer = window.setTimeout(() => {
-      this.checkInitialContentFit();
-    }, 50);
+    // // Debounce to avoid multiple calls
+    // this.contentSizingTimer = window.setTimeout(() => {
+    //   this.checkInitialContentFit();
+    // }, 50);
   }
 
   /**
@@ -461,20 +461,20 @@ export class BaseWidget extends FASTElement {
    */
   protected notifyContentChanged(): void {
     // Clear any existing timeout
-    if (this.contentSizingTimer !== null) {
-      window.clearTimeout(this.contentSizingTimer);
-    }
+    // if (this.contentSizingTimer !== null) {
+    //   window.clearTimeout(this.contentSizingTimer);
+    // }
 
-    // Force an immediate recalculation
-    const contentHeight = this.scrollHeight;
-    const containerHeight = this.clientHeight;
+    // // Force an immediate recalculation
+    // const contentHeight = this.scrollHeight;
+    // const containerHeight = this.clientHeight;
 
-    console.debug(`Content changed notification: height=${contentHeight}px, container=${containerHeight}px`);
+    // console.debug(`Content changed notification: height=${contentHeight}px, container=${containerHeight}px`);
 
-    this.$emit('content-change', {
-      contentHeight: contentHeight,
-      containerHeight: containerHeight
-    })
+    // this.$emit('content-change', {
+    //   contentHeight: contentHeight,
+    //   containerHeight: containerHeight
+    // })
 
     return
     // If significantly smaller, try to shrink

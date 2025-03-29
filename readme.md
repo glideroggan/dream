@@ -1,6 +1,12 @@
 Ok, rework
 Lets adjust everything for kidwallet
 
+# TODO
+- widget handling
+  - make sure the cells size doesn't change
+  - hardcode the size of the widget to start
+
+
 # needed
 - create tickets
 - create achievements
