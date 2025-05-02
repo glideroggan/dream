@@ -6,6 +6,10 @@ Lets adjust everything for kidwallet
   - make sure the cells size doesn't change
   - hardcode the size of the widget to start
 
+# First
+- fix widget movement/handling
+  - fix widget resizing
+  - fix widget dragging
 
 # needed
 - create tickets

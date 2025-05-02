@@ -1,6 +1,12 @@
 FROM node:lts-alpine AS build
 WORKDIR /usr/src/app
 COPY ./package.json ./yarn.lock ./ ./build.mjs ./
+
+# Add ARG for build-time environment variable
+ARG PUBLIC_PATH=/wallet-app/
+# Set it as environment variable for the build
+ENV PUBLIC_PATH=${PUBLIC_PATH}
+
 RUN yarn install --frozen-lockfile
 
 COPY ./src/. .

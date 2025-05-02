@@ -2,8 +2,10 @@ services:
   app:
     image: "docker.io/glideroggan/wallet-app:latest"
     build:
-      context: .
+      context: ./app
       dockerfile: Dockerfile
+      args:
+        - PUBLIC_PATH=${PUBLIC_PATH:-./}
     container_name: wallet-app
     ports:
       - "80:80"

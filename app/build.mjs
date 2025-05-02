@@ -4,6 +4,8 @@ import { copy } from 'esbuild-plugin-copy';
 import { htmlUpdaterPlugin } from "./plugins/copy-with-hash.mjs";
 
 const env = "'server'"
+// Get publicPath from environment variable or use default
+const publicPath = process.env.PUBLIC_PATH || '/wallet-app/'
 
 const context = await build.context({
     entryPoints: [
@@ -43,10 +45,11 @@ const context = await build.context({
         'src/pages/investments-page.ts',
         'src/pages/savings-page.ts',
         // example widgets
-        'src/widgets/error-widget/error-widget.ts',
-        'src/widgets/slow-widget/slow-widget.ts',
+        'src/widgets/error-widget.ts',
+        'src/widgets/slow-widget.ts',
     ],
     entryNames: '[dir]/[name]-[hash]',
+    chunkNames: 'chunks/[name]-[hash]',
     assetNames: 'assets/[name]-[hash]',
     target: ['es2022', 'chrome90', 'firefox90', 'safari15', 'edge91'],
     bundle: true,
@@ -58,7 +61,7 @@ const context = await build.context({
     format: 'esm',
     metafile: true,
     minify: true,
-    publicPath: '/wallet-app/', 
+    publicPath: '',
     loader: {
         '.html': 'text',
         '.svg': 'file',

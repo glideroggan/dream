@@ -4,6 +4,8 @@ import { copy } from 'esbuild-plugin-copy';
 import { htmlUpdaterPlugin } from "./plugins/copy-with-hash.mjs";
 
 const env = "'local'"
+// Get publicPath from environment variable or use default (empty for local dev)
+const publicPath = process.env.PUBLIC_PATH || '/'
 
 const context = await build.context({
     // Specify main entry point plus widget entry points
@@ -58,6 +60,7 @@ const context = await build.context({
     logLevel: 'info',
     metafile: true,
     minify: true,
+    publicPath: publicPath,
     external: [
         "@microsoft/fast-element",
         "@chart/js",
