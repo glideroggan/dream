@@ -25,6 +25,29 @@ Dream is a modern banking and financial management application built with TypeSc
 
 The application is built with a modular architecture:
 
+```mermaid
+flowchart TD
+  subgraph UI
+    Widgets[Widgets<br/>(/app/src/widgets/)]
+    Components[Components<br/>(/app/src/components/)]
+    Pages[Pages<br/>(/app/src/pages/)]
+  end
+
+  Workflows[Workflows<br/>(/app/src/workflows/)]
+  Services[Services<br/>(/app/src/services/)]
+  Repositories[Repositories<br/>(/app/src/repositories/)]
+
+  Widgets -- uses --> Workflows
+  Widgets -- uses --> Services
+  Widgets -- uses --> Components
+  Workflows -- uses --> Services
+  Services -- uses --> Repositories
+  Pages -- uses --> Widgets
+
+  classDef box fill:#f9f,stroke:#333,stroke-width:1px;
+  class Widgets,Workflows,Services,Repositories,Components,Pages box;
+```
+
 - **Widgets**: Self-contained UI components (`/app/src/widgets/`)
 - **Workflows**: Multi-step processes for user interactions (`/app/src/workflows/`)
 - **Services**: Business logic layer (`/app/src/services/`)
@@ -152,3 +175,4 @@ For detailed development notes, bugs, and feature requests, see [DEVELOPMENT.md]
 ## License
 
 This project is licensed under the MIT License - see the package.json file for details.
+
