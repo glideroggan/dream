@@ -23,36 +23,100 @@ Dream is a modern banking and financial management application built with TypeSc
 
 ## Architecture
 
-The application is built with a modular architecture:
+The application is built with a layered modular architecture that promotes separation of concerns and maintainability:
 
 ```mermaid
-flowchart TD
-  subgraph UI
-    Widgets[Widgets<br/>(/app/src/widgets/)]
-    Components[Components<br/>(/app/src/components/)]
-    Pages[Pages<br/>(/app/src/pages/)]
-  end
+graph TB
+    subgraph "Presentation Layer"
+        Pages[Pages<br/>Route-based page components]
+        Widgets[Widgets<br/>Dashboard widgets<br/>• Account Widget<br/>• Financial Health<br/>• Welcome Widget]
+        Components[Reusable Components<br/>UI building blocks]
+    end
+    
+    subgraph "Business Logic Layer"
+        Workflows[Workflows<br/>Multi-step processes<br/>• Transfer<br/>• KYC<br/>• Loan Application<br/>• Card Management]
+        Services[Services<br/>Business logic<br/>• Widget Service<br/>• User Service<br/>• Storage Service<br/>• Router Service]
+        WR[Widget Registry]
+        WFR[Workflow Registry]
+        RR[Routes Registry]
+    end
+    
+    subgraph "Data Layer"
+        Repositories[Repositories<br/>Data access<br/>• Account Repository<br/>• Transaction Repository<br/>• User Repository<br/>• Card Repository]
+        Models[Data Models<br/>Type definitions]
+    end
+    
+    subgraph "Core Infrastructure"
+        Main[main.ts<br/>Application bootstrap]
+        Routes[Router Service<br/>Navigation]
+        Storage[Storage Service<br/>Data persistence]
+        Utils[Utilities & Helpers<br/>• Debug Utils<br/>• Widget Helper<br/>• ID Generator]
+    end
+    
+    subgraph "Shared Resources"
+        Types[TypeScript Types]
+        Constants[Constants]
+        Styles[Global Styles<br/>Theme system]
+        Assets[Static Assets]
+    end
 
-  Workflows[Workflows<br/>(/app/src/workflows/)]
-  Services[Services<br/>(/app/src/services/)]
-  Repositories[Repositories<br/>(/app/src/repositories/)]
-
-  Widgets -- uses --> Workflows
-  Widgets -- uses --> Services
-  Widgets -- uses --> Components
-  Workflows -- uses --> Services
-  Services -- uses --> Repositories
-  Pages -- uses --> Widgets
-
-  classDef box fill:#f9f,stroke:#333,stroke-width:1px;
-  class Widgets,Workflows,Services,Repositories,Components,Pages box;
+    %% Relationships
+    Main --> Services
+    Main --> Workflows
+    Pages --> Widgets
+    Widgets --> WR
+    Widgets --> Services
+    Widgets --> Components
+    Workflows --> WFR
+    Workflows --> Services
+    Services --> Repositories
+    Services --> Storage
+    Routes --> RR
+    Repositories --> Models
+    Utils -.-> Widgets
+    Utils -.-> Services
+    Utils -.-> Workflows
+    
+    %% Styling
+    classDef presentation fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
+    classDef business fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef data fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    classDef core fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef shared fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    
+    class Pages,Widgets,Components presentation
+    class Workflows,Services,WR,WFR,RR business
+    class Repositories,Models data
+    class Main,Routes,Storage,Utils core
+    class Types,Constants,Styles,Assets shared
 ```
 
-- **Widgets**: Self-contained UI components (`/app/src/widgets/`)
-- **Workflows**: Multi-step processes for user interactions (`/app/src/workflows/`)
-- **Services**: Business logic layer (`/app/src/services/`)
-- **Repositories**: Data access layer (`/app/src/repositories/`)
-- **Components**: Reusable UI components (`/app/src/components/`)
+### Architecture Layers
+
+**Presentation Layer:**
+- **Widgets**: Self-contained dashboard widgets with their own state and logic (`/app/src/widgets/`)
+- **Pages**: Route-based page components that compose widgets and handle navigation (`/app/src/pages/`)
+- **Components**: Reusable UI building blocks shared across widgets and pages (`/app/src/components/`)
+
+**Business Logic Layer:**
+- **Workflows**: Multi-step guided processes for complex user interactions (`/app/src/workflows/`)
+- **Services**: Core business logic and application state management (`/app/src/services/`)
+- **Registries**: Central registration systems for widgets, workflows, and routes
+
+**Data Layer:**
+- **Repositories**: Data access abstraction layer with mock and REST implementations (`/app/src/repositories/`)
+- **Models**: TypeScript interfaces and data models (`/app/src/repositories/models/`)
+
+**Core Infrastructure:**
+- **Router Service**: SPA navigation and route management
+- **Storage Service**: Local storage and data persistence
+- **Utilities**: Helper functions, debug tools, and shared utilities (`/app/src/utilities/`, `/app/src/helpers/`)
+
+**Shared Resources:**
+- **Types**: Application-wide TypeScript type definitions (`/app/src/types/`)
+- **Constants**: Shared configuration and constant values (`/app/src/constants/`)
+- **Styles**: Global CSS and theme system (`/app/src/styles/`)
+- **Assets**: Static resources like images and icons (`/app/src/assets/`)
 
 ## Getting Started
 
