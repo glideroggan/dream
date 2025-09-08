@@ -75,6 +75,10 @@ const context = await build.context({
                     from: ['./src/assets/**/*'],
                     to: ['./assets'],
                 },
+                {
+                    from: ['./src/styles/**/*'],
+                    to: ['./styles'],
+                }
             ],
             watch: true,
         }),
