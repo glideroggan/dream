@@ -30,7 +30,7 @@ const styles = css`
 export class DashboardPage extends BasePage {
   // Default widgets for dashboard - only used if user has no saved settings
   @attr({ attribute: 'initialwidgets' })
-  initialWidgets: string = 'slow-widget';
+  initialWidgets: string = 'welcome,slow-widget,error-widget,account';
 
   constructor() {
     super();

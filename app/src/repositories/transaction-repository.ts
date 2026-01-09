@@ -14,17 +14,17 @@ export class TransactionRepository extends LocalStorageRepository<Transaction> {
 
   protected async initializeMockData(): Promise<void> {
     // Check user type before initializing with mock data
-    // const userType = this.userService.getUserType();
-    // const module = await import("@mocks/transaction")
-    // const transactions = module.getMockTransactionsByUserType(userType);
+    const userType = this.userService.getUserType();
+    const module = await import("@mocks/transaction")
+    const transactions = module.getMockTransactionsByUserType(userType);
 
     // Add mock transactions
-    // transactions.forEach(transaction => {
-    //   this.createForMocks(transaction);
-    // });
+    transactions.forEach(transaction => {
+      this.createForMocks(transaction);
+    });
 
     // Save to storage
-    // this.saveToStorage();
+    this.saveToStorage();
   }
 
   /**

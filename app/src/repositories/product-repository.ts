@@ -86,16 +86,16 @@ export class ProductRepository {
    * Initialize with default users
    */
   private async initializeDefaultProducts(): Promise<void> {
-    // const module = await import("@mocks/product")
-    // const mockProducts = module.generateMockProducts();
+    const module = await import("@mocks/product")
+    const mockProducts = module.generateMockProducts();
 
-    // // Add users to map
-    // this.products = mockProducts;
+    // Add users to map
+    this.products = mockProducts;
 
-    // // Save to storage
-    // this.saveProducts();
+    // Save to storage
+    this.saveProducts();
 
-    // console.debug('Initialized default users');
+    console.debug('Initialized default users');
   }
 }
 

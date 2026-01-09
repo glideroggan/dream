@@ -39,18 +39,18 @@ export class UserRepository {
    * Initialize with default users
    */
   private async initializeDefaultUsers(): Promise<void> {
-    // const module = await import("@mocks/user")
-    // const mockUsers = module.generateMockUsers();
+    const module = await import("@mocks/user")
+    const mockUsers = module.generateMockUsers();
     
-    // // Add users to map
-    // mockUsers.forEach(user => {
-    //   this.users.set(user.id, user);
-    // });
+    // Add users to map
+    mockUsers.forEach(user => {
+      this.users.set(user.id, user);
+    });
     
-    // // Save to storage
-    // this.saveUsers();
+    // Save to storage
+    this.saveUsers();
     
-    // console.debug('Initialized default users');
+    console.debug('Initialized default users');
   }
   
   /**

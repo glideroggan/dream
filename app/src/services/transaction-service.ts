@@ -16,14 +16,14 @@ export class TransactionService {
 
   private constructor() {
     // TODO: add a task to the simulation, to process the upcoming transactions
-    // const upcomingSystemTask = simulationService.getTaskByType('system-upcoming-processing')
-    // if (!upcomingSystemTask) {
-      // simulationService.createTask({
-      //   productId: 'system-upcoming-processing',
-      //   type: 'system-upcoming-processing',
-      //   metadata: {},
-      // })
-    // }
+    const upcomingSystemTask = simulationService.getTaskByType('system-upcoming-processing')
+    if (!upcomingSystemTask) {
+      simulationService.createTask({
+        productId: 'system-upcoming-processing',
+        type: 'system-upcoming-processing',
+        metadata: {},
+      })
+    }
 
     console.debug('TransactionService instance created')
   }

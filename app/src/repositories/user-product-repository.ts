@@ -16,15 +16,15 @@ export class UserProductRepository extends LocalStorageRepository<UserProduct> {
    */
   protected async initializeMockData(): Promise<void> {
     // TODO: these should be mocked from the actual products that are offered
-    // const userType = this.userService.getUserType();
-    // const module = await import("@mocks/user-products");
-    // const mockProducts = await module.generateProductsForUsers(userType);
+    const userType = this.userService.getUserType();
+    const module = await import("@mocks/user-products");
+    const mockProducts = await module.generateProductsForUsers(userType);
     
-    // mockProducts.forEach(product => {
-    //   this.createForMocks(product);
-    // });
+    mockProducts.forEach(product => {
+      this.createForMocks(product);
+    });
     
-    // this.saveToStorage();
+    this.saveToStorage();
   }
   
   /**

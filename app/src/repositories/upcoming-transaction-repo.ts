@@ -11,17 +11,17 @@ export class UpcomingTransactionRepository extends LocalStorageRepository<Upcomi
 
     protected async initializeMockData(): Promise<void> {
         // Check user type before initializing with mock data
-        // const userType = this.userService.getUserType();
-        // const module = await import("@mocks/upcoming-transaction")
-        // const upcoming = module.getMockUpcomingTransactionsByUserType(userType);
+        const userType = this.userService.getUserType();
+        const module = await import("@mocks/upcoming-transaction")
+        const upcoming = module.getMockUpcomingTransactionsByUserType(userType);
 
-        // // Add mock transactions
-        // upcoming.forEach(transaction => {
-        //     this.createForMocks(transaction);
-        // });
+        // Add mock transactions
+        upcoming.forEach(transaction => {
+            this.createForMocks(transaction);
+        });
 
-        // // Save to storage
-        // this.saveToStorage();
+        // Save to storage
+        this.saveToStorage();
     }
     async getByReference(reference: string): Promise<UpcomingTransaction | undefined> {
         const transactions = await this.getAll();
