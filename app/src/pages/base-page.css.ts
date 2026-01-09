@@ -23,6 +23,9 @@ export const baseStyles = css`
   /* Grid layout component now handles the widget positioning and sizing */
   .widgets-container {
     width: 100%;
+    height: calc(100vh - 120px);
+    min-height: 500px;
+    box-sizing: border-box;
   }
 
   /* Remove redundant widget size classes as they're now handled by grid-layout */

@@ -60,12 +60,20 @@ const styles = css`
 export class ErrorWidget extends BaseWidget {
   @attr title = 'Error Widget';
   @observable config: Record<string, unknown> = {};
+  
+  // Track if we've already thrown the error (don't throw again on DOM moves)
+  private hasThrown = false;
 
   connectedCallback(): void {
     super.connectedCallback();
     
+    // Only throw once - DOM moves will re-trigger connectedCallback
+    if (this.hasThrown) return;
+    
     // Simulate initialization error
     setTimeout(() => {
+      if (this.hasThrown) return;
+      this.hasThrown = true;
       // Dispatch error event
       throw new Error('Widget initialization failed');
       // this.dispatchEvent(new ErrorEvent('error', {

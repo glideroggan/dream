@@ -63,13 +63,14 @@ const styles = css`
     height: 100%;
   }
   
-.grid-container {
+  .grid-container {
     display: grid;
     grid-template-columns: var(--grid-template-columns);
     grid-auto-rows: var(--row-height, 30px);
     gap: var(--grid-gap, 0.5rem);
     width: 100%;
-    min-height: 100%;
+    height: 100%;
+    min-height: 400px;
     align-items: start;
     align-content: start;
     position: relative;
@@ -188,6 +189,8 @@ export interface GridItemMetadata {
   minWidth?: number;
   colSpan?: number;
   rowSpan?: number;
+  gridCol?: number;  // 1-based column start position
+  gridRow?: number;  // 1-based row start position
   fullWidth?: boolean;
   userResized?: boolean; // Whether the widget was manually resized by the user
 }
@@ -219,10 +222,14 @@ export class GridLayout extends FASTElement {
   // Live shuffle state
   private originalWidgetOrder: string[] = [];
   private draggedElement: HTMLElement | null = null;
-  private lastShuffleIndex: number = -1;
+  private lastShuffleTargetId: string | null = null;
+  private lastShuffleDirection: 'before' | 'after' | null = null;
   private shuffleThrottleTimer: number | null = null;
   private isShuffling: boolean = false;
   private boundKeyDown: ((e: KeyboardEvent) => void) | null = null;
+  
+  // Expand targets update timer
+  private expandTargetsUpdateTimer: number | null = null;
 
   private settingsRepository: SettingsRepository;
 
@@ -267,6 +274,8 @@ export class GridLayout extends FASTElement {
     this.addEventListener('widget-spans-change', (e) => {
       console.debug(`GridLayout: Received widget-spans-change event`, (e as CustomEvent).detail);
       this.handleWidgetSpansChange(e);
+      // Update expand targets after widget resize
+      this.scheduleExpandTargetsUpdate();
     });
     
     // Listen for drag events on the host element to capture events from slotted content
@@ -287,6 +296,12 @@ export class GridLayout extends FASTElement {
     });
 
     console.debug("GridLayout connected, metadata size:", this.itemMetadata.size);
+
+    // Initial expand targets update after widgets have rendered
+    setTimeout(() => this.updateExpandTargets(), 500);
+    
+    // Initialize explicit grid positions for all widgets after slotted content loads
+    setTimeout(() => this.initializeItemPositions(), 100);
   }
 
   disconnectedCallback(): void {
@@ -310,6 +325,220 @@ export class GridLayout extends FASTElement {
       this.dragServiceUnsubscribe = null;
     }
     this.detachDocumentDragListeners();
+  }
+
+  // ================== GRID ITEM MANAGEMENT ==================
+
+  /**
+   * Add an item to the grid with automatic position assignment.
+   * Finds the next available position that doesn't overlap with existing items.
+   */
+  addItem(element: HTMLElement, options: Partial<GridItemMetadata> = {}): void {
+    const id = options.id || element.getAttribute('data-grid-item-id') || element.getAttribute('data-widget-id') || '';
+    
+    // Determine spans: options > registry > defaults
+    let colSpan = options.colSpan || parseInt(element.getAttribute('colSpan') || '0', 10);
+    let rowSpan = options.rowSpan || parseInt(element.getAttribute('rowSpan') || '0', 10);
+    
+    // Fallback to registry if not provided
+    if (!colSpan || !rowSpan) {
+      const registryColSpan = getWidgetColumnSpan(id);
+      const registryRowSpan = getWidgetRowSpan(id);
+      colSpan = colSpan || registryColSpan || 8;
+      rowSpan = rowSpan || registryRowSpan || 2;
+    }
+    
+    // Use provided position or find next available
+    const position = (options.gridCol && options.gridRow)
+      ? { col: options.gridCol, row: options.gridRow }
+      : this.findNextAvailablePosition(colSpan, rowSpan);
+    
+    // Store metadata
+    const metadata: GridItemMetadata = {
+      id,
+      colSpan,
+      rowSpan,
+      gridCol: position.col,
+      gridRow: position.row,
+      minWidth: options.minWidth,
+      fullWidth: options.fullWidth,
+      userResized: options.userResized
+    };
+    this.itemMetadata.set(id, metadata);
+    
+    // Apply explicit grid positioning
+    this.applyGridPosition(element, position.col, position.row, colSpan, rowSpan);
+    
+    // Set data attributes
+    element.setAttribute('data-grid-item-id', id);
+    element.setAttribute('data-widget-id', id);
+    if (options.minWidth) {
+      element.setAttribute('data-min-width', options.minWidth.toString());
+    }
+    
+    // Update widget-wrapper spans if present
+    const widgetWrapper = element.querySelector('widget-wrapper');
+    if (widgetWrapper) {
+      (widgetWrapper as any).colSpan = colSpan;
+      (widgetWrapper as any).rowSpan = rowSpan;
+    }
+    
+    // Add full-width class if specified
+    if (options.fullWidth) {
+      element.classList.add('widget-full-width');
+    }
+    
+    console.debug(`GridLayout: Added item ${id} at col:${position.col}, row:${position.row}, span:${colSpan}x${rowSpan}`);
+  }
+
+  /**
+   * Apply explicit grid positioning to an element
+   */
+  private applyGridPosition(element: HTMLElement, col: number, row: number, colSpan: number, rowSpan: number): void {
+    // Use inline styles for explicit positioning
+    element.style.gridColumn = `${col} / span ${colSpan}`;
+    element.style.gridRow = `${row} / span ${rowSpan}`;
+    
+    // Also set custom properties for potential use
+    element.style.setProperty('--grid-col', col.toString());
+    element.style.setProperty('--grid-row', row.toString());
+    element.style.setProperty('--current-col-span', colSpan.toString());
+    element.style.setProperty('--current-row-span', rowSpan.toString());
+  }
+
+  /**
+   * Find the next available position in the grid for an item of the given size.
+   * Uses a simple row-major scan to find a position where the item fits without overlapping.
+   */
+  private findNextAvailablePosition(colSpan: number, rowSpan: number): { col: number; row: number } {
+    // Build occupancy grid from current items
+    const occupied = this.buildOccupancyGrid();
+    
+    // Scan row by row, column by column
+    for (let row = 1; row <= this.totalRows - rowSpan + 1; row++) {
+      for (let col = 1; col <= this.totalColumns - colSpan + 1; col++) {
+        if (this.canPlaceAt(occupied, col, row, colSpan, rowSpan)) {
+          return { col, row };
+        }
+      }
+    }
+    
+    // If no space found, place at the end (will extend grid)
+    const maxRow = this.getMaxOccupiedRow(occupied);
+    return { col: 1, row: maxRow + 1 };
+  }
+
+  /**
+   * Build a 2D boolean grid indicating which cells are occupied
+   * @param excludeId Optional widget ID to exclude from occupancy (for moving widgets)
+   */
+  private buildOccupancyGrid(excludeId?: string): boolean[][] {
+    // Create empty grid (1-indexed, so add 1 to dimensions)
+    const grid: boolean[][] = [];
+    for (let row = 0; row <= this.totalRows + 10; row++) {
+      grid[row] = [];
+      for (let col = 0; col <= this.totalColumns; col++) {
+        grid[row][col] = false;
+      }
+    }
+    
+    // Mark cells occupied by existing items
+    this.itemMetadata.forEach((metadata, id) => {
+      // Skip the excluded widget (the one being moved)
+      if (excludeId && id === excludeId) return;
+      
+      const { gridCol, gridRow, colSpan, rowSpan } = metadata;
+      if (gridCol && gridRow && colSpan && rowSpan) {
+        for (let r = gridRow; r < gridRow + rowSpan; r++) {
+          for (let c = gridCol; c < gridCol + colSpan; c++) {
+            if (grid[r]) {
+              grid[r][c] = true;
+            }
+          }
+        }
+      }
+    });
+    
+    return grid;
+  }
+
+  /**
+   * Check if an item can be placed at the given position without overlapping
+   */
+  private canPlaceAt(occupied: boolean[][], col: number, row: number, colSpan: number, rowSpan: number): boolean {
+    for (let r = row; r < row + rowSpan; r++) {
+      for (let c = col; c < col + colSpan; c++) {
+        if (occupied[r] && occupied[r][c]) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Get the maximum row that has any occupied cells
+   */
+  private getMaxOccupiedRow(occupied: boolean[][]): number {
+    let maxRow = 0;
+    for (let row = 1; row < occupied.length; row++) {
+      for (let col = 1; col < occupied[row].length; col++) {
+        if (occupied[row][col]) {
+          maxRow = Math.max(maxRow, row);
+        }
+      }
+    }
+    return maxRow;
+  }
+
+  /**
+   * Initialize positions for all existing slotted items that don't have explicit positions.
+   * By default, uses CSS Grid auto-flow based on DOM order (no explicit positioning).
+   */
+  initializeItemPositions(): void {
+    // Find items by data-grid-item-id OR data-widget-id (widgets come with data-widget-id initially)
+    const items = Array.from(this.querySelectorAll('[data-grid-item-id], [data-widget-id]')) as HTMLElement[];
+    
+    // Deduplicate in case both attributes are present
+    const seen = new Set<string>();
+    const uniqueItems: HTMLElement[] = [];
+    for (const item of items) {
+      const id = item.getAttribute('data-grid-item-id') || item.getAttribute('data-widget-id') || '';
+      if (id && !seen.has(id)) {
+        seen.add(id);
+        uniqueItems.push(item);
+      }
+    }
+    
+    for (const item of uniqueItems) {
+      const id = item.getAttribute('data-grid-item-id') || item.getAttribute('data-widget-id') || '';
+      
+      // Skip if already has metadata
+      if (this.itemMetadata.has(id)) {
+        continue;
+      }
+      
+      // Get spans from classes or attributes
+      const colSpan = this.getWidgetColSpan(item);
+      const rowSpan = this.getWidgetRowSpan(item);
+      
+      // Store metadata WITHOUT explicit position (uses auto-flow)
+      this.itemMetadata.set(id, {
+        id,
+        colSpan,
+        rowSpan,
+        // No gridCol/gridRow - let CSS Grid auto-flow handle positioning
+      });
+      
+      // Ensure element has the grid item ID
+      item.setAttribute('data-grid-item-id', id);
+      
+      // Clear any explicit positioning to use auto-flow
+      item.style.gridColumn = '';
+      item.style.gridRow = '';
+    }
+    
+    console.debug(`GridLayout: Initialized ${uniqueItems.length} items (using auto-flow positioning)`);
   }
 
   /**
@@ -537,26 +766,8 @@ export class GridLayout extends FASTElement {
   //   this.dispatchEvent(spansEvent);
   // }
 
-  /**
-   * Add an item to the grid with its metadata
-   */
-  addItem(element: HTMLElement, metadata: GridItemMetadata): void {
-    console.debug(`GridLayout: Adding item ${metadata.id} with metadata:`, metadata);
-
-    // Store metadata
-    this.itemMetadata.set(metadata.id, metadata);
-
-    // Apply default spans based on metadata or registry
-    this.applyDefaultSpans(element, metadata);
-
-    // Add data attributes for size calculation and identification
-    if (metadata.minWidth) {
-      element.setAttribute('data-min-width', metadata.minWidth.toString());
-    }
-
-    element.setAttribute('data-grid-item-id', metadata.id);
-    element.setAttribute('data-widget-id', metadata.id);
-  }
+  // NOTE: addItem is defined earlier in the file (line ~333) with explicit grid positioning support.
+  // The old implementation here has been removed to avoid duplicate function error.
 
   // /**
   //  * Try to load saved spans from settings
@@ -702,7 +913,7 @@ export class GridLayout extends FASTElement {
     console.debug(`GridLayout: Dropped widget ${widgetId}`);
 
     // Find the widget element and clean up dragging state
-    const widgetElement = this.querySelector(`[data-grid-item-id="${widgetId}"]`) as HTMLElement;
+    const widgetElement = this.querySelector(`[data-grid-item-id="${widgetId}"], [data-widget-id="${widgetId}"]`) as HTMLElement;
     if (!widgetElement) {
       console.warn(`GridLayout: Could not find widget element for ${widgetId}`);
       return;
@@ -710,35 +921,137 @@ export class GridLayout extends FASTElement {
     
     // Clean up dragging classes
     widgetElement.classList.remove('widget-dragging');
-    const widgetWrapper = widgetElement.querySelector('widget-wrapper');
+    const widgetWrapper = widgetElement.querySelector('widget-wrapper') as any;
     if (widgetWrapper) {
       widgetWrapper.classList.remove('widget-dragging');
     }
 
-    // Live shuffle already moved the widget to its new position during dragover
-    // No need to call reorderWidget here - just finalize
-
-    // End drag operation in service (this will trigger endLiveShuffle via subscription)
-    dragDropService.endDrag();
-
-    // Calculate final position for the event
-    const gridContainer = this.shadowRoot?.querySelector('.grid-container') as HTMLElement;
-    if (gridContainer) {
-      const { col, row } = this.pixelToGridCell(event.clientX, event.clientY, gridContainer);
+    // If shuffle happened, endLiveShuffle already reordered DOM
+    // Just clear inline positioning to use auto-flow from DOM order
+    if (this.isShuffling) {
+      // Clear explicit positioning - let CSS Grid auto-flow based on DOM order
+      widgetElement.style.gridColumn = '';
+      widgetElement.style.gridRow = '';
       
-      // Dispatch event for position change
-      const moveEvent = new CustomEvent('widget-position-change', {
-        bubbles: true,
-        composed: true,
-        detail: {
-          widgetId,
-          targetCol: col,
-          targetRow: row,
-          pageType: this.dataPage,
-        }
+      // Update metadata to clear positions (use auto-placement)
+      const existingMeta = this.itemMetadata.get(widgetId) || { id: widgetId };
+      this.itemMetadata.set(widgetId, {
+        ...existingMeta,
+        id: widgetId,
+        gridCol: undefined,
+        gridRow: undefined,
+        colSpan: this.getWidgetColSpan(widgetElement),
+        rowSpan: this.getWidgetRowSpan(widgetElement)
       });
-      this.dispatchEvent(moveEvent);
+      
+      console.debug(`GridLayout: Widget ${widgetId} dropped after shuffle - using DOM order`);
     }
+
+    // End drag operation in service
+    dragDropService.endDrag();
+    
+    // Reset shuffle state without DOM reordering
+    this.isShuffling = false;
+    this.draggedElement = null;
+    this.draggedWidgetId = null;
+    this.lastShuffleTargetId = null;
+    this.lastShuffleDirection = null;
+    this.originalWidgetOrder = [];
+  }
+  
+  /**
+   * Find a valid drop position that doesn't overlap with other widgets.
+   * If the target position overlaps, try to find nearest valid position.
+   */
+  private findValidDropPosition(
+    widgetId: string,
+    targetCol: number,
+    targetRow: number,
+    colSpan: number,
+    rowSpan: number
+  ): { col: number; row: number } {
+    // Build occupancy grid excluding the widget being moved
+    const occupied = this.buildOccupancyGrid(widgetId);
+    
+    // Check if target position is valid
+    if (this.canPlaceAt(occupied, targetCol, targetRow, colSpan, rowSpan)) {
+      return { col: targetCol, row: targetRow };
+    }
+    
+    // Target overlaps - search for nearest valid position
+    // Search in expanding rings around the target
+    for (let distance = 1; distance <= Math.max(this.totalColumns, this.totalRows); distance++) {
+      // Try positions at this distance
+      for (let dRow = -distance; dRow <= distance; dRow++) {
+        for (let dCol = -distance; dCol <= distance; dCol++) {
+          // Only check positions at exactly this distance (ring, not filled square)
+          if (Math.abs(dRow) !== distance && Math.abs(dCol) !== distance) continue;
+          
+          const testCol = targetCol + dCol;
+          const testRow = targetRow + dRow;
+          
+          // Skip invalid positions
+          if (testCol < 1 || testCol > this.totalColumns - colSpan + 1) continue;
+          if (testRow < 1) continue;
+          
+          if (this.canPlaceAt(occupied, testCol, testRow, colSpan, rowSpan)) {
+            console.debug(`GridLayout: Collision at (${targetCol},${targetRow}), moved to (${testCol},${testRow})`);
+            return { col: testCol, row: testRow };
+          }
+        }
+      }
+    }
+    
+    // No valid position found nearby - place at end of grid
+    const maxRow = this.getMaxOccupiedRow(occupied);
+    console.debug(`GridLayout: No valid position found, placing at row ${maxRow + 1}`);
+    return { col: 1, row: maxRow + 1 };
+  }
+  
+  /**
+   * Get the column span of a widget element
+   */
+  private getWidgetColSpan(element: HTMLElement): number {
+    // Try to get from colSpan attribute directly (widget-wrapper uses this)
+    const directColSpan = element.getAttribute('colSpan');
+    if (directColSpan) {
+      return parseInt(directColSpan, 10) || 8;
+    }
+    // Try to get from class
+    const colSpanClass = Array.from(element.classList).find(c => c.startsWith('col-span-'));
+    if (colSpanClass) {
+      return parseInt(colSpanClass.replace('col-span-', ''), 10) || 8;
+    }
+    // Try to get from widget registry using widget id
+    const widgetId = element.getAttribute('data-widget-id') || element.getAttribute('data-grid-item-id');
+    if (widgetId) {
+      const registrySpan = getWidgetColumnSpan(widgetId);
+      if (registrySpan) return registrySpan;
+    }
+    return 8; // default
+  }
+  
+  /**
+   * Get the row span of a widget element
+   */
+  private getWidgetRowSpan(element: HTMLElement): number {
+    // Try to get from rowSpan attribute directly (widget-wrapper uses this)
+    const directRowSpan = element.getAttribute('rowSpan');
+    if (directRowSpan) {
+      return parseInt(directRowSpan, 10) || 2;
+    }
+    // Try to get from class
+    const rowSpanClass = Array.from(element.classList).find(c => c.startsWith('row-span-'));
+    if (rowSpanClass) {
+      return parseInt(rowSpanClass.replace('row-span-', ''), 10) || 2;
+    }
+    // Try to get from widget registry using widget id
+    const widgetId = element.getAttribute('data-widget-id') || element.getAttribute('data-grid-item-id');
+    if (widgetId) {
+      const registrySpan = getWidgetRowSpan(widgetId);
+      if (registrySpan) return registrySpan;
+    }
+    return 2; // default
   }
 
   /**
@@ -904,15 +1217,12 @@ console.debug(`GridLayout: Set item ${id} column span to ${colSpan}, preserved r
 
     this.isDragOver = true;
 
-    // Calculate drop position
+    // Calculate drop position and show indicator
     const gridContainer = this.shadowRoot?.querySelector('.grid-container') as HTMLElement;
     if (gridContainer) {
       const { col, row } = this.pixelToGridCell(event.clientX, event.clientY, gridContainer);
       
-      // Perform live shuffle - widgets reorder in real-time
-      this.performLiveShuffle(col, row);
-      
-      // Update drop indicator to show current position
+      // Just update drop indicator - no shuffling needed with explicit positioning
       this.updateDropIndicator(col, row);
     }
   }
@@ -1046,6 +1356,7 @@ console.debug(`GridLayout: Set item ${id} column span to ${colSpan}, preserved r
 
   /**
    * Convert pixel position to grid cell coordinates
+   * Uses actual rendered grid metrics for accurate positioning
    */
   private pixelToGridCell(x: number, y: number, gridElement: HTMLElement): { col: number; row: number } {
     const rect = gridElement.getBoundingClientRect();
@@ -1054,14 +1365,142 @@ console.debug(`GridLayout: Set item ${id} column span to ${colSpan}, preserved r
     const relX = x - rect.left;
     const relY = y - rect.top;
 
-    // Convert to grid cells
-    const cellWidthWithGap = this.minColumnWidth + this.gridGap;
-    const cellHeightWithGap = this.minRowHeight + this.gridGap;
+    // Get the ACTUAL column width by dividing available width by column count
+    // This accounts for the grid using minmax(min, 1fr) which makes columns grow
+    const containerWidth = rect.width;
+    const totalGapWidth = (this.totalColumns - 1) * this.gridGap;
+    const availableWidth = containerWidth - totalGapWidth;
+    const actualColumnWidth = availableWidth / this.totalColumns;
+    
+    // Row height stays fixed
+    const actualRowHeight = this.minRowHeight;
 
-    const col = Math.max(0, Math.min(Math.floor(relX / cellWidthWithGap), this.totalColumns - 1));
+    // Calculate cell position including gaps
+    // We need to find which cell by counting gaps
+    let col = 0;
+    let accumulatedWidth = 0;
+    for (let i = 0; i < this.totalColumns; i++) {
+      const cellEnd = accumulatedWidth + actualColumnWidth;
+      if (relX < cellEnd) {
+        col = i;
+        break;
+      }
+      accumulatedWidth = cellEnd + this.gridGap;
+      if (i === this.totalColumns - 1) col = i; // Last column
+    }
+
+    // For rows, it's simpler since they're fixed height
+    const cellHeightWithGap = actualRowHeight + this.gridGap;
     const row = Math.max(0, Math.floor(relY / cellHeightWithGap));
 
+    // Clamp to valid ranges
+    col = Math.max(0, Math.min(col, this.totalColumns - 1));
+
+    console.debug(`pixelToGridCell: (${x},${y}) -> col:${col}, row:${row} [colWidth:${actualColumnWidth.toFixed(1)}px, rowHeight:${actualRowHeight}px]`);
     return { col, row };
+  }
+
+  // ============================================
+  // Expand to Align Feature
+  // ============================================
+
+  /**
+   * Update expand targets for all widgets.
+   * Widgets that start at the same column but have smaller colSpan can expand to match the widest one.
+   */
+  updateExpandTargets(): void {
+    const widgets = Array.from(this.querySelectorAll('[data-grid-item-id]')) as HTMLElement[];
+    
+    if (widgets.length === 0) {
+      console.debug('GridLayout: No widgets found for expand targets');
+      return;
+    }
+
+    // Group widgets by their starting column
+    const columnGroups = new Map<number, Array<{element: HTMLElement, colSpan: number, id: string}>>();
+    
+    const gridRect = this.getBoundingClientRect();
+    const cellWidth = this.minColumnWidth + this.gridGap;
+
+    console.debug(`GridLayout: Calculating expand targets for ${widgets.length} widgets, gridRect.left=${gridRect.left}, cellWidth=${cellWidth}`);
+
+    widgets.forEach(widget => {
+      const rect = widget.getBoundingClientRect();
+      const startCol = Math.round((rect.left - gridRect.left) / cellWidth);
+      const widgetId = widget.getAttribute('data-grid-item-id') || 'unknown';
+      
+      // Extract colSpan from class
+      const colSpanMatch = widget.className.match(/col-span-(\d+)/);
+      const colSpan = colSpanMatch ? parseInt(colSpanMatch[1], 10) : 1;
+      
+      console.debug(`GridLayout: Widget ${widgetId} at col ${startCol}, colSpan=${colSpan}`);
+      
+      if (!columnGroups.has(startCol)) {
+        columnGroups.set(startCol, []);
+      }
+      columnGroups.get(startCol)!.push({ element: widget, colSpan, id: widgetId });
+    });
+
+    console.debug(`GridLayout: Found ${columnGroups.size} column groups`);
+
+    // For each group, find max colSpan and update widgets
+    columnGroups.forEach((group, startCol) => {
+      console.debug(`GridLayout: Column ${startCol} has ${group.length} widgets: ${group.map(g => `${g.id}(span=${g.colSpan})`).join(', ')}`);
+      
+      if (group.length <= 1) {
+        // Only one widget in this column - no expand needed
+        group.forEach(({ element }) => {
+          // The element might BE the widget-wrapper, or contain it
+          const wrapper = element.tagName.toLowerCase() === 'widget-wrapper' 
+            ? element as any 
+            : element.querySelector('widget-wrapper') as any;
+          if (wrapper) {
+            wrapper.canExpand = false;
+            wrapper.expandTargetColSpan = 0;
+          }
+        });
+        return;
+      }
+
+      const maxColSpan = Math.max(...group.map(w => w.colSpan));
+      console.debug(`GridLayout: Column ${startCol} max colSpan=${maxColSpan}`);
+
+      group.forEach(({ element, colSpan, id }) => {
+        // The element might BE the widget-wrapper, or contain it
+        const wrapper = element.tagName.toLowerCase() === 'widget-wrapper' 
+          ? element as any 
+          : element.querySelector('widget-wrapper') as any;
+        if (wrapper) {
+          if (colSpan < maxColSpan) {
+            console.debug(`GridLayout: Setting canExpand=true for ${id} (${colSpan} -> ${maxColSpan})`);
+            wrapper.canExpand = true;
+            wrapper.expandTargetColSpan = maxColSpan;
+          } else {
+            wrapper.canExpand = false;
+            wrapper.expandTargetColSpan = 0;
+          }
+        } else {
+          console.debug(`GridLayout: No widget-wrapper found in ${id}`);
+        }
+      });
+    });
+
+    console.debug('GridLayout: Updated expand targets for widgets');
+  }
+
+  /**
+   * Schedule an expand targets update with debouncing.
+   * This prevents excessive recalculations during rapid layout changes.
+   */
+  private scheduleExpandTargetsUpdate(): void {
+    if (this.expandTargetsUpdateTimer !== null) {
+      clearTimeout(this.expandTargetsUpdateTimer);
+    }
+    
+    this.expandTargetsUpdateTimer = window.setTimeout(() => {
+      this.expandTargetsUpdateTimer = null;
+      this.updateExpandTargets();
+    }, 100);
   }
 
   // ============================================
@@ -1079,7 +1518,8 @@ console.debug(`GridLayout: Set item ${id} column span to ${colSpan}, preserved r
     this.originalWidgetOrder = widgets.map(w => (w as HTMLElement).dataset.gridItemId || '');
     this.draggedElement = element;
     this.draggedWidgetId = widgetId;
-    this.lastShuffleIndex = widgets.indexOf(element);
+    this.lastShuffleTargetId = null;
+    this.lastShuffleDirection = null;
     this.isShuffling = true;
 
     // Add transition class to all widgets for smooth movement
@@ -1103,8 +1543,25 @@ console.debug(`GridLayout: Set item ${id} column span to ${colSpan}, preserved r
     }
 
     if (revert && this.originalWidgetOrder.length > 0) {
-      // Revert to original order
-      this.restoreOriginalOrder();
+      // Revert to original order - no DOM changes needed since we didn't move during drag
+      console.debug('GridLayout: Drag cancelled, no reorder needed');
+    } else if (this.lastShuffleTargetId && this.lastShuffleDirection && this.draggedElement) {
+      // Perform the actual DOM reorder now (on drop, not during drag)
+      if (this.lastShuffleTargetId === '__END__') {
+        // Move to end of widget list
+        this.appendChild(this.draggedElement);
+        console.debug('GridLayout: Moved widget to end');
+      } else {
+        const targetWidget = this.querySelector(`[data-grid-item-id="${this.lastShuffleTargetId}"]`);
+        if (targetWidget && targetWidget !== this.draggedElement) {
+          if (this.lastShuffleDirection === 'after') {
+            targetWidget.after(this.draggedElement);
+          } else {
+            targetWidget.before(this.draggedElement);
+          }
+          console.debug(`GridLayout: Reordered widget ${this.lastShuffleDirection} ${this.lastShuffleTargetId}`);
+        }
+      }
     }
 
     // Remove transition styles
@@ -1117,8 +1574,12 @@ console.debug(`GridLayout: Set item ${id} column span to ${colSpan}, preserved r
     this.originalWidgetOrder = [];
     this.draggedElement = null;
     this.draggedWidgetId = null;
-    this.lastShuffleIndex = -1;
+    this.lastShuffleTargetId = null;
+    this.lastShuffleDirection = null;
     this.isShuffling = false;
+
+    // Update expand targets after reorder
+    this.scheduleExpandTargetsUpdate();
 
     console.debug('GridLayout: Ended live shuffle');
   }
@@ -1144,47 +1605,116 @@ console.debug(`GridLayout: Set item ${id} column span to ${colSpan}, preserved r
   /**
    * Perform live shuffle during drag - reorder widgets in real-time
    * Called from dragover handler
+   * 
+   * NOTE: Live DOM reordering is disabled because moving elements with .before()/.after()
+   * causes them to be disconnected/reconnected, triggering connectedCallback and
+   * re-initialization errors. Instead, we track the intended position and reorder on drop.
    */
   private performLiveShuffle(targetCol: number, targetRow: number): void {
     if (!this.isShuffling || !this.draggedElement) return;
 
-    // Throttle shuffles to prevent jank (max once per 150ms)
-    if (this.shuffleThrottleTimer !== null) return;
-
     // Find which widget we're hovering over based on mouse position
     const hoverTarget = this.findWidgetAtPosition(targetCol, targetRow);
     
-    // If not hovering over a different widget, do nothing
-    if (!hoverTarget || hoverTarget === this.draggedElement) return;
-
-    // Get current widget order
-    const widgets = Array.from(this.querySelectorAll('[data-grid-item-id]'));
+    // Get current widget order (excluding dragged element for position calculation)
+    const widgets = Array.from(this.querySelectorAll('[data-grid-item-id]')) as HTMLElement[];
     const draggedIndex = widgets.indexOf(this.draggedElement);
-    const targetIndex = widgets.indexOf(hoverTarget);
-
-    // Skip if indices are invalid or same
-    if (draggedIndex === -1 || targetIndex === -1 || draggedIndex === targetIndex) return;
     
-    // Skip if this is the same shuffle we just did
-    if (targetIndex === this.lastShuffleIndex) return;
+    if (hoverTarget && hoverTarget !== this.draggedElement) {
+      // Hovering over a widget - insert before or after based on relative position
+      const targetIndex = widgets.indexOf(hoverTarget);
+      const targetId = hoverTarget.getAttribute('data-grid-item-id');
 
-    // Set throttle
-    this.shuffleThrottleTimer = window.setTimeout(() => {
-      this.shuffleThrottleTimer = null;
-    }, 150);
-
-    // Perform the swap: insert dragged element before or after target based on direction
-    if (draggedIndex < targetIndex) {
-      // Moving right/down - insert after target
-      hoverTarget.after(this.draggedElement);
+      // Skip if indices are invalid or same
+      if (draggedIndex === -1 || targetIndex === -1 || draggedIndex === targetIndex) return;
+      
+      // Determine the direction we would insert
+      const direction: 'before' | 'after' = draggedIndex < targetIndex ? 'after' : 'before';
+      
+      // Track intended position for reorder on drop
+      this.lastShuffleTargetId = targetId;
+      this.lastShuffleDirection = direction;
     } else {
-      // Moving left/up - insert before target
-      hoverTarget.before(this.draggedElement);
+      // Hovering over empty space - find insertion point based on grid position
+      const insertionPoint = this.findInsertionPoint(targetCol, targetRow, widgets);
+      
+      if (insertionPoint) {
+        this.lastShuffleTargetId = insertionPoint.targetId;
+        this.lastShuffleDirection = insertionPoint.direction;
+      } else {
+        // No insertion point found (e.g., dropping at the very end)
+        // Mark as "move to end" by using special sentinel
+        this.lastShuffleTargetId = '__END__';
+        this.lastShuffleDirection = 'after';
+      }
+    }
+  }
+
+  /**
+   * Find the best insertion point when dropping in empty space.
+   * Returns the widget to insert before/after based on the target grid position.
+   */
+  private findInsertionPoint(
+    targetCol: number, 
+    targetRow: number, 
+    widgets: HTMLElement[]
+  ): { targetId: string; direction: 'before' | 'after' } | null {
+    const gridContainer = this.shadowRoot?.querySelector('.grid-container') as HTMLElement;
+    if (!gridContainer) return null;
+
+    const gridRect = gridContainer.getBoundingClientRect();
+    const cellWidth = this.minColumnWidth + this.gridGap;
+    const cellHeight = this.minRowHeight + this.gridGap;
+
+    // Calculate pixel position of drop target
+    const dropY = gridRect.top + targetRow * cellHeight;
+    const dropX = gridRect.left + targetCol * cellWidth;
+
+    // Find widgets that end before our drop row (candidates for "insert after")
+    // and widgets that start after our drop row (candidates for "insert before")
+    let bestCandidate: { widget: HTMLElement; distance: number; direction: 'before' | 'after' } | null = null;
+
+    for (const widget of widgets) {
+      if (widget === this.draggedElement) continue;
+
+      const rect = widget.getBoundingClientRect();
+      
+      // Check if this widget is in the same column range
+      const widgetStartCol = Math.floor((rect.left - gridRect.left) / cellWidth);
+      const widgetEndCol = Math.ceil((rect.right - gridRect.left) / cellWidth);
+      
+      // If drop position is below widget bottom, this is a candidate for "insert after"
+      if (dropY >= rect.bottom) {
+        const distance = dropY - rect.bottom;
+        if (!bestCandidate || distance < bestCandidate.distance) {
+          bestCandidate = { 
+            widget, 
+            distance, 
+            direction: 'after' 
+          };
+        }
+      }
+      // If drop position is above widget top, this is a candidate for "insert before"
+      else if (dropY + cellHeight <= rect.top) {
+        const distance = rect.top - dropY;
+        if (!bestCandidate || distance < bestCandidate.distance) {
+          bestCandidate = { 
+            widget, 
+            distance, 
+            direction: 'before' 
+          };
+        }
+      }
     }
 
-    this.lastShuffleIndex = targetIndex;
+    if (bestCandidate) {
+      const targetId = bestCandidate.widget.getAttribute('data-grid-item-id');
+      if (targetId) {
+        return { targetId, direction: bestCandidate.direction };
+      }
+    }
 
-    console.debug(`GridLayout: Live shuffle - moved from index ${draggedIndex} to ${targetIndex}`);
+    return null;
   }
 
   /**

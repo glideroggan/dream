@@ -200,6 +200,164 @@ export class SettingsRepository extends LocalStorageRepository<UserSettings> {
   }
 
   /**
+   * Update widget order for a page based on current DOM order
+   */
+  async updateWidgetOrder(pageKey: string, widgetIds: string[]): Promise<void> {
+    const settings = await this.getCurrentSettings();
+    
+    // Initialize widgetLayout if it doesn't exist
+    if (!settings.widgetLayout) {
+      settings.widgetLayout = {};
+    }
+    
+    // Initialize page widgets array if it doesn't exist
+    if (!settings.widgetLayout[pageKey]) {
+      settings.widgetLayout[pageKey] = [];
+    }
+    
+    // Update order property for each widget based on position in array
+    widgetIds.forEach((widgetId, index) => {
+      const widgetIndex = settings.widgetLayout[pageKey].findIndex(w => w.id === widgetId);
+      
+      if (widgetIndex >= 0) {
+        settings.widgetLayout[pageKey][widgetIndex].order = index;
+      } else {
+        // Widget not in layout yet - add it with order
+        settings.widgetLayout[pageKey].push({
+          id: widgetId,
+          colSpan: 8,
+          rowSpan: 2,
+          order: index
+        });
+      }
+    });
+    
+    // Save updated settings
+    await this.update(settings.id, { widgetLayout: settings.widgetLayout });
+    
+    console.debug(`Updated widget order for page ${pageKey}:`, widgetIds);
+  }
+
+  /**
+   * Update widget grid position (V2 - explicit positioning)
+   */
+  async updateWidgetGridPosition(
+    pageKey: string,
+    widgetId: string,
+    gridCol: number,
+    gridRow: number,
+    colSpan: number,
+    rowSpan: number
+  ): Promise<void> {
+    const settings = await this.getCurrentSettings();
+    
+    // Initialize widgetLayout if it doesn't exist
+    if (!settings.widgetLayout) {
+      settings.widgetLayout = {};
+    }
+    
+    // Initialize page widgets array if it doesn't exist
+    if (!settings.widgetLayout[pageKey]) {
+      settings.widgetLayout[pageKey] = [];
+    }
+    
+    // Find the widget in the page's widget settings
+    const widgetIndex = settings.widgetLayout[pageKey].findIndex(widget => widget.id === widgetId);
+    
+    if (widgetIndex >= 0) {
+      // Update existing widget settings
+      settings.widgetLayout[pageKey][widgetIndex].gridCol = gridCol;
+      settings.widgetLayout[pageKey][widgetIndex].gridRow = gridRow;
+      settings.widgetLayout[pageKey][widgetIndex].colSpan = colSpan;
+      settings.widgetLayout[pageKey][widgetIndex].rowSpan = rowSpan;
+    } else {
+      // Add new widget settings
+      settings.widgetLayout[pageKey].push({
+        id: widgetId,
+        gridCol,
+        gridRow,
+        colSpan,
+        rowSpan
+      });
+    }
+    
+    // Save updated settings
+    await this.update(settings.id, { widgetLayout: settings.widgetLayout });
+    
+    console.debug(`Updated widget ${widgetId} on page ${pageKey} to position (${gridCol},${gridRow}) size ${colSpan}x${rowSpan}`);
+  }
+
+  /**
+   * Update all widget positions for a page (V2 - bulk update after drag/resize)
+   */
+  async updateAllWidgetPositions(
+    pageKey: string,
+    positions: Array<{ id: string; col: number; row: number; colSpan: number; rowSpan: number }>
+  ): Promise<void> {
+    const settings = await this.getCurrentSettings();
+    
+    // Initialize widgetLayout if it doesn't exist
+    if (!settings.widgetLayout) {
+      settings.widgetLayout = {};
+    }
+    
+    // Initialize page widgets array if it doesn't exist
+    if (!settings.widgetLayout[pageKey]) {
+      settings.widgetLayout[pageKey] = [];
+    }
+    
+    // Update each position
+    for (const pos of positions) {
+      const widgetIndex = settings.widgetLayout[pageKey].findIndex(widget => widget.id === pos.id);
+      
+      if (widgetIndex >= 0) {
+        settings.widgetLayout[pageKey][widgetIndex].gridCol = pos.col;
+        settings.widgetLayout[pageKey][widgetIndex].gridRow = pos.row;
+        settings.widgetLayout[pageKey][widgetIndex].colSpan = pos.colSpan;
+        settings.widgetLayout[pageKey][widgetIndex].rowSpan = pos.rowSpan;
+      } else {
+        settings.widgetLayout[pageKey].push({
+          id: pos.id,
+          gridCol: pos.col,
+          gridRow: pos.row,
+          colSpan: pos.colSpan,
+          rowSpan: pos.rowSpan
+        });
+      }
+    }
+    
+    // Save updated settings
+    await this.update(settings.id, { widgetLayout: settings.widgetLayout });
+    
+    console.debug(`Updated ${positions.length} widget positions for page ${pageKey}`);
+  }
+
+  /**
+   * Get widget position (V2)
+   */
+  async getWidgetGridPosition(
+    pageKey: string,
+    widgetId: string
+  ): Promise<{ gridCol?: number; gridRow?: number; colSpan: number; rowSpan: number } | null> {
+    const settings = await this.getCurrentSettings();
+    
+    if (settings.widgetLayout && settings.widgetLayout[pageKey]) {
+      const widgetSettings = settings.widgetLayout[pageKey].find(widget => widget.id === widgetId);
+      
+      if (widgetSettings) {
+        return {
+          gridCol: widgetSettings.gridCol,
+          gridRow: widgetSettings.gridRow,
+          colSpan: widgetSettings.colSpan ?? 8,
+          rowSpan: widgetSettings.rowSpan ?? 4
+        };
+      }
+    }
+    
+    return null;
+  }
+
+  /**
    * Get current user settings
    */
   async getCurrentSettings(): Promise<UserSettings> {

@@ -299,6 +299,174 @@ export const styles = css`
   .close-button::after {
     transform: rotate(-45deg);
   }
+
+  /* Expand button styles */
+  .expand-button {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    background-color: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--widget-subtle-text, #888);
+    z-index: 10;
+    opacity: 0;
+    padding: 0;
+    margin-right: 4px;
+    transition: opacity 0.2s, background-color 0.2s, transform 0.2s, color 0.2s;
+  }
+  
+  .widget-container:hover .expand-button {
+    opacity: 0.7;
+  }
+  
+  .expand-button:hover {
+    opacity: 1;
+    background-color: rgba(0, 120, 212, 0.1);
+    color: var(--widget-primary-color, #0078d4);
+  }
+  
+  .expand-button:active {
+    transform: scale(0.9);
+  }
+  
+  .expand-icon {
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1;
+  }
+
+  /* Settings button and popover styles */
+  .settings-container {
+    position: relative;
+    display: inline-flex;
+  }
+
+  .settings-button {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    background-color: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--widget-subtle-text, #888);
+    z-index: 10;
+    opacity: 0;
+    padding: 0;
+    margin-right: 4px;
+    transition: opacity 0.2s, background-color 0.2s, transform 0.2s, color 0.2s;
+  }
+
+  .widget-container:hover .settings-button {
+    opacity: 0.7;
+  }
+
+  .settings-button:hover {
+    opacity: 1;
+    background-color: rgba(0, 120, 212, 0.1);
+    color: var(--widget-primary-color, #0078d4);
+  }
+
+  .settings-button:active {
+    transform: scale(0.9);
+  }
+
+  .settings-icon {
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  .settings-popover {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    background: var(--widget-background, #fff);
+    border: 1px solid var(--widget-border-color, #e0e0e0);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    padding: 12px;
+    min-width: 160px;
+    z-index: 1000;
+  }
+
+  .settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--widget-border-color, #e0e0e0);
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--widget-text-color, #333);
+  }
+
+  .settings-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    color: var(--widget-subtle-text, #888);
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+  }
+
+  .settings-close:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--widget-text-color, #333);
+  }
+
+  .settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .settings-row:last-child {
+    margin-bottom: 0;
+  }
+
+  .settings-row label {
+    font-size: 12px;
+    color: var(--widget-text-color, #333);
+    margin-right: 12px;
+  }
+
+  .span-input {
+    width: 60px;
+    padding: 4px 8px;
+    border: 1px solid var(--widget-border-color, #e0e0e0);
+    border-radius: 4px;
+    font-size: 12px;
+    text-align: center;
+    background: var(--widget-background, #fff);
+    color: var(--widget-text-color, #333);
+  }
+
+  .span-input:focus {
+    outline: none;
+    border-color: var(--widget-primary-color, #0078d4);
+    box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.1);
+  }
+
+  .span-input::-webkit-inner-spin-button,
+  .span-input::-webkit-outer-spin-button {
+    opacity: 1;
+  }
   
   .widget-loading, .widget-error, .widget-timeout {
     height: 100%;

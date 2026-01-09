@@ -1,6 +1,66 @@
 import { getWidgetMinWidth, getWidgetColumnSpan, getWidgetRowSpan } from '../widgets/widget-registry';
 import { WidgetDefinition, widgetService } from '../services/widget-service';
 
+// ============================================
+// V2 Widget Wrapper Helper (for grid-layout-v2)
+// ============================================
+
+/**
+ * Options for creating a V2 widget wrapper
+ */
+export interface WidgetWrapperV2Options {
+  widgetId: string;
+  widgetTitle?: string;
+  pageType?: string;
+  colSpan?: number;
+  rowSpan?: number;
+  gridCol?: number;  // 1-based column position (optional - auto-placed if not set)
+  gridRow?: number;  // 1-based row position (optional - auto-placed if not set)
+  hideCloseButton?: boolean;
+}
+
+/**
+ * Creates a widget-wrapper-v2 element for use with grid-layout-v2
+ */
+export function createWidgetWrapperV2(options: WidgetWrapperV2Options): HTMLElement {
+  const wrapper = document.createElement('widget-wrapper-v2');
+  
+  // Required attributes
+  wrapper.setAttribute('widget-id', options.widgetId);
+  wrapper.setAttribute('data-widget-id', options.widgetId);
+  
+  // Title
+  if (options.widgetTitle) {
+    wrapper.setAttribute('widget-title', options.widgetTitle);
+  }
+  
+  // Page type
+  if (options.pageType) {
+    wrapper.setAttribute('page-type', options.pageType);
+  }
+  
+  // Grid dimensions
+  const colSpan = options.colSpan || getWidgetColumnSpan(options.widgetId) || 8;
+  const rowSpan = options.rowSpan || getWidgetRowSpan(options.widgetId) || 4;
+  wrapper.setAttribute('col-span', colSpan.toString());
+  wrapper.setAttribute('row-span', rowSpan.toString());
+  
+  // Explicit grid position (if provided)
+  if (options.gridCol && options.gridCol > 0) {
+    wrapper.setAttribute('grid-col', options.gridCol.toString());
+  }
+  if (options.gridRow && options.gridRow > 0) {
+    wrapper.setAttribute('grid-row', options.gridRow.toString());
+  }
+  
+  // Close button
+  if (options.hideCloseButton) {
+    wrapper.setAttribute('hide-close-button', '');
+  }
+  
+  return wrapper;
+}
+
 /**
  * Options for creating a widget element
  */

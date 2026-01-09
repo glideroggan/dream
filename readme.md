@@ -2,11 +2,22 @@ Ok, rework
 Lets adjust everything for kidwallet
 
 # TODO
+- new widgets
+  Start with just a grid element and a widget element
+  - Make these from scratch, don't use the old ones
+  steps
+    - don't worry about anything else than having a an element that we can get out on the grid
+      - one grid
+      - one widget
+    - move the widget around
+      - pick up and move the widget somewhere else on the grid
+
+
+
+
 - widget handling
   - make sure the cells size doesn't change
   - hardcode the size of the widget to start
-
-# First
 - fix widget movement/handling
   - fix widget resizing
   - fix widget dragging

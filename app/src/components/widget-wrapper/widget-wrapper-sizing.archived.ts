@@ -666,11 +666,67 @@ export class WidgetSizingManager {
       gridItemParent.classList.add(`row-span-${rowSpan}`);
 
       // Apply inline styles for immediate visual feedback
-      gridItemParent.style.gridColumn = `span ${colSpan}`;
-      gridItemParent.style.gridRow = `span ${rowSpan}`;
+      // Use explicit positioning if gridCol/gridRow are set, otherwise use span-only
+      const gridCol = this.component.gridCol;
+      const gridRow = this.component.gridRow;
+      
+      if (gridCol > 0) {
+        gridItemParent.style.gridColumn = `${gridCol} / span ${colSpan}`;
+      } else {
+        gridItemParent.style.gridColumn = `span ${colSpan}`;
+      }
+      
+      if (gridRow > 0) {
+        gridItemParent.style.gridRow = `${gridRow} / span ${rowSpan}`;
+      } else {
+        gridItemParent.style.gridRow = `span ${rowSpan}`;
+      }
+      
+      // Also update custom properties used for tracking
+      gridItemParent.style.setProperty('--current-col-span', colSpan.toString());
+      gridItemParent.style.setProperty('--current-row-span', rowSpan.toString());
+      if (gridCol > 0) {
+        gridItemParent.style.setProperty('--grid-col', gridCol.toString());
+      }
+      if (gridRow > 0) {
+        gridItemParent.style.setProperty('--grid-row', gridRow.toString());
+      }
     }
 
-    console.debug(`Direct grid update: ${colSpan}x${rowSpan} applied to DOM`);
+    console.debug(`Direct grid update: col ${this.component.gridCol || 'auto'}, row ${this.component.gridRow || 'auto'}, ${colSpan}x${rowSpan} applied to DOM`);
+  }
+
+  /**
+   * Update widget grid position (column and row start)
+   * Used when dropping a widget at a specific grid location
+   */
+  setGridPosition(col: number, row: number): void {
+    this.component.gridCol = col;
+    this.component.gridRow = row;
+    
+    // Update attributes
+    this.component.setAttribute('gridCol', col.toString());
+    this.component.setAttribute('gridRow', row.toString());
+    
+    // Apply to parent element
+    this.updateParentGridClasses(this.component.colSpan, this.component.rowSpan);
+    
+    // Dispatch position change event
+    const positionChangeEvent = new CustomEvent('widget-position-set', {
+      bubbles: true,
+      composed: true,
+      detail: {
+        widgetId: this.component.widgetId,
+        pageType: this.component.pageType,
+        gridCol: col,
+        gridRow: row,
+        colSpan: this.component.colSpan,
+        rowSpan: this.component.rowSpan
+      }
+    });
+    this.component.dispatchEvent(positionChangeEvent);
+    
+    console.debug(`Widget ${this.component.widgetId} position set to col:${col}, row:${row}`);
   }
 
   /**

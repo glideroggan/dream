@@ -17,17 +17,18 @@ import {
   getWidgetColumnSpan,
   getWidgetRowSpan
 } from '../widgets/widget-registry';
-import { createWidgetWrapper } from '../utils/widget-helper';
+import { createWidgetWrapperV2 } from '../utils/widget-helper';
 import { getSearchService } from '../services/search-service';
 
-// Import grid layout and modal components
-import '../components/grid-layout';
+// Import grid layout V2 and modal components
+import '../components/grid-layout-v2';
 import '../components/modal-component';
-import '../components/widget-wrapper/widget-wrapper';
+import '../components/widget-wrapper-v2/widget-wrapper-v2';
 import { workflowManager } from '../services/workflow-manager-service';
 import { repositoryService } from '../services/repository-service';
 import { UserSettings } from '../repositories/settings-repository';
-import { GridLayout } from '../components/grid-layout';
+import { GridLayoutV2 } from '../components/grid-layout-v2';
+import { GridItemPosition } from '../services/grid-service';
 import { UserProductChangeEvent } from '../repositories/models/user-product-models';
 
 // Add responsive styles for the base page
@@ -111,7 +112,11 @@ export const baseContentTemplate = html<BasePage>/*html*/ `
         <p>Check back soon for updates!</p>
       </div>`
 )}
-    <grid-layout class="widgets-container" data-page="${x => x.pageTitle}"></grid-layout>
+    <grid-layout-v2 
+      class="widgets-container" 
+      page-type="${x => x.pageType}"
+      @grid-layout-changed="${(x, c) => x.handleGridLayoutChanged(c.event as CustomEvent)}"
+    ></grid-layout-v2>
     
     <!-- Modal for workflows -->
     <dream-modal 
@@ -140,7 +145,7 @@ export class BasePage extends FASTElement {
   protected settingsRepository = repositoryService.getSettingsRepository();
   protected widgetLoadAttempts: Map<string, number> = new Map();
   protected maxLoadAttempts = 2;
-  protected pageType: string = 'base';
+  public pageType: string = 'base';  // Made public for template access
 
   private boundHandleResize: EventListener;
   private boundHandleWorkflowStart: EventListener;
@@ -149,6 +154,7 @@ export class BasePage extends FASTElement {
   private boundHandleRetryWidget: EventListener;
   private boundHandleDismissWidget: EventListener;
   private boundHandleCancelWidget: EventListener;
+
 
   
 
@@ -189,6 +195,7 @@ export class BasePage extends FASTElement {
     document.addEventListener('retry-widget', this.boundHandleRetryWidget);
     document.addEventListener('dismiss-widget', this.boundHandleDismissWidget);
     document.addEventListener('cancel-widget-load', this.boundHandleCancelWidget);
+    // Note: grid-layout-changed is handled directly in template binding
 
     this.subscribeToProductChanges();
     // Diagnostic log to track page lifecycle
@@ -209,7 +216,7 @@ export class BasePage extends FASTElement {
     document.removeEventListener('retry-widget', this.boundHandleRetryWidget);
     document.removeEventListener('dismiss-widget', this.boundHandleDismissWidget);
     document.removeEventListener('cancel-widget-load', this.boundHandleCancelWidget);
-    document.removeEventListener('retry-widget', this.boundHandleRetryWidget);
+    // Note: grid-layout-changed is handled by template binding, no need to remove
     if (this.productChangeUnsubscribe) {
       this.productChangeUnsubscribe();
       this.productChangeUnsubscribe = null;
@@ -370,7 +377,9 @@ export class BasePage extends FASTElement {
         // Get grid dimensions from registry
         let colSpan = widgetDef?.colSpan || getWidgetColumnSpan(widgetId);
         let rowSpan = widgetDef?.rowSpan || getWidgetRowSpan(widgetId);
-        // Try to load grid dimensions from settings if available
+        // Try to load grid dimensions and position from settings if available
+        let gridCol: number | undefined;
+        let gridRow: number | undefined;
         if (this.dataPage) {
           try {
             const dimensions = await this.settingsRepository.getWidgetGridDimensions(
@@ -382,45 +391,32 @@ export class BasePage extends FASTElement {
             colSpan = dimensions.colSpan;
             rowSpan = dimensions.rowSpan;
             console.debug(`Loaded dimensions from settings for widget ${widgetId}: ${colSpan}x${rowSpan}`);
+            
+            // Try to get explicit grid position
+            const position = await this.settingsRepository.getWidgetGridPosition(this.pageType, widgetId);
+            if (position) {
+              gridCol = position.gridCol;
+              gridRow = position.gridRow;
+            }
           } catch (error) {
             console.warn(`Failed to load grid dimensions for widget ${widgetId}:`, error);
           }
         }
-        // Create the wrapper with spans
-        const wrapperElement = createWidgetWrapper({
+        // Create the V2 wrapper with spans and optional position
+        const wrapperElement = createWidgetWrapperV2({
           widgetId: widget.id,
-          initialState: 'loading',
-          additionalAttributes: {
-            'widget-name': widget.name || widget.id,
-            'page-type': this.pageType,
-            'colSpan': colSpan.toString(),
-            'rowSpan': rowSpan.toString()
-          }
+          widgetTitle: widget.name || widget.id,
+          pageType: this.pageType,
+          colSpan,
+          rowSpan,
+          gridCol,
+          gridRow
         });
-        // Critical: Ensure data-grid-item-id is set on the wrapper's parent element
-        wrapperElement.setAttribute('data-widget-id', widgetId);
-        wrapperElement.setAttribute('data-grid-item-id', widgetId);
-        const widgetContainer = this.shadowRoot?.querySelector('.widgets-container') as HTMLElement;
-        widgetContainer.appendChild(wrapperElement);
-        // Use grid-layout's addItem method with proper spans
-        const gridLayout = widgetContainer as any;
-        if (gridLayout.addItem && typeof gridLayout.addItem === 'function') {
-          // Log grid layout presence and function
-          console.debug(`Found grid-layout with addItem function for widget ${widgetId}`);
-
-          gridLayout.addItem(wrapperElement, {
-            id: widget.id,
-            colSpan,
-            rowSpan,
-            minWidth: widgetDef?.minWidth || getWidgetMinWidth(widget.id),
-            fullWidth: widgetDef?.fullWidth || shouldWidgetBeFullWidth(widget.id)
-          });
-
-          // Verify data attribute after adding to grid
-          console.debug(`Widget wrapper data-grid-item-id after grid.addItem: ${wrapperElement.getAttribute('data-grid-item-id')}`);
-        } else {
-          console.warn(`Grid layout for ${widgetId} does not have addItem method!`);
-        }
+        
+        // Add to grid - grid-layout-v2 auto-registers slotted items
+        const gridLayout = this.shadowRoot?.querySelector('.widgets-container') as GridLayoutV2;
+        gridLayout.appendChild(wrapperElement);
+        console.debug(`Added widget ${widgetId} to grid-layout-v2`);
 
         this.createWidgetElement(widget, wrapperElement);
         wrapperElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -428,10 +424,7 @@ export class BasePage extends FASTElement {
         setTimeout(() => {
           wrapperElement.classList.remove('widget-highlight');
         }, 2000);
-        // Update layout
-        if (gridLayout.updateLayout && typeof gridLayout.updateLayout === 'function') {
-          gridLayout.updateLayout();
-        }
+        // V2 grid handles layout automatically via slotchange event
       } else {
         console.error(`Widget with ID ${widgetId} could not be loaded`);
       }
@@ -450,9 +443,8 @@ export class BasePage extends FASTElement {
         throw new Error(`Failed to create widget element for ${widget.id}`);
       }
       console.debug(`Widget element created for ${widget.id}`);
-      widgetElement.addEventListener('*', (event) => {
-        console.debug(`Widget ${widget.id} event: ${event.type}`);
-      }, true);
+      
+      // Listen for initialization event
       const onLoaded = () => {
         console.debug(`Widget ${widget.id} initialized`);
         widgetElement.removeEventListener('initialized', onLoaded);
@@ -461,10 +453,15 @@ export class BasePage extends FASTElement {
 
       console.debug(`Adding widget ${widget.id} to wrapper`);
       wrapperElement.appendChild(widgetElement);
+      
+      // Mark wrapper as loaded once widget element is added
+      // The wrapper-v2 may also receive an 'initialized' event from the widget,
+      // but we set state directly as a fallback since not all widgets emit this event
+      wrapperElement.setAttribute('state', 'loaded');
     } catch (error) {
       console.error(`Error creating widget ${widget.id}:`, error);
       wrapperElement.setAttribute('state', 'error');
-      wrapperElement.setAttribute('errorMessage',
+      wrapperElement.setAttribute('error-message',
         error instanceof Error ? error.message : 'Failed to initialize widget'
       );
     }
@@ -472,43 +469,24 @@ export class BasePage extends FASTElement {
 
   protected async addWidgetsToDOM(): Promise<void> {
     console.debug('Adding widgets to DOM...');
-    const widgetContainer = this.shadowRoot?.querySelector('.widgets-container') as HTMLElement;
-    if (!widgetContainer) return;
+    const gridLayout = this.shadowRoot?.querySelector('.widgets-container') as GridLayoutV2;
+    if (!gridLayout) return;
 
-    // Get the GridLayout component
-    const gridLayout = widgetContainer as GridLayout;
-
-    // Set the data-page attribute on the grid layout to ensure it's available to all widgets
-    gridLayout.setAttribute('data-page', this.pageType);
+    // Set the page-type attribute (already set in template, but ensure consistency)
+    gridLayout.setAttribute('page-type', this.pageType);
 
     // Process each active widget
-    this.activeWidgets.forEach(async (widget) => {
+    for (const widget of this.activeWidgets) {
       const widgetDef = getWidgetById(widget.id);
       console.debug(`Adding widget to DOM: ${widget.id}, definition:`, widgetDef);
 
-      // Create widget wrapper with explicit page-type attribute
-      const wrapperElement = createWidgetWrapper({
-        widgetId: widget.id,
-        initialState: 'loading',
-        warningTimeout: 5000,
-        failureTimeout: 10000,
-        additionalAttributes: {
-          'widget-name': widget.name || widget.id,
-          'page-type': this.pageType,  // Ensure page-type is explicitly set
-          'colSpan': widgetDef?.colSpan?.toString() || getWidgetColumnSpan(widget.id).toString(),
-          'rowSpan': widgetDef?.rowSpan?.toString() || getWidgetRowSpan(widget.id).toString()
-        }
-      });
-
-      // Debug the page type setting
-      console.debug(`Widget wrapper ${widget.id} created with page-type: ${wrapperElement.getAttribute('page-type')}`);
-
-      // Add wrapper to DOM
-      widgetContainer.appendChild(wrapperElement);
       // Get grid dimensions from user settings
       let colSpan = widgetDef?.colSpan || getWidgetColumnSpan(widget.id);
       let rowSpan = widgetDef?.rowSpan || getWidgetRowSpan(widget.id);
-      // If we're a data page, try to load saved dimensions
+      let gridCol: number | undefined;
+      let gridRow: number | undefined;
+      
+      // If we're a data page, try to load saved dimensions and position
       if (this.dataPage) {
         try {
           const dimensions = await this.settingsRepository.getWidgetGridDimensions(
@@ -519,29 +497,44 @@ export class BasePage extends FASTElement {
           );
           colSpan = dimensions.colSpan;
           rowSpan = dimensions.rowSpan;
+          
+          // Try to get explicit grid position
+          const position = await this.settingsRepository.getWidgetGridPosition(this.pageType, widget.id);
+          if (position) {
+            gridCol = position.gridCol;
+            gridRow = position.gridRow;
+          }
         } catch (error) {
           console.warn(`Failed to load grid dimensions for widget ${widget.id}:`, error);
         }
       }
-      // Add to grid layout with proper metadata
-      gridLayout.addItem(wrapperElement, {
-        id: widget.id,
+      
+      // Create V2 widget wrapper with dimensions and optional position
+      const wrapperElement = createWidgetWrapperV2({
+        widgetId: widget.id,
+        widgetTitle: widget.name || widget.id,
+        pageType: this.pageType,
         colSpan,
         rowSpan,
-        minWidth: widgetDef?.minWidth || getWidgetMinWidth(widget.id),
-        fullWidth: widgetDef?.fullWidth || shouldWidgetBeFullWidth(widget.id)
+        gridCol,
+        gridRow
       });
+
+      // Debug the page type setting
+      console.debug(`Widget wrapper ${widget.id} created with page-type: ${wrapperElement.getAttribute('page-type')}`);
+
+      // Add wrapper to DOM - grid-layout-v2 auto-registers via slotchange
+      gridLayout.appendChild(wrapperElement);
+      
       // Create the actual widget element inside the wrapper
       this.createWidgetElement(widget, wrapperElement);
-    });
+    }
   }
 
   protected handleResize() {
-    // Update to call grid layout's updateLayout instead of the removed optimizeLayout
-    const gridLayout = this.shadowRoot?.querySelector('.widgets-container') as any;
-    if (gridLayout && typeof gridLayout.updateLayout === 'function') {
-      gridLayout.updateLayout();
-    }
+    // V2 grid handles layout automatically - no manual updateLayout needed
+    // This is kept for compatibility but does nothing significant now
+    console.debug('Resize event - V2 grid handles layout automatically');
   }
 
   protected handleWorkflowStart(event: Event): void {
@@ -628,14 +621,14 @@ export class BasePage extends FASTElement {
     const attempts = this.widgetLoadAttempts.get(widgetId) || 0;
     if (attempts >= this.maxLoadAttempts) {
       console.error(`Exceeded max retry attempts (${this.maxLoadAttempts}) for widget ${widgetId}`);
-      const wrapper = this.shadowRoot?.querySelector(`widget-wrapper[widgetId="${widgetId}"]`);
+      const wrapper = this.shadowRoot?.querySelector(`widget-wrapper-v2[widget-id="${widgetId}"]`);
       if (wrapper) {
         wrapper.setAttribute('state', 'error');
-        wrapper.setAttribute('errorMessage', `Failed to load after ${this.maxLoadAttempts} attempts`);
+        wrapper.setAttribute('error-message', `Failed to load after ${this.maxLoadAttempts} attempts`);
       }
       return;
     }
-    const wrapper = this.shadowRoot?.querySelector(`widget-wrapper[widgetId="${widgetId}"]`);
+    const wrapper = this.shadowRoot?.querySelector(`widget-wrapper-v2[widget-id="${widgetId}"]`);
     if (!wrapper) return;
     while (wrapper.firstChild) {
       wrapper.removeChild(wrapper.firstChild);
@@ -660,6 +653,49 @@ export class BasePage extends FASTElement {
     this.removeWidgetFromPage(widgetId);
   }
 
+  /**
+   * Handle widget position change after drag-drop reorder
+   */
+  protected handleWidgetPositionChange(event: Event): void {
+    const { pageType } = (event as CustomEvent).detail;
+    
+    // Only handle events for our page
+    if (pageType && pageType !== this.pageType) return;
+    
+    console.debug(`Widget position changed on ${this.pageType} page`);
+    
+    // Get the current DOM order of widgets
+    const gridLayout = this.shadowRoot?.querySelector('.widgets-container') as GridLayoutV2;
+    if (!gridLayout) return;
+    
+    const widgets = Array.from(gridLayout.querySelectorAll('[data-widget-id]'));
+    const widgetIds = widgets.map(w => w.getAttribute('data-widget-id')).filter(Boolean) as string[];
+    
+    console.debug(`Saving new widget order for ${this.pageType}:`, widgetIds);
+    
+    // Save the new order
+    this.settingsRepository.updateWidgetOrder(this.pageType, widgetIds)
+      .catch(err => console.error('Error saving widget order:', err));
+  }
+  
+  /**
+   * Handle grid layout changed event from grid-layout-v2
+   * This is triggered after drag-drop or resize operations
+   */
+  public handleGridLayoutChanged(event: CustomEvent): void {
+    const { positions, pageType } = event.detail as { positions: GridItemPosition[], pageType: string };
+    
+    // Only handle events for our page
+    if (pageType && pageType !== this.pageType) return;
+    
+    // Save all positions to settings repository
+    this.settingsRepository.updateAllWidgetPositions(this.pageType, positions)
+      .then(() => {
+        console.debug(`Saved ${positions.length} widget positions for ${this.pageType}`);
+      })
+      .catch(err => console.error('Error saving widget positions:', err));
+  }
+
   private removeWidgetFromPage(widgetId: string): void {
     // Find widget in active widgets array
     const widgetToRemove = this.activeWidgets.find(w => w.id === widgetId);
@@ -671,34 +707,24 @@ export class BasePage extends FASTElement {
     // Update our active widgets tracking array
     this.activeWidgets = this.activeWidgets.filter(w => w.id !== widgetId);
 
-    // Get direct reference to the grid-layout
-    const gridLayout = this.shadowRoot?.querySelector('.widgets-container') as GridLayout;
+    // Get direct reference to the grid-layout-v2
+    const gridLayout = this.shadowRoot?.querySelector('.widgets-container') as GridLayoutV2;
     if (!gridLayout) {
-      console.error("Could not find grid-layout component");
+      console.error("Could not find grid-layout-v2 component");
       return;
     }
 
     // Find the widget element directly within the grid
-    const widgetElement = gridLayout.querySelector(`[data-grid-item-id="${widgetId}"]`);
+    const widgetElement = gridLayout.querySelector(`[data-widget-id="${widgetId}"]`);
     if (widgetElement) {
       // Add a brief animation class if desired
       widgetElement.classList.add('widget-removing');
 
       // Use short timeout to allow animation to complete
       setTimeout(() => {
-        // Remove from grid directly
+        // Remove from grid directly - V2 grid auto-handles removal via slotchange
         if (widgetElement.parentElement) {
           widgetElement.parentElement.removeChild(widgetElement);
-        }
-
-        // If grid-layout has a removeItem method, use it
-        if (typeof gridLayout.removeItem === 'function') {
-          gridLayout.removeItem(widgetId);
-        }
-
-        // Always update the layout
-        if (typeof gridLayout.updateGridStyle === 'function') {
-          gridLayout.updateGridStyle();
         }
       }, 300);
 
@@ -715,20 +741,16 @@ export class BasePage extends FASTElement {
     const { widgetId } = (event as CustomEvent).detail;
     if (!widgetId) return;
     console.debug(`Cancelling widget load for ${widgetId}`);
-    const wrapper = this.shadowRoot?.querySelector(`widget-wrapper[widgetId="${widgetId}"]`);
+    const wrapper = this.shadowRoot?.querySelector(`widget-wrapper-v2[widget-id="${widgetId}"]`);
     if (wrapper) {
       wrapper.setAttribute('state', 'error');
-      wrapper.setAttribute('errorMessage', 'Widget load cancelled due to timeout');
+      wrapper.setAttribute('error-message', 'Widget load cancelled due to timeout');
     }
   }
 
-  // Add a simple optimizeLayout method that delegates to grid-layout
-  // for backward compatibility with any code that might still call it
+  // V2 grid handles layout automatically - this is kept for compatibility
   protected optimizeLayout(): void {
-    const gridLayout = this.shadowRoot?.querySelector('.widgets-container') as any;
-    if (gridLayout && typeof gridLayout.updateLayout === 'function') {
-      gridLayout.updateLayout();
-    }
+    console.debug('optimizeLayout called - V2 grid handles layout automatically');
   }
 
   protected async loadUserWidgetPreferences(): Promise<void> {
@@ -737,9 +759,25 @@ export class BasePage extends FASTElement {
       const userSettings = await settingsRepo.getCurrentSettings();
       const pageKey = `${this.pageType}Widgets`;
       const pageWidgets = userSettings[pageKey] as string[] | undefined;
+      
       if (pageWidgets && pageWidgets.length > 0) {
-        console.debug(`Using widgets from user settings for ${this.pageType}:`, pageWidgets);
-        this.initialWidgets = pageWidgets.join(',');
+        // Check if we have order info in widgetLayout
+        const layoutSettings = userSettings.widgetLayout?.[this.pageType];
+        
+        if (layoutSettings && layoutSettings.length > 0) {
+          // Sort widgets by their saved order
+          const orderedWidgets = [...pageWidgets].sort((a, b) => {
+            const orderA = layoutSettings.find(w => w.id === a)?.order ?? Infinity;
+            const orderB = layoutSettings.find(w => w.id === b)?.order ?? Infinity;
+            return orderA - orderB;
+          });
+          
+          console.debug(`Using ordered widgets from user settings for ${this.pageType}:`, orderedWidgets);
+          this.initialWidgets = orderedWidgets.join(',');
+        } else {
+          console.debug(`Using widgets from user settings for ${this.pageType} (no order info):`, pageWidgets);
+          this.initialWidgets = pageWidgets.join(',');
+        }
       } else {
         console.debug(`No saved widget preferences found for ${this.pageType} page`);
       }

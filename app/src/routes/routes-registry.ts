@@ -24,6 +24,12 @@ export const appRoutes: Route[] = [
     title: 'Investments - Wallet Banking',
     elementName: 'investments-page',
     modulePath: '@pages/investments'
+  },
+  {
+    path: 'grid-test',
+    title: 'Grid V2 Test - Wallet Banking',
+    elementName: 'grid-test-page',
+    modulePath: '@pages/grid-test'
   }
 ];
 
@@ -33,7 +39,8 @@ export const appRoutes: Route[] = [
 export const routeIcons: Record<string, string> = {
   'home': '📊',
   'savings': '💰',
-  'investments': '📈'
+  'investments': '📈',
+  'grid-test': '🔲'
 };
 
 /**
@@ -55,6 +62,10 @@ export const routeMetadata: Record<string, {
   'investments': {
     keywords: ['investments', 'stocks', 'funds', 'portfolio', 'invest'],
     description: 'Track and manage your investment portfolio'
+  },
+  'grid-test': {
+    keywords: ['grid', 'test', 'v2', 'layout', 'debug'],
+    description: 'Test page for grid layout v2 system'
   }
 };
 

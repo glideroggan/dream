@@ -49,6 +49,10 @@ export class WidgetWrapper extends FASTElement {
   @attr minColSpan: number = 1;
   @attr minRowSpan: number = 1;
 
+  // Grid position attributes (1-based, 0 means auto-placement)
+  @attr({ mode: "fromView" }) gridCol: number = 0;
+  @attr({ mode: "fromView" }) gridRow: number = 0;
+
   // NOTE: colSpanChanged is intentionally removed to prevent infinite loops.
   // The sizingManager.changeSpans() method handles span updates directly.
   // Triggering changeSpans from an attribute change callback creates a loop:
@@ -89,6 +93,14 @@ export class WidgetWrapper extends FASTElement {
 
   // Drag and drop state
   @observable isDragging: boolean = false;
+  
+  // Expand to align feature
+  @observable canExpand: boolean = false;
+  @observable expandTargetColSpan: number = 0;
+  
+  // Settings popover state
+  @observable isSettingsOpen: boolean = false;
+  
   private resizePointerId: number | null = null;
   private boundPointerMove: ((e: PointerEvent) => void) | null = null;
   private boundPointerUp: ((e: PointerEvent) => void) | null = null;
@@ -159,6 +171,10 @@ export class WidgetWrapper extends FASTElement {
     
     // Ensure data attributes are consistent - this is critical for grid layout to find the wrapper
     this.setAttribute('data-widget-id', this.widgetId);
+    // Also set data-grid-item-id for grid-layout compatibility
+    if (!this.hasAttribute('data-grid-item-id')) {
+      this.setAttribute('data-grid-item-id', this.widgetId);
+    }
     
     // Make the host element draggable (avoids shadow DOM issues with drag events)
     this.setAttribute('draggable', 'true');
@@ -248,7 +264,21 @@ export class WidgetWrapper extends FASTElement {
     // Listen for content shrink events
     // this.addEventListener('widget-content-shrink', this.sizingManager.handleContentShrink.bind(this.sizingManager));
 
+    // Apply initial spans to CSS after a microtask to ensure DOM is ready
+    queueMicrotask(() => {
+      this.applyInitialSpans();
+    });
+
     console.debug(`Widget wrapper connected: ${this.displayName}, spans: ${this.colSpan}x${this.rowSpan}`);
+  }
+  
+  /**
+   * Apply initial span values to CSS grid classes
+   */
+  private applyInitialSpans(): void {
+    // Apply spans via sizing manager
+    this.sizingManager.changeSpans(this.colSpan, this.rowSpan, false, false);
+    console.debug(`Widget ${this.widgetId}: Applied initial spans ${this.colSpan}x${this.rowSpan}`);
   }
 
   disconnectedCallback() {
@@ -418,6 +448,58 @@ export class WidgetWrapper extends FASTElement {
    */
   closeWidget() {
     this.stateManager.closeWidget();
+  }
+
+  /**
+   * Expand widget to align with the widest widget in the same column
+   */
+  expandToAlign(): void {
+    if (this.canExpand && this.expandTargetColSpan > this.colSpan) {
+      this.sizingManager.changeSpans(this.expandTargetColSpan, this.rowSpan);
+    }
+  }
+
+  /**
+   * Toggle settings popover visibility
+   */
+  toggleSettings(): void {
+    this.isSettingsOpen = !this.isSettingsOpen;
+  }
+
+  /**
+   * Close settings popover
+   */
+  closeSettings(): void {
+    this.isSettingsOpen = false;
+  }
+
+  /**
+   * Handle column span input change
+   */
+  handleColSpanChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const newValue = parseInt(input.value, 10);
+    if (!isNaN(newValue) && newValue >= this.minColSpan && newValue <= this.maxColSpan) {
+      this.sizingManager.changeSpans(newValue, this.rowSpan);
+    }
+  }
+
+  /**
+   * Handle row span input change
+   */
+  handleRowSpanChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const newValue = parseInt(input.value, 10);
+    if (!isNaN(newValue) && newValue >= this.minRowSpan && newValue <= this.maxRowSpan) {
+      this.sizingManager.changeSpans(this.colSpan, newValue);
+    }
+  }
+
+  /**
+   * Set widget grid position - delegate to sizing manager
+   */
+  setGridPosition(col: number, row: number): void {
+    this.sizingManager.setGridPosition(col, row);
   }
 
   /**
@@ -614,14 +696,26 @@ export class WidgetWrapper extends FASTElement {
     // Get grid element and calculate new spans
     const gridElement = this.closest('grid-layout') as HTMLElement;
     if (gridElement) {
-      const cellInfo = dragDropService.getGridCellInfo(gridElement);
-      const { newColSpan, newRowSpan } = dragDropService.getNewSpans(cellInfo);
+      // getNewSpans now uses cached cell info from resize start
+      const { newColSpan, newRowSpan } = dragDropService.getNewSpans();
       
-      console.debug(`Resize move: calculated spans ${newColSpan}x${newRowSpan}, cell size ${cellInfo.cellWidth}x${cellInfo.cellHeight}`);
+      console.debug(`Resize move: calculated spans ${newColSpan}x${newRowSpan}`);
       
-      // Clamp to valid range
-      const clampedColSpan = Math.max(this.minColSpan, Math.min(newColSpan, this.maxColSpan));
-      const clampedRowSpan = Math.max(this.minRowSpan, Math.min(newRowSpan, this.maxRowSpan));
+      // Clamp to valid range based on max/min spans
+      let clampedColSpan = Math.max(this.minColSpan, Math.min(newColSpan, this.maxColSpan));
+      let clampedRowSpan = Math.max(this.minRowSpan, Math.min(newRowSpan, this.maxRowSpan));
+      
+      // ALSO clamp based on widget position to prevent extending past grid boundary
+      // If widget is at column 20 (gridCol=20) and grid has 24 columns,
+      // max colSpan should be 24 - 20 + 1 = 5
+      if (this.gridCol > 0) {
+        const maxColSpanFromPosition = this.maxColSpan - this.gridCol + 1;
+        clampedColSpan = Math.min(clampedColSpan, maxColSpanFromPosition);
+      }
+      if (this.gridRow > 0) {
+        const maxRowSpanFromPosition = this.maxRowSpan - this.gridRow + 1;
+        clampedRowSpan = Math.min(clampedRowSpan, maxRowSpanFromPosition);
+      }
       
       // Update spans if changed (visual preview during drag)
       if (clampedColSpan !== this.colSpan || clampedRowSpan !== this.rowSpan) {

@@ -5,9 +5,6 @@ import {
 } from '@microsoft/fast-element';
 import { BasePage, baseContentTemplate } from './base-page';
 import { baseStyles } from './base-page.css';
-import { repositoryService } from '../services/repository-service';
-import { PageWidgetSettings } from '../repositories/models/widget-settings';
-import { WidgetWrapper } from '../components/widget-wrapper/widget-wrapper';
 
 // Use the base template
 const template = baseContentTemplate;
@@ -48,29 +45,8 @@ export class DashboardPage extends BasePage {
     // This will respect the initialWidgets being potentially changed by loadUserWidgetPreferences
     await this.loadWidgetsFromList(this.initialWidgets);
     
-    // save widget layout to settings
-    const settingsRepo = await repositoryService.getSettingsRepository();
-    const pageWidgets = this.getActiveWidgets()
-    await settingsRepo.savePageWidgetLayout(this.pageType, pageWidgets);
     // Make sure page is ready, even if no widgets
     this.ready = true;
-  }
-
-  getActiveWidgets(): PageWidgetSettings[] {
-    // get the grid, and then its children
-    const grid = this.shadowRoot?.querySelector('grid-layout');
-    if (!grid) {
-      return [];
-    }
-
-    return Array.from(grid.children).map((child) => {
-      const widget = child as WidgetWrapper;
-      return {
-        id: child.id,
-        colSpan: widget.colSpan,
-        rowSpan: widget.rowSpan
-      };
-    });
   }
 
   attributeChangedCallback(

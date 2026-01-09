@@ -5,7 +5,7 @@
  * Uses Pointer Events for resize operations (better control)
  */
 
-import { MIN_COLUMN_WIDTH, MIN_ROW_HEIGHT, DEFAULT_GRID_GAP } from "../constants/grid-constants";
+import { MIN_COLUMN_WIDTH, MIN_ROW_HEIGHT, DEFAULT_GRID_GAP, MAX_GRID_COLUMNS } from "../constants/grid-constants";
 
 export type DragOperation = 'move' | 'resize';
 export type ResizeDirection = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
@@ -39,6 +39,8 @@ export interface DragState {
   element: HTMLElement | null;
   /** The grid layout element */
   gridElement: HTMLElement | null;
+  /** Cached grid cell info computed at interaction start */
+  cachedCellInfo: GridCellInfo | null;
 }
 
 export interface GridCellInfo {
@@ -79,6 +81,7 @@ class DragDropService {
       currentY: 0,
       element: null,
       gridElement: null,
+      cachedCellInfo: null,
     };
   }
 
@@ -119,6 +122,9 @@ class DragDropService {
     colSpan: number,
     rowSpan: number
   ): void {
+    // Cache grid cell info at start of move
+    const cellInfo = this.getGridCellInfo(gridElement);
+    
     this.state = {
       isDragging: true,
       operation: 'move',
@@ -134,6 +140,7 @@ class DragDropService {
       currentY: startY,
       element,
       gridElement,
+      cachedCellInfo: cellInfo,
     };
 
     console.debug(`DragDropService: Started move for widget ${widgetId}`);
@@ -157,6 +164,11 @@ class DragDropService {
     const startCol = this.getElementGridColumn(element);
     const startRow = this.getElementGridRow(element);
 
+    // CRITICAL: Cache grid cell info at start of resize
+    // This ensures consistent cell size calculations throughout the resize operation
+    const cellInfo = this.getGridCellInfo(gridElement);
+    console.debug(`DragDropService: Cached cell info at resize start - cellWidth=${cellInfo.cellWidth.toFixed(1)}px, cellHeight=${cellInfo.cellHeight}px`);
+
     this.state = {
       isDragging: true,
       operation: 'resize',
@@ -172,6 +184,7 @@ class DragDropService {
       currentY: startY,
       element,
       gridElement,
+      cachedCellInfo: cellInfo,
     };
 
     console.debug(`DragDropService: Started resize (${direction}) for widget ${widgetId}`);
@@ -191,8 +204,16 @@ class DragDropService {
 
   /**
    * Calculate delta from start position in grid cells
+   * Uses cached cell info from interaction start for consistency
    */
-  getDeltaInCells(cellInfo: GridCellInfo): { deltaCols: number; deltaRows: number } {
+  getDeltaInCells(): { deltaCols: number; deltaRows: number } {
+    // Use cached cell info for consistent calculations
+    const cellInfo = this.state.cachedCellInfo;
+    if (!cellInfo) {
+      console.warn('getDeltaInCells called without cached cell info');
+      return { deltaCols: 0, deltaRows: 0 };
+    }
+
     const deltaX = this.state.currentX - this.state.startX;
     const deltaY = this.state.currentY - this.state.startY;
 
@@ -200,21 +221,31 @@ class DragDropService {
     const cellWidthWithGap = cellInfo.cellWidth + cellInfo.gap;
     const cellHeightWithGap = cellInfo.cellHeight + cellInfo.gap;
 
-    const deltaCols = Math.round(deltaX / cellWidthWithGap);
-    const deltaRows = Math.round(deltaY / cellHeightWithGap);
+    // Use floor with a threshold to make resize more granular
+    // Only change size when dragged at least 60% of a cell
+    const threshold = 0.6;
+    const rawDeltaCols = deltaX / cellWidthWithGap;
+    const rawDeltaRows = deltaY / cellHeightWithGap;
+    
+    // Better threshold calculation: only snap when crossing threshold boundary
+    const deltaCols = Math.round(rawDeltaCols);
+    const deltaRows = Math.round(rawDeltaRows);
+    
+    console.debug(`getDeltaInCells: deltaX=${deltaX.toFixed(1)}px, cellWidth=${cellInfo.cellWidth.toFixed(1)}px, rawDeltaCols=${rawDeltaCols.toFixed(2)} -> deltaCols=${deltaCols}`);
 
     return { deltaCols, deltaRows };
   }
 
   /**
    * Calculate new spans based on resize direction and delta
+   * Uses cached cell info for consistency
    */
-  getNewSpans(cellInfo: GridCellInfo): { newColSpan: number; newRowSpan: number } {
+  getNewSpans(): { newColSpan: number; newRowSpan: number } {
     if (this.state.operation !== 'resize' || !this.state.resizeDirection) {
       return { newColSpan: this.state.colSpan, newRowSpan: this.state.rowSpan };
     }
 
-    const { deltaCols, deltaRows } = this.getDeltaInCells(cellInfo);
+    const { deltaCols, deltaRows } = this.getDeltaInCells();
     const direction = this.state.resizeDirection;
 
     let newColSpan = this.state.colSpan;
@@ -313,14 +344,34 @@ class DragDropService {
 
   /**
    * Calculate grid cell info from a grid element
-   * Uses known constants since grid dimensions are fixed
+   * Calculates actual rendered cell dimensions accounting for responsive grid
    */
   getGridCellInfo(gridElement: HTMLElement): GridCellInfo {
-    // Use known grid constants - these are fixed values from grid-constants.ts
-    // This is more reliable than parsing CSS from shadow DOM
-    const gap = DEFAULT_GRID_GAP; // 8px
-    const cellWidth = MIN_COLUMN_WIDTH; // 40px
-    const cellHeight = MIN_ROW_HEIGHT; // 30px
+    const gap = DEFAULT_GRID_GAP; // 8px - this is fixed
+    const cellHeight = MIN_ROW_HEIGHT; // 30px - rows are fixed height
+    
+    // The gridElement passed is the <grid-layout> custom element host.
+    // The actual CSS grid is on the .grid-container div inside its shadow DOM.
+    // We need to get the container's dimensions for accurate cell width calculation.
+    let gridContainer: HTMLElement | null = null;
+    if (gridElement.shadowRoot) {
+      gridContainer = gridElement.shadowRoot.querySelector('.grid-container');
+    }
+    
+    // Use the container if found, otherwise fall back to the host element
+    const targetElement = gridContainer || gridElement;
+    const gridRect = targetElement.getBoundingClientRect();
+    
+    // Calculate ACTUAL column width from the grid's rendered size
+    // The grid uses minmax(MIN_COLUMN_WIDTH, 1fr) so columns grow with available space
+    const totalGapWidth = (MAX_GRID_COLUMNS - 1) * gap;
+    const availableWidth = gridRect.width - totalGapWidth;
+    const actualCellWidth = availableWidth / MAX_GRID_COLUMNS;
+    
+    // Use the calculated width, but ensure it's at least the minimum
+    const cellWidth = Math.max(MIN_COLUMN_WIDTH, actualCellWidth);
+    
+    console.debug(`getGridCellInfo: container width=${gridRect.width}px, calculated cell width=${cellWidth.toFixed(1)}px (min=${MIN_COLUMN_WIDTH}px), using=${gridContainer ? '.grid-container' : 'host'}`);
 
     return {
       col: 0,
@@ -340,7 +391,14 @@ class DragDropService {
     gridElement: HTMLElement
   ): { col: number; row: number } {
     const cellInfo = this.getGridCellInfo(gridElement);
-    const rect = gridElement.getBoundingClientRect();
+    
+    // Get the actual grid container for accurate position calculation
+    let gridContainer: HTMLElement | null = null;
+    if (gridElement.shadowRoot) {
+      gridContainer = gridElement.shadowRoot.querySelector('.grid-container');
+    }
+    const targetElement = gridContainer || gridElement;
+    const rect = targetElement.getBoundingClientRect();
 
     // Calculate relative position within grid
     const relX = x - rect.left;
