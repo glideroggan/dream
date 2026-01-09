@@ -469,10 +469,10 @@ export class BasePage extends FASTElement {
   }
 
   protected async addWidgetsToDOM(): Promise<void> {
-    console.info(`[GRID-DEBUG] addWidgetsToDOM START for page: ${this.pageType}`);
+    console.debug(`[GRID-DEBUG] addWidgetsToDOM START for page: ${this.pageType}`);
     const gridLayout = this.shadowRoot?.querySelector('.widgets-container') as GridLayoutV2;
     if (!gridLayout) {
-      console.info('[GRID-DEBUG] No grid layout found, returning');
+      console.debug('[GRID-DEBUG] No grid layout found, returning');
       return;
     }
 
@@ -482,7 +482,7 @@ export class BasePage extends FASTElement {
     // Track widgets that need their positions saved (those without explicit positions)
     const widgetsNeedingPositionSave: string[] = [];
 
-    console.info(`[GRID-DEBUG] Processing ${this.activeWidgets.length} active widgets`);
+    console.debug(`[GRID-DEBUG] Processing ${this.activeWidgets.length} active widgets`);
 
     // Process each active widget
     for (const widget of this.activeWidgets) {
@@ -510,14 +510,14 @@ export class BasePage extends FASTElement {
           
           // Try to get explicit grid position
           const position = await this.settingsRepository.getWidgetGridPosition(this.pageType, widget.id);
-          console.info(`[GRID-DEBUG] Widget ${widget.id} position from settings:`, position);
+          console.debug(`[GRID-DEBUG] Widget ${widget.id} position from settings:`, position);
           if (position && position.gridCol && position.gridRow) {
             gridCol = position.gridCol;
             gridRow = position.gridRow;
             hasExplicitPosition = true;
-            console.info(`[GRID-DEBUG] Widget ${widget.id} using saved position: col=${gridCol}, row=${gridRow}`);
+            console.debug(`[GRID-DEBUG] Widget ${widget.id} using saved position: col=${gridCol}, row=${gridRow}`);
           } else {
-            console.info(`[GRID-DEBUG] Widget ${widget.id} has NO explicit position (will be auto-positioned)`);
+            console.debug(`[GRID-DEBUG] Widget ${widget.id} has NO explicit position (will be auto-positioned)`);
           }
         } catch (error) {
           console.warn(`Failed to load grid dimensions for widget ${widget.id}:`, error);
@@ -540,7 +540,7 @@ export class BasePage extends FASTElement {
         gridRow
       });
       
-      console.info(`[GRID-DEBUG] Created wrapper for ${widget.id}: grid-col=${wrapperElement.getAttribute('grid-col')}, grid-row=${wrapperElement.getAttribute('grid-row')}, col-span=${wrapperElement.getAttribute('col-span')}, row-span=${wrapperElement.getAttribute('row-span')}`);
+      console.debug(`[GRID-DEBUG] Created wrapper for ${widget.id}: grid-col=${wrapperElement.getAttribute('grid-col')}, grid-row=${wrapperElement.getAttribute('grid-row')}, col-span=${wrapperElement.getAttribute('col-span')}, row-span=${wrapperElement.getAttribute('row-span')}`);
 
       // Debug the page type setting
       console.debug(`Widget wrapper ${widget.id} created with page-type: ${wrapperElement.getAttribute('page-type')}`);
@@ -555,22 +555,22 @@ export class BasePage extends FASTElement {
     // If any widgets were auto-positioned by the grid, save their positions
     // This ensures positions persist across page navigation
     if (widgetsNeedingPositionSave.length > 0 && this.dataPage) {
-      console.info(`[GRID-DEBUG] ${widgetsNeedingPositionSave.length} widgets need position save: ${widgetsNeedingPositionSave.join(', ')}`);
+      console.debug(`[GRID-DEBUG] ${widgetsNeedingPositionSave.length} widgets need position save: ${widgetsNeedingPositionSave.join(', ')}`);
       // Small delay to let grid finish positioning
       setTimeout(() => {
         const positions = gridLayout.getPositions();
-        console.info(`[GRID-DEBUG] Grid returned ${positions.length} positions for auto-save:`, positions);
+        console.debug(`[GRID-DEBUG] Grid returned ${positions.length} positions for auto-save:`, positions);
         if (positions.length > 0) {
-          console.info(`[GRID-DEBUG] Saving initial positions for ${widgetsNeedingPositionSave.length} auto-positioned widgets`);
+          console.debug(`[GRID-DEBUG] Saving initial positions for ${widgetsNeedingPositionSave.length} auto-positioned widgets`);
           this.settingsRepository.updateAllWidgetPositions(this.pageType, positions)
             .catch(err => console.error('Error saving initial widget positions:', err));
         }
       }, 100);
     } else {
-      console.info(`[GRID-DEBUG] No widgets need position save (widgetsNeedingPositionSave=${widgetsNeedingPositionSave.length}, dataPage=${this.dataPage})`);
+      console.debug(`[GRID-DEBUG] No widgets need position save (widgetsNeedingPositionSave=${widgetsNeedingPositionSave.length}, dataPage=${this.dataPage})`);
     }
     
-    console.info(`[GRID-DEBUG] addWidgetsToDOM COMPLETE for page: ${this.pageType}`);
+    console.debug(`[GRID-DEBUG] addWidgetsToDOM COMPLETE for page: ${this.pageType}`);
   }
 
   protected handleResize() {

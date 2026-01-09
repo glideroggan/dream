@@ -117,7 +117,7 @@ class GridService {
    * Register an item with the grid for a specific page
    */
   addItem(pageType: string, item: GridItemPosition): void {
-    console.info(`[GRID-DEBUG] gridService.addItem: page=${pageType}, ${item.id} at (${item.col}, ${item.row}) size ${item.colSpan}x${item.rowSpan}`);
+    console.debug(`[GRID-DEBUG] gridService.addItem: page=${pageType}, ${item.id} at (${item.col}, ${item.row}) size ${item.colSpan}x${item.rowSpan}`);
     const pageMap = this.getPageMap(pageType);
     pageMap.set(item.id, { ...item });
     this.notifyListeners(pageType);
@@ -181,7 +181,7 @@ class GridService {
     const pageMap = this.pageItems.get(pageType);
     const count = pageMap?.size || 0;
     const ids = pageMap ? Array.from(pageMap.keys()) : [];
-    console.info(`[GRID-DEBUG] gridService.clear(${pageType}) called - clearing ${count} items: ${ids.join(', ')}`);
+    console.debug(`[GRID-DEBUG] gridService.clear(${pageType}) called - clearing ${count} items: ${ids.join(', ')}`);
     
     if (pageMap) {
       pageMap.clear();

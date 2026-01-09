@@ -44,7 +44,6 @@ const context = await build.context({
         'src/pages/dashboard-page.ts',
         'src/pages/investments-page.ts',
         'src/pages/savings-page.ts',
-        'src/pages/grid-test-page.ts',
         // example widgets
         'src/widgets/error-widget.ts',
         'src/widgets/slow-widget.ts',
@@ -84,7 +83,7 @@ const context = await build.context({
         // workflows
         "@workflows/*",
         // pages
-        "@pages/dashboard", "@pages/investments", "@pages/savings", "@pages/grid-test",
+        "@pages/dashboard", "@pages/investments", "@pages/savings",
         "@widgets/error", "@widgets/fast", "@widgets/slow",
     ],
     define: {

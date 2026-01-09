@@ -95,6 +95,17 @@ export class BaseWidget extends FASTElement {
 
     // Check initial content size after a brief delay to allow rendering
     setTimeout(() => this.checkInitialContentFit(), 100);
+    
+    // By default, emit initialized immediately for widgets that load synchronously.
+    // Widgets that need async loading (like slow-widget) should override connectedCallback
+    // and NOT call super.connectedCallback() until they're ready, or they should call
+    // this.notifyInitialized() manually after their async work completes.
+    // We use a microtask to ensure the widget is fully attached before emitting.
+    queueMicrotask(() => {
+      if (!this.initialized) {
+        this.notifyInitialized();
+      }
+    });
   }
 
   disconnectedCallback(): void {

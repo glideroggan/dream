@@ -134,7 +134,7 @@ export class GridLayoutV2 extends FASTElement {
     // Subscribe to grid service updates (now page-aware)
     this.unsubscribe = gridService.subscribe(this.handlePositionsChanged.bind(this));
     
-    console.info(`[GRID-DEBUG] GridLayoutV2 connectedCallback for page: ${this.pageType}`);
+    console.debug(`[GRID-DEBUG] GridLayoutV2 connectedCallback for page: ${this.pageType}`);
     
     // Initialize items from slotted content
     this.initializeFromSlot();
@@ -154,7 +154,7 @@ export class GridLayoutV2 extends FASTElement {
     // Clear this page's positions from gridService when component unmounts
     // This ensures fresh positions are loaded from settings on next mount
     if (this.pageType) {
-      console.info(`[GRID-DEBUG] GridLayoutV2 disconnectedCallback: clearing positions for page ${this.pageType}`);
+      console.debug(`[GRID-DEBUG] GridLayoutV2 disconnectedCallback: clearing positions for page ${this.pageType}`);
       gridService.clear(this.pageType);
     }
     
@@ -177,22 +177,22 @@ export class GridLayoutV2 extends FASTElement {
    * Initialize grid items from slotted content
    */
   private initializeFromSlot(): void {
-    console.info(`[GRID-DEBUG] initializeFromSlot START for page: ${this.pageType}`);
+    console.debug(`[GRID-DEBUG] initializeFromSlot START for page: ${this.pageType}`);
     const slot = this.shadowRoot?.querySelector('slot');
     const elements = slot?.assignedElements() as HTMLElement[];
     
     if (!elements || elements.length === 0) {
-      console.info('[GRID-DEBUG] initializeFromSlot: No slotted elements found');
+      console.debug('[GRID-DEBUG] initializeFromSlot: No slotted elements found');
       return;
     }
     
     // Log current gridService state before clearing (for this page only)
     const beforePositions = gridService.getAllPositions(this.pageType);
-    console.info(`[GRID-DEBUG] gridService positions for ${this.pageType} BEFORE clear (${beforePositions.length} items):`, beforePositions.map(p => `${p.id}@(${p.col},${p.row})`));
+    console.debug(`[GRID-DEBUG] gridService positions for ${this.pageType} BEFORE clear (${beforePositions.length} items):`, beforePositions.map(p => `${p.id}@(${p.col},${p.row})`));
     
     // Clear existing items in service for THIS PAGE ONLY
     gridService.clear(this.pageType);
-    console.info(`[GRID-DEBUG] gridService.clear(${this.pageType}) called`);
+    console.debug(`[GRID-DEBUG] gridService.clear(${this.pageType}) called`);
     
     for (const element of elements) {
       const widgetId = element.getAttribute('data-widget-id') || element.getAttribute('widget-id');
@@ -204,17 +204,17 @@ export class GridLayoutV2 extends FASTElement {
       const colSpan = parseInt(element.getAttribute('col-span') || '8', 10);
       const rowSpan = parseInt(element.getAttribute('row-span') || '4', 10);
       
-      console.info(`[GRID-DEBUG] initializeFromSlot: Reading widget ${widgetId} attrs: grid-col=${col}, grid-row=${row}, col-span=${colSpan}, row-span=${rowSpan}`);
+      console.debug(`[GRID-DEBUG] initializeFromSlot: Reading widget ${widgetId} attrs: grid-col=${col}, grid-row=${row}, col-span=${colSpan}, row-span=${rowSpan}`);
       
       // If no explicit position, find one
       let position: GridItemPosition;
       if (col > 0 && row > 0) {
         position = { id: widgetId, col, row, colSpan, rowSpan };
-        console.info(`[GRID-DEBUG] initializeFromSlot: Widget ${widgetId} using explicit position`);
+        console.debug(`[GRID-DEBUG] initializeFromSlot: Widget ${widgetId} using explicit position`);
       } else {
         const { col: newCol, row: newRow } = gridService.findNextAvailablePosition(this.pageType, colSpan, rowSpan);
         position = { id: widgetId, col: newCol, row: newRow, colSpan, rowSpan };
-        console.info(`[GRID-DEBUG] initializeFromSlot: Widget ${widgetId} auto-positioned to (${newCol}, ${newRow})`);
+        console.debug(`[GRID-DEBUG] initializeFromSlot: Widget ${widgetId} auto-positioned to (${newCol}, ${newRow})`);
       }
       
       // Register with service for this page
@@ -224,19 +224,19 @@ export class GridLayoutV2 extends FASTElement {
       this.applyPositionToElement(element, position);
     }
     
-    console.info(`[GRID-DEBUG] initializeFromSlot COMPLETE: Initialized ${elements.length} items for page ${this.pageType}`);
+    console.debug(`[GRID-DEBUG] initializeFromSlot COMPLETE: Initialized ${elements.length} items for page ${this.pageType}`);
   }
   
   /**
    * Handle slot content changes
    */
   private handleSlotChange(): void {
-    console.info(`[GRID-DEBUG] handleSlotChange triggered for page: ${this.pageType}`);
+    console.debug(`[GRID-DEBUG] handleSlotChange triggered for page: ${this.pageType}`);
     // Re-check for new items that aren't registered
     const slot = this.shadowRoot?.querySelector('slot');
     const elements = slot?.assignedElements() as HTMLElement[];
     
-    console.info(`[GRID-DEBUG] handleSlotChange: ${elements?.length || 0} slotted elements`);
+    console.debug(`[GRID-DEBUG] handleSlotChange: ${elements?.length || 0} slotted elements`);
     
     for (const element of elements) {
       const widgetId = element.getAttribute('data-widget-id') || element.getAttribute('widget-id');
@@ -247,7 +247,7 @@ export class GridLayoutV2 extends FASTElement {
       if (existingPosition) {
         // Widget already registered - but we still need to apply CSS styles to the new DOM element
         // The page may have been recreated (navigation) so the element is new even if gridService has the position
-        console.info(`[GRID-DEBUG] handleSlotChange: Widget ${widgetId} already registered on ${this.pageType}, applying existing position`);
+        console.debug(`[GRID-DEBUG] handleSlotChange: Widget ${widgetId} already registered on ${this.pageType}, applying existing position`);
         this.applyPositionToElement(element, existingPosition);
         continue;
       }
@@ -258,17 +258,17 @@ export class GridLayoutV2 extends FASTElement {
       const colSpan = parseInt(element.getAttribute('col-span') || '8', 10);
       const rowSpan = parseInt(element.getAttribute('row-span') || '4', 10);
       
-      console.info(`[GRID-DEBUG] handleSlotChange: New widget ${widgetId} attrs: grid-col=${col}, grid-row=${row}, col-span=${colSpan}, row-span=${rowSpan}`);
+      console.debug(`[GRID-DEBUG] handleSlotChange: New widget ${widgetId} attrs: grid-col=${col}, grid-row=${row}, col-span=${colSpan}, row-span=${rowSpan}`);
       
       // If no explicit position, find one
       let position: GridItemPosition;
       if (col > 0 && row > 0) {
         position = { id: widgetId, col, row, colSpan, rowSpan };
-        console.info(`[GRID-DEBUG] handleSlotChange: Widget ${widgetId} using explicit position (${col}, ${row})`);
+        console.debug(`[GRID-DEBUG] handleSlotChange: Widget ${widgetId} using explicit position (${col}, ${row})`);
       } else {
         const { col: newCol, row: newRow } = gridService.findNextAvailablePosition(this.pageType, colSpan, rowSpan);
         position = { id: widgetId, col: newCol, row: newRow, colSpan, rowSpan };
-        console.info(`[GRID-DEBUG] handleSlotChange: Widget ${widgetId} auto-positioned to (${newCol}, ${newRow})`);
+        console.debug(`[GRID-DEBUG] handleSlotChange: Widget ${widgetId} auto-positioned to (${newCol}, ${newRow})`);
       }
       
       gridService.addItem(this.pageType, position);
@@ -277,7 +277,7 @@ export class GridLayoutV2 extends FASTElement {
       console.debug(`GridLayoutV2: Added new item ${widgetId} at (${position.col}, ${position.row}) on page ${this.pageType}`);
     }
     
-    console.info('[GRID-DEBUG] handleSlotChange COMPLETE');
+    console.debug('[GRID-DEBUG] handleSlotChange COMPLETE');
   }
   
   // ============================================

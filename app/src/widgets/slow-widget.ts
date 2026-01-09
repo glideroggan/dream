@@ -82,21 +82,25 @@ export class SlowWidget extends BaseWidget {
   private loadInterval: number | null = null;
 
   connectedCallback(): void {
+    // Mark as initialized=true BEFORE calling super to prevent BaseWidget
+    // from auto-emitting 'initialized'. We'll emit it manually after 6 seconds.
+    this.initialized = true;
+    
     super.connectedCallback();
+    console.debug('SlowWidget: connectedCallback started, simulating 6-second load');
 
     // Start the loading progress simulation
-    // this.loadInterval = window.setInterval(() => {
-    //   if (this.loadingProgress < 100) {
-    //     // Increment by approximately 1.67% every 100ms to reach 100% in 6 seconds
-    //     this.loadingProgress += 1.67;
+    this.loadInterval = window.setInterval(() => {
+      if (this.loadingProgress < 100) {
+        // Increment by approximately 1.67% every 100ms to reach 100% in 6 seconds
+        this.loadingProgress += 1.67;
         
-    //     if (this.loadingProgress >= 100) {
-    //       this.loadingProgress = 100;
-    //       this.completeLoading();
-    //     }
-    //   }
-    // }, 100);
-    this.completeLoading(); 
+        if (this.loadingProgress >= 100) {
+          this.loadingProgress = 100;
+          this.completeLoading();
+        }
+      }
+    }, 100);
   }
   
   disconnectedCallback(): void {
@@ -110,17 +114,18 @@ export class SlowWidget extends BaseWidget {
   }
   
   private completeLoading(): void {
+    console.debug('SlowWidget: completeLoading called');
     // Clear the interval
     if (this.loadInterval !== null) {
       window.clearInterval(this.loadInterval);
       this.loadInterval = null;
     }
     
-    // Dispatch initialized event
-    this.dispatchEvent(new CustomEvent('initialized', {
-      bubbles: true,
-      composed: true
-    }));
+    // Use the base class method to emit initialized event
+    console.debug('SlowWidget: calling notifyInitialized');
+    // Reset initialized flag so notifyInitialized actually emits
+    this.initialized = false;
+    this.notifyInitialized();
     setTimeout(() => this.notifyContentChanged(), 50);
   }
 
