@@ -60,7 +60,8 @@ export const basePageStyles = css`
   .widgets-container {
     padding: 1rem;
     overflow: auto; /* Allow vertical scrolling inside the container */
-    height: calc(100% - 70px); /* Adjust based on your header height */
+    height: calc(100vh - 120px); /* Use viewport height minus header/sidebar space */
+    min-height: 500px;
     width: 100%;
     box-sizing: border-box;
   }

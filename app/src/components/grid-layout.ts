@@ -69,9 +69,9 @@ const styles = css`
     grid-auto-rows: var(--row-height, 30px);
     gap: var(--grid-gap, 0.5rem);
     width: 100%;
-    height: 100%;
-    min-height: 400px;
-    align-items: stretch;
+    min-height: 100%;
+    align-items: start;
+    align-content: start;
     position: relative;
   }
   
@@ -92,6 +92,11 @@ const styles = css`
     opacity: 0.5;
     z-index: 1000;
     /* Note: Do NOT use pointer-events: none here - it cancels the HTML5 drag operation */
+  }
+  
+  /* Smooth transitions for widgets during live shuffle */
+  ::slotted(.shuffle-transition) {
+    transition: transform 0.2s ease-out, opacity 0.2s ease-out;
   }
   
   /* Dynamically generate span classes */
@@ -210,6 +215,14 @@ export class GridLayout extends FASTElement {
   private boundDocumentDragOver: ((e: DragEvent) => void) | null = null;
   private boundDocumentDrop: ((e: DragEvent) => void) | null = null;
   private boundDocumentDragEnd: ((e: DragEvent) => void) | null = null;
+  
+  // Live shuffle state
+  private originalWidgetOrder: string[] = [];
+  private draggedElement: HTMLElement | null = null;
+  private lastShuffleIndex: number = -1;
+  private shuffleThrottleTimer: number | null = null;
+  private isShuffling: boolean = false;
+  private boundKeyDown: ((e: KeyboardEvent) => void) | null = null;
 
   private settingsRepository: SettingsRepository;
 
@@ -266,8 +279,10 @@ export class GridLayout extends FASTElement {
       console.info(`GridLayout: drag state change - isDragging=${state.isDragging}, operation=${state.operation}, gridElement match=${state.gridElement === this}`);
       if (state.isDragging && state.operation === 'move' && state.gridElement === this) {
         this.attachDocumentDragListeners();
+        this.startLiveShuffle(state.widgetId, state.element);
       } else if (!state.isDragging) {
         this.detachDocumentDragListeners();
+        this.endLiveShuffle(false); // false = don't revert, keep current order
       }
     });
 
@@ -307,12 +322,14 @@ export class GridLayout extends FASTElement {
     this.boundDocumentDragOver = (e: DragEvent) => this.handleDocumentDragOver(e);
     this.boundDocumentDrop = (e: DragEvent) => this.handleDocumentDrop(e);
     this.boundDocumentDragEnd = (e: DragEvent) => this.handleDocumentDragEnd(e);
+    this.boundKeyDown = (e: KeyboardEvent) => this.handleKeyDown(e);
     
     document.addEventListener('dragover', this.boundDocumentDragOver);
     document.addEventListener('drop', this.boundDocumentDrop);
     document.addEventListener('dragend', this.boundDocumentDragEnd);
+    document.addEventListener('keydown', this.boundKeyDown);
     
-    console.info('GridLayout: Attached document-level drag listeners');
+    console.debug('GridLayout: Attached document-level drag listeners');
   }
 
   /**
@@ -331,10 +348,24 @@ export class GridLayout extends FASTElement {
       document.removeEventListener('dragend', this.boundDocumentDragEnd);
       this.boundDocumentDragEnd = null;
     }
+    if (this.boundKeyDown) {
+      document.removeEventListener('keydown', this.boundKeyDown);
+      this.boundKeyDown = null;
+    }
     
     // Also reset drag state
     this.isDragOver = false;
     this.dropIndicatorStyle = 'display: none;';
+  }
+
+  /**
+   * Handle keydown events during drag (ESC to cancel)
+   */
+  private handleKeyDown(event: KeyboardEvent): void {
+    if (event.key === 'Escape' && this.isShuffling) {
+      console.debug('GridLayout: ESC pressed, cancelling drag');
+      this.handleDragCancel();
+    }
   }
 
   /**
@@ -647,8 +678,6 @@ export class GridLayout extends FASTElement {
    * Handle drop event for widget move
    */
   handleDrop(event: DragEvent): void {
-    console.info(`GridLayout: drop event received`);
-    
     event.preventDefault();
     event.stopPropagation();
     
@@ -672,12 +701,6 @@ export class GridLayout extends FASTElement {
 
     console.debug(`GridLayout: Dropped widget ${widgetId}`);
 
-    // Calculate drop position
-    const gridContainer = this.shadowRoot?.querySelector('.grid-container') as HTMLElement;
-    if (!gridContainer) return;
-
-    const { col, row } = this.pixelToGridCell(event.clientX, event.clientY, gridContainer);
-
     // Find the widget element and clean up dragging state
     const widgetElement = this.querySelector(`[data-grid-item-id="${widgetId}"]`) as HTMLElement;
     if (!widgetElement) {
@@ -692,24 +715,30 @@ export class GridLayout extends FASTElement {
       widgetWrapper.classList.remove('widget-dragging');
     }
 
-    // Reorder widgets: move the dropped widget to the new position
-    this.reorderWidget(widgetElement, col, row);
+    // Live shuffle already moved the widget to its new position during dragover
+    // No need to call reorderWidget here - just finalize
 
-    // End drag operation in service
+    // End drag operation in service (this will trigger endLiveShuffle via subscription)
     dragDropService.endDrag();
 
-    // Dispatch event for position change
-    const moveEvent = new CustomEvent('widget-position-change', {
-      bubbles: true,
-      composed: true,
-      detail: {
-        widgetId,
-        targetCol: col,
-        targetRow: row,
-        pageType: this.dataPage,
-      }
-    });
-    this.dispatchEvent(moveEvent);
+    // Calculate final position for the event
+    const gridContainer = this.shadowRoot?.querySelector('.grid-container') as HTMLElement;
+    if (gridContainer) {
+      const { col, row } = this.pixelToGridCell(event.clientX, event.clientY, gridContainer);
+      
+      // Dispatch event for position change
+      const moveEvent = new CustomEvent('widget-position-change', {
+        bubbles: true,
+        composed: true,
+        detail: {
+          widgetId,
+          targetCol: col,
+          targetRow: row,
+          pageType: this.dataPage,
+        }
+      });
+      this.dispatchEvent(moveEvent);
+    }
   }
 
   /**
@@ -761,6 +790,7 @@ export class GridLayout extends FASTElement {
       `repeat(${adjustedColumnCount}, minmax(${columnWidth}px, 1fr))`);
     this.style.setProperty('--row-height', `${rowHeight}px`);
     this.style.setProperty('--grid-gap', `${this.gridGap}px`);
+    this.style.setProperty('--total-rows', `${this.totalRows}`);
 
     console.debug(`GridLayout: Using fixed grid with ${adjustedColumnCount} columns (${columnWidth}px) and rows (${rowHeight}px)`);
   }
@@ -858,8 +888,6 @@ console.debug(`GridLayout: Set item ${id} column span to ${colSpan}, preserved r
     // Note: dataTransfer.types may not include custom types during dragover in some browsers
     const state = dragDropService.getState();
     
-    console.info(`GridLayout: dragover event, isDragging=${state.isDragging}, operation=${state.operation}`);
-    
     if (!state.isDragging || state.operation !== 'move') {
       // Also check dataTransfer as fallback
       if (!event.dataTransfer?.types.includes('text/plain')) {
@@ -876,12 +904,16 @@ console.debug(`GridLayout: Set item ${id} column span to ${colSpan}, preserved r
 
     this.isDragOver = true;
 
-    // Calculate drop position and show indicator
+    // Calculate drop position
     const gridContainer = this.shadowRoot?.querySelector('.grid-container') as HTMLElement;
     if (gridContainer) {
       const { col, row } = this.pixelToGridCell(event.clientX, event.clientY, gridContainer);
+      
+      // Perform live shuffle - widgets reorder in real-time
+      this.performLiveShuffle(col, row);
+      
+      // Update drop indicator to show current position
       this.updateDropIndicator(col, row);
-      console.info(`GridLayout: drop indicator at col=${col}, row=${row}`);
     }
   }
 
@@ -904,7 +936,6 @@ console.debug(`GridLayout: Set item ${id} column span to ${colSpan}, preserved r
    * For CSS Grid, this means changing the order in the DOM or using explicit grid positions
    */
   private reorderWidget(widgetElement: HTMLElement, targetCol: number, targetRow: number): void {
-    // For now, we'll use DOM order for positioning
     // Get all widget elements
     const widgets = Array.from(this.querySelectorAll('[data-grid-item-id]'));
     const currentIndex = widgets.indexOf(widgetElement);
@@ -914,10 +945,25 @@ console.debug(`GridLayout: Set item ${id} column span to ${colSpan}, preserved r
     const targetIndex = this.calculateInsertIndex(targetCol, targetRow, widgetElement);
 
     if (targetIndex !== currentIndex && targetIndex >= 0) {
+      // Get the target sibling BEFORE removing the element
+      // Account for index shift when moving from higher to lower index
+      let targetSibling: Element | null = null;
+      
+      if (targetIndex < widgets.length) {
+        // If moving to a lower index (left/up), use the widget at targetIndex
+        // If moving to a higher index (right/down), the index shifts after removal
+        if (targetIndex < currentIndex) {
+          targetSibling = widgets[targetIndex];
+        } else {
+          // When moving right/down, after removal indices shift down by 1
+          // So we need targetIndex + 1 to get the correct position
+          targetSibling = widgets[targetIndex + 1] || null;
+        }
+      }
+
       // Remove and reinsert at new position
       widgetElement.remove();
 
-      const targetSibling = widgets[targetIndex];
       if (targetSibling && targetSibling !== widgetElement) {
         targetSibling.before(widgetElement);
       } else {
@@ -1016,5 +1062,178 @@ console.debug(`GridLayout: Set item ${id} column span to ${colSpan}, preserved r
     const row = Math.max(0, Math.floor(relY / cellHeightWithGap));
 
     return { col, row };
+  }
+
+  // ============================================
+  // Live Shuffle Methods
+  // ============================================
+
+  /**
+   * Start live shuffle mode - capture original order and prepare for live reordering
+   */
+  private startLiveShuffle(widgetId: string | null, element: HTMLElement | null): void {
+    if (!widgetId || !element || this.isShuffling) return;
+
+    // Capture original DOM order for potential revert
+    const widgets = Array.from(this.querySelectorAll('[data-grid-item-id]'));
+    this.originalWidgetOrder = widgets.map(w => (w as HTMLElement).dataset.gridItemId || '');
+    this.draggedElement = element;
+    this.draggedWidgetId = widgetId;
+    this.lastShuffleIndex = widgets.indexOf(element);
+    this.isShuffling = true;
+
+    // Add transition class to all widgets for smooth movement
+    widgets.forEach(w => {
+      (w as HTMLElement).style.transition = 'transform 0.2s ease-out';
+    });
+
+    console.debug(`GridLayout: Started live shuffle for ${widgetId}, original order:`, this.originalWidgetOrder);
+  }
+
+  /**
+   * End live shuffle mode - either keep current order or revert
+   */
+  private endLiveShuffle(revert: boolean): void {
+    if (!this.isShuffling) return;
+
+    // Clear throttle timer
+    if (this.shuffleThrottleTimer !== null) {
+      clearTimeout(this.shuffleThrottleTimer);
+      this.shuffleThrottleTimer = null;
+    }
+
+    if (revert && this.originalWidgetOrder.length > 0) {
+      // Revert to original order
+      this.restoreOriginalOrder();
+    }
+
+    // Remove transition styles
+    const widgets = this.querySelectorAll('[data-grid-item-id]');
+    widgets.forEach(w => {
+      (w as HTMLElement).style.transition = '';
+    });
+
+    // Reset state
+    this.originalWidgetOrder = [];
+    this.draggedElement = null;
+    this.draggedWidgetId = null;
+    this.lastShuffleIndex = -1;
+    this.isShuffling = false;
+
+    console.debug('GridLayout: Ended live shuffle');
+  }
+
+  /**
+   * Restore widgets to their original order (on drag cancel)
+   */
+  private restoreOriginalOrder(): void {
+    if (this.originalWidgetOrder.length === 0) return;
+
+    console.debug('GridLayout: Restoring original widget order');
+
+    // Get current widgets and reorder them according to original order
+    for (let i = 0; i < this.originalWidgetOrder.length; i++) {
+      const widgetId = this.originalWidgetOrder[i];
+      const widget = this.querySelector(`[data-grid-item-id="${widgetId}"]`);
+      if (widget) {
+        this.appendChild(widget); // Move to end in correct order
+      }
+    }
+  }
+
+  /**
+   * Perform live shuffle during drag - reorder widgets in real-time
+   * Called from dragover handler
+   */
+  private performLiveShuffle(targetCol: number, targetRow: number): void {
+    if (!this.isShuffling || !this.draggedElement) return;
+
+    // Throttle shuffles to prevent jank (max once per 150ms)
+    if (this.shuffleThrottleTimer !== null) return;
+
+    // Find which widget we're hovering over based on mouse position
+    const hoverTarget = this.findWidgetAtPosition(targetCol, targetRow);
+    
+    // If not hovering over a different widget, do nothing
+    if (!hoverTarget || hoverTarget === this.draggedElement) return;
+
+    // Get current widget order
+    const widgets = Array.from(this.querySelectorAll('[data-grid-item-id]'));
+    const draggedIndex = widgets.indexOf(this.draggedElement);
+    const targetIndex = widgets.indexOf(hoverTarget);
+
+    // Skip if indices are invalid or same
+    if (draggedIndex === -1 || targetIndex === -1 || draggedIndex === targetIndex) return;
+    
+    // Skip if this is the same shuffle we just did
+    if (targetIndex === this.lastShuffleIndex) return;
+
+    // Set throttle
+    this.shuffleThrottleTimer = window.setTimeout(() => {
+      this.shuffleThrottleTimer = null;
+    }, 150);
+
+    // Perform the swap: insert dragged element before or after target based on direction
+    if (draggedIndex < targetIndex) {
+      // Moving right/down - insert after target
+      hoverTarget.after(this.draggedElement);
+    } else {
+      // Moving left/up - insert before target
+      hoverTarget.before(this.draggedElement);
+    }
+
+    this.lastShuffleIndex = targetIndex;
+
+    console.debug(`GridLayout: Live shuffle - moved from index ${draggedIndex} to ${targetIndex}`);
+  }
+
+  /**
+   * Find which widget is at a given grid position
+   */
+  private findWidgetAtPosition(col: number, row: number): HTMLElement | null {
+    const gridContainer = this.shadowRoot?.querySelector('.grid-container') as HTMLElement;
+    if (!gridContainer) return null;
+
+    const gridRect = gridContainer.getBoundingClientRect();
+    const cellWidth = this.minColumnWidth + this.gridGap;
+    const cellHeight = this.minRowHeight + this.gridGap;
+
+    // Calculate pixel position of the target cell center
+    const targetX = gridRect.left + col * cellWidth + cellWidth / 2;
+    const targetY = gridRect.top + row * cellHeight + cellHeight / 2;
+
+    // Find widget whose bounding rect contains this point
+    const widgets = Array.from(this.querySelectorAll('[data-grid-item-id]')) as HTMLElement[];
+    
+    for (const widget of widgets) {
+      if (widget === this.draggedElement) continue;
+      
+      const rect = widget.getBoundingClientRect();
+      if (targetX >= rect.left && targetX <= rect.right &&
+          targetY >= rect.top && targetY <= rect.bottom) {
+        return widget;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Handle drag cancel (ESC key or drag outside grid)
+   */
+  private handleDragCancel(): void {
+    if (this.isShuffling) {
+      // Clean up dragging class from the dragged element
+      if (this.draggedElement) {
+        this.draggedElement.classList.remove('widget-dragging');
+        const widgetWrapper = this.draggedElement.querySelector('widget-wrapper');
+        if (widgetWrapper) {
+          widgetWrapper.classList.remove('widget-dragging');
+        }
+      }
+      
+      this.endLiveShuffle(true); // true = revert to original order
+      dragDropService.cancelDrag();
+    }
   }
 }

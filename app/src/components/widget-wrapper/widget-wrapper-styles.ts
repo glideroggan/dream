@@ -28,15 +28,17 @@ export const styles = css`
     height: auto;
     min-height: 100%;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    border-radius: 8px;
+    border-radius: 12px;
     overflow: hidden;
     box-sizing: border-box;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
     
     /* Widget specific variables with appropriate defaults and global fallbacks */
     /* Backgrounds and colors - distinct from parent for visual separation */
     --widget-background: #ffffff; 
-    --widget-header-background: #fafafa;
-    --widget-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --widget-header-background: linear-gradient(to bottom, #fafafa, #f5f5f5);
+    --widget-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.05);
+    --widget-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.12), 0 8px 24px rgba(0, 0, 0, 0.08);
     
     /* Text colors - inherit from global theme */
     --widget-text-color: var(--primary-text-color);
@@ -44,8 +46,8 @@ export const styles = css`
     --widget-subtle-text: var(--inactive-color);
     
     /* Borders and dividers - inherit from global theme */
-    --widget-border-color: var(--border-color, rgba(0,0,0,0.08));
-    --widget-border-radius: 8px;
+    --widget-border-color: var(--border-color, rgba(0,0,0,0.06));
+    --widget-border-radius: 12px;
     --widget-divider-color: var(--divider-color);
     
     /* Primary action colors - inherit from global theme */
@@ -67,12 +69,12 @@ export const styles = css`
     --widget-error-light: rgba(231, 76, 60, 0.1);
     
     /* Widget controls - buttons, headers, etc. */
-    --widget-close-color: var(--secondary-text-color, #777);
+    --widget-close-color: var(--secondary-text-color, #999);
     --widget-title-color: var(--primary-text-color, #333);
     
     /* Spacing - widget specific */
     --widget-padding: 16px;
-    --widget-header-padding: 0.3rem 0.75rem;
+    --widget-header-padding: 0.5rem 1rem;
     --widget-content-padding: 1rem;
     
     /* Control colors - derive from theme */
@@ -88,6 +90,11 @@ export const styles = css`
     /* Apply styles */
     background-color: var(--widget-background);
     box-shadow: var(--widget-shadow);
+    border: 1px solid var(--widget-border-color);
+  }
+  
+  :host(:hover) {
+    box-shadow: var(--widget-shadow-hover);
   }
 
   /* Apply dark theme styles when body has dark-theme class */
@@ -150,9 +157,15 @@ export const styles = css`
     display: flex;
     align-items: center;
     border-bottom: 1px solid var(--widget-border-color);
-    background-color: var(--widget-header-background);
-    height: 40px;
-    z-index: 10; /* Keep header above widget content */
+    background: var(--widget-header-background);
+    height: 44px;
+    z-index: 10;
+    user-select: none;
+    cursor: grab;
+  }
+  
+  .widget-header:active {
+    cursor: grabbing;
   }
 
   .widget-header-left, 
@@ -224,7 +237,7 @@ export const styles = css`
   }
 
   .widget-title {
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: 600;
     text-align: center;
     color: var(--widget-title-color);
@@ -232,51 +245,40 @@ export const styles = css`
     white-space: nowrap;
     text-overflow: ellipsis;
     width: 100%;
+    letter-spacing: 0.01em;
   }
 
   /* Close button styles */
   .close-button {
     position: relative;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
     background-color: transparent;
     border: none;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 18px;
-    color: var(--widget-header-text-color);
-    z-index: 10;
-    opacity: 0.6;
-    margin-left: 8px;
-    padding: 0;
-    background: none;
-    cursor: pointer;
     color: var(--widget-close-color);
-    font-size: 1.2rem;
-    line-height: 1;
-    padding: 0 0 0 8px;
-    margin-left: auto;
+    z-index: 10;
+    opacity: 0;
+    padding: 0;
+    transition: opacity 0.2s, background-color 0.2s, transform 0.2s;
+  }
+  
+  .widget-container:hover .close-button {
+    opacity: 0.6;
   }
   
   .close-button:hover {
     opacity: 1;
-    background-color: var(--widget-secondary-hover);
-    color: var(--widget-text-color);
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
   }
-
-  /* Only show close button on hover for cleaner look */
-  .close-button {
-    opacity: 0.6;
-    transform: scale(0.8);
-    transition: opacity 0.2s, transform 0.2s;
-  }
-
-  .widget-wrapper:hover .close-button {
-    opacity: 0.8;
-    transform: scale(1);
+  
+  .close-button:active {
+    transform: scale(0.9);
   }
   
   /* Add X to close button */
@@ -287,7 +289,7 @@ export const styles = css`
     width: 2px;
     height: 12px;
     background-color: currentColor;
-    top: 6px;
+    border-radius: 1px;
   }
   
   .close-button::before {
@@ -665,29 +667,31 @@ export const styles = css`
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     cursor: grab;
-    opacity: 0.5;
-    transition: opacity 0.2s, transform 0.2s;
-    border-radius: 4px;
-    margin-right: 8px;
+    opacity: 0.4;
+    transition: opacity 0.2s, transform 0.2s, background-color 0.2s;
+    border-radius: 6px;
+    margin-right: 10px;
   }
   
   .drag-handle:hover {
     opacity: 1;
-    background-color: var(--widget-secondary-hover, rgba(0, 0, 0, 0.05));
+    background-color: var(--widget-secondary-hover, rgba(0, 0, 0, 0.08));
   }
   
   .drag-handle:active {
     cursor: grabbing;
-    transform: scale(0.95);
+    transform: scale(0.92);
+    background-color: var(--widget-secondary-color, rgba(0, 0, 0, 0.12));
   }
   
   .drag-handle-icon {
-    font-size: 14px;
-    color: var(--widget-subtle-text, #999);
+    font-size: 16px;
+    color: var(--widget-subtle-text, #888);
     line-height: 1;
+    letter-spacing: 1px;
   }
   
   /* Size indicator (read-only display) */
