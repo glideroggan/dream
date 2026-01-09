@@ -131,8 +131,10 @@ export class GridLayoutV2 extends FASTElement {
     // Get grid container from shadow DOM
     this.gridContainer = this.shadowRoot?.querySelector('.grid-container') as HTMLElement;
     
-    // Subscribe to grid service updates
+    // Subscribe to grid service updates (now page-aware)
     this.unsubscribe = gridService.subscribe(this.handlePositionsChanged.bind(this));
+    
+    console.info(`[GRID-DEBUG] GridLayoutV2 connectedCallback for page: ${this.pageType}`);
     
     // Initialize items from slotted content
     this.initializeFromSlot();
@@ -148,6 +150,13 @@ export class GridLayoutV2 extends FASTElement {
   
   disconnectedCallback(): void {
     super.disconnectedCallback();
+    
+    // Clear this page's positions from gridService when component unmounts
+    // This ensures fresh positions are loaded from settings on next mount
+    if (this.pageType) {
+      console.info(`[GRID-DEBUG] GridLayoutV2 disconnectedCallback: clearing positions for page ${this.pageType}`);
+      gridService.clear(this.pageType);
+    }
     
     if (this.unsubscribe) {
       this.unsubscribe();
@@ -168,16 +177,22 @@ export class GridLayoutV2 extends FASTElement {
    * Initialize grid items from slotted content
    */
   private initializeFromSlot(): void {
+    console.info(`[GRID-DEBUG] initializeFromSlot START for page: ${this.pageType}`);
     const slot = this.shadowRoot?.querySelector('slot');
     const elements = slot?.assignedElements() as HTMLElement[];
     
     if (!elements || elements.length === 0) {
-      console.debug('GridLayoutV2: No slotted elements found');
+      console.info('[GRID-DEBUG] initializeFromSlot: No slotted elements found');
       return;
     }
     
-    // Clear existing items in service
-    gridService.clear();
+    // Log current gridService state before clearing (for this page only)
+    const beforePositions = gridService.getAllPositions(this.pageType);
+    console.info(`[GRID-DEBUG] gridService positions for ${this.pageType} BEFORE clear (${beforePositions.length} items):`, beforePositions.map(p => `${p.id}@(${p.col},${p.row})`));
+    
+    // Clear existing items in service for THIS PAGE ONLY
+    gridService.clear(this.pageType);
+    console.info(`[GRID-DEBUG] gridService.clear(${this.pageType}) called`);
     
     for (const element of elements) {
       const widgetId = element.getAttribute('data-widget-id') || element.getAttribute('widget-id');
@@ -189,39 +204,51 @@ export class GridLayoutV2 extends FASTElement {
       const colSpan = parseInt(element.getAttribute('col-span') || '8', 10);
       const rowSpan = parseInt(element.getAttribute('row-span') || '4', 10);
       
+      console.info(`[GRID-DEBUG] initializeFromSlot: Reading widget ${widgetId} attrs: grid-col=${col}, grid-row=${row}, col-span=${colSpan}, row-span=${rowSpan}`);
+      
       // If no explicit position, find one
       let position: GridItemPosition;
       if (col > 0 && row > 0) {
         position = { id: widgetId, col, row, colSpan, rowSpan };
+        console.info(`[GRID-DEBUG] initializeFromSlot: Widget ${widgetId} using explicit position`);
       } else {
-        const { col: newCol, row: newRow } = gridService.findNextAvailablePosition(colSpan, rowSpan);
+        const { col: newCol, row: newRow } = gridService.findNextAvailablePosition(this.pageType, colSpan, rowSpan);
         position = { id: widgetId, col: newCol, row: newRow, colSpan, rowSpan };
+        console.info(`[GRID-DEBUG] initializeFromSlot: Widget ${widgetId} auto-positioned to (${newCol}, ${newRow})`);
       }
       
-      // Register with service
-      gridService.addItem(position);
+      // Register with service for this page
+      gridService.addItem(this.pageType, position);
       
       // Apply position to element
       this.applyPositionToElement(element, position);
     }
     
-    console.debug(`GridLayoutV2: Initialized ${elements.length} items`);
+    console.info(`[GRID-DEBUG] initializeFromSlot COMPLETE: Initialized ${elements.length} items for page ${this.pageType}`);
   }
   
   /**
    * Handle slot content changes
    */
   private handleSlotChange(): void {
+    console.info(`[GRID-DEBUG] handleSlotChange triggered for page: ${this.pageType}`);
     // Re-check for new items that aren't registered
     const slot = this.shadowRoot?.querySelector('slot');
     const elements = slot?.assignedElements() as HTMLElement[];
+    
+    console.info(`[GRID-DEBUG] handleSlotChange: ${elements?.length || 0} slotted elements`);
     
     for (const element of elements) {
       const widgetId = element.getAttribute('data-widget-id') || element.getAttribute('widget-id');
       if (!widgetId) continue;
       
-      // Check if already registered
-      if (gridService.getPosition(widgetId)) {
+      // Check if already registered for this page
+      const existingPosition = gridService.getPosition(this.pageType, widgetId);
+      if (existingPosition) {
+        // Widget already registered - but we still need to apply CSS styles to the new DOM element
+        // The page may have been recreated (navigation) so the element is new even if gridService has the position
+        console.info(`[GRID-DEBUG] handleSlotChange: Widget ${widgetId} already registered on ${this.pageType}, applying existing position`);
+        this.applyPositionToElement(element, existingPosition);
         continue;
       }
       
@@ -231,20 +258,26 @@ export class GridLayoutV2 extends FASTElement {
       const colSpan = parseInt(element.getAttribute('col-span') || '8', 10);
       const rowSpan = parseInt(element.getAttribute('row-span') || '4', 10);
       
+      console.info(`[GRID-DEBUG] handleSlotChange: New widget ${widgetId} attrs: grid-col=${col}, grid-row=${row}, col-span=${colSpan}, row-span=${rowSpan}`);
+      
       // If no explicit position, find one
       let position: GridItemPosition;
       if (col > 0 && row > 0) {
         position = { id: widgetId, col, row, colSpan, rowSpan };
+        console.info(`[GRID-DEBUG] handleSlotChange: Widget ${widgetId} using explicit position (${col}, ${row})`);
       } else {
-        const { col: newCol, row: newRow } = gridService.findNextAvailablePosition(colSpan, rowSpan);
+        const { col: newCol, row: newRow } = gridService.findNextAvailablePosition(this.pageType, colSpan, rowSpan);
         position = { id: widgetId, col: newCol, row: newRow, colSpan, rowSpan };
+        console.info(`[GRID-DEBUG] handleSlotChange: Widget ${widgetId} auto-positioned to (${newCol}, ${newRow})`);
       }
       
-      gridService.addItem(position);
+      gridService.addItem(this.pageType, position);
       this.applyPositionToElement(element, position);
       
-      console.debug(`GridLayoutV2: Added new item ${widgetId} at (${position.col}, ${position.row})`);
+      console.debug(`GridLayoutV2: Added new item ${widgetId} at (${position.col}, ${position.row}) on page ${this.pageType}`);
     }
+    
+    console.info('[GRID-DEBUG] handleSlotChange COMPLETE');
   }
   
   // ============================================
@@ -261,8 +294,14 @@ export class GridLayoutV2 extends FASTElement {
   
   /**
    * Handle position changes from grid service
+   * Now receives pageType as first argument
    */
-  private handlePositionsChanged(positions: GridItemPosition[]): void {
+  private handlePositionsChanged(pageType: string, positions: GridItemPosition[]): void {
+    // Only handle changes for our page
+    if (pageType !== this.pageType) {
+      return;
+    }
+    
     const slot = this.shadowRoot?.querySelector('slot');
     const elements = slot?.assignedElements() as HTMLElement[];
     
@@ -311,9 +350,9 @@ export class GridLayoutV2 extends FASTElement {
       element.classList.remove('widget-moving');
     }
     
-    // Restore actual positions from service
-    const positions = gridService.getAllPositions();
-    this.handlePositionsChanged(positions);
+    // Restore actual positions from service for this page
+    const positions = gridService.getAllPositions(this.pageType);
+    this.handlePositionsChanged(this.pageType, positions);
     
     this.previewPositions = [];
   }
@@ -331,8 +370,9 @@ export class GridLayoutV2 extends FASTElement {
     this.isDragOver = true;
     
     // Update drop indicator position
+    // Use pageX/pageY to account for scroll position
     if (this.gridContainer) {
-      const result = gridService.updateDrag(event.clientX, event.clientY);
+      const result = gridService.updateDrag(event.pageX, event.pageY);
       if (result) {
         // Show drop indicator at the dragged item's new position
         const draggedItem = result.positions.find(
@@ -405,7 +445,7 @@ export class GridLayoutV2 extends FASTElement {
    */
   startDrag(widgetId: string, pointerX: number, pointerY: number): boolean {
     if (!this.gridContainer) return false;
-    return gridService.startDrag(widgetId, pointerX, pointerY, this.gridContainer);
+    return gridService.startDrag(this.pageType, widgetId, pointerX, pointerY, this.gridContainer);
   }
   
   /**
@@ -418,7 +458,7 @@ export class GridLayoutV2 extends FASTElement {
     pointerY: number
   ): boolean {
     if (!this.gridContainer) return false;
-    return gridService.startResize(widgetId, direction, pointerX, pointerY, this.gridContainer);
+    return gridService.startResize(this.pageType, widgetId, direction, pointerX, pointerY, this.gridContainer);
   }
   
   /**
@@ -467,7 +507,7 @@ export class GridLayoutV2 extends FASTElement {
    * Load positions from persistence
    */
   loadPositions(positions: GridItemPosition[]): void {
-    gridService.setAllPositions(positions);
+    gridService.setAllPositions(this.pageType, positions);
     
     // Apply to DOM
     const slot = this.shadowRoot?.querySelector('slot');
@@ -489,6 +529,6 @@ export class GridLayoutV2 extends FASTElement {
    * Get all current positions (for persistence)
    */
   getPositions(): GridItemPosition[] {
-    return gridService.getAllPositions();
+    return gridService.getAllPositions(this.pageType);
   }
 }

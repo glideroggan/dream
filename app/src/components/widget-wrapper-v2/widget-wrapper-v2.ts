@@ -301,8 +301,8 @@ export class WidgetWrapperV2 extends FASTElement {
   }
   
   private updateGridPosition(): void {
-    // Update grid service
-    gridService.updatePosition(this.widgetId, {
+    // Update grid service (now page-aware)
+    gridService.updatePosition(this.pageType, this.widgetId, {
       col: this.gridCol,
       row: this.gridRow,
       colSpan: this.colSpan,
@@ -342,9 +342,10 @@ export class WidgetWrapperV2 extends FASTElement {
     event.dataTransfer.setData('application/x-widget-id', this.widgetId);
     
     // Find grid layout and start drag via service
+    // Use pageX/pageY to account for scroll position
     const gridLayout = this.closest('grid-layout-v2') as GridLayoutV2;
     if (gridLayout) {
-      gridLayout.startDrag(this.widgetId, event.clientX, event.clientY);
+      gridLayout.startDrag(this.widgetId, event.pageX, event.pageY);
     }
     
     // Visual feedback (delayed to not interfere with drag ghost)
@@ -378,9 +379,10 @@ export class WidgetWrapperV2 extends FASTElement {
     this.classList.add('widget-resizing');
     
     // Start resize via grid layout
+    // Use pageX/pageY to account for scroll position
     const gridLayout = this.closest('grid-layout-v2') as GridLayoutV2;
     if (gridLayout) {
-      gridLayout.startResize(this.widgetId, direction, event.clientX, event.clientY);
+      gridLayout.startResize(this.widgetId, direction, event.pageX, event.pageY);
     }
     
     // Set up global listeners
@@ -400,9 +402,10 @@ export class WidgetWrapperV2 extends FASTElement {
   private handleResizeMove(event: PointerEvent): void {
     event.preventDefault();
     
+    // Use pageX/pageY to account for scroll position
     const gridLayout = this.closest('grid-layout-v2') as GridLayoutV2;
     if (gridLayout) {
-      gridLayout.updateResize(event.clientX, event.clientY);
+      gridLayout.updateResize(event.pageX, event.pageY);
     }
   }
   
@@ -428,8 +431,8 @@ export class WidgetWrapperV2 extends FASTElement {
       gridLayout.endResize();
     }
     
-    // Update our local state from grid service
-    const position = gridService.getPosition(this.widgetId);
+    // Update our local state from grid service (now page-aware)
+    const position = gridService.getPosition(this.pageType, this.widgetId);
     if (position) {
       this.gridCol = position.col;
       this.gridRow = position.row;

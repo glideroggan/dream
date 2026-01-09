@@ -2,6 +2,8 @@
  * Grid Service
  * Centralized service for grid layout calculations and state management.
  * Single source of truth for all grid-related operations.
+ * 
+ * Now page-aware: each page has its own isolated set of positions.
  */
 
 import {
@@ -63,6 +65,7 @@ export type ResizeDirection = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
 export interface ActiveOperation {
   type: 'drag' | 'resize';
   itemId: string;
+  pageType: string;  // Track which page the operation is on
   direction?: ResizeDirection;
   /** Starting pointer position */
   startPointer: { x: number; y: number };
@@ -76,85 +79,120 @@ export interface ActiveOperation {
   containerRect: DOMRect;
 }
 
-type GridServiceListener = (positions: GridItemPosition[]) => void;
+type GridServiceListener = (pageType: string, positions: GridItemPosition[]) => void;
 
 // ============================================
 // Grid Service Class
 // ============================================
 
 class GridService {
-  /** Current positions of all items */
-  private items: Map<string, GridItemPosition> = new Map();
+  /** Current positions of all items, organized by page type */
+  private pageItems: Map<string, Map<string, GridItemPosition>> = new Map();
   
   /** Active drag/resize operation */
   private activeOperation: ActiveOperation | null = null;
   
-  /** Listeners for position changes */
+  /** Listeners for position changes (per page) */
   private listeners: Set<GridServiceListener> = new Set();
+
+  // ============================================
+  // Page Management
+  // ============================================
+
+  /**
+   * Get or create the items map for a page
+   */
+  private getPageMap(pageType: string): Map<string, GridItemPosition> {
+    if (!this.pageItems.has(pageType)) {
+      this.pageItems.set(pageType, new Map());
+    }
+    return this.pageItems.get(pageType)!;
+  }
 
   // ============================================
   // Item Management
   // ============================================
 
   /**
-   * Register an item with the grid
+   * Register an item with the grid for a specific page
    */
-  addItem(item: GridItemPosition): void {
-    this.items.set(item.id, { ...item });
-    this.notifyListeners();
+  addItem(pageType: string, item: GridItemPosition): void {
+    console.info(`[GRID-DEBUG] gridService.addItem: page=${pageType}, ${item.id} at (${item.col}, ${item.row}) size ${item.colSpan}x${item.rowSpan}`);
+    const pageMap = this.getPageMap(pageType);
+    pageMap.set(item.id, { ...item });
+    this.notifyListeners(pageType);
   }
 
   /**
-   * Remove an item from the grid
+   * Remove an item from the grid for a specific page
    */
-  removeItem(id: string): void {
-    this.items.delete(id);
-    this.notifyListeners();
-  }
-
-  /**
-   * Get all item positions
-   */
-  getAllPositions(): GridItemPosition[] {
-    return Array.from(this.items.values());
-  }
-
-  /**
-   * Get a single item's position
-   */
-  getPosition(id: string): GridItemPosition | undefined {
-    return this.items.get(id);
-  }
-
-  /**
-   * Update an item's position directly
-   */
-  updatePosition(id: string, updates: Partial<GridItemPosition>): void {
-    const item = this.items.get(id);
-    if (item) {
-      this.items.set(id, { ...item, ...updates });
-      this.notifyListeners();
+  removeItem(pageType: string, id: string): void {
+    const pageMap = this.pageItems.get(pageType);
+    if (pageMap) {
+      pageMap.delete(id);
+      this.notifyListeners(pageType);
     }
   }
 
   /**
-   * Set all positions at once (for loading from persistence)
+   * Get all item positions for a specific page
    */
-  setAllPositions(positions: GridItemPosition[]): void {
-    this.items.clear();
+  getAllPositions(pageType: string): GridItemPosition[] {
+    const pageMap = this.pageItems.get(pageType);
+    return pageMap ? Array.from(pageMap.values()) : [];
+  }
+
+  /**
+   * Get a single item's position for a specific page
+   */
+  getPosition(pageType: string, id: string): GridItemPosition | undefined {
+    const pageMap = this.pageItems.get(pageType);
+    return pageMap?.get(id);
+  }
+
+  /**
+   * Update an item's position directly for a specific page
+   */
+  updatePosition(pageType: string, id: string, updates: Partial<GridItemPosition>): void {
+    const pageMap = this.pageItems.get(pageType);
+    const item = pageMap?.get(id);
+    if (item && pageMap) {
+      pageMap.set(id, { ...item, ...updates });
+      this.notifyListeners(pageType);
+    }
+  }
+
+  /**
+   * Set all positions at once for a specific page (for loading from persistence)
+   */
+  setAllPositions(pageType: string, positions: GridItemPosition[]): void {
+    const pageMap = this.getPageMap(pageType);
+    pageMap.clear();
     for (const pos of positions) {
-      this.items.set(pos.id, { ...pos });
+      pageMap.set(pos.id, { ...pos });
     }
-    this.notifyListeners();
+    this.notifyListeners(pageType);
   }
 
   /**
-   * Clear all items
+   * Clear all items for a specific page only
    */
-  clear(): void {
-    this.items.clear();
-    this.activeOperation = null;
-    this.notifyListeners();
+  clear(pageType: string): void {
+    const pageMap = this.pageItems.get(pageType);
+    const count = pageMap?.size || 0;
+    const ids = pageMap ? Array.from(pageMap.keys()) : [];
+    console.info(`[GRID-DEBUG] gridService.clear(${pageType}) called - clearing ${count} items: ${ids.join(', ')}`);
+    
+    if (pageMap) {
+      pageMap.clear();
+    }
+    
+    // Cancel any active operation for this page
+    if (this.activeOperation?.pageType === pageType) {
+      this.activeOperation = null;
+    }
+    
+    this.notifyListeners(pageType);
   }
 
   // ============================================
@@ -252,12 +290,15 @@ class GridService {
   /**
    * Find all items that overlap with the given position (excluding the item itself)
    */
-  findOverlappingItems(position: GridItemPosition): GridItemPosition[] {
+  findOverlappingItems(pageType: string, position: GridItemPosition): GridItemPosition[] {
     const overlapping: GridItemPosition[] = [];
+    const pageMap = this.pageItems.get(pageType);
     
-    for (const item of this.items.values()) {
-      if (item.id !== position.id && this.itemsOverlap(position, item)) {
-        overlapping.push({ ...item });
+    if (pageMap) {
+      for (const item of pageMap.values()) {
+        if (item.id !== position.id && this.itemsOverlap(position, item)) {
+          overlapping.push({ ...item });
+        }
       }
     }
     
@@ -376,14 +417,15 @@ class GridService {
    * Start a drag operation
    */
   startDrag(
+    pageType: string,
     itemId: string,
     pointerX: number,
     pointerY: number,
     gridContainer: HTMLElement
   ): boolean {
-    const item = this.items.get(itemId);
+    const item = this.getPosition(pageType, itemId);
     if (!item) {
-      console.warn(`GridService: Cannot start drag - item ${itemId} not found`);
+      console.warn(`GridService: Cannot start drag - item ${itemId} not found on page ${pageType}`);
       return false;
     }
     
@@ -393,6 +435,7 @@ class GridService {
     this.activeOperation = {
       type: 'drag',
       itemId,
+      pageType,
       startPointer: { x: pointerX, y: pointerY },
       currentPointer: { x: pointerX, y: pointerY },
       originalPosition: { ...item },
@@ -400,7 +443,7 @@ class GridService {
       containerRect,
     };
     
-    console.debug(`GridService: Started drag for ${itemId} at (${item.col}, ${item.row})`);
+    console.debug(`GridService: Started drag for ${itemId} on page ${pageType} at (${item.col}, ${item.row})`);
     return true;
   }
 
@@ -414,7 +457,7 @@ class GridService {
     
     this.activeOperation.currentPointer = { x: pointerX, y: pointerY };
     
-    const { originalPosition, containerRect, cellDimensions } = this.activeOperation;
+    const { originalPosition, cellDimensions, pageType } = this.activeOperation;
     
     // Calculate delta in cells
     const deltaX = pointerX - this.activeOperation.startPointer.x;
@@ -441,7 +484,7 @@ class GridService {
     };
     
     // Calculate positions with pushing
-    const allItems = this.getAllPositions();
+    const allItems = this.getAllPositions(pageType);
     const newPositions = this.pushItemsDown(newPosition, allItems);
     
     return {
@@ -463,12 +506,15 @@ class GridService {
       this.activeOperation.currentPointer.y
     );
     
+    const { pageType } = this.activeOperation;
+    
     if (result && result.isValid) {
       // Apply the new positions
+      const pageMap = this.getPageMap(pageType);
       for (const pos of result.positions) {
-        this.items.set(pos.id, pos);
+        pageMap.set(pos.id, pos);
       }
-      this.notifyListeners();
+      this.notifyListeners(pageType);
     }
     
     this.activeOperation = null;
@@ -490,15 +536,16 @@ class GridService {
    * Start a resize operation
    */
   startResize(
+    pageType: string,
     itemId: string,
     direction: ResizeDirection,
     pointerX: number,
     pointerY: number,
     gridContainer: HTMLElement
   ): boolean {
-    const item = this.items.get(itemId);
+    const item = this.getPosition(pageType, itemId);
     if (!item) {
-      console.warn(`GridService: Cannot start resize - item ${itemId} not found`);
+      console.warn(`GridService: Cannot start resize - item ${itemId} not found on page ${pageType}`);
       return false;
     }
     
@@ -508,6 +555,7 @@ class GridService {
     this.activeOperation = {
       type: 'resize',
       itemId,
+      pageType,
       direction,
       startPointer: { x: pointerX, y: pointerY },
       currentPointer: { x: pointerX, y: pointerY },
@@ -516,7 +564,7 @@ class GridService {
       containerRect,
     };
     
-    console.debug(`GridService: Started resize (${direction}) for ${itemId}`);
+    console.debug(`GridService: Started resize (${direction}) for ${itemId} on page ${pageType}`);
     return true;
   }
 
@@ -530,7 +578,7 @@ class GridService {
     
     this.activeOperation.currentPointer = { x: pointerX, y: pointerY };
     
-    const { originalPosition, cellDimensions, direction } = this.activeOperation;
+    const { originalPosition, cellDimensions, direction, pageType } = this.activeOperation;
     
     // Calculate delta in cells
     const deltaX = pointerX - this.activeOperation.startPointer.x;
@@ -588,7 +636,7 @@ class GridService {
     };
     
     // Calculate positions with pushing
-    const allItems = this.getAllPositions();
+    const allItems = this.getAllPositions(pageType);
     const newPositions = this.pushItemsDown(newPosition, allItems);
     
     return {
@@ -610,12 +658,15 @@ class GridService {
       this.activeOperation.currentPointer.y
     );
     
+    const { pageType } = this.activeOperation;
+    
     if (result && result.isValid) {
       // Apply the new positions
+      const pageMap = this.getPageMap(pageType);
       for (const pos of result.positions) {
-        this.items.set(pos.id, pos);
+        pageMap.set(pos.id, pos);
       }
-      this.notifyListeners();
+      this.notifyListeners(pageType);
     }
     
     this.activeOperation = null;
@@ -660,11 +711,11 @@ class GridService {
   }
 
   /**
-   * Notify all listeners of position changes
+   * Notify all listeners of position changes for a specific page
    */
-  private notifyListeners(): void {
-    const positions = this.getAllPositions();
-    this.listeners.forEach(listener => listener(positions));
+  private notifyListeners(pageType: string): void {
+    const positions = this.getAllPositions(pageType);
+    this.listeners.forEach(listener => listener(pageType, positions));
   }
 
   // ============================================
@@ -672,10 +723,10 @@ class GridService {
   // ============================================
 
   /**
-   * Find the next available position for a new item
+   * Find the next available position for a new item on a specific page
    */
-  findNextAvailablePosition(colSpan: number, rowSpan: number): { col: number; row: number } {
-    const allItems = this.getAllPositions();
+  findNextAvailablePosition(pageType: string, colSpan: number, rowSpan: number): { col: number; row: number } {
+    const allItems = this.getAllPositions(pageType);
     
     // Try each row starting from 1
     for (let row = 1; row <= MAX_GRID_ROWS * 2; row++) {

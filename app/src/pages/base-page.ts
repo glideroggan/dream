@@ -454,10 +454,11 @@ export class BasePage extends FASTElement {
       console.debug(`Adding widget ${widget.id} to wrapper`);
       wrapperElement.appendChild(widgetElement);
       
-      // Mark wrapper as loaded once widget element is added
-      // The wrapper-v2 may also receive an 'initialized' event from the widget,
-      // but we set state directly as a fallback since not all widgets emit this event
-      wrapperElement.setAttribute('state', 'loaded');
+      // NOTE: Do NOT set state='loaded' here immediately!
+      // The widget-wrapper-v2 listens for 'initialized' events from widgets.
+      // Widgets that need loading time (like slow-widget) will emit 'initialized' when ready.
+      // Widgets that load instantly should emit 'initialized' in their connectedCallback.
+      // The wrapper has a failureTimeout that will show an error if the widget never initializes.
     } catch (error) {
       console.error(`Error creating widget ${widget.id}:`, error);
       wrapperElement.setAttribute('state', 'error');
@@ -468,12 +469,20 @@ export class BasePage extends FASTElement {
   }
 
   protected async addWidgetsToDOM(): Promise<void> {
-    console.debug('Adding widgets to DOM...');
+    console.info(`[GRID-DEBUG] addWidgetsToDOM START for page: ${this.pageType}`);
     const gridLayout = this.shadowRoot?.querySelector('.widgets-container') as GridLayoutV2;
-    if (!gridLayout) return;
+    if (!gridLayout) {
+      console.info('[GRID-DEBUG] No grid layout found, returning');
+      return;
+    }
 
     // Set the page-type attribute (already set in template, but ensure consistency)
     gridLayout.setAttribute('page-type', this.pageType);
+
+    // Track widgets that need their positions saved (those without explicit positions)
+    const widgetsNeedingPositionSave: string[] = [];
+
+    console.info(`[GRID-DEBUG] Processing ${this.activeWidgets.length} active widgets`);
 
     // Process each active widget
     for (const widget of this.activeWidgets) {
@@ -485,6 +494,7 @@ export class BasePage extends FASTElement {
       let rowSpan = widgetDef?.rowSpan || getWidgetRowSpan(widget.id);
       let gridCol: number | undefined;
       let gridRow: number | undefined;
+      let hasExplicitPosition = false;
       
       // If we're a data page, try to load saved dimensions and position
       if (this.dataPage) {
@@ -500,13 +510,23 @@ export class BasePage extends FASTElement {
           
           // Try to get explicit grid position
           const position = await this.settingsRepository.getWidgetGridPosition(this.pageType, widget.id);
-          if (position) {
+          console.info(`[GRID-DEBUG] Widget ${widget.id} position from settings:`, position);
+          if (position && position.gridCol && position.gridRow) {
             gridCol = position.gridCol;
             gridRow = position.gridRow;
+            hasExplicitPosition = true;
+            console.info(`[GRID-DEBUG] Widget ${widget.id} using saved position: col=${gridCol}, row=${gridRow}`);
+          } else {
+            console.info(`[GRID-DEBUG] Widget ${widget.id} has NO explicit position (will be auto-positioned)`);
           }
         } catch (error) {
           console.warn(`Failed to load grid dimensions for widget ${widget.id}:`, error);
         }
+      }
+      
+      // Track widgets without explicit positions - we'll save them after grid auto-positions them
+      if (!hasExplicitPosition) {
+        widgetsNeedingPositionSave.push(widget.id);
       }
       
       // Create V2 widget wrapper with dimensions and optional position
@@ -519,6 +539,8 @@ export class BasePage extends FASTElement {
         gridCol,
         gridRow
       });
+      
+      console.info(`[GRID-DEBUG] Created wrapper for ${widget.id}: grid-col=${wrapperElement.getAttribute('grid-col')}, grid-row=${wrapperElement.getAttribute('grid-row')}, col-span=${wrapperElement.getAttribute('col-span')}, row-span=${wrapperElement.getAttribute('row-span')}`);
 
       // Debug the page type setting
       console.debug(`Widget wrapper ${widget.id} created with page-type: ${wrapperElement.getAttribute('page-type')}`);
@@ -529,6 +551,26 @@ export class BasePage extends FASTElement {
       // Create the actual widget element inside the wrapper
       this.createWidgetElement(widget, wrapperElement);
     }
+    
+    // If any widgets were auto-positioned by the grid, save their positions
+    // This ensures positions persist across page navigation
+    if (widgetsNeedingPositionSave.length > 0 && this.dataPage) {
+      console.info(`[GRID-DEBUG] ${widgetsNeedingPositionSave.length} widgets need position save: ${widgetsNeedingPositionSave.join(', ')}`);
+      // Small delay to let grid finish positioning
+      setTimeout(() => {
+        const positions = gridLayout.getPositions();
+        console.info(`[GRID-DEBUG] Grid returned ${positions.length} positions for auto-save:`, positions);
+        if (positions.length > 0) {
+          console.info(`[GRID-DEBUG] Saving initial positions for ${widgetsNeedingPositionSave.length} auto-positioned widgets`);
+          this.settingsRepository.updateAllWidgetPositions(this.pageType, positions)
+            .catch(err => console.error('Error saving initial widget positions:', err));
+        }
+      }, 100);
+    } else {
+      console.info(`[GRID-DEBUG] No widgets need position save (widgetsNeedingPositionSave=${widgetsNeedingPositionSave.length}, dataPage=${this.dataPage})`);
+    }
+    
+    console.info(`[GRID-DEBUG] addWidgetsToDOM COMPLETE for page: ${this.pageType}`);
   }
 
   protected handleResize() {
