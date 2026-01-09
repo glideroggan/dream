@@ -2,60 +2,42 @@ import { html, when } from "@microsoft/fast-element";
 import { WidgetWrapper } from "./widget-wrapper";
 
 export const template = html<WidgetWrapper>/*html*/`
-  <div class="widget-container" state="${x => x.state}">
+  <div class="widget-container ${x => x.isDragging ? 'dragging' : ''}" state="${x => x.state}">
+    <!-- Resize handles (corners) -->
+    ${when(x => x.showSizeControls, html<WidgetWrapper>/*html*/`
+      <div class="resize-handle resize-handle-se" 
+           @pointerdown="${(x, c) => x.handleResizeStart(c.event as PointerEvent, 'se')}"
+           title="Drag to resize"></div>
+      <div class="resize-handle resize-handle-sw" 
+           @pointerdown="${(x, c) => x.handleResizeStart(c.event as PointerEvent, 'sw')}"
+           title="Drag to resize"></div>
+      <div class="resize-handle resize-handle-ne" 
+           @pointerdown="${(x, c) => x.handleResizeStart(c.event as PointerEvent, 'ne')}"
+           title="Drag to resize"></div>
+      <div class="resize-handle resize-handle-nw" 
+           @pointerdown="${(x, c) => x.handleResizeStart(c.event as PointerEvent, 'nw')}"
+           title="Drag to resize"></div>
+      <!-- Edge resize handles -->
+      <div class="resize-handle resize-handle-e" 
+           @pointerdown="${(x, c) => x.handleResizeStart(c.event as PointerEvent, 'e')}"
+           title="Drag to resize width"></div>
+      <div class="resize-handle resize-handle-w" 
+           @pointerdown="${(x, c) => x.handleResizeStart(c.event as PointerEvent, 'w')}"
+           title="Drag to resize width"></div>
+      <div class="resize-handle resize-handle-s" 
+           @pointerdown="${(x, c) => x.handleResizeStart(c.event as PointerEvent, 's')}"
+           title="Drag to resize height"></div>
+      <div class="resize-handle resize-handle-n" 
+           @pointerdown="${(x, c) => x.handleResizeStart(c.event as PointerEvent, 'n')}"
+           title="Drag to resize height"></div>
+    `)}
+    
     <div class="widget-header">
       <div class="widget-header-left">
-        ${when(x => x.showSizeControls, html<WidgetWrapper>/*html*/`
-          <div class="widget-size-controls">
-            <!-- Span controls for width and height adjustment -->
-            <div class="span-controls">
-              <div class="span-control-group">
-                <span class="span-label">W:</span>
-                <button 
-                  class="span-button"
-                  type="button"
-                  @click="${(x, c) => { 
-                    console.debug(`Width decrease button clicked for ${x.widgetId}`); 
-                    c.event.preventDefault(); 
-                    x.decreaseColSpan();
-                  }}" 
-                  title="Decrease width">-</button>
-                <span class="span-value">${x => x.colSpan}</span>
-                <button 
-                  class="span-button"
-                  type="button"
-                  @click="${(x, c) => { 
-                    console.debug(`Width increase button clicked for ${x.widgetId}`); 
-                    c.event.preventDefault();
-                    x.increaseColSpan();
-                  }}" 
-                  title="Increase width">+</button>
-              </div>
-              <div class="span-control-group">
-                <span class="span-label">H:</span>
-                <button 
-                  class="span-button"
-                  type="button"
-                  @click="${(x, c) => { 
-                    console.debug(`Height decrease button clicked for ${x.widgetId}`); 
-                    c.event.preventDefault();
-                    x.decreaseRowSpan();
-                  }}" 
-                  title="Decrease height">-</button>
-                <span class="span-value">${x => x.rowSpan}</span>
-                <button 
-                  class="span-button"
-                  type="button"
-                  @click="${(x, c) => { 
-                    console.debug(`Height increase button clicked for ${x.widgetId}`); 
-                    c.event.preventDefault();
-                    x.increaseRowSpan();
-                  }}" 
-                  title="Increase height">+</button>
-              </div>
-            </div>
-          </div>
-        `)}
+        <!-- Drag handle icon -->
+        <div class="drag-handle" title="Drag to move widget">
+          <span class="drag-handle-icon">&#x2630;</span>
+        </div>
       </div>
       
       <div class="widget-header-center">
@@ -63,6 +45,12 @@ export const template = html<WidgetWrapper>/*html*/`
       </div>
       
       <div class="widget-header-right">
+        <!-- Size indicator (read-only) -->
+        ${when(x => x.showSizeControls, html<WidgetWrapper>/*html*/`
+          <span class="size-indicator" title="Current size (columns x rows)">
+            ${x => x.colSpan} × ${x => x.rowSpan}
+          </span>
+        `)}
         ${when(x => !x.hideCloseButton, html<WidgetWrapper>/*html*/`
           <button class="close-button" @click="${x => x.closeWidget()}" title="Close widget">
             <span class="close-icon">×</span>

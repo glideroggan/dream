@@ -696,8 +696,8 @@ export class BasePage extends FASTElement {
         }
 
         // Always update the layout
-        if (typeof gridLayout.updateLayout === 'function') {
-          gridLayout.updateLayout();
+        if (typeof gridLayout.updateGridStyle === 'function') {
+          gridLayout.updateGridStyle();
         }
       }, 300);
 

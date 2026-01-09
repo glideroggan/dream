@@ -9,14 +9,20 @@ import {
   MIN_ROW_HEIGHT,
   DEFAULT_GRID_GAP
 } from "../constants/grid-constants";
+import { dragDropService } from "../services/drag-drop-service";
 
 /**
  * A responsive grid layout component that arranges items in a grid
  * based on their preferred column and row spans.
  */
 const template = html<GridLayout>/*html*/`
-  <div class="grid-container" style="${x => x.gridStyle}">
+  <div class="grid-container ${x => x.isDragOver ? 'drag-over' : ''}" 
+       style="${x => x.gridStyle}"
+       @dragover="${(x, c) => x.handleDragOver(c.event as DragEvent)}"
+       @dragleave="${(x, c) => x.handleDragLeave(c.event as DragEvent)}"
+       @drop="${(x, c) => x.handleDrop(c.event as DragEvent)}">
     <slot></slot>
+    <div class="drop-indicator" style="${x => x.dropIndicatorStyle}"></div>
   </div>
 `;
 
@@ -57,7 +63,7 @@ const styles = css`
     height: 100%;
   }
   
-  .grid-container {
+.grid-container {
     display: grid;
     grid-template-columns: var(--grid-template-columns);
     grid-auto-rows: var(--row-height, 30px);
@@ -66,6 +72,26 @@ const styles = css`
     height: 100%;
     min-height: 400px;
     align-items: stretch;
+    position: relative;
+  }
+  
+  /* Drag over state */
+  .grid-container.drag-over {
+    background-color: rgba(0, 120, 212, 0.05);
+    outline: 2px dashed rgba(0, 120, 212, 0.3);
+    outline-offset: -2px;
+  }
+  
+  /* Drop indicator styling is inline but we can add transitions here */
+  .drop-indicator {
+    transition: all 0.15s ease-out;
+  }
+  
+  /* Widget being dragged */
+  ::slotted(.widget-dragging) {
+    opacity: 0.5;
+    z-index: 1000;
+    /* Note: Do NOT use pointer-events: none here - it cancels the HTML5 drag operation */
   }
   
   /* Dynamically generate span classes */
@@ -176,6 +202,15 @@ export class GridLayout extends FASTElement {
   @attr({ attribute: "rows" }) totalRows = MAX_GRID_ROWS; // This should now be 30
   @observable gridStyle = '';
 
+  // Drag and drop state
+  @observable isDragOver = false;
+  @observable dropIndicatorStyle = 'display: none;';
+  private draggedWidgetId: string | null = null;
+  private dragServiceUnsubscribe: (() => void) | null = null;
+  private boundDocumentDragOver: ((e: DragEvent) => void) | null = null;
+  private boundDocumentDrop: ((e: DragEvent) => void) | null = null;
+  private boundDocumentDragEnd: ((e: DragEvent) => void) | null = null;
+
   private settingsRepository: SettingsRepository;
 
   // Maps item IDs to their metadata
@@ -205,7 +240,7 @@ export class GridLayout extends FASTElement {
 
     // Create a ResizeObserver to handle container resize events
     // this.resizeObserver = new ResizeObserver(entries => {
-    //   this.updateLayout();
+    //   this.updateGridStyle();
     // });
 
     // Start observing the container
@@ -219,6 +254,21 @@ export class GridLayout extends FASTElement {
     this.addEventListener('widget-spans-change', (e) => {
       console.debug(`GridLayout: Received widget-spans-change event`, (e as CustomEvent).detail);
       this.handleWidgetSpansChange(e);
+    });
+    
+    // Listen for drag events on the host element to capture events from slotted content
+    this.addEventListener('dragover', this.handleDragOver.bind(this));
+    this.addEventListener('dragleave', this.handleDragLeave.bind(this));
+    this.addEventListener('drop', this.handleDrop.bind(this));
+    
+    // Subscribe to drag service to add/remove document-level listeners during drag
+    this.dragServiceUnsubscribe = dragDropService.subscribe((state) => {
+      console.info(`GridLayout: drag state change - isDragging=${state.isDragging}, operation=${state.operation}, gridElement match=${state.gridElement === this}`);
+      if (state.isDragging && state.operation === 'move' && state.gridElement === this) {
+        this.attachDocumentDragListeners();
+      } else if (!state.isDragging) {
+        this.detachDocumentDragListeners();
+      }
     });
 
     console.debug("GridLayout connected, metadata size:", this.itemMetadata.size);
@@ -235,6 +285,120 @@ export class GridLayout extends FASTElement {
     // Remove event listeners
     // this.removeEventListener('widget-size-change', this.handleWidgetSizeChange);
     this.removeEventListener('widget-spans-change', this.handleWidgetSpansChange);
+    this.removeEventListener('dragover', this.handleDragOver.bind(this));
+    this.removeEventListener('dragleave', this.handleDragLeave.bind(this));
+    this.removeEventListener('drop', this.handleDrop.bind(this));
+    
+    // Clean up drag service subscription and document listeners
+    if (this.dragServiceUnsubscribe) {
+      this.dragServiceUnsubscribe();
+      this.dragServiceUnsubscribe = null;
+    }
+    this.detachDocumentDragListeners();
+  }
+
+  /**
+   * Attach document-level drag listeners during active drag operations.
+   * This ensures drag events are captured even when hovering over slotted widgets.
+   */
+  private attachDocumentDragListeners(): void {
+    if (this.boundDocumentDragOver) return; // Already attached
+    
+    this.boundDocumentDragOver = (e: DragEvent) => this.handleDocumentDragOver(e);
+    this.boundDocumentDrop = (e: DragEvent) => this.handleDocumentDrop(e);
+    this.boundDocumentDragEnd = (e: DragEvent) => this.handleDocumentDragEnd(e);
+    
+    document.addEventListener('dragover', this.boundDocumentDragOver);
+    document.addEventListener('drop', this.boundDocumentDrop);
+    document.addEventListener('dragend', this.boundDocumentDragEnd);
+    
+    console.info('GridLayout: Attached document-level drag listeners');
+  }
+
+  /**
+   * Detach document-level drag listeners when drag operation ends.
+   */
+  private detachDocumentDragListeners(): void {
+    if (this.boundDocumentDragOver) {
+      document.removeEventListener('dragover', this.boundDocumentDragOver);
+      this.boundDocumentDragOver = null;
+    }
+    if (this.boundDocumentDrop) {
+      document.removeEventListener('drop', this.boundDocumentDrop);
+      this.boundDocumentDrop = null;
+    }
+    if (this.boundDocumentDragEnd) {
+      document.removeEventListener('dragend', this.boundDocumentDragEnd);
+      this.boundDocumentDragEnd = null;
+    }
+    
+    // Also reset drag state
+    this.isDragOver = false;
+    this.dropIndicatorStyle = 'display: none;';
+  }
+
+  /**
+   * Handle dragover at document level - forwards to grid if over this grid
+   */
+  private handleDocumentDragOver(event: DragEvent): void {
+    // Check if the event is within our grid bounds
+    const rect = this.getBoundingClientRect();
+    const isOverGrid = 
+      event.clientX >= rect.left && 
+      event.clientX <= rect.right && 
+      event.clientY >= rect.top && 
+      event.clientY <= rect.bottom;
+    
+
+    
+    if (isOverGrid) {
+      event.preventDefault();
+      event.stopPropagation();
+      
+      if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = 'move';
+      }
+      
+      this.isDragOver = true;
+      
+      // Calculate drop position and show indicator
+      const gridContainer = this.shadowRoot?.querySelector('.grid-container') as HTMLElement;
+      if (gridContainer) {
+        const { col, row } = this.pixelToGridCell(event.clientX, event.clientY, gridContainer);
+        this.updateDropIndicator(col, row);
+        console.info(`GridLayout: (document) drop indicator at col=${col}, row=${row}`);
+      }
+    } else {
+      this.isDragOver = false;
+      this.dropIndicatorStyle = 'display: none;';
+    }
+  }
+
+  /**
+   * Handle drop at document level - forwards to grid if over this grid
+   */
+  private handleDocumentDrop(event: DragEvent): void {
+    // Check if the event is within our grid bounds
+    const rect = this.getBoundingClientRect();
+    const isOverGrid = 
+      event.clientX >= rect.left && 
+      event.clientX <= rect.right && 
+      event.clientY >= rect.top && 
+      event.clientY <= rect.bottom;
+    
+    if (isOverGrid) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.handleDrop(event);
+    }
+  }
+
+  /**
+   * Handle dragend at document level - clean up state
+   */
+  private handleDocumentDragEnd(event: DragEvent): void {
+    console.info('GridLayout: (document) dragend received');
+    this.detachDocumentDragListeners();
   }
 
   /**
@@ -272,7 +436,7 @@ export class GridLayout extends FASTElement {
       }
 
       // Update layout regardless of whether we found the element
-      this.updateLayout();
+      this.updateGridStyle();
 
       // Save to settings repository if this was a user-initiated change
       console.debug(`are we saving? ${isUserResized} ${pageType} ${widgetId}`);
@@ -417,7 +581,7 @@ export class GridLayout extends FASTElement {
     }
 
     // Update layout
-    this.updateLayout();
+    this.updateGridStyle();
   }
 
   /**
@@ -428,7 +592,7 @@ export class GridLayout extends FASTElement {
     this.itemMetadata.delete(id);
 
     // Update layout
-    this.updateLayout();
+    this.updateGridStyle();
   }
 
   /**
@@ -480,17 +644,78 @@ export class GridLayout extends FASTElement {
   // }
 
   /**
-   * Update the grid layout based on container size and item requirements
+   * Handle drop event for widget move
    */
-  updateLayout(): void {
-    // Update grid style
-    this.updateGridStyle();
+  handleDrop(event: DragEvent): void {
+    console.info(`GridLayout: drop event received`);
+    
+    event.preventDefault();
+    event.stopPropagation();
+    
+    this.isDragOver = false;
+    this.dropIndicatorStyle = 'display: none;';
+
+    // Try to get widget ID from dataTransfer or from service state
+    let widgetId = event.dataTransfer?.getData('application/x-widget-id') || 
+                   event.dataTransfer?.getData('text/plain');
+    
+    // Fallback to service state if dataTransfer is empty
+    if (!widgetId) {
+      const state = dragDropService.getState();
+      widgetId = state.widgetId || undefined;
+    }
+    
+    if (!widgetId) {
+      console.debug('GridLayout: Drop event with no widget ID');
+      return;
+    }
+
+    console.debug(`GridLayout: Dropped widget ${widgetId}`);
+
+    // Calculate drop position
+    const gridContainer = this.shadowRoot?.querySelector('.grid-container') as HTMLElement;
+    if (!gridContainer) return;
+
+    const { col, row } = this.pixelToGridCell(event.clientX, event.clientY, gridContainer);
+
+    // Find the widget element and clean up dragging state
+    const widgetElement = this.querySelector(`[data-grid-item-id="${widgetId}"]`) as HTMLElement;
+    if (!widgetElement) {
+      console.warn(`GridLayout: Could not find widget element for ${widgetId}`);
+      return;
+    }
+    
+    // Clean up dragging classes
+    widgetElement.classList.remove('widget-dragging');
+    const widgetWrapper = widgetElement.querySelector('widget-wrapper');
+    if (widgetWrapper) {
+      widgetWrapper.classList.remove('widget-dragging');
+    }
+
+    // Reorder widgets: move the dropped widget to the new position
+    this.reorderWidget(widgetElement, col, row);
+
+    // End drag operation in service
+    dragDropService.endDrag();
+
+    // Dispatch event for position change
+    const moveEvent = new CustomEvent('widget-position-change', {
+      bubbles: true,
+      composed: true,
+      detail: {
+        widgetId,
+        targetCol: col,
+        targetRow: row,
+        pageType: this.dataPage,
+      }
+    });
+    this.dispatchEvent(moveEvent);
   }
 
   /**
    * Update the grid CSS style using CSS custom properties
    */
-  private updateGridStyle(): void {
+  updateGridStyle(): void {
     const containerWidth = this.clientWidth;
     const columnCount = this.totalColumns;
 
@@ -620,6 +845,176 @@ export class GridLayout extends FASTElement {
       parseInt(rowSpanClass.replace('row-span-', '')) :
       "preserved";
 
-    console.debug(`GridLayout: Set item ${id} column span to ${colSpan}, preserved row span ${currentRowSpan}`);
+console.debug(`GridLayout: Set item ${id} column span to ${colSpan}, preserved row span ${currentRowSpan}`);
+  }
+
+  // ================== DRAG AND DROP HANDLERS ==================
+
+  /**
+   * Handle dragover event for widget move
+   */
+  handleDragOver(event: DragEvent): void {
+    // Allow drop - check if we're currently dragging a widget via service
+    // Note: dataTransfer.types may not include custom types during dragover in some browsers
+    const state = dragDropService.getState();
+    
+    console.info(`GridLayout: dragover event, isDragging=${state.isDragging}, operation=${state.operation}`);
+    
+    if (!state.isDragging || state.operation !== 'move') {
+      // Also check dataTransfer as fallback
+      if (!event.dataTransfer?.types.includes('text/plain')) {
+        return;
+      }
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+
+    this.isDragOver = true;
+
+    // Calculate drop position and show indicator
+    const gridContainer = this.shadowRoot?.querySelector('.grid-container') as HTMLElement;
+    if (gridContainer) {
+      const { col, row } = this.pixelToGridCell(event.clientX, event.clientY, gridContainer);
+      this.updateDropIndicator(col, row);
+      console.info(`GridLayout: drop indicator at col=${col}, row=${row}`);
+    }
+  }
+
+  /**
+   * Handle dragleave event
+   */
+  handleDragLeave(event: DragEvent): void {
+    // Only hide if actually leaving the grid (not entering a child)
+    const relatedTarget = event.relatedTarget as HTMLElement;
+    if (relatedTarget && this.contains(relatedTarget)) {
+      return;
+    }
+
+    this.isDragOver = false;
+    this.dropIndicatorStyle = 'display: none;';
+  }
+
+  /**
+   * Reorder a widget to a new position in the grid
+   * For CSS Grid, this means changing the order in the DOM or using explicit grid positions
+   */
+  private reorderWidget(widgetElement: HTMLElement, targetCol: number, targetRow: number): void {
+    // For now, we'll use DOM order for positioning
+    // Get all widget elements
+    const widgets = Array.from(this.querySelectorAll('[data-grid-item-id]'));
+    const currentIndex = widgets.indexOf(widgetElement);
+
+    // Calculate target index based on grid position
+    // This is a simplified approach - widgets flow left-to-right, top-to-bottom
+    const targetIndex = this.calculateInsertIndex(targetCol, targetRow, widgetElement);
+
+    if (targetIndex !== currentIndex && targetIndex >= 0) {
+      // Remove and reinsert at new position
+      widgetElement.remove();
+
+      const targetSibling = widgets[targetIndex];
+      if (targetSibling && targetSibling !== widgetElement) {
+        targetSibling.before(widgetElement);
+      } else {
+        // Append to end
+        this.appendChild(widgetElement);
+      }
+
+      console.debug(`GridLayout: Moved widget from index ${currentIndex} to ${targetIndex}`);
+      this.updateGridStyle();
+    }
+  }
+
+  /**
+   * Calculate where to insert a widget based on target grid position
+   */
+  private calculateInsertIndex(targetCol: number, targetRow: number, excludeElement: HTMLElement): number {
+    const widgets = Array.from(this.querySelectorAll('[data-grid-item-id]'));
+    
+    // For now, use a simple row-major order calculation
+    // Each widget's "position" is approximated by its visual order
+    const targetPosition = targetRow * this.totalColumns + targetCol;
+
+    for (let i = 0; i < widgets.length; i++) {
+      if (widgets[i] === excludeElement) continue;
+
+      // Get the widget's approximate position from its bounding rect
+      const rect = widgets[i].getBoundingClientRect();
+      const gridRect = this.getBoundingClientRect();
+
+      const relX = rect.left - gridRect.left;
+      const relY = rect.top - gridRect.top;
+
+      const widgetCol = Math.floor(relX / (this.minColumnWidth + this.gridGap));
+      const widgetRow = Math.floor(relY / (this.minRowHeight + this.gridGap));
+      const widgetPosition = widgetRow * this.totalColumns + widgetCol;
+
+      if (widgetPosition > targetPosition) {
+        return i;
+      }
+    }
+
+    return widgets.length; // Append to end
+  }
+
+  /**
+   * Update the drop indicator position
+   */
+  private updateDropIndicator(col: number, row: number): void {
+    const cellWidth = this.minColumnWidth;
+    const cellHeight = this.minRowHeight;
+    const gap = this.gridGap;
+
+    // Calculate position in pixels
+    const left = col * (cellWidth + gap);
+    const top = row * (cellHeight + gap);
+
+    // Get the dragged widget's span for indicator size
+    const state = dragDropService.getState();
+    const colSpan = state.colSpan || 1;
+    const rowSpan = state.rowSpan || 1;
+
+    const width = colSpan * cellWidth + (colSpan - 1) * gap;
+    const height = rowSpan * cellHeight + (rowSpan - 1) * gap;
+
+    this.dropIndicatorStyle = `
+      display: block;
+      position: absolute;
+      left: ${left}px;
+      top: ${top}px;
+      width: ${width}px;
+      height: ${height}px;
+      background-color: rgba(0, 120, 212, 0.2);
+      border: 2px dashed rgba(0, 120, 212, 0.5);
+      border-radius: 8px;
+      pointer-events: none;
+      z-index: 50;
+      transition: all 0.15s ease-out;
+    `;
+  }
+
+  /**
+   * Convert pixel position to grid cell coordinates
+   */
+  private pixelToGridCell(x: number, y: number, gridElement: HTMLElement): { col: number; row: number } {
+    const rect = gridElement.getBoundingClientRect();
+
+    // Calculate relative position within grid
+    const relX = x - rect.left;
+    const relY = y - rect.top;
+
+    // Convert to grid cells
+    const cellWidthWithGap = this.minColumnWidth + this.gridGap;
+    const cellHeightWithGap = this.minRowHeight + this.gridGap;
+
+    const col = Math.max(0, Math.min(Math.floor(relX / cellWidthWithGap), this.totalColumns - 1));
+    const row = Math.max(0, Math.floor(relY / cellHeightWithGap));
+
+    return { col, row };
   }
 }

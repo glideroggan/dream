@@ -141,6 +141,7 @@ export const styles = css`
     height: auto; /* Changed from 100% to auto to allow shrinking */
     /* min-height: 100%; removed to allow shrinking */
     overflow: hidden; /* Let child elements handle their own overflow */
+    position: relative; /* Required for absolutely positioned resize handles */
   }
 
   .widget-header {
@@ -652,9 +653,185 @@ export const styles = css`
     background-color: var(--widget-secondary-hover);
   }
   
-  .auto-size-toggle.active {
+.auto-size-toggle.active {
     background-color: var(--widget-primary-color);
     border-color: var(--widget-primary-color);
     color: var(--widget-primary-text);
+  }
+
+  /* ================== DRAG HANDLE STYLES ================== */
+  
+  .drag-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    cursor: grab;
+    opacity: 0.5;
+    transition: opacity 0.2s, transform 0.2s;
+    border-radius: 4px;
+    margin-right: 8px;
+  }
+  
+  .drag-handle:hover {
+    opacity: 1;
+    background-color: var(--widget-secondary-hover, rgba(0, 0, 0, 0.05));
+  }
+  
+  .drag-handle:active {
+    cursor: grabbing;
+    transform: scale(0.95);
+  }
+  
+  .drag-handle-icon {
+    font-size: 14px;
+    color: var(--widget-subtle-text, #999);
+    line-height: 1;
+  }
+  
+  /* Size indicator (read-only display) */
+  .size-indicator {
+    font-size: 11px;
+    color: var(--widget-subtle-text, #999);
+    padding: 2px 6px;
+    background-color: var(--widget-secondary-color, rgba(0, 0, 0, 0.05));
+    border-radius: 4px;
+    margin-right: 8px;
+    font-family: monospace;
+  }
+  
+  /* ================== RESIZE HANDLE STYLES ================== */
+  
+  .resize-handle {
+    position: absolute;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.2s, background-color 0.2s;
+  }
+  
+  /* Show resize handles on hover */
+  .widget-container:hover .resize-handle {
+    opacity: 1;
+  }
+  
+  /* Corner resize handles */
+  .resize-handle-se,
+  .resize-handle-sw,
+  .resize-handle-ne,
+  .resize-handle-nw {
+    width: 16px;
+    height: 16px;
+    background-color: var(--widget-primary-color, #0078d4);
+    border-radius: 50%;
+    border: 2px solid var(--widget-background, #fff);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
+  
+  .resize-handle-se {
+    bottom: -6px;
+    right: -6px;
+    cursor: nwse-resize;
+  }
+  
+  .resize-handle-sw {
+    bottom: -6px;
+    left: -6px;
+    cursor: nesw-resize;
+  }
+  
+  .resize-handle-ne {
+    top: -6px;
+    right: -6px;
+    cursor: nesw-resize;
+  }
+  
+  .resize-handle-nw {
+    top: -6px;
+    left: -6px;
+    cursor: nwse-resize;
+  }
+  
+  /* Edge resize handles */
+  .resize-handle-e,
+  .resize-handle-w {
+    width: 6px;
+    height: calc(100% - 32px);
+    top: 16px;
+    background-color: transparent;
+  }
+  
+  .resize-handle-e:hover,
+  .resize-handle-w:hover {
+    background-color: var(--widget-primary-color, #0078d4);
+    opacity: 0.3;
+  }
+  
+  .resize-handle-e {
+    right: 0;
+    cursor: ew-resize;
+  }
+  
+  .resize-handle-w {
+    left: 0;
+    cursor: ew-resize;
+  }
+  
+  .resize-handle-n,
+  .resize-handle-s {
+    height: 6px;
+    width: calc(100% - 32px);
+    left: 16px;
+    background-color: transparent;
+  }
+  
+  .resize-handle-n:hover,
+  .resize-handle-s:hover {
+    background-color: var(--widget-primary-color, #0078d4);
+    opacity: 0.3;
+  }
+  
+  .resize-handle-n {
+    top: 0;
+    cursor: ns-resize;
+  }
+  
+  .resize-handle-s {
+    bottom: 0;
+    cursor: ns-resize;
+  }
+  
+  /* Resize handle hover states */
+  .resize-handle:hover {
+    opacity: 1 !important;
+    transform: scale(1.2);
+  }
+  
+  /* ================== DRAGGING STATE STYLES ================== */
+  
+  .widget-container.dragging {
+    opacity: 0.7;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    transform: scale(1.02);
+    z-index: 1000;
+  }
+  
+  :host(.widget-dragging) {
+    opacity: 0.5;
+    z-index: 1000;
+    /* Note: Do NOT use pointer-events: none here - it cancels the HTML5 drag operation */
+  }
+  
+  :host(.widget-resizing) {
+    z-index: 1000;
+  }
+  
+  /* Make header draggable */
+  .widget-header {
+    cursor: grab;
+  }
+  
+  .widget-header:active {
+    cursor: grabbing;
   }
 `;

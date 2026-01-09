@@ -9,6 +9,7 @@ import { WidgetSizingManager } from "./widget-wrapper-sizing";
 import { WidgetSettingsManager } from "./widget-wrapper-settings";
 import { DEFAULT_COLUMN_SPAN, DEFAULT_ROW_SPAN, MAX_GRID_COLUMNS, MAX_GRID_ROWS } from "../../constants/grid-constants";
 import { WidgetResizeTracker } from "../../utils/resize-tracker";
+import { dragDropService, ResizeDirection } from "../../services/drag-drop-service";
 
 /**
  * Widget loading states
@@ -48,12 +49,10 @@ export class WidgetWrapper extends FASTElement {
   @attr minColSpan: number = 1;
   @attr minRowSpan: number = 1;
 
-  colSpanChanged(oldValue: number, newValue: number) {
-    console.debug(`Column span changed from ${oldValue} to ${newValue}`);
-    if (this.initialized) {
-      this.sizingManager.changeSpans(newValue, this.rowSpan, true, true);
-    }
-  }
+  // NOTE: colSpanChanged is intentionally removed to prevent infinite loops.
+  // The sizingManager.changeSpans() method handles span updates directly.
+  // Triggering changeSpans from an attribute change callback creates a loop:
+  // colSpan setter -> colSpanChanged -> changeSpans -> colSpan setter -> ...
 
   // Timeout configuration
   @attr({ mode: "fromView" }) warningTimeout: number = 5000; // 5 seconds for warning
@@ -87,6 +86,15 @@ export class WidgetWrapper extends FASTElement {
   autoSizeEnabled: boolean = true;
   
   @attr({ mode: "boolean" }) enableAutoSize: boolean = true;
+
+  // Drag and drop state
+  @observable isDragging: boolean = false;
+  private resizePointerId: number | null = null;
+  private boundPointerMove: ((e: PointerEvent) => void) | null = null;
+  private boundPointerUp: ((e: PointerEvent) => void) | null = null;
+  private boundHandleDragEnd: ((e: DragEvent) => void) | null = null;
+  private boundHandleDragStart: ((e: DragEvent) => void) | null = null;
+  private boundHandleDragEndLocal: ((e: DragEvent) => void) | null = null;
 
   constructor() {
     super();
@@ -152,6 +160,13 @@ export class WidgetWrapper extends FASTElement {
     // Ensure data attributes are consistent - this is critical for grid layout to find the wrapper
     this.setAttribute('data-widget-id', this.widgetId);
     
+    // Make the host element draggable (avoids shadow DOM issues with drag events)
+    this.setAttribute('draggable', 'true');
+    this.boundHandleDragStart = this.handleDragStart.bind(this);
+    this.boundHandleDragEndLocal = this.handleDragEnd.bind(this);
+    this.addEventListener('dragstart', this.boundHandleDragStart);
+    this.addEventListener('dragend', this.boundHandleDragEndLocal);
+    
     // Get widget info from registry
     this.updateWidgetDefinition();
     
@@ -204,6 +219,10 @@ export class WidgetWrapper extends FASTElement {
     this.addEventListener('error', this.eventHandlers.handleChildError);
     this.addEventListener('initialized', this.eventHandlers.handleInitialized);
     this.addEventListener('load-complete', this.eventHandlers.handleInitialized);
+    
+    // Listen for dragend at document level since widget has pointer-events: none during drag
+    this.boundHandleDragEnd = this.handleDocumentDragEnd.bind(this);
+    document.addEventListener('dragend', this.boundHandleDragEnd);
 
     // Also listen for module errors that bubble up from widget-service
     document.addEventListener('widget-module-error', this.eventHandlers.handleModuleError);
@@ -241,6 +260,22 @@ export class WidgetWrapper extends FASTElement {
     this.removeEventListener('initialized', this.eventHandlers.handleInitialized);
     this.removeEventListener('load-complete', this.eventHandlers.handleInitialized);
     document.removeEventListener('widget-module-error', this.eventHandlers.handleModuleError);
+    
+    // Remove document-level drag end listener
+    if (this.boundHandleDragEnd) {
+      document.removeEventListener('dragend', this.boundHandleDragEnd);
+      this.boundHandleDragEnd = null;
+    }
+    
+    // Remove host-level drag listeners
+    if (this.boundHandleDragStart) {
+      this.removeEventListener('dragstart', this.boundHandleDragStart);
+      this.boundHandleDragStart = null;
+    }
+    if (this.boundHandleDragEndLocal) {
+      this.removeEventListener('dragend', this.boundHandleDragEndLocal);
+      this.boundHandleDragEndLocal = null;
+    }
 
     this.removeEventListener('content-change', this.sizingManager.handleContentChange.bind(this.sizingManager));
     
@@ -420,10 +455,239 @@ export class WidgetWrapper extends FASTElement {
     this.sizingManager.decreaseRowSpan();
   }
 
-  /**
+/**
    * Toggle auto-sizing behavior - delegate to sizing manager
    */
   // toggleAutoSize(): void {
   //   this.sizingManager.toggleAutoSize();
   // }
+
+  // ================== DRAG AND DROP HANDLERS ==================
+
+  /**
+   * Handle drag start for widget move (HTML5 Drag and Drop)
+   */
+  handleDragStart(event: DragEvent): void {
+    if (!event.dataTransfer) return;
+
+    this.isDragging = true;
+    
+    // Set drag data
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', this.widgetId);
+    event.dataTransfer.setData('application/x-widget-id', this.widgetId);
+    
+    // Find grid layout parent
+    const gridElement = this.closest('grid-layout') as HTMLElement;
+    const widgetElement = this.closest('[data-grid-item-id]') as HTMLElement || this;
+    
+    // Ensure we have numeric values for spans
+    const currentColSpan = Number(this.colSpan) || 1;
+    const currentRowSpan = Number(this.rowSpan) || 1;
+    
+    if (gridElement) {
+      dragDropService.startMove(
+        this.widgetId,
+        widgetElement,
+        gridElement,
+        event.clientX,
+        event.clientY,
+        0, // startCol - will be calculated from current position
+        0, // startRow - will be calculated from current position
+        currentColSpan,
+        currentRowSpan
+      );
+    }
+
+    // Add dragging class for visual feedback - add to both this element and parent
+    // Use requestAnimationFrame to delay the visual change until after the drag has started
+    // This prevents the browser from cancelling the drag or failing to create the ghost image
+    // due to immediate DOM/style changes during the dragstart event
+    requestAnimationFrame(() => {
+      this.classList.add('widget-dragging');
+      widgetElement?.classList.add('widget-dragging');
+    });
+    
+
+    
+    console.info(`Widget ${this.widgetId}: Drag started with spans ${currentColSpan}x${currentRowSpan}`);
+  }
+
+  /**
+   * Handle drag end for widget move
+   */
+  handleDragEnd(event: DragEvent): void {
+    this.cleanupDragState();
+  }
+
+  /**
+   * Handle drag end at document level (fires even when widget has pointer-events: none)
+   */
+  handleDocumentDragEnd(event: DragEvent): void {
+    // Only clean up if this widget is currently dragging
+    if (this.isDragging) {
+      this.cleanupDragState();
+    }
+  }
+
+  /**
+   * Shared cleanup logic for drag end
+   */
+  private cleanupDragState(): void {
+    if (!this.isDragging) return;
+    
+    this.isDragging = false;
+    
+    // Remove dragging class from both this element and parent
+    this.classList.remove('widget-dragging');
+    const widgetElement = this.closest('[data-grid-item-id]') as HTMLElement || this;
+    widgetElement?.classList.remove('widget-dragging');
+    
+    dragDropService.endDrag();
+    
+    console.info(`Widget ${this.widgetId}: Drag ended`);
+  }
+
+  /**
+   * Handle resize start (Pointer Events for precise control)
+   */
+  handleResizeStart(event: PointerEvent, direction: ResizeDirection): void {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // Capture pointer for this element
+    const target = event.target as HTMLElement;
+    target.setPointerCapture(event.pointerId);
+    this.resizePointerId = event.pointerId;
+    
+    this.isDragging = true;
+    
+    // Find grid layout parent
+    const gridElement = this.closest('grid-layout') as HTMLElement;
+    const widgetElement = this.closest('[data-grid-item-id]') as HTMLElement || this;
+    
+    // Ensure we have numeric values for spans
+    const currentColSpan = Number(this.colSpan) || 1;
+    const currentRowSpan = Number(this.rowSpan) || 1;
+    
+    console.debug(`Widget ${this.widgetId}: Starting resize with spans ${currentColSpan}x${currentRowSpan}`);
+    
+    if (gridElement) {
+      dragDropService.startResize(
+        this.widgetId,
+        widgetElement,
+        gridElement,
+        direction,
+        event.clientX,
+        event.clientY,
+        currentColSpan,
+        currentRowSpan
+      );
+    }
+    
+    // Add resize class for visual feedback
+    widgetElement?.classList.add('widget-resizing');
+    document.body.style.cursor = this.getCursorForDirection(direction);
+    
+    // Set up global pointer move/up listeners
+    this.boundPointerMove = this.handleResizeMove.bind(this);
+    this.boundPointerUp = this.handleResizeEnd.bind(this);
+    
+    document.addEventListener('pointermove', this.boundPointerMove);
+    document.addEventListener('pointerup', this.boundPointerUp);
+    document.addEventListener('pointercancel', this.boundPointerUp);
+    
+    console.debug(`Widget ${this.widgetId}: Resize started (${direction})`);
+  }
+
+  /**
+   * Handle resize move
+   */
+  private handleResizeMove(event: PointerEvent): void {
+    if (!dragDropService.isDragging()) return;
+    
+    event.preventDefault();
+    
+    // Update position in service
+    dragDropService.updatePosition(event.clientX, event.clientY);
+    
+    // Get grid element and calculate new spans
+    const gridElement = this.closest('grid-layout') as HTMLElement;
+    if (gridElement) {
+      const cellInfo = dragDropService.getGridCellInfo(gridElement);
+      const { newColSpan, newRowSpan } = dragDropService.getNewSpans(cellInfo);
+      
+      console.debug(`Resize move: calculated spans ${newColSpan}x${newRowSpan}, cell size ${cellInfo.cellWidth}x${cellInfo.cellHeight}`);
+      
+      // Clamp to valid range
+      const clampedColSpan = Math.max(this.minColSpan, Math.min(newColSpan, this.maxColSpan));
+      const clampedRowSpan = Math.max(this.minRowSpan, Math.min(newRowSpan, this.maxRowSpan));
+      
+      // Update spans if changed (visual preview during drag)
+      if (clampedColSpan !== this.colSpan || clampedRowSpan !== this.rowSpan) {
+        console.debug(`Resize: updating spans from ${this.colSpan}x${this.rowSpan} to ${clampedColSpan}x${clampedRowSpan}`);
+        // Update spans for visual feedback
+        this.sizingManager.changeSpans(clampedColSpan, clampedRowSpan, true, false);
+      }
+    }
+  }
+
+  /**
+   * Handle resize end
+   */
+  private handleResizeEnd(event: PointerEvent): void {
+    if (this.resizePointerId !== null) {
+      const target = event.target as HTMLElement;
+      try {
+        target.releasePointerCapture(this.resizePointerId);
+      } catch (e) {
+        // Ignore if pointer capture was already released
+      }
+      this.resizePointerId = null;
+    }
+    
+    this.isDragging = false;
+    
+    const widgetElement = this.closest('[data-grid-item-id]') as HTMLElement || this;
+    widgetElement?.classList.remove('widget-resizing');
+    document.body.style.cursor = '';
+    
+    // Remove global listeners
+    if (this.boundPointerMove) {
+      document.removeEventListener('pointermove', this.boundPointerMove);
+      this.boundPointerMove = null;
+    }
+    if (this.boundPointerUp) {
+      document.removeEventListener('pointerup', this.boundPointerUp);
+      document.removeEventListener('pointercancel', this.boundPointerUp);
+      this.boundPointerUp = null;
+    }
+    
+    // Finalize the resize
+    const result = dragDropService.endDrag();
+    
+    // Save dimensions if this was a successful resize
+    if (result.success && this.saveDimensions) {
+      this.settingsManager.saveDimensionsToSettings(this.colSpan, this.rowSpan);
+    }
+    
+    console.debug(`Widget ${this.widgetId}: Resize ended - final size ${this.colSpan}x${this.rowSpan}`);
+  }
+
+  /**
+   * Get appropriate cursor for resize direction
+   */
+  private getCursorForDirection(direction: ResizeDirection): string {
+    const cursorMap: Record<ResizeDirection, string> = {
+      'n': 'ns-resize',
+      's': 'ns-resize',
+      'e': 'ew-resize',
+      'w': 'ew-resize',
+      'ne': 'nesw-resize',
+      'sw': 'nesw-resize',
+      'nw': 'nwse-resize',
+      'se': 'nwse-resize',
+    };
+    return cursorMap[direction] || 'default';
+  }
 }
