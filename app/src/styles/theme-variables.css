@@ -1,10 +1,10 @@
 /* Root theme variables */
 :root {
-    /* Base theme colors */
-    --primary-color: #384959;
-    --secondary-color: #6A89A7;
-    --accent-color: #88BDF2;
-    --background-color: #F8FAFD;
+    /* Base theme colors - Modern/Friendly with professional feel */
+    --primary-color: #1E3A4C;           /* Deep teal-slate - trustworthy, grounded */
+    --secondary-color: #5A7C8A;         /* Muted teal-gray - professional */
+    --accent-color: #2D9C8F;            /* Sage teal - calm, modern, approachable */
+    --background-color: #F7F9F7;        /* Warm off-white with slight green tint */
 
     /* ============ SPACING (4px base scale) ============ */
     --space-xs: 4px;
@@ -99,22 +99,22 @@
     --link-color: var(--accent-color);
     --highlight-color: var(--accent-color);
     --background-card: var(--background-color);
-    --hover-bg: rgba(136, 189, 242, 0.1);
+    --hover-bg: rgba(45, 156, 143, 0.08);   /* Teal-tinted hover */
     --text-light: #ffffff;
-    --border-color: var(--secondary-color);
+    --border-color: #D1DBD9;                 /* Softer border */
 
-    /* Financial indicators */
-    --success-color: #2ecc71;
-    --warning-color: #f39c12;
-    --error-color: var(--notification-badge-bg);
+    /* Financial indicators - refined for cohesion */
+    --success-color: #10B981;                /* Emerald - modern green */
+    --warning-color: #F59E0B;                /* Amber */
+    --error-color: #EF4444;                  /* Red */
 
-    /* Badge colors */
-    --widget-color: #388e3c;
-    --widget-bg: #e8f5e9;
-    --workflow-color: #8f4700;
-    --workflow-bg: #fff1e6;
-    --theme-color: #0d47a1;
-    --theme-bg: #e3f2fd;
+    /* Badge colors - updated to match palette */
+    --widget-color: #10B981;
+    --widget-bg: #D1FAE5;
+    --workflow-color: #D97706;
+    --workflow-bg: #FEF3C7;
+    --theme-color: #2D9C8F;
+    --theme-bg: #CCFBF1;
 
     /* Notification badges */
     --notification-badge-bg: #e74c3c;
@@ -135,11 +135,11 @@
 
   /* Dark theme colors */
   .dark-theme {
-    /* Base theme colors - inverted */
-    --primary-color: #1e2e3e;
-    --secondary-color: #4a6885;
-    --accent-color: #5a94d8;
-    --background-color: #1a222e;
+    /* Base theme colors - Modern/Friendly dark variant */
+    --primary-color: #0F1F2A;               /* Deep dark teal-slate */
+    --secondary-color: #3D5A68;             /* Muted teal-gray */
+    --accent-color: #3DB9A9;                /* Brighter sage teal for dark mode */
+    --background-color: #0D1A1F;            /* Deep teal-black */
     
     /* Dark shadows */
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
@@ -148,39 +148,39 @@
     --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.35), 0 10px 10px rgba(0, 0, 0, 0.25);
     
     /* Dark surface colors */
-    --surface-color: #243546;
-    --text-color: #e8eef4;
-    --text-muted: #9cb3cc;
-    --label-color: #c8d8e8;
+    --surface-color: #162832;               /* Slightly lighter than background */
+    --text-color: #E8F0ED;                  /* Warm off-white */
+    --text-muted: #9CB3B8;                  /* Muted teal-gray text */
+    --label-color: #C8D8DC;
 
     /* Dark widget colors */
     --widget-background: var(--surface-color);
-    --widget-divider-color: #3a5675;
+    --widget-divider-color: #2A4550;
     --widget-text-color: var(--text-color);
-    --widget-text-secondary: #9cb3cc;
+    --widget-text-secondary: #9CB3B8;
     --widget-primary-color: var(--accent-color);
-    --widget-secondary-color: #1e2e3e;
+    --widget-secondary-color: #1A2F38;
     --widget-secondary-hover: rgba(255, 255, 255, 0.05);
-    --widget-success-color: var(--success-color);
-    --widget-success-light: rgba(74, 222, 128, 0.15);
-    --widget-warning-color: var(--warning-color);
+    --widget-success-color: #34D399;        /* Bright emerald */
+    --widget-success-light: rgba(52, 211, 153, 0.15);
+    --widget-warning-color: #FBBF24;        /* Bright amber */
     --widget-warning-light: rgba(251, 191, 36, 0.15);
-    --widget-error-color: #f87171;
+    --widget-error-color: #F87171;          /* Bright red */
     --widget-error-light: rgba(248, 113, 113, 0.15);
 
     /* Semantic color variants */
-    --primary-text-color: #e8eef4;
-    --secondary-text-color: #9cb3cc;
-    --header-bg: #101820;
-    --footer-bg: #101820;
-    --sidebar-bg: #101820;
-    --divider-color: #3a5675;
-    --inactive-color: #567697;
-    --button-bg: #5a94d8;
-    --link-color: #88BDF2;
-    --highlight-color: #88BDF2;
-    --background-card: #243546;
-    --hover-bg: rgba(136, 189, 242, 0.2);
+    --primary-text-color: #E8F0ED;
+    --secondary-text-color: #9CB3B8;
+    --header-bg: #0A1418;
+    --footer-bg: #0A1418;
+    --sidebar-bg: #0A1418;
+    --divider-color: #2A4550;
+    --inactive-color: #4A6670;
+    --button-bg: var(--accent-color);
+    --link-color: #5DD3C5;                  /* Lighter teal for links */
+    --highlight-color: #5DD3C5;
+    --background-card: #162832;
+    --hover-bg: rgba(61, 185, 169, 0.12);   /* Teal-tinted hover */
     --text-light: #e7ecf1;
     --border-color: #3a5675;
 
@@ -242,49 +242,55 @@
     }
 
     body:not(.light-theme-forced):not(.dark-theme) {
-      /* Apply dark theme automatically */
-      --primary-color: #1e2e3e;
-      --secondary-color: #4a6885;
-      --accent-color: #5a94d8;
-      --background-color: #1a222e;
-      --primary-text-color: #e0e6ed;
-      --secondary-text-color: #a7c0db;
-      --header-bg: #101820;
-      --footer-bg: #101820;
-      --sidebar-bg: #101820;
-      --divider-color: #3a5675;
-      --inactive-color: #567697;
-      --button-bg: #5a94d8;
-      --link-color: #88BDF2;
-      --highlight-color: #88BDF2;
-      --background-card: #243546;
-      --hover-bg: rgba(136, 189, 242, 0.2);
+      /* Apply dark theme automatically - Modern/Friendly teal palette */
+      --primary-color: #0F1F2A;
+      --secondary-color: #3D5A68;
+      --accent-color: #3DB9A9;
+      --background-color: #0D1A1F;
+      --primary-text-color: #E8F0ED;
+      --secondary-text-color: #9CB3B8;
+      --header-bg: #0A1418;
+      --footer-bg: #0A1418;
+      --sidebar-bg: #0A1418;
+      --divider-color: #2A4550;
+      --inactive-color: #4A6670;
+      --button-bg: #3DB9A9;
+      --link-color: #5DD3C5;
+      --highlight-color: #5DD3C5;
+      --background-card: #162832;
+      --hover-bg: rgba(61, 185, 169, 0.12);
       --text-light: #e7ecf1;
-      --border-color: #3a5675;
+      --border-color: #2A4550;
       --widget-color: #4caf50;
       --widget-bg: #1a2e1c;
       --workflow-color: #ffb74d;
       --workflow-bg: #2e251a;
-      --theme-color: #64b5f6;
-      --theme-bg: #1a2a3e;
+      --theme-color: #3DB9A9;
+      --theme-bg: #0F2A28;
 
       /* Widget colors for auto dark theme */
-      --surface-color: #243546;
-      --text-color: #e8eef4;
-      --text-muted: #9cb3cc;
-      --widget-background: #243546;
-      --widget-divider-color: #3a5675;
-      --widget-text-color: #e8eef4;
-      --widget-text-secondary: #9cb3cc;
-      --widget-primary-color: #5a94d8;
-      --widget-secondary-color: #1e2e3e;
+      --surface-color: #162832;
+      --text-color: #E8F0ED;
+      --text-muted: #9CB3B8;
+      --label-color: #C8D8DC;
+      --widget-background: #162832;
+      --widget-divider-color: #2A4550;
+      --widget-text-color: #E8F0ED;
+      --widget-text-secondary: #9CB3B8;
+      --widget-primary-color: #3DB9A9;
+      --widget-secondary-color: #1A2F38;
       --widget-secondary-hover: rgba(255, 255, 255, 0.05);
-      --widget-success-color: #4ade80;
-      --widget-success-light: rgba(74, 222, 128, 0.15);
-      --widget-warning-color: #fbbf24;
+      --widget-success-color: #34D399;
+      --widget-success-light: rgba(52, 211, 153, 0.15);
+      --widget-warning-color: #FBBF24;
       --widget-warning-light: rgba(251, 191, 36, 0.15);
-      --widget-error-color: #f87171;
+      --widget-error-color: #F87171;
       --widget-error-light: rgba(248, 113, 113, 0.15);
+
+      /* Financial indicators for auto dark theme */
+      --success-color: #4ade80;
+      --warning-color: #fbbf24;
+      --error-color: #f87171;
 
       /* Badge color variables for auto dark theme */
       --badge-text: #ffffff;
@@ -320,31 +326,31 @@
     background-color: #a8a8a8;
   }
 
-  /* Dark theme scrollbars */
+  /* Dark theme scrollbars - teal palette */
   .dark-theme::-webkit-scrollbar-track {
-    background-color: #1a222e;
+    background-color: #0D1A1F;
   }
 
   .dark-theme::-webkit-scrollbar-thumb {
-    background-color: #3a5675;
+    background-color: #2A4550;
   }
 
   .dark-theme::-webkit-scrollbar-thumb:hover {
-    background-color: #4a6885;
+    background-color: #3D5A68;
   }
 
-  /* System preference dark scrollbars */
+  /* System preference dark scrollbars - teal palette */
   @media (prefers-color-scheme: dark) {
     body:not(.light-theme-forced)::-webkit-scrollbar-track {
-      background-color: #1a222e;
+      background-color: #0D1A1F;
     }
 
     body:not(.light-theme-forced)::-webkit-scrollbar-thumb {
-      background-color: #3a5675;
+      background-color: #2A4550;
     }
 
     body:not(.light-theme-forced)::-webkit-scrollbar-thumb:hover {
-      background-color: #4a6885;
+      background-color: #3D5A68;
     }
   }
 
@@ -370,14 +376,14 @@
   }
 
   .dark-theme * {
-    scrollbar-color: #3a5675 #1a222e !important;
-    /* dark theme scrollbars */
+    scrollbar-color: #2A4550 #0D1A1F !important;
+    /* dark theme scrollbars - teal palette */
   }
 
   @media (prefers-color-scheme: dark) {
     body:not(.light-theme-forced) * {
-      scrollbar-color: #3a5675 #1a222e !important;
-      /* system dark scrollbars */
+      scrollbar-color: #2A4550 #0D1A1F !important;
+      /* system dark scrollbars - teal palette */
     }
   }
 
@@ -424,17 +430,17 @@
     display: block;
   }
 
-  /* Dark theme checkboxes */
+  /* Dark theme checkboxes - teal palette */
   .dark-theme input[type="checkbox"] {
-    background-color: #243546;
-    border-color: #3a5675;
+    background-color: #162832;
+    border-color: #2A4550;
   }
 
-  /* System preference dark checkboxes */
+  /* System preference dark checkboxes - teal palette */
   @media (prefers-color-scheme: dark) {
     body:not(.light-theme-forced) input[type="checkbox"] {
-      background-color: #243546;
-      border-color: #3a5675;
+      background-color: #162832;
+      border-color: #2A4550;
     }
   }
 
