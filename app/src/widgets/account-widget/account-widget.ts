@@ -76,28 +76,14 @@ const template = html<AccountWidget>/*html*/ `
 
 const styles = css`
   .account-widget {
-    /* Premium gradient background */
-    background: var(--bg-gradient-widget, var(--widget-background, #ffffff));
+    background: transparent;
     color: var(--widget-text-color, #333333);
     border-radius: inherit;
     padding: 0;
     
-    /* Elevation 2: widget containers */
-    box-shadow: var(--elevation-2, 0 2px 4px rgba(0, 0, 0, 0.1));
-    border: 1px solid rgba(30, 58, 76, 0.08);
-    
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    
-    /* Smooth hover lift */
-    transition: box-shadow var(--duration-normal, 180ms) var(--easing-default, ease),
-                transform var(--duration-normal, 180ms) var(--easing-default, ease);
-  }
-  
-  .account-widget:hover {
-    box-shadow: var(--elevation-2-hover, 0 4px 12px rgba(0, 0, 0, 0.15));
-    transform: translateY(-2px);
   }
   
   .widget-action-bar {

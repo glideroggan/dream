@@ -10,21 +10,26 @@ export const styles = css`
     border-radius: 12px;
     overflow: hidden;
     box-sizing: border-box;
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    transition: box-shadow var(--duration-normal, 180ms) var(--easing-default, ease),
+                transform var(--duration-normal, 180ms) var(--easing-default, ease);
     
-    /* Widget specific variables */
-    --widget-background: #ffffff; 
-    --widget-header-background: linear-gradient(to bottom, #fafafa, #f5f5f5);
-    --widget-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.05);
-    --widget-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.12), 0 8px 24px rgba(0, 0, 0, 0.08);
+    /* Widget specific variables - use theme elevation system */
+    --widget-background: var(--background-color, #ffffff); 
+    --widget-header-background: linear-gradient(
+      to bottom, 
+      rgba(247, 249, 247, 0.8) 0%, 
+      rgba(242, 246, 244, 0.4) 100%
+    );
+    --widget-shadow: var(--elevation-2, 0 2px 8px rgba(30, 58, 76, 0.08), 0 4px 16px rgba(30, 58, 76, 0.04));
+    --widget-shadow-hover: var(--elevation-2-hover, 0 4px 12px rgba(30, 58, 76, 0.12), 0 8px 24px rgba(30, 58, 76, 0.06));
     
     /* Text colors - inherit from global theme */
     --widget-text-color: var(--primary-text-color, #333);
     --widget-header-text-color: var(--secondary-text-color, #666);
     --widget-subtle-text: var(--inactive-color, #888);
     
-    /* Borders and dividers */
-    --widget-border-color: var(--border-color, rgba(0,0,0,0.06));
+    /* Borders and dividers - use teal-tinted borders */
+    --widget-border-color: var(--border-color, rgba(30, 58, 76, 0.08));
     --widget-border-radius: 12px;
     
     /* Primary action colors */
@@ -56,26 +61,39 @@ export const styles = css`
   
   :host(:hover) {
     box-shadow: var(--widget-shadow-hover);
+    transform: translateY(-2px);
   }
 
   /* Dark theme support */
   :host-context(body.dark-theme) {
-    --widget-background: #243546;
-    --widget-header-background: #1e2e3e;
-    --widget-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --widget-background: var(--background-color, #243546);
+    --widget-header-background: linear-gradient(
+      to bottom,
+      rgba(30, 46, 62, 0.9) 0%,
+      rgba(36, 53, 70, 0.6) 100%
+    );
+    --widget-shadow: var(--elevation-2, 0 2px 8px rgba(0, 0, 0, 0.3));
+    --widget-shadow-hover: var(--elevation-2-hover, 0 4px 16px rgba(0, 0, 0, 0.4));
     --widget-secondary-color: #2c3e50;
     --widget-secondary-hover: #34495e;
     --widget-error-light: rgba(231, 76, 60, 0.2);
+    --widget-border-color: rgba(255, 255, 255, 0.08);
   }
 
   @media (prefers-color-scheme: dark) {
     :host-context(body:not(.light-theme-forced):not(.dark-theme)) {
-      --widget-background: #243546;
-      --widget-header-background: #1e2e3e;
-      --widget-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      --widget-background: var(--background-color, #243546);
+      --widget-header-background: linear-gradient(
+        to bottom,
+        rgba(30, 46, 62, 0.9) 0%,
+        rgba(36, 53, 70, 0.6) 100%
+      );
+      --widget-shadow: var(--elevation-2, 0 2px 8px rgba(0, 0, 0, 0.3));
+      --widget-shadow-hover: var(--elevation-2-hover, 0 4px 16px rgba(0, 0, 0, 0.4));
       --widget-secondary-color: #2c3e50;
       --widget-secondary-hover: #34495e;
       --widget-error-light: rgba(231, 76, 60, 0.2);
+      --widget-border-color: rgba(255, 255, 255, 0.08);
     }
   }
 
@@ -104,6 +122,9 @@ export const styles = css`
     z-index: 10;
     user-select: none;
     cursor: grab;
+    
+    /* Subtle 3D border effect */
+    box-shadow: var(--border-3d-shadow, 0 1px 0 rgba(255, 255, 255, 0.5));
   }
   
   .widget-header:active {

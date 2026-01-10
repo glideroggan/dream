@@ -79,28 +79,14 @@ const styles = css`
   /* Ensure welcome widget content doesn't block widget header controls */
   .welcome-widget {
     text-align: center;
-    // background: var(--background-color, #fff);
-    border-radius: 8px;
+    background: transparent;
     padding: 20px;
-    
-    /* Elevation 2: widget containers */
-    box-shadow: var(--elevation-2, 0 2px 8px rgba(0, 0, 0, 0.1));
-    border: 1px solid rgba(30, 58, 76, 0.08);
     
     flex: 1;
     display: flex;
     flex-direction: column;
     position: relative;
     z-index: 1; /* Lower z-index than header controls */
-    
-    /* Smooth hover lift */
-    transition: box-shadow var(--duration-normal, 180ms) var(--easing-default, ease),
-                transform var(--duration-normal, 180ms) var(--easing-default, ease);
-  }
-  
-  .welcome-widget:hover {
-    box-shadow: var(--elevation-2-hover, 0 4px 12px rgba(0, 0, 0, 0.15));
-    transform: translateY(-2px);
   }
   
   h2 {
@@ -162,8 +148,8 @@ const styles = css`
     flex: 1;
     min-height: 250px; /* Ensure minimum height for content */
     
-    /* Subtle panel gradient */
-    background: var(--bg-gradient-panel, linear-gradient(180deg, rgba(247, 249, 247, 0.3) 0%, rgba(242, 246, 244, 0.1) 100%));
+    /* Very subtle panel background */
+    background: rgba(247, 249, 247, 0.15);
     border-radius: 8px;
     margin-top: 8px;
   }

@@ -147,24 +147,15 @@ export const styles = css`
     padding: 12px 16px;
     cursor: pointer;
     
-    /* Subtle gradient background */
-    background: linear-gradient(
-      135deg,
-      var(--background-light, rgba(247, 249, 247, 0.5)) 0%,
-      rgba(242, 246, 244, 0.3) 100%
-    );
+    /* Very subtle background - almost transparent */
+    background: rgba(247, 249, 247, 0.3);
     
-    transition: all var(--duration-fast, 120ms) var(--easing-default, ease);
+    transition: background var(--duration-fast, 120ms) var(--easing-default, ease);
     align-items: center;
   }
   
   .account-header:hover {
-    /* Teal-tinted hover gradient */
-    background: linear-gradient(
-      135deg,
-      var(--hover-bg, rgba(45, 156, 143, 0.08)) 0%,
-      rgba(45, 156, 143, 0.04) 100%
-    );
+    background: var(--hover-bg, rgba(45, 156, 143, 0.06));
   }
   
   .account-info {
