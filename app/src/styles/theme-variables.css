@@ -6,6 +6,72 @@
     --accent-color: #88BDF2;
     --background-color: #F8FAFD;
 
+    /* ============ SPACING (4px base scale) ============ */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 48px;
+    
+    /* ============ TYPOGRAPHY ============ */
+    --font-size-xs: 12px;
+    --font-size-sm: 14px;
+    --font-size-base: 16px;
+    --font-size-lg: 18px;
+    --font-size-xl: 24px;
+    --font-size-2xl: 32px;
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    --line-height-tight: 1.25;
+    --line-height-normal: 1.5;
+    --line-height-relaxed: 1.75;
+    
+    /* ============ BORDER RADIUS ============ */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-full: 9999px;
+    
+    /* ============ SHADOWS ============ */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1), 0 10px 10px rgba(0, 0, 0, 0.04);
+    
+    /* ============ MOTION ============ */
+    --duration-fast: 120ms;
+    --duration-normal: 180ms;
+    --duration-slow: 240ms;
+    --duration-slower: 300ms;
+    --easing-default: cubic-bezier(0.4, 0, 0.2, 1);
+    --easing-in: cubic-bezier(0.4, 0, 1, 1);
+    --easing-out: cubic-bezier(0, 0, 0.2, 1);
+    
+    /* ============ Z-INDEX SCALE ============ */
+    --z-base: 0;
+    --z-dropdown: 100;
+    --z-sticky: 200;
+    --z-overlay: 300;
+    --z-modal: 400;
+    --z-toast: 500;
+    --z-tooltip: 600;
+    
+    /* ============ FOCUS RING ============ */
+    --focus-ring-color: var(--accent-color);
+    --focus-ring-width: 2px;
+    --focus-ring-offset: 2px;
+    --focus-ring: 0 0 0 var(--focus-ring-offset) var(--background-color),
+                  0 0 0 calc(var(--focus-ring-offset) + var(--focus-ring-width)) var(--focus-ring-color);
+
+    /* ============ SURFACE COLORS ============ */
+    --surface-color: #ffffff;
+    --text-color: var(--primary-text-color);
+    --text-muted: #666666;
+    --label-color: #4a5568;
+
     /* Semantic color variants */
     --primary-text-color: var(--primary-color);
     --secondary-text-color: var(--secondary-color);
@@ -59,10 +125,22 @@
     --secondary-color: #4a6885;
     --accent-color: #5a94d8;
     --background-color: #1a222e;
+    
+    /* Dark shadows */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3), 0 4px 6px rgba(0, 0, 0, 0.2);
+    --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.35), 0 10px 10px rgba(0, 0, 0, 0.25);
+    
+    /* Dark surface colors */
+    --surface-color: #243546;
+    --text-color: #e8eef4;
+    --text-muted: #9cb3cc;
+    --label-color: #c8d8e8;
 
     /* Semantic color variants */
-    --primary-text-color: #e0e6ed;
-    --secondary-text-color: #a7c0db;
+    --primary-text-color: #e8eef4;
+    --secondary-text-color: #9cb3cc;
     --header-bg: #101820;
     --footer-bg: #101820;
     --sidebar-bg: #101820;
@@ -76,10 +154,10 @@
     --text-light: #e7ecf1;
     --border-color: #3a5675;
 
-    /* Financial indicators for dark theme */
-    --success-color: #27ae60;
-    --warning-color: #e67e22;
-    /* error-color inherits from notification-badge-bg */
+    /* Financial indicators for dark theme - brighter for contrast */
+    --success-color: #4ade80;
+    --warning-color: #fbbf24;
+    --error-color: #f87171;
 
     /* Badge colors for dark theme */
     --widget-color: #4caf50;

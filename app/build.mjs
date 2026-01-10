@@ -44,6 +44,19 @@ const context = await build.context({
         'src/pages/dashboard-page.ts',
         'src/pages/investments-page.ts',
         'src/pages/savings-page.ts',
+        'src/pages/primitives-test-page.ts',
+        // primitives
+        'src/primitives/index.ts',
+        'src/primitives/button/button.ts',
+        'src/primitives/input/input.ts',
+        'src/primitives/select/select.ts',
+        'src/primitives/card/card.ts',
+        'src/primitives/checkbox-primitive.ts',
+        'src/primitives/toast/toast.ts',
+        'src/primitives/toast/toast-service.ts',
+        'src/primitives/skeleton/skeleton.ts',
+        'src/primitives/tooltip/tooltip.ts',
+        'src/primitives/tokens/design-tokens.css.ts',
         // example widgets
         'src/widgets/error-widget.ts',
         'src/widgets/slow-widget.ts',
@@ -83,7 +96,9 @@ const context = await build.context({
         // workflows
         "@workflows/*",
         // pages
-        "@pages/dashboard", "@pages/investments", "@pages/savings",
+        "@pages/dashboard", "@pages/investments", "@pages/savings", "@pages/primitives",
+        // primitives
+        "@primitives", "@primitives/*",
         "@widgets/error", "@widgets/fast", "@widgets/slow",
     ],
     define: {

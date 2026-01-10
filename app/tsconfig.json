@@ -42,6 +42,18 @@
       "@workflows/transfer": ["./dist/workflows/transfer/transfer-workflow.d.ts"],
       "@workflows/swish-workflow": ["./dist/workflows/swish-workflow.d.ts"],
       "@workflows/add-contact-workflow": ["./dist/workflows/add-contact-workflow.d.ts"],
+
+      "@primitives": ["./src/primitives/index.ts"],
+      "@primitives/button": ["./src/primitives/button/button.ts"],
+      "@primitives/input": ["./src/primitives/input/input.ts"],
+      "@primitives/select": ["./src/primitives/select/select.ts"],
+      "@primitives/card": ["./src/primitives/card/card.ts"],
+      "@primitives/checkbox": ["./src/primitives/checkbox-primitive.ts"],
+      "@primitives/toast": ["./src/primitives/toast/toast.ts"],
+      "@primitives/toast-service": ["./src/primitives/toast/toast-service.ts"],
+      "@primitives/skeleton": ["./src/primitives/skeleton/skeleton.ts"],
+      "@primitives/tooltip": ["./src/primitives/tooltip/tooltip.ts"],
+      "@primitives/tokens": ["./src/primitives/tokens/design-tokens.css.ts"]
     }
   },
   "include": ["src"],

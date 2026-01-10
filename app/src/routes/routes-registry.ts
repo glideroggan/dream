@@ -24,6 +24,12 @@ export const appRoutes: Route[] = [
     title: 'Investments - Wallet Banking',
     elementName: 'investments-page',
     modulePath: '@pages/investments'
+  },
+  {
+    path: 'primitives',
+    title: 'UI Primitives - Design System',
+    elementName: 'primitives-test-page',
+    modulePath: '@pages/primitives'
   }
 ];
 
@@ -33,7 +39,8 @@ export const appRoutes: Route[] = [
 export const routeIcons: Record<string, string> = {
   'home': '📊',
   'savings': '💰',
-  'investments': '📈'
+  'investments': '📈',
+  'primitives': '🎨'
 };
 
 /**
@@ -55,6 +62,10 @@ export const routeMetadata: Record<string, {
   'investments': {
     keywords: ['investments', 'stocks', 'funds', 'portfolio', 'invest'],
     description: 'Track and manage your investment portfolio'
+  },
+  'primitives': {
+    keywords: ['primitives', 'components', 'design', 'ui', 'ux', 'test', 'buttons', 'inputs'],
+    description: 'Visual test page for UI primitive components'
   }
 };
 
