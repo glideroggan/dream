@@ -1,5 +1,6 @@
 import { customElement, observable, attr, Observable, FASTElement } from "@microsoft/fast-element";
 import { WorkflowBase } from "../workflow-base";
+import "@primitives/button";
 import { PaymentContact } from "../../repositories/models/payment-contact";
 import { generateUniqueId } from "../../utilities/id-generator";
 import { paymentContactsService } from "../../services/payment-contacts-service";

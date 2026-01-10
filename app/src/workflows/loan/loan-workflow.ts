@@ -3,6 +3,7 @@ import { WorkflowBase, WorkflowResult } from "../workflow-base";
 import { loanService } from "../../services/loan-service";
 import { repositoryService } from "../../services/repository-service";
 import { WorkflowIds } from "../workflow-registry";
+import "@primitives/button";
 
 // Include template and styles
 import { template } from "./loan-workflow.template";

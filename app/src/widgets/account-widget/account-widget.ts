@@ -1,5 +1,5 @@
 import { customElement, html, css, observable, when } from "@microsoft/fast-element";
-import "@primitives/button/button.js";
+import "@primitives/button";
 import { repositoryService } from "../../services/repository-service";
 import { WorkflowIds } from "../../workflows/workflow-registry";
 import "./account-lister/account-list-component";

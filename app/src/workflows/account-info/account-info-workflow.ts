@@ -4,6 +4,7 @@ import {
   attr,
 } from '@microsoft/fast-element'
 import { WorkflowBase } from '../workflow-base'
+import "@primitives/button"
 import { repositoryService } from '../../services/repository-service'
 import { Account } from '../../repositories/models/account-models'
 import { template } from './account-info-workflow.template'

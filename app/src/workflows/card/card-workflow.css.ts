@@ -237,25 +237,10 @@ export const styles = css`
     padding: 16px;
     margin-top: 16px;
   }
-  
+
   .no-accounts-message p {
     margin: 0 0 12px 0;
     color: var(--secondary-text-color);
-  }
-  
-  .secondary-button {
-    background-color: transparent;
-    color: var(--accent-color);
-    border: 1px solid var(--accent-color);
-    border-radius: 4px;
-    padding: 8px 16px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  
-  .secondary-button:hover {
-    background-color: var(--hover-bg);
   }
   
   .success-message {

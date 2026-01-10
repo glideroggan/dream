@@ -111,10 +111,10 @@ export const template = html<CardWorkflow>/*html*/`
               </div>
             `)}
             
-            ${when(x => x.selectedProduct?.type === 'debit' && x.availableAccounts.length === 0, html`
+        ${when(x => x.selectedProduct?.type === 'debit' && x.availableAccounts.length === 0, html`
               <div class="no-accounts-message">
                 <p>You don't have any compatible accounts for a debit card.</p>
-                <button @click="${x => x.handleCreateAccount()}" class="secondary-button">Open a New Account</button>
+                <dream-button variant="secondary" @click="${x => x.handleCreateAccount()}">Open a New Account</dream-button>
               </div>
             `)}
             

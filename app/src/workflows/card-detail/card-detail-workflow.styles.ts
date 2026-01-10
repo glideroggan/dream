@@ -308,68 +308,6 @@ export const styles = css`
     flex-wrap: wrap;
   }
 
-  /* Action buttons with theme-aware styling */
-  .action-button {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    font-weight: 600;
-    transition: background-color 0.2s, color 0.2s;
-  }
-
-  .action-button .icon {
-    margin-right: 6px;
-  }
-
-  .freeze {
-    background-color: rgba(var(--accent-color, #88BDF2), 0.2);
-    color: var(--accent-color, #88BDF2);
-  }
-
-  .freeze:hover {
-    background-color: rgba(var(--accent-color, #88BDF2), 0.3);
-  }
-
-  .unfreeze {
-    background-color: rgba(var(--success-color, #2ecc71), 0.2);
-    color: var(--success-color, #2ecc71);
-  }
-
-  .unfreeze:hover {
-    background-color: rgba(var(--success-color, #2ecc71), 0.3);
-  }
-
-  .report {
-    background-color: rgba(var(--error-color, #e74c3c), 0.2);
-    color: var(--error-color, #e74c3c);
-  }
-
-  .report:hover {
-    background-color: rgba(var(--error-color, #e74c3c), 0.3);
-  }
-
-  .pin {
-    background-color: rgba(var(--inactive-color, #6A89A7), 0.2);
-    color: var(--inactive-color, #6A89A7);
-  }
-
-  .pin:hover {
-    background-color: rgba(var(--inactive-color, #6A89A7), 0.3);
-  }
-
-  .replace {
-    background-color: rgba(var(--success-color, #2ecc71), 0.2);
-    color: var(--success-color, #2ecc71);
-    margin-top: 10px;
-  }
-
-  .replace:hover {
-    background-color: rgba(var(--success-color, #2ecc71), 0.3);
-  }
-
   .replacement-message {
     margin-bottom: 10px;
     color: var(--secondary-text-color);

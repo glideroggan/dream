@@ -1,5 +1,6 @@
 import { customElement, observable, attr } from '@microsoft/fast-element';
 import { WorkflowBase } from '../workflow-base';
+import "@primitives/button";
 import { cardService } from '../../services/card-service';
 import { repositoryService } from '../../services/repository-service';
 import { template } from './card-detail-workflow.template';

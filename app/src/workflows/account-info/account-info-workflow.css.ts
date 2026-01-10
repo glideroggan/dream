@@ -254,19 +254,6 @@ export const styles = css`
     flex-wrap: wrap;
   }
   
-  .rename-icon {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 14px;
-    padding: 2px;
-    opacity: 0.7;
-  }
-  
-  .rename-icon:hover {
-    opacity: 1;
-  }
-  
   .rename-container {
     display: flex;
     flex-direction: column;
@@ -287,24 +274,6 @@ export const styles = css`
   .rename-actions {
     display: flex;
     gap: 8px;
-  }
-  
-  .rename-btn {
-    padding: 4px 8px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 12px;
-  }
-  
-  .rename-btn.save {
-    background-color: var(--accent-color);
-    color: var(--text-light);
-  }
-  
-  .rename-btn.cancel {
-    background-color: var(--inactive-color);
-    color: var(--text-light);
   }
   
   /* Type-specific sections */

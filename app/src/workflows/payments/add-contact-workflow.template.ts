@@ -126,7 +126,7 @@ export const template = html<AddContactWorkflow>/*html*/`
         ${when(x => !x.isLoading && x.contacts.length === 0, html`
           <div class="empty-state">
             <p>No saved contacts found.</p>
-            <button class="action-button" @click="${x => x.setActiveTab('add')}">Add a contact</button>
+            <dream-button variant="primary" @click="${x => x.setActiveTab('add')}">Add a contact</dream-button>
           </div>
         `)}
         
@@ -143,7 +143,7 @@ export const template = html<AddContactWorkflow>/*html*/`
                     ${x => x.accountNumber} ${x => x.bankName ? `• ${x.bankName}` : ''}
                   </div>
                 </div>
-                <button class="edit-button" @click="${(x, c) => c.parent.editContact(x)}">Edit</button>
+                <dream-button variant="primary" size="sm" @click="${(x, c) => c.parent.editContact(x)}">Edit</dream-button>
               </div>
             `)}
           </div>
@@ -177,9 +177,7 @@ export const template = html<AddContactWorkflow>/*html*/`
                     ${x => x.accountNumber} ${x => x.bankName ? `• ${x.bankName}` : ''}
                   </div>
                 </div>
-                <button class="delete-button" @click="${(x, c) => c.parent.confirmDeleteContact(x)}">
-                  Remove
-                </button>
+                <dream-button variant="danger" size="sm" @click="${(x, c) => c.parent.confirmDeleteContact(x)}">Remove</dream-button>
               </div>
             `)}
           </div>
@@ -191,8 +189,8 @@ export const template = html<AddContactWorkflow>/*html*/`
               <h4>Remove Contact</h4>
               <p>Are you sure you want to remove "${x => x.contactToDelete?.name}"?</p>
               <div class="confirm-dialog-actions">
-                <button class="cancel-button" @click="${x => x.cancelDelete()}">Cancel</button>
-                <button class="confirm-button" @click="${x => x.deleteContact()}">Remove</button>
+                <dream-button variant="ghost" @click="${x => x.cancelDelete()}">Cancel</dream-button>
+                <dream-button variant="danger" @click="${x => x.deleteContact()}">Remove</dream-button>
               </div>
             </div>
           </div>

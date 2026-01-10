@@ -36,10 +36,10 @@ const step1Template = html<LoanWorkflow>/*html*/`
     </div>
     
     <div class="loan-navigation">
-      <button @click="${x => x.cancel('Loan application cancelled')}" class="secondary-button">Cancel</button>
-      <button ?disabled="${x => !x.selectedProduct}" @click="${x => x.checkEligibility()}" class="primary-button">
+      <dream-button variant="secondary" @click="${x => x.cancel('Loan application cancelled')}">Cancel</dream-button>
+      <dream-button variant="primary" ?disabled="${x => !x.selectedProduct}" @click="${x => x.checkEligibility()}">
         Continue
-      </button>
+      </dream-button>
     </div>
   </div>
 `;
@@ -59,7 +59,7 @@ const step2Template = html<LoanWorkflow>/*html*/`
         <div class="error-icon">❌</div>
         <h3>Not Eligible</h3>
         <p>${x => x.eligibilityResult?.reason || 'You are not eligible for this loan type at this time.'}</p>
-        <button @click="${x => x.goToStep('select-product')}" class="primary-button">Choose Another Loan</button>
+        <dream-button variant="primary" @click="${x => x.goToStep('select-product')}">Choose Another Loan</dream-button>
       </div>
     `)}
     
@@ -155,8 +155,8 @@ const step2Template = html<LoanWorkflow>/*html*/`
         
         <!-- Footer navigation -->
         <div class="loan-navigation">
-          <button @click="${x => x.goToStep('select-product')}" class="secondary-button">Back</button>
-          <button @click="${x => x.createDraftLoan(x.estimatedDetails)}" class="primary-button">Continue</button>
+          <dream-button variant="secondary" @click="${x => x.goToStep('select-product')}">Back</dream-button>
+          <dream-button variant="primary" @click="${x => x.createDraftLoan(x.estimatedDetails)}">Continue</dream-button>
         </div>
       </div>
     `)}
@@ -226,8 +226,8 @@ const step3Template = html<LoanWorkflow>/*html*/`
     </div>
     
     <div class="loan-navigation">
-      <button @click="${x => x.goToStep('eligibility')}" class="secondary-button">Back</button>
-      <button ?disabled="${x => !x.selectedAccountId}" @click="${x => x.goToStep('terms')}" class="primary-button">Continue</button>
+      <dream-button variant="secondary" @click="${x => x.goToStep('eligibility')}">Back</dream-button>
+      <dream-button variant="primary" ?disabled="${x => !x.selectedAccountId}" @click="${x => x.goToStep('terms')}">Continue</dream-button>
     </div>
   </div>
 `;
@@ -280,8 +280,8 @@ const step4Template = html<LoanWorkflow>/*html*/`
     `)}
     
     <div class="loan-navigation">
-      <button @click="${x => x.goToStep('loan-details')}" class="secondary-button">Back</button>
-      <button ?disabled="${x => !x.agreedToTerms}" @click="${x => x.proceedToSigning()}" class="primary-button">Continue to Signing</button>
+      <dream-button variant="secondary" @click="${x => x.goToStep('loan-details')}">Back</dream-button>
+      <dream-button variant="primary" ?disabled="${x => !x.agreedToTerms}" @click="${x => x.proceedToSigning()}">Continue to Signing</dream-button>
     </div>
   </div>
 `;
@@ -313,14 +313,14 @@ const step5Template = html<LoanWorkflow>/*html*/`
         <h3>Application Failed</h3>
         <p>There was an issue with your loan application:</p>
         <p class="error-message">${x => x.errorMessage}</p>
-        <button @click="${x => x.goToStep('loan-details')}" class="primary-button">Back to Loan Details</button>
+        <dream-button variant="primary" @click="${x => x.goToStep('loan-details')}">Back to Loan Details</dream-button>
       </div>
     `)}
     
     <div class="loan-navigation">
-      <button @click="${x => x.handleComplete()}" class="primary-button">
+      <dream-button variant="primary" @click="${x => x.handleComplete()}">
         ${x => x.applicationSuccess ? 'Finish' : 'Close'}
-      </button>
+      </dream-button>
     </div>
   </div>
 `;

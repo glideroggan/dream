@@ -185,46 +185,7 @@ export const styles = css`
     color: var(--secondary-text-color, #666);
   }
   
-  .edit-button, .delete-button, .action-button {
-    padding: 6px 12px;
-    border-radius: 4px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  
-  .edit-button {
-    background-color: var(--accent-color, #3498db);
-    color: white;
-    border: none;
-  }
-  
-  .edit-button:hover {
-    background-color: var(--accent-color, #2980b9);
-  }
-  
-  .delete-button {
-    background-color: transparent;
-    color: var(--error-color, #e74c3c);
-    border: 1px solid var(--error-color, #e74c3c);
-  }
-  
-  .delete-button:hover {
-    background-color: var(--error-color, #e74c3c);
-    color: white;
-  }
-  
-  .action-button {
-    background-color: var(--accent-color, #3498db);
-    color: white;
-    border: none;
-    align-self: center;
-  }
-  
-  .action-button:hover {
-    background-color: var(--accent-color, #2980b9);
-  }
+
   
   /* Empty state and loading */
   .empty-state {
@@ -277,20 +238,5 @@ export const styles = css`
     margin-top: 24px;
   }
   
-  .cancel-button {
-    padding: 8px 16px;
-    background-color: transparent;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  
-  .confirm-button {
-    padding: 8px 16px;
-    background-color: var(--error-color, #e74c3c);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
+
 `;

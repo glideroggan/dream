@@ -1,6 +1,6 @@
 import { customElement, html, css, attr, observable } from '@microsoft/fast-element';
 import { BaseWidget, baseWidgetStyles } from '../../components/base-widget';
-import "@primitives/button/button.js";
+import "@primitives/button";
 
 const template = html<WelcomeWidget>/*html*/`
   <div class="welcome-widget">

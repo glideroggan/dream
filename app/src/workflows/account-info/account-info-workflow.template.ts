@@ -36,8 +36,8 @@ export const template = html<AccountInfoWorkflow>/*html*/ `
                         @keyup="${(x, c) => x.accountNameChanged(c.event)}"
                       />
                       <div class="rename-actions">
-                        <button @click="${(x) => x.saveRename()}" class="rename-btn save">Save</button>
-                        <button @click="${(x) => x.cancelRename()}" class="rename-btn cancel">Cancel</button>
+                        <dream-button variant="primary" size="sm" @click="${(x) => x.saveRename()}">Save</dream-button>
+                        <dream-button variant="ghost" size="sm" @click="${(x) => x.cancelRename()}">Cancel</dream-button>
                       </div>
                     </div>
                   `
@@ -48,7 +48,7 @@ export const template = html<AccountInfoWorkflow>/*html*/ `
                     <h3>${(x) => x.account?.name || 'Account'}</h3>
                     <div class="account-title-actions">
                       <span class="account-type">${(x) => x.account?.type || ''}</span>
-                      <button @click="${(x) => x.startRename()}" class="rename-icon" title="Rename account">✏️</button>
+                      <dream-button variant="ghost" size="sm" @click="${(x) => x.startRename()}" title="Rename account">✏️</dream-button>
                     </div>
                   `
                 )}

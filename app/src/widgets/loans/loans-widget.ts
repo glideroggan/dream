@@ -1,5 +1,5 @@
 import { css, customElement, html, Observable, observable, repeat, when } from "@microsoft/fast-element";
-import "@primitives/button/button.js";
+import "@primitives/button";
 import { BaseWidget } from "../../components/base-widget";
 import { Loan, LoanStatus, LoanType } from "../../repositories/models/loan-models";
 import { mockLoans } from "../../repositories/mock/loan-mock";

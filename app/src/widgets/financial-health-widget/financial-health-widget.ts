@@ -2,7 +2,7 @@ import { FASTElement, customElement, html, css, observable, when } from "@micros
 import { repositoryService } from "../../services/repository-service";
 import { workflowManager } from "../../services/workflow-manager-service";
 import { WorkflowIds } from "../../workflows/workflow-registry";
-import "@primitives/button/button.js";
+import "@primitives/button";
 
 // Import components
 import "./components/health-score-component";

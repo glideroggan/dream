@@ -147,25 +147,25 @@ export const template = html<CardDetailWorkflow>/*html*/ `
                 ${when(
                   (x) => x.card?.status === 'active',
                   html<CardDetailWorkflow>/*html*/ `
-                    <button class="action-button freeze" @click="${(x) => x.freezeCard()}">
+                    <dream-button variant="secondary" @click="${(x) => x.freezeCard()}">
                       <span class="icon">❄️</span> Freeze Card
-                    </button>
+                    </dream-button>
                   `
                 )}
                 ${when(
                   (x) => x.card?.status === 'frozen',
                   html<CardDetailWorkflow>/*html*/ `
-                    <button class="action-button unfreeze" @click="${(x) => x.unfreezeCard()}">
+                    <dream-button variant="primary" @click="${(x) => x.unfreezeCard()}">
                       <span class="icon">🔥</span> Unfreeze Card
-                    </button>
+                    </dream-button>
                   `
                 )}
-                <button class="action-button report" @click="${(x) => x.reportLostCard()}">
+                <dream-button variant="danger" @click="${(x) => x.reportLostCard()}">
                   <span class="icon">⚠️</span> Report Lost/Stolen
-                </button>
-                <button class="action-button pin" @click="${(x) => x.changePIN()}">
+                </dream-button>
+                <dream-button variant="ghost" @click="${(x) => x.changePIN()}">
                   <span class="icon">🔒</span> Change PIN
-                </button>
+                </dream-button>
               </div>
             `
           )}
@@ -174,9 +174,9 @@ export const template = html<CardDetailWorkflow>/*html*/ `
             html<CardDetailWorkflow>/*html*/ `
               <div class="card-replacement">
                 <p class="replacement-message">This card is no longer active. Would you like to request a replacement?</p>
-                <button class="action-button replace" @click="${(x) => x.requestReplacement()}">
+                <dream-button variant="primary" @click="${(x) => x.requestReplacement()}">
                   <span class="icon">🔄</span> Request Replacement
-                </button>
+                </dream-button>
               </div>
             `
           )}

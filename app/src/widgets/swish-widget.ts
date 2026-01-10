@@ -1,5 +1,5 @@
 import { customElement, FASTElement, html, css, observable, when } from "@microsoft/fast-element";
-import "@primitives/button/button.js";
+import "@primitives/button";
 import { SwishProduct } from "../workflows/swish-workflow";
 import { BaseWidget } from "../components/base-widget";
 import { userProductService, UserProductService } from "../services/user-product-service";

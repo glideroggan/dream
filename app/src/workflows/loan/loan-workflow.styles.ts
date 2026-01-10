@@ -93,44 +93,6 @@ export const styles = css`
     margin-top: 24px;
   }
 
-  .primary-button {
-    background-color: var(--accent-color);
-    color: var(--text-light);
-    border: none;
-    padding: 10px 20px;
-    border-radius: 4px;
-    cursor: pointer;
-    min-width: 100px;
-    transition: background-color 0.2s ease;
-    font-weight: 500;
-  }
-
-  .primary-button:hover {
-    background-color: var(--button-bg);
-  }
-
-  .primary-button:disabled {
-    background-color: var(--inactive-color);
-    color: var(--text-light);
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
-
-  .secondary-button {
-    background-color: transparent;
-    color: var(--accent-color);
-    border: 1px solid var(--accent-color);
-    padding: 10px 20px;
-    border-radius: 4px;
-    cursor: pointer;
-    min-width: 100px;
-    transition: all 0.2s ease;
-  }
-
-  .secondary-button:hover {
-    background-color: var(--hover-bg);
-  }
-
   .loading-spinner {
     display: flex;
     flex-direction: column;
