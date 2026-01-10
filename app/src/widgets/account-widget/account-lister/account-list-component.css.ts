@@ -46,7 +46,7 @@ export const styles = css`
   
   /* Support system theme preference */
   @media (prefers-color-scheme: dark) {
-    :host-context(body:not(.light-theme-forced):not(.dark-theme)) {
+    :host-context(body:not(.light-theme-forced)) {
       --background-light: rgba(255, 255, 255, 0.05);
       --insights-bg: rgba(40, 40, 40, 0.5);
       --insights-border: rgba(60, 60, 60, 0.5);

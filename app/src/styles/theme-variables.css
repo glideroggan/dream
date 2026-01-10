@@ -72,6 +72,21 @@
     --text-muted: #666666;
     --label-color: #4a5568;
 
+    /* ============ WIDGET COLORS ============ */
+    --widget-background: var(--surface-color);
+    --widget-divider-color: #eaeaea;
+    --widget-text-color: var(--text-color);
+    --widget-text-secondary: #777777;
+    --widget-primary-color: var(--accent-color);
+    --widget-secondary-color: #f0f0f0;
+    --widget-secondary-hover: rgba(0, 0, 0, 0.05);
+    --widget-success-color: var(--success-color);
+    --widget-success-light: #d5f5e3;
+    --widget-warning-color: var(--warning-color);
+    --widget-warning-light: #fef9e7;
+    --widget-error-color: #e74c3c;
+    --widget-error-light: #fadbd8;
+
     /* Semantic color variants */
     --primary-text-color: var(--primary-color);
     --secondary-text-color: var(--secondary-color);
@@ -137,6 +152,21 @@
     --text-color: #e8eef4;
     --text-muted: #9cb3cc;
     --label-color: #c8d8e8;
+
+    /* Dark widget colors */
+    --widget-background: var(--surface-color);
+    --widget-divider-color: #3a5675;
+    --widget-text-color: var(--text-color);
+    --widget-text-secondary: #9cb3cc;
+    --widget-primary-color: var(--accent-color);
+    --widget-secondary-color: #1e2e3e;
+    --widget-secondary-hover: rgba(255, 255, 255, 0.05);
+    --widget-success-color: var(--success-color);
+    --widget-success-light: rgba(74, 222, 128, 0.15);
+    --widget-warning-color: var(--warning-color);
+    --widget-warning-light: rgba(251, 191, 36, 0.15);
+    --widget-error-color: #f87171;
+    --widget-error-light: rgba(248, 113, 113, 0.15);
 
     /* Semantic color variants */
     --primary-text-color: #e8eef4;
@@ -237,6 +267,24 @@
       --workflow-bg: #2e251a;
       --theme-color: #64b5f6;
       --theme-bg: #1a2a3e;
+
+      /* Widget colors for auto dark theme */
+      --surface-color: #243546;
+      --text-color: #e8eef4;
+      --text-muted: #9cb3cc;
+      --widget-background: #243546;
+      --widget-divider-color: #3a5675;
+      --widget-text-color: #e8eef4;
+      --widget-text-secondary: #9cb3cc;
+      --widget-primary-color: #5a94d8;
+      --widget-secondary-color: #1e2e3e;
+      --widget-secondary-hover: rgba(255, 255, 255, 0.05);
+      --widget-success-color: #4ade80;
+      --widget-success-light: rgba(74, 222, 128, 0.15);
+      --widget-warning-color: #fbbf24;
+      --widget-warning-light: rgba(251, 191, 36, 0.15);
+      --widget-error-color: #f87171;
+      --widget-error-light: rgba(248, 113, 113, 0.15);
 
       /* Badge color variables for auto dark theme */
       --badge-text: #ffffff;
