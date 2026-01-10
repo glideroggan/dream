@@ -4,6 +4,8 @@ import { when } from "@microsoft/fast-element";
 import { getProductIcon, getInterestRateDisplay } from "./loan-workflow.helper";
 import { Account } from "../../repositories/models/account-models";
 import { Product } from "../../repositories/models/product-models";
+import "@primitives/input";
+import "@primitives/select";
 
 // Step 1: Choose loan product
 const step1Template = html<LoanWorkflow>/*html*/`
@@ -114,15 +116,16 @@ const step2Template = html<LoanWorkflow>/*html*/`
         <!-- Loan form (bottom left) -->
         <div class="loan-form">
           <div class="loan-amount-section">
-            <label for="loanAmount">Loan Amount</label>
-            <div class="loan-amount-container">
-              <div class="currency-symbol">$</div>
-              <input id="loanAmount" type="number" 
-                    min="${x => x.eligibilityResult?.minAmount}" 
-                    max="${x => x.eligibilityResult?.maxAmount}" 
-                    value="${x => x.loanAmount}"
-                    @input="${(x, c) => x.updateLoanAmountAndCalculate(c.event)}"/>
-            </div>
+            <dream-input 
+              id="loanAmount" 
+              type="number" 
+              label="Loan Amount"
+              :value="${x => String(x.loanAmount)}"
+              full-width
+              @input="${(x, c) => x.updateLoanAmountAndCalculate(c.event)}"
+            >
+              <span slot="prefix">$</span>
+            </dream-input>
             <div class="range-limits">
               <span>Min: $${x => x.formatNumber(x.eligibilityResult?.minAmount || 0)}</span>
               <span>Max: $${x => x.formatNumber(x.eligibilityResult?.maxAmount || 0)}</span>
@@ -143,13 +146,18 @@ const step2Template = html<LoanWorkflow>/*html*/`
           </div>
 
           <div class="loan-purpose-section">
-            <label for="loanPurpose">Loan Purpose</label>
-            <select id="loanPurpose" @change="${(x, c) => x.updateLoanPurpose(c.event)}">
+            <dream-select 
+              id="loanPurpose" 
+              label="Loan Purpose"
+              :value="${x => x.loanPurpose}"
+              helper="Please select the primary purpose for this loan"
+              full-width
+              @change="${(x, c) => x.updateLoanPurpose(c.event)}"
+            >
               ${repeat(x => x.getLoanPurposeOptions(), html<string, LoanWorkflow>/*html*/`
-              <option value="${purpose => purpose}" ?selected="${(purpose, c) => purpose === c.parent.loanPurpose}">${purpose => purpose}</option>
+              <option value="${purpose => purpose}">${purpose => purpose}</option>
               `)}
-            </select>
-            <div class="field-hint">Please select the primary purpose for this loan</div>
+            </dream-select>
           </div>
         </div>
         
@@ -211,18 +219,21 @@ const step3Template = html<LoanWorkflow>/*html*/`
     </div>
     
     <div class="account-select-section">
-      <label for="accountSelect">Deposit Account</label>
-      <select id="accountSelect" @change="${(x, c) => x.updateSelectedAccount(c.event)}">
-        ${when(x => x.accounts.length === 0, html<LoanWorkflow>/*html*/`
-          <option value="">No eligible accounts found</option>
-        `)}
+      <dream-select 
+        id="accountSelect" 
+        label="Deposit Account"
+        :value="${x => x.selectedAccountId}"
+        placeholder="${x => x.accounts.length === 0 ? 'No eligible accounts found' : '-- Select Account --'}"
+        helper="The approved loan amount will be deposited to this account"
+        full-width
+        @change="${(x, c) => x.updateSelectedAccount(c.event)}"
+      >
         ${repeat(x => x.accounts, html<Account, LoanWorkflow>/*html*/`
-          <option value="${x => x.id}" ?selected="${(x, c) => x.id === c.parent.selectedAccountId}">
+          <option value="${x => x.id}">
             ${x => x.name} - $${(x, c) => c.parent.formatNumber(x.balance)}
           </option>
         `)}
-      </select>
-      <div class="field-hint">The approved loan amount will be deposited to this account</div>
+      </dream-select>
     </div>
     
     <div class="loan-navigation">

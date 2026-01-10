@@ -15,7 +15,7 @@ const template = html<InputPrimitive>`
         part="input"
         id="input-control"
         type="${x => x.type}"
-        :value="${x => x.value}"
+        :value="${x => x.value ?? ''}"
         placeholder="${x => x.placeholder}"
         ?disabled="${x => x.disabled}"
         ?readonly="${x => x.readonly}"
@@ -160,6 +160,25 @@ const styles = css`
     opacity: 1;
   }
 
+  /* Date/time input styling - ensure picker icon is visible and clickable */
+  .input[type="date"],
+  .input[type="time"],
+  .input[type="datetime-local"] {
+    cursor: pointer;
+  }
+
+  /* WebKit browsers (Chrome, Safari, Edge) */
+  .input::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.6;
+    padding: 4px;
+    margin-right: -4px;
+  }
+
+  .input::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+  }
+
   /* Slot styling */
   ::slotted(*) {
     display: flex;
@@ -194,7 +213,7 @@ const styles = css`
   shadowOptions: { delegatesFocus: true }
 })
 export class InputPrimitive extends FASTElement {
-  @attr type: "text" | "number" | "password" | "email" | "search" | "tel" | "url" = "text";
+  @attr type: "text" | "number" | "password" | "email" | "search" | "tel" | "url" | "date" | "time" = "text";
   @attr value: string = "";
   @attr placeholder: string = "";
   @attr label: string = "";
@@ -210,12 +229,32 @@ export class InputPrimitive extends FASTElement {
   @attr({ attribute: "full-width", mode: "boolean" }) fullWidth: boolean = false;
 
   handleInput(event: Event) {
+    event.stopPropagation(); // Stop propagation of the native event
     const input = event.target as HTMLInputElement;
     this.value = input.value;
+    this.$emit('input', { value: this.value, name: this.name });
   }
 
   handleChange(event: Event) {
+    event.stopPropagation(); // Stop propagation of the native event
     const input = event.target as HTMLInputElement;
     this.value = input.value;
+    this.$emit('change', { value: this.value, name: this.name });
+  }
+
+  /**
+   * Focus the inner input element
+   */
+  focus(): void {
+    const input = this.shadowRoot?.querySelector('input');
+    input?.focus();
+  }
+
+  /**
+   * Select all text in the inner input element
+   */
+  select(): void {
+    const input = this.shadowRoot?.querySelector('input');
+    input?.select();
   }
 }

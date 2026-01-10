@@ -1,5 +1,6 @@
 import { html, when, repeat, ref } from "@microsoft/fast-element";
 import { AddContactWorkflow } from "./add-contact-workflow";
+import "@primitives/input";
 
 export const template = html<AddContactWorkflow>/*html*/`
   <div class="contact-workflow">
@@ -30,52 +31,50 @@ export const template = html<AddContactWorkflow>/*html*/`
         
         <form @submit="${(x, c) => x.handleSubmit(c.event)}">
           <div class="form-group">
-            <label for="contactName">Contact Name</label>
-            <input 
+            <dream-input
               ${ref('inputNameElement')}
-              id="contactName"
-              type="text"
-              value="${x => x.contactName}"
+              label="Contact Name"
+              :value="${x => x.contactName}"
               @input="${(x, c) => x.handleNameInput(c.event)}"
+              ?error="${x => !!x.errors.name}"
+              error-message="${x => x.errors.name || ''}"
               required
-            />
-            ${when(x => x.errors.name, html`<div class="error-message">${x => x.errors.name}</div>`)}
+              full-width
+            ></dream-input>
           </div>
 
           <div class="form-group">
-            <label for="accountNumber">Account Number</label>
-            <input 
+            <dream-input
               ${ref('inputAccountElement')}
-              id="accountNumber"
-              type="text"
-              value="${x => x.accountNumber}"
+              label="Account Number"
+              :value="${x => x.accountNumber}"
               @input="${(x, c) => x.handleAccountNumberInput(c.event)}"
+              ?error="${x => !!x.errors.accountNumber}"
+              error-message="${x => x.errors.accountNumber || ''}"
               required
-            />
-            ${when(x => x.errors.accountNumber, html`<div class="error-message">${x => x.errors.accountNumber}</div>`)}
+              full-width
+            ></dream-input>
           </div>
 
           <div class="form-group">
-            <label for="bankName">Bank Name</label>
-            <input 
+            <dream-input
               ${ref('inputBankElement')}
-              id="bankName"
-              type="text"
-              value="${x => x.bankName}"
+              label="Bank Name"
+              :value="${x => x.bankName}"
               @input="${(x, c) => x.handleBankNameInput(c.event)}"
-            />
+              full-width
+            ></dream-input>
           </div>
 
           <div class="form-group">
-            <label for="alias">Alias (Optional)</label>
-            <input 
+            <dream-input
               ${ref('inputAliasElement')}
-              id="alias"
-              type="text"
-              value="${x => x.alias}"
+              label="Alias (Optional)"
+              :value="${x => x.alias}"
               @input="${(x, c) => x.handleAliasInput(c.event)}"
               placeholder="Nickname for this contact"
-            />
+              full-width
+            ></dream-input>
           </div>
 
           <div class="form-group">

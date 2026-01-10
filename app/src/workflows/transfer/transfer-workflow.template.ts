@@ -1,20 +1,25 @@
 import { html, repeat, when } from "@microsoft/fast-element";
 import { TransferWorkflow } from "./transfer-workflow";
+import "@primitives/input";
+import "@primitives/select";
 
 export const template = html<TransferWorkflow>/*html*/`
   <div class="transfer-workflow">
     <div class="transfer-form">
-      <div class="form-group">
-        <label for="fromAccount">From Account</label>
-        <select id="fromAccount" @change="${(x, c) => x.handleFromAccountChange(c.event)}">
-          <option value="">-- Select Account --</option>
-          ${repeat(x => x.accounts, html`
-            <option value="${x => x.id}" ?selected="${(x, c) => x.id === c.parent.fromAccountId}">
-              ${x => x.name} (${x => x.balance.toFixed(2)} ${x => x.currency})
-            </option>
-          `)}
-        </select>
-      </div>
+      <dream-select 
+        id="fromAccount"
+        label="From Account"
+        placeholder="-- Select Account --"
+        :value="${x => x.fromAccountId}"
+        full-width
+        @change="${(x, c) => x.handleFromAccountChange(c.event)}"
+      >
+        ${repeat(x => x.accounts, html`
+          <option value="${x => x.id}">
+            ${x => x.name} (${x => x.balance.toFixed(2)} ${x => x.currency})
+          </option>
+        `)}
+      </dream-select>
       
       <to-account-field
         :accounts="${x => x.accounts}"
@@ -26,22 +31,27 @@ export const template = html<TransferWorkflow>/*html*/`
         @validationError="${(x, c) => x.handleToAccountValidationError(c.event)}"
       ></to-account-field>
       
-      <div class="form-group">
-        <label for="amount">Amount</label>
-        <div class="amount-input-group">
-          <input type="number" id="amount" placeholder="0.00" step="0.01" min="0.01"
-                 value="${x => x.amount}" 
-                 @input="${(x, c) => x.handleAmountChange(c.event)}" />
-          <span class="currency">${x => x.currency}</span>
-        </div>
-      </div>
+      <dream-input
+        id="amount"
+        type="number"
+        label="Amount"
+        placeholder="0.00"
+        :value="${x => x.amount ? String(x.amount) : ''}"
+        full-width
+        @input="${(x, c) => x.handleAmountChange(c.event)}"
+      >
+        <span slot="suffix">${x => x.currency}</span>
+      </dream-input>
       
-      <div class="form-group">
-        <label for="description">Description (Optional)</label>
-        <input type="text" id="description" placeholder="Enter a description" 
-               value="${x => x.description}"
-               @input="${(x, c) => x.handleDescriptionChange(c.event)}" />
-      </div>
+      <dream-input
+        id="description"
+        type="text"
+        label="Description (Optional)"
+        placeholder="Enter a description"
+        :value="${x => x.description}"
+        full-width
+        @input="${(x, c) => x.handleDescriptionChange(c.event)}"
+      ></dream-input>
       
       <!-- Scheduling Option -->
       <div class="form-group schedule-section">
@@ -57,20 +67,21 @@ export const template = html<TransferWorkflow>/*html*/`
         ${when(x => x.isScheduled, html`
           <div class="schedule-details">
             <div class="schedule-inputs">
-              <div class="schedule-date-input">
-                <label for="scheduleDate">Date</label>
-                <input type="date" id="scheduleDate" 
-                       value="${x => x.scheduleDate}" 
-                       min="${x => new Date().toISOString().split('T')[0]}"
-                       @change="${(x, c) => x.handleScheduleDateChange(c.event)}" />
-              </div>
+              <dream-input
+                id="scheduleDate"
+                type="date"
+                label="Date"
+                :value="${x => x.scheduleDate}"
+                @change="${(x, c) => x.handleScheduleDateChange(c.event)}"
+              ></dream-input>
               
-              <div class="schedule-time-input">
-                <label for="scheduleTime">Time</label>
-                <input type="time" id="scheduleTime" 
-                       value="${x => x.scheduleTime}" 
-                       @change="${(x, c) => x.handleScheduleTimeChange(c.event)}" />
-              </div>
+              <dream-input
+                id="scheduleTime"
+                type="time"
+                label="Time"
+                :value="${x => x.scheduleTime}"
+                @change="${(x, c) => x.handleScheduleTimeChange(c.event)}"
+              ></dream-input>
             </div>
           </div>
         `)}

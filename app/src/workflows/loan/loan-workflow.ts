@@ -463,8 +463,8 @@ export class LoanWorkflow extends WorkflowBase {
    * Update loan purpose
    */
   updateLoanPurpose(event: Event): void {
-    const select = event.target as HTMLSelectElement;
-    this.loanPurpose = select.value;
+    const customEvent = event as CustomEvent;
+    this.loanPurpose = customEvent.detail?.value ?? (event.target as HTMLSelectElement).value;
 
     // Update draft loan if it exists
     if (this.loanDetails) {
@@ -480,8 +480,8 @@ export class LoanWorkflow extends WorkflowBase {
    * Update selected account
    */
   updateSelectedAccount(event: Event): void {
-    const select = event.target as HTMLSelectElement;
-    this.selectedAccountId = select.value;
+    const customEvent = event as CustomEvent;
+    this.selectedAccountId = customEvent.detail?.value ?? (event.target as HTMLSelectElement).value;
 
     // Update draft loan if it exists
     if (this.loanDetails) {

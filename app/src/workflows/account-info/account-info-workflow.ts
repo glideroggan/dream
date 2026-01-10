@@ -5,10 +5,12 @@ import {
 } from '@microsoft/fast-element'
 import { WorkflowBase } from '../workflow-base'
 import "@primitives/button"
+import "@primitives/input"
 import { repositoryService } from '../../services/repository-service'
 import { Account } from '../../repositories/models/account-models'
 import { template } from './account-info-workflow.template'
 import { styles } from './account-info-workflow.css'
+import { InputPrimitive } from '../../primitives/input/input'
 
 @customElement({
   name: 'account-info-workflow',
@@ -18,7 +20,7 @@ import { styles } from './account-info-workflow.css'
 export class AccountInfoWorkflow extends WorkflowBase {
   @observable account: Account | null = null
   @observable isRenaming: boolean = false
-  nameInput: HTMLInputElement;
+  nameInput: InputPrimitive;
   
 
   @attr({ attribute: 'hide-actions', mode: 'boolean' })

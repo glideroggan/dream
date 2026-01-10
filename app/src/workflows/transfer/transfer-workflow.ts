@@ -95,14 +95,14 @@ export class TransferWorkflow extends WorkflowBase {
   }
 
   async handleScheduleDateChange(event: Event) {
-    const input = event.target as HTMLInputElement;
-    this.scheduleDate = input.value;
+    const customEvent = event as CustomEvent;
+    this.scheduleDate = customEvent.detail?.value ?? (event.target as HTMLInputElement).value;
     this.validateForm();
   }
 
   async handleScheduleTimeChange(event: Event) {
-    const input = event.target as HTMLInputElement;
-    this.scheduleTime = input.value;
+    const customEvent = event as CustomEvent;
+    this.scheduleTime = customEvent.detail?.value ?? (event.target as HTMLInputElement).value;
     this.validateForm();
   }
 
@@ -142,18 +142,6 @@ export class TransferWorkflow extends WorkflowBase {
 
   connectedCallback() {
     super.connectedCallback();
-
-    // Add HTML validation attributes to inputs
-    setTimeout(() => {
-      const fromSelect = this.shadowRoot?.getElementById('fromAccount') as HTMLSelectElement;
-      const amountInput = this.shadowRoot?.getElementById('amount') as HTMLInputElement;
-
-      if (fromSelect) fromSelect.required = true;
-      if (amountInput) {
-        amountInput.required = true;
-        amountInput.min = "0.01"; // Ensure positive amount
-      }
-    }, 0);
     
     // Add event listener for new contact creation
     this.addEventListener('contactCreated', this.handleContactCreated.bind(this));
@@ -165,9 +153,9 @@ export class TransferWorkflow extends WorkflowBase {
   public focusFirstElement(): void {
     console.debug('[transfer-workflow] focusFirstElement called');
     
-    // Try to focus the fromAccount dropdown
+    // Try to focus the fromAccount dream-select
     setTimeout(() => {
-      const fromSelect = this.shadowRoot?.getElementById('fromAccount') as HTMLSelectElement;
+      const fromSelect = this.shadowRoot?.getElementById('fromAccount') as HTMLElement;
       if (fromSelect) {
         console.debug('[transfer-workflow] focusing fromAccount select');
         fromSelect.focus();
@@ -187,8 +175,8 @@ export class TransferWorkflow extends WorkflowBase {
   }
 
   handleFromAccountChange(event: Event) {
-    const select = event.target as HTMLSelectElement;
-    this.fromAccountId = select.value;
+    const customEvent = event as CustomEvent;
+    this.fromAccountId = customEvent.detail?.value ?? (event.target as HTMLSelectElement).value;
 
     // Set currency based on selected account
     if (this.fromAccountId) {
@@ -237,14 +225,15 @@ export class TransferWorkflow extends WorkflowBase {
   }
 
   handleAmountChange(event: Event) {
-    const input = event.target as HTMLInputElement;
-    this.amount = parseFloat(input.value) || 0;
+    const customEvent = event as CustomEvent;
+    const value = customEvent.detail?.value ?? (event.target as HTMLInputElement).value;
+    this.amount = parseFloat(value) || 0;
     this.validateForm();
   }
 
   handleDescriptionChange(event: Event) {
-    const input = event.target as HTMLInputElement;
-    this.description = input.value;
+    const customEvent = event as CustomEvent;
+    this.description = customEvent.detail?.value ?? (event.target as HTMLInputElement).value;
   }
 
   validateForm(): boolean {
@@ -310,14 +299,22 @@ export class TransferWorkflow extends WorkflowBase {
   }
 
   /**
-   * Mark a form element as invalid using HTML's validity API
+   * Mark a form element as invalid
+   * For dream-input/dream-select, we set the error attribute
+   * For native elements, we use the validity API
    */
   private markInvalid(elementId: string): void {
-    const element = this.shadowRoot?.getElementById(elementId) as HTMLInputElement | HTMLSelectElement;
+    const element = this.shadowRoot?.getElementById(elementId);
     if (element) {
-      // This will trigger the :user-invalid CSS selector
-      element.setCustomValidity(this.errorMessage!);
-      element.reportValidity();
+      // Check if it's a custom element with error attribute (dream-input, dream-select)
+      if ('error' in element) {
+        (element as any).error = true;
+        (element as any).errorMessage = this.errorMessage;
+      } else if ('setCustomValidity' in element) {
+        // Native element - use validity API
+        (element as HTMLInputElement).setCustomValidity(this.errorMessage!);
+        (element as HTMLInputElement).reportValidity();
+      }
     }
   }
 
@@ -326,9 +323,16 @@ export class TransferWorkflow extends WorkflowBase {
    */
   private resetInvalidStates(): void {
     ['fromAccount', 'toAccount', 'amount', 'description'].forEach(id => {
-      const element = this.shadowRoot?.getElementById(id) as HTMLInputElement | HTMLSelectElement;
+      const element = this.shadowRoot?.getElementById(id);
       if (element) {
-        element.setCustomValidity('');
+        // Check if it's a custom element with error attribute
+        if ('error' in element) {
+          (element as any).error = false;
+          (element as any).errorMessage = '';
+        } else if ('setCustomValidity' in element) {
+          // Native element - use validity API
+          (element as HTMLInputElement).setCustomValidity('');
+        }
       }
     });
   }

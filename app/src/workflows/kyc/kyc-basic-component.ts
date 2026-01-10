@@ -1,6 +1,8 @@
 import { css, customElement, FASTElement, html, observable, when } from "@microsoft/fast-element";
 import { BasicPersonalInfo } from "./kyc-workflow";
 import { KycLevel, kycService, KycStatus } from "../../services/kyc-service";
+import '@primitives/input';
+import '@primitives/button';
 
 const template = html<KycBasic>/*html*/ `
   <div class="kyc-basic-workflow">
@@ -14,33 +16,49 @@ const template = html<KycBasic>/*html*/ `
       <p>This is a simplified verification for basic account access.</p>
       
       <div class="kyc-form">
-        <div class="form-group ${x => x.errors.fullName ? 'invalid' : ''}">
-          <label for="fullName">Full Name</label>
-          <input type="text" id="fullName" value="${x => x.personalInfo.fullName}"
-                 @input="${(x, c) => x.handleInput('fullName', (c.event.target as HTMLInputElement).value)}" required>
-          ${when(x => x.errors.fullName, html`<div class="error-message">${x => x.errors.fullName}</div>`)}
-        </div>
+        <dream-input
+          id="fullName"
+          type="text"
+          label="Full Name"
+          :value="${x => x.personalInfo.fullName || ''}"
+          ?error="${x => !!x.errors.fullName}"
+          error-message="${x => x.errors.fullName || ''}"
+          full-width
+          @input="${(x, c) => x.handleInputChange('fullName', c.event)}"
+        ></dream-input>
         
-        <div class="form-group ${x => x.errors.email ? 'invalid' : ''}">
-          <label for="email">Email Address</label>
-          <input type="email" id="email" value="${x => x.personalInfo.email}"
-                 @input="${(x, c) => x.handleInput('email', (c.event.target as HTMLInputElement).value)}" required>
-          ${when(x => x.errors.email, html`<div class="error-message">${x => x.errors.email}</div>`)}
-        </div>
+        <dream-input
+          id="email"
+          type="email"
+          label="Email Address"
+          :value="${x => x.personalInfo.email || ''}"
+          ?error="${x => !!x.errors.email}"
+          error-message="${x => x.errors.email || ''}"
+          full-width
+          @input="${(x, c) => x.handleInputChange('email', c.event)}"
+        ></dream-input>
         
-        <div class="form-group ${x => x.errors.phone ? 'invalid' : ''}">
-          <label for="phone">Phone Number</label>
-          <input type="tel" id="phone" value="${x => x.personalInfo.phone}"
-                 @input="${(x, c) => x.handleInput('phone', (c.event.target as HTMLInputElement).value)}" required>
-          ${when(x => x.errors.phone, html`<div class="error-message">${x => x.errors.phone}</div>`)}
-        </div>
+        <dream-input
+          id="phone"
+          type="tel"
+          label="Phone Number"
+          :value="${x => x.personalInfo.phone || ''}"
+          ?error="${x => !!x.errors.phone}"
+          error-message="${x => x.errors.phone || ''}"
+          full-width
+          @input="${(x, c) => x.handleInputChange('phone', c.event)}"
+        ></dream-input>
         
-        <div class="form-group ${x => x.errors.dateOfBirth ? 'invalid' : ''}">
-          <label for="dateOfBirth">Date of Birth</label>
-          <input type="date" id="dateOfBirth" value="${x => x.personalInfo.dateOfBirth}"
-                 @input="${(x, c) => x.handleInput('dateOfBirth', (c.event.target as HTMLInputElement).value)}" required>
-          ${when(x => x.errors.dateOfBirth, html`<div class="error-message">${x => x.errors.dateOfBirth}</div>`)}
-        </div>
+        <dream-input
+          id="dateOfBirth"
+          type="date"
+          label="Date of Birth"
+          :value="${x => x.personalInfo.dateOfBirth || ''}"
+          ?error="${x => !!x.errors.dateOfBirth}"
+          error-message="${x => x.errors.dateOfBirth || ''}"
+          full-width
+          @input="${(x, c) => x.handleInputChange('dateOfBirth', c.event)}"
+        ></dream-input>
         
         <div class="form-group checkbox-group ${x => x.errors.consent ? 'invalid' : ''}">
             <dream-checkbox id="consentCheckbox" ?checked="${x => x.consentChecked}"
@@ -54,10 +72,14 @@ const template = html<KycBasic>/*html*/ `
       ${when(x => x.generalError, html`<div class="error-message general-error">${x => x.generalError}</div>`)}
       
       <div class="kyc-actions">
-        <button class="submit-button" @click="${x => x.handleSubmit()}"
-                ?disabled="${x => !x.isFormValid || x.isProcessing}">
-          ${x => x.isProcessing ? 'Processing...' : 'Verify Identity'}
-        </button>
+        <dream-button 
+          variant="primary" 
+          ?loading="${x => x.isProcessing}"
+          ?disabled="${x => !x.isFormValid}"
+          @click="${x => x.handleSubmit()}"
+        >
+          Verify Identity
+        </dream-button>
       </div>   
     </div>
   </div>
@@ -105,27 +127,11 @@ const styles = css`
     gap: 10px;
   }
   
-  label {
-    font-weight: 500;
-  }
-  
-  input[type="text"],
-  input[type="email"],
-  input[type="tel"],
-  input[type="date"] {
-    padding: 10px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    font-size: 16px;
-  }
-  
   .error-message {
-    color: var(--notification-badge-bg, #e74c3c);
+    color: var(--error-color, #e74c3c);
     font-size: 14px;
-    padding: 10px;
-    border-radius: 4px;
-    background-color: color-mix(in srgb, var(--notification-badge-bg, #e74c3c) 10%, transparent);
-    margin-top: 8px;
+    margin-top: 4px;
+    font-weight: 500;
   }
   
   .kyc-actions {
@@ -136,40 +142,6 @@ const styles = css`
     border-top: 1px solid var(--divider-color);
   }
   
-  .submit-button {
-    padding: 10px 20px;
-    border-radius: 4px;
-    border: none;
-    background-color: var(--primary-color, #3498db);
-    color: var(--text-light, white);
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  
-  .submit-button:hover:not(:disabled) {
-    background-color: var(--accent-color, #2980b9);
-    filter: brightness(1.1);
-  }
-  
-  .submit-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  
-  .form-group.invalid input,
-  .form-group.invalid select {
-    border-color: var(--error-color, #e74c3c);
-    background-color: var(--error-bg-color, rgba(231, 76, 60, 0.05));
-  }
-  
-  .error-message {
-    color: var(--error-color, #e74c3c);
-    font-size: 14px;
-    margin-top: 4px;
-    font-weight: 500;
-  }
-  
   .general-error {
     padding: 10px;
     border-radius: 4px;
@@ -177,29 +149,8 @@ const styles = css`
     margin-top: 16px;
   }
   
-  .form-group.invalid label {
-    color: var(--error-color, #e74c3c);
-  }
-  
   .form-group.invalid dream-checkbox {
     --checkbox-border-color: var(--error-color, #e74c3c);
-  }
-  
-  .submit-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    background-color: var(--inactive-color, #999);
-    color: var(--text-light, white);
-  }
-  
-  .submit-button:not(:disabled) {
-    background-color: var(--primary-color, #3498db);
-    color: var(--text-light, white);
-  }
-  
-  @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
   }
 `;
 
@@ -230,7 +181,10 @@ export class KycBasic extends FASTElement {
     this.validateForm();
   }
   
-  handleInput(field: string, value: string): void {
+  handleInputChange(field: string, event: Event): void {
+    const customEvent = event as CustomEvent;
+    const value = customEvent.detail?.value ?? (event.target as HTMLInputElement).value;
+    
     this.personalInfo = {
       ...this.personalInfo,
       [field]: value

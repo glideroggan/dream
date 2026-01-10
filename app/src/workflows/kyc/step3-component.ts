@@ -1,87 +1,112 @@
 import { FASTElement, customElement, html, css, attr, observable } from "@microsoft/fast-element";
 import { PersonalInformation } from "./kyc-workflow";
+import '@primitives/input';
+import '@primitives/select';
+import '@primitives/checkbox';
 
 const template = html<KycStep3Component>/*html*/`
   <div class="form-section">
     <h4>Address Information</h4>
-    <div class="form-group ${x => x.errors.addressLine1 ? 'invalid' : ''}">
-      <label for="addressLine1">Address Line 1</label>
-      <input type="text" id="addressLine1" placeholder="Street address"
-            :value="${x => x?.personalInfo.addressLine1}"
-            @input="${(x, c) => x.handleTextInput('addressLine1', c.event)}" />
-      ${x => x.errors.addressLine1 ? html`<div class="error-message">${x => x.errors.addressLine1}</div>` : ''}
-    </div>
+    
+    <dream-input
+      id="addressLine1"
+      type="text"
+      label="Address Line 1"
+      placeholder="Street address"
+      :value="${x => x?.personalInfo.addressLine1}"
+      ?error="${x => !!x.errors.addressLine1}"
+      error-message="${x => x.errors.addressLine1 || ''}"
+      full-width
+      @input="${(x, c) => x.handleInputChange('addressLine1', c.event)}"
+    ></dream-input>
 
-    <div class="form-group">
-      <label for="addressLine2">Address Line 2 (Optional)</label>
-      <input type="text" id="addressLine2" placeholder="Apartment, suite, unit, etc."
-            :value="${x => x?.personalInfo.addressLine2 || ''}"
-            @input="${(x, c) => x.handleTextInput('addressLine2', c.event)}" />
-    </div>
+    <dream-input
+      id="addressLine2"
+      type="text"
+      label="Address Line 2 (Optional)"
+      placeholder="Apartment, suite, unit, etc."
+      :value="${x => x?.personalInfo.addressLine2 || ''}"
+      full-width
+      @input="${(x, c) => x.handleInputChange('addressLine2', c.event)}"
+    ></dream-input>
 
     <div class="form-row">
-      <div class="form-group ${x => x.errors.city ? 'invalid' : ''}">
-        <label for="city">City</label>
-        <input type="text" id="city" placeholder="City"
-              :value="${x => x?.personalInfo.city}"
-              @input="${(x, c) => x.handleTextInput('city', c.event)}" />
-        ${x => x.errors.city ? html`<div class="error-message">${x => x.errors.city}</div>` : ''}
-      </div>
+      <dream-input
+        id="city"
+        type="text"
+        label="City"
+        placeholder="City"
+        :value="${x => x?.personalInfo.city}"
+        ?error="${x => !!x.errors.city}"
+        error-message="${x => x.errors.city || ''}"
+        full-width
+        @input="${(x, c) => x.handleInputChange('city', c.event)}"
+      ></dream-input>
 
-      <div class="form-group ${x => x.errors.postalCode ? 'invalid' : ''}">
-        <label for="postalCode">Postal Code</label>
-        <input type="text" id="postalCode" placeholder="Postal Code"
-              :value="${x => x?.personalInfo.postalCode}"
-              @input="${(x, c) => x.handleTextInput('postalCode', c.event)}" />
-        ${x => x.errors.postalCode ? html`<div class="error-message">${x => x.errors.postalCode}</div>` : ''}
-      </div>
+      <dream-input
+        id="postalCode"
+        type="text"
+        label="Postal Code"
+        placeholder="Postal Code"
+        :value="${x => x?.personalInfo.postalCode}"
+        ?error="${x => !!x.errors.postalCode}"
+        error-message="${x => x.errors.postalCode || ''}"
+        full-width
+        @input="${(x, c) => x.handleInputChange('postalCode', c.event)}"
+      ></dream-input>
     </div>
 
-    <div class="form-group ${x => x.errors.country ? 'invalid' : ''}">
-      <label for="country">Country</label>
-      <select id="country" 
-              :value="${x => x?.personalInfo.country}"
-              @change="${(x, c) => x.handleTextInput('country', c.event)}">
-        <option value="" disabled selected>Select your country</option>
-        <option value="US">United States</option>
-        <option value="CA">Canada</option>
-        <option value="UK">United Kingdom</option>
-        <option value="AU">Australia</option>
-        <option value="DE">Germany</option>
-        <option value="FR">France</option>
-      </select>
-      ${x => x.errors.country ? html`<div class="error-message">${x => x.errors.country}</div>` : ''}
-    </div>
+    <dream-select
+      id="country"
+      label="Country"
+      :value="${x => x?.personalInfo.country}"
+      ?error="${x => !!x.errors.country}"
+      error-message="${x => x.errors.country || ''}"
+      full-width
+      @change="${(x, c) => x.handleSelectChange('country', c.event)}"
+    >
+      <option value="" disabled selected>Select your country</option>
+      <option value="US">United States</option>
+      <option value="CA">Canada</option>
+      <option value="UK">United Kingdom</option>
+      <option value="AU">Australia</option>
+      <option value="DE">Germany</option>
+      <option value="FR">France</option>
+    </dream-select>
     
     <div class="disclaimer ${x => x.errors.consent ? 'invalid' : ''}">
-      <div class="agreement-checkbox-wrapper ${x => x.consentChecked ? 'checked' : ''}" 
-           @click="${x => x.toggleConsent()}">
-        <div class="custom-checkbox">
-          ${x => x.consentChecked ? html`
-            <svg class="checkmark" viewBox="0 0 24 24">
-              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"></path>
-            </svg>
-          ` : ''}
-        </div>
-        <span class="checkbox-label">
-          I confirm that all information provided is accurate and I consent to having my identity verified.
-        </span>
-      </div>
+      <dream-checkbox
+        id="consent"
+        ?checked="${x => x.consentChecked}"
+        ?error="${x => !!x.errors.consent}"
+        @change="${(x, c) => x.handleConsentChange(c.event)}"
+      >
+        I confirm that all information provided is accurate and I consent to having my identity verified.
+      </dream-checkbox>
       ${x => x.errors.consent ? html`<div class="error-message">${x => x.errors.consent}</div>` : ''}
     </div>
   </div>
 `;
 
 const styles = css`
-  .form-group {
+  .form-section {
+    background-color: var(--background-card, #f8f9fa);
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid var(--border-color, #e0e0e0);
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    margin-bottom: 16px;
+    gap: 16px;
   }
   
-  .form-group:last-child {
+  .form-section h4 {
+    margin-top: 0;
     margin-bottom: 0;
+    color: var(--primary-text-color, #333);
+    font-weight: 600;
+    font-size: 18px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color, #e0e0e0);
   }
   
   .form-row {
@@ -90,123 +115,17 @@ const styles = css`
     width: 100%;
   }
   
-  .form-row > .form-group {
+  .form-row > * {
     flex: 1;
-    min-width: 0; /* Prevents flexbox children from overflowing */
-  }
-  
-  label {
-    font-weight: 500;
-    font-size: 14px;
-    color: var(--secondary-text-color, #666);
-  }
-  
-  input[type="text"],
-  select {
-    padding: 10px 12px;
-    border: 1px solid var(--border-color, #e0e0e0);
-    border-radius: 4px;
-    font-size: 16px;
-    transition: border-color 0.2s;
-    background-color: var(--background-color, white);
-    width: 100%;
-    box-sizing: border-box;
-  }
-  
-  input[type="text"]:focus,
-  select:focus {
-    border-color: var(--primary-color, #3498db);
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
-  }
-  
-  .form-section {
-    background-color: var(--background-card, #f8f9fa);
-    border-radius: 8px;
-    padding: 16px;
-    border: 1px solid var(--border-color, #e0e0e0);
-  }
-  
-  .form-section h4 {
-    margin-top: 0;
-    margin-bottom: 16px;
-    color: var(--primary-text-color, #333);
-    font-weight: 600;
-    font-size: 18px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--border-color, #e0e0e0);
+    min-width: 0;
   }
   
   .disclaimer {
-    margin-top: 16px;
+    margin-top: 8px;
   }
   
-  /* Checkbox styles */
-  .agreement-checkbox-wrapper {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    cursor: pointer;
-    user-select: none;
-    padding: 8px;
-    background-color: rgba(0, 0, 0, 0.02);
-    border-radius: 4px;
-    transition: background-color 0.2s;
-  }
-  
-  .agreement-checkbox-wrapper:hover {
-    background-color: var(--hover-bg, rgba(0, 0, 0, 0.05));
-  }
-  
-  .agreement-checkbox-wrapper.checked {
-    background-color: color-mix(in srgb, var(--accent-color, #3498db) 5%, transparent);
-  }
-  
-  .custom-checkbox {
-    width: 20px;
-    height: 20px;
-    min-width: 20px; /* Prevent shrinking */
-    border: 2px solid var(--border-color, #ccc);
-    border-radius: 3px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--background-color, white);
-    transition: all 0.2s;
-  }
-  
-  .agreement-checkbox-wrapper:hover .custom-checkbox {
-    border-color: var(--accent-color, #3498db);
-  }
-  
-  .agreement-checkbox-wrapper.checked .custom-checkbox {
-    background-color: var(--accent-color, #3498db);
-    border-color: var(--accent-color, #3498db);
-  }
-  
-  .checkmark {
-    width: 16px;
-    height: 16px;
-    fill: white;
-    animation: scale 0.2s ease-in-out;
-  }
-  
-  @keyframes scale {
-    0% { transform: scale(0); }
-    50% { transform: scale(1.2); }
-    100% { transform: scale(1); }
-  }
-  
-  .checkbox-label {
-    font-size: 14px;
-    color: var(--secondary-text-color, #666);
-    line-height: 1.4;
-  }
-  
-  .form-group.invalid input,
-  .form-group.invalid select {
-    border-color: var(--error-color, #e74c3c);
-    background-color: var(--error-bg-color, rgba(231, 76, 60, 0.05));
+  .disclaimer.invalid dream-checkbox {
+    --checkbox-border-color: var(--error-color, #e74c3c);
   }
   
   .error-message {
@@ -214,18 +133,6 @@ const styles = css`
     font-size: 12px;
     margin-top: 4px;
     font-weight: 500;
-  }
-  
-  .form-group.invalid label {
-    color: var(--error-color, #e74c3c);
-  }
-  
-  .disclaimer.invalid .agreement-checkbox-wrapper {
-    background-color: var(--error-bg-color, rgba(231, 76, 60, 0.05));
-  }
-  
-  .disclaimer.invalid .custom-checkbox {
-    border-color: var(--error-color, #e74c3c);
   }
 `;
 
@@ -268,13 +175,14 @@ export class KycStep3Component extends FASTElement {
     }, 0);
   }
   
-  handleTextInput(field: string, event: Event) {
-    const input = event.target as HTMLInputElement | HTMLSelectElement;
+handleInputChange(field: string, event: Event): void {
+    const customEvent = event as CustomEvent;
+    const value = customEvent.detail?.value ?? (event.target as HTMLInputElement).value;
     
     // Update the field
     this.personalInfo = {
       ...this.personalInfo,
-      [field]: input.value
+      [field]: value
     };
     
     // Validate the form
@@ -284,7 +192,34 @@ export class KycStep3Component extends FASTElement {
     this.dispatchEvent(new CustomEvent('field-changed', {
       detail: {
         field,
-        value: input.value,
+        value,
+        personalInfo: this.personalInfo,
+        isValid: this.isValid,
+        errors: this.errors
+      },
+      bubbles: true,
+      composed: true
+    }));
+  }
+  
+  handleSelectChange(field: string, event: Event): void {
+    const customEvent = event as CustomEvent;
+    const value = customEvent.detail?.value ?? (event.target as HTMLSelectElement).value;
+    
+    // Update the field
+    this.personalInfo = {
+      ...this.personalInfo,
+      [field]: value
+    };
+    
+    // Validate the form
+    this.validateForm();
+    
+    // Dispatch event to parent
+    this.dispatchEvent(new CustomEvent('field-changed', {
+      detail: {
+        field,
+        value,
         personalInfo: this.personalInfo,
         isValid: this.isValid,
         errors: this.errors
@@ -295,10 +230,11 @@ export class KycStep3Component extends FASTElement {
   }
   
   /**
-   * Toggle consent checkbox state (similar to Swish workflow)
+   * Handle consent checkbox change (from dream-checkbox)
    */
-  toggleConsent(): void {
-    this.consentChecked = !this.consentChecked;
+  handleConsentChange(event: Event): void {
+    const customEvent = event as CustomEvent;
+    this.consentChecked = customEvent.detail?.checked ?? (event.target as HTMLInputElement).checked;
     
     // Validate form after toggling consent
     this.validateForm();

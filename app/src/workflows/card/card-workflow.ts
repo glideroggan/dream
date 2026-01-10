@@ -279,8 +279,8 @@ export class CardWorkflow extends WorkflowBase {
     }
 
     handleAccountSelection(event: Event): void {
-        const target = event.target as HTMLSelectElement;
-        this.selectedAccountId = target.value;
+        const customEvent = event as CustomEvent;
+        this.selectedAccountId = customEvent.detail?.value ?? (event.target as HTMLSelectElement).value;
         this.accountSelectError = null;
 
         this.validateForm();

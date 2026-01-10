@@ -2,6 +2,10 @@ import { css, customElement, FASTElement, html, observable } from "@microsoft/fa
 import { EnhancedPersonalInfo } from "./kyc-workflow";
 import { KycLevel, kycService, KycStatus } from "../../services/kyc-service";
 import { WorkflowIds } from "../workflow-registry";
+import '@primitives/input';
+import '@primitives/select';
+import '@primitives/checkbox';
+import '@primitives/button';
 
 const template = html<KycEnhanced>/*html*/ `
   <div class="kyc-enhanced-workflow">
@@ -18,25 +22,30 @@ const template = html<KycEnhanced>/*html*/ `
         <div class="form-section">
           <h3>Financial Information</h3>
           
-          <div class="form-group">
-            <label for="occupation">Occupation</label>
-            <input type="text" id="occupation" value="${x => x.personalInfo.occupation || ''}"
-                  @input="${(x, c) => x.handleInput('occupation', (c.event.target as HTMLInputElement).value)}" required>
-          </div>
+          <dream-input
+            id="occupation"
+            type="text"
+            label="Occupation"
+            :value="${x => x.personalInfo.occupation || ''}"
+            full-width
+            @input="${(x, c) => x.handleInputChange('occupation', c.event)}"
+          ></dream-input>
           
-          <div class="form-group">
-            <label for="sourceOfFunds">Source of Funds</label>
-            <select id="sourceOfFunds" 
-                    @change="${(x, c) => x.handleInput('sourceOfFunds', (c.event.target as HTMLSelectElement).value)}" required>
-              <option value="" disabled ${x => !x.personalInfo.sourceOfFunds ? 'selected' : ''}>Select source of funds</option>
-              <option value="employment" ${x => x.personalInfo.sourceOfFunds === 'employment' ? 'selected' : ''}>Employment Income</option>
-              <option value="business" ${x => x.personalInfo.sourceOfFunds === 'business' ? 'selected' : ''}>Business Income</option>
-              <option value="investment" ${x => x.personalInfo.sourceOfFunds === 'investment' ? 'selected' : ''}>Investment Returns</option>
-              <option value="inheritance" ${x => x.personalInfo.sourceOfFunds === 'inheritance' ? 'selected' : ''}>Inheritance</option>
-              <option value="gift" ${x => x.personalInfo.sourceOfFunds === 'gift' ? 'selected' : ''}>Gift</option>
-              <option value="other" ${x => x.personalInfo.sourceOfFunds === 'other' ? 'selected' : ''}>Other</option>
-            </select>
-          </div>
+          <dream-select
+            id="sourceOfFunds"
+            label="Source of Funds"
+            :value="${x => x.personalInfo.sourceOfFunds || ''}"
+            full-width
+            @change="${(x, c) => x.handleSelectChange('sourceOfFunds', c.event)}"
+          >
+            <option value="" disabled selected>Select source of funds</option>
+            <option value="employment">Employment Income</option>
+            <option value="business">Business Income</option>
+            <option value="investment">Investment Returns</option>
+            <option value="inheritance">Inheritance</option>
+            <option value="gift">Gift</option>
+            <option value="other">Other</option>
+          </dream-select>
           
           <div class="form-group proof-upload">
             <label>Proof of Address</label>
@@ -44,7 +53,7 @@ const template = html<KycEnhanced>/*html*/ `
               ${x => x.proofOfAddressName ? html`
                 <div class="uploaded-file">
                   <span>${x => x.proofOfAddressName}</span>
-                  <button class="remove-button" @click="${x => x.handleRemoveProofOfAddress()}">✕</button>
+                  <dream-button variant="ghost" size="sm" class="remove-button" @click="${x => x.handleRemoveProofOfAddress()}">✕</dream-button>
                 </div>
               ` : html`
                 <label class="upload-button">
@@ -60,29 +69,39 @@ const template = html<KycEnhanced>/*html*/ `
         <div class="form-section">
           <h3>Tax Information</h3>
           
-          <div class="form-group">
-            <label for="taxResidency">Tax Residency Country</label>
-            <input type="text" id="taxResidency" value="${x => x.personalInfo.taxResidency || ''}"
-                  @input="${(x, c) => x.handleInput('taxResidency', (c.event.target as HTMLInputElement).value)}" required>
-          </div>
+          <dream-input
+            id="taxResidency"
+            type="text"
+            label="Tax Residency Country"
+            :value="${x => x.personalInfo.taxResidency || ''}"
+            full-width
+            @input="${(x, c) => x.handleInputChange('taxResidency', c.event)}"
+          ></dream-input>
           
-          <div class="form-group">
-            <label for="taxIdNumber">Tax Identification Number</label>
-            <input type="text" id="taxIdNumber" value="${x => x.personalInfo.taxIdNumber || ''}"
-                  @input="${(x, c) => x.handleInput('taxIdNumber', (c.event.target as HTMLInputElement).value)}" required>
-          </div>
+          <dream-input
+            id="taxIdNumber"
+            type="text"
+            label="Tax Identification Number"
+            :value="${x => x.personalInfo.taxIdNumber || ''}"
+            full-width
+            @input="${(x, c) => x.handleInputChange('taxIdNumber', c.event)}"
+          ></dream-input>
           
-          <div class="form-group checkbox-group">
-            <input type="checkbox" id="taxConsent" ?checked="${x => x.taxConsentChecked}"
-                  @change="${(x, c) => x.handleTaxConsentChanged((c.event.target as HTMLInputElement).checked)}">
-            <label for="taxConsent">I confirm that the tax information provided is accurate and complete</label>
-          </div>
+          <dream-checkbox
+            id="taxConsent"
+            ?checked="${x => x.taxConsentChecked}"
+            @change="${(x, c) => x.handleTaxConsentChange(c.event)}"
+          >
+            I confirm that the tax information provided is accurate and complete
+          </dream-checkbox>
           
-          <div class="form-group checkbox-group">
-            <input type="checkbox" id="consent" ?checked="${x => x.consentChecked}"
-                  @change="${(x, c) => x.handleConsentChanged((c.event.target as HTMLInputElement).checked)}">
-            <label for="consent">I agree to the enhanced verification terms and consent to data processing</label>
-          </div>
+          <dream-checkbox
+            id="consent"
+            ?checked="${x => x.consentChecked}"
+            @change="${(x, c) => x.handleConsentChange(c.event)}"
+          >
+            I agree to the enhanced verification terms and consent to data processing
+          </dream-checkbox>
         </div>
       </div>
       
@@ -91,10 +110,14 @@ const template = html<KycEnhanced>/*html*/ `
       ` : ''}
       
       <div class="kyc-actions">
-        <button class="submit-button" @click="${x => x.handleSubmit()}"
-                ?disabled="${x => !x.isFormValid || x.isProcessing}">
-          ${x => x.isProcessing ? 'Processing...' : 'Submit Enhanced Verification'}
-        </button>
+        <dream-button 
+          variant="primary" 
+          ?loading="${x => x.isProcessing}"
+          ?disabled="${x => !x.isFormValid}"
+          @click="${x => x.handleSubmit()}"
+        >
+          Submit Enhanced Verification
+        </dream-button>
       </div>
     </div>
   </div>
@@ -135,11 +158,14 @@ const styles = css`
     border-radius: 8px;
     padding: 20px;
     border: 1px solid var(--border-color, #e0e0e0);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   }
   
   .form-section h3 {
     margin-top: 0;
-    margin-bottom: 16px;
+    margin-bottom: 0;
     padding-bottom: 8px;
     border-bottom: 1px solid var(--border-color);
     color: var(--primary-text-color);
@@ -150,21 +176,6 @@ const styles = css`
     display: flex;
     flex-direction: column;
     gap: 6px;
-    margin-bottom: 16px;
-  }
-  
-  .form-group:last-child {
-    margin-bottom: 0;
-  }
-  
-  .checkbox-group {
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 10px;
-  }
-  
-  .checkbox-group input {
-    margin-top: 3px;
   }
   
   label {
@@ -175,23 +186,6 @@ const styles = css`
   small {
     color: var(--secondary-text-color);
     font-size: 12px;
-  }
-  
-  input[type="text"],
-  select {
-    padding: 10px 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    font-size: 16px;
-    background-color: var(--background-color, white);
-    transition: border-color 0.2s;
-  }
-  
-  input[type="text"]:focus,
-  select:focus {
-    border-color: var(--primary-color, #3498db);
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
   }
   
   .upload-container {
@@ -230,12 +224,7 @@ const styles = css`
   }
   
   .remove-button {
-    background: none;
-    border: none;
     color: var(--notification-badge-bg);
-    cursor: pointer;
-    font-weight: bold;
-    padding: 0 8px;
   }
   
   .error-message {
@@ -253,27 +242,6 @@ const styles = css`
     margin-top: 20px;
     padding-top: 16px;
     border-top: 1px solid var(--divider-color);
-  }
-  
-  .submit-button {
-    padding: 10px 24px;
-    border-radius: 4px;
-    border: none;
-    background-color: var(--primary-color, #3498db);
-    color: var(--text-light, white);
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  
-  .submit-button:hover:not(:disabled) {
-    background-color: var(--accent-color, #2980b9);
-    filter: brightness(1.1);
-  }
-  
-  .submit-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
   }
 `;
 
@@ -329,7 +297,9 @@ export class KycEnhanced extends FASTElement {
     }
   }
   
-  handleInput(field: string, value: string): void {
+handleInputChange(field: string, event: Event): void {
+    const customEvent = event as CustomEvent;
+    const value = customEvent.detail?.value ?? (event.target as HTMLInputElement).value;
     this.personalInfo = {
       ...this.personalInfo,
       [field]: value
@@ -337,13 +307,25 @@ export class KycEnhanced extends FASTElement {
     this.validateForm();
   }
   
-  handleConsentChanged(checked: boolean): void {
-    this.consentChecked = checked;
+  handleSelectChange(field: string, event: Event): void {
+    const customEvent = event as CustomEvent;
+    const value = customEvent.detail?.value ?? (event.target as HTMLSelectElement).value;
+    this.personalInfo = {
+      ...this.personalInfo,
+      [field]: value
+    };
     this.validateForm();
   }
   
-  handleTaxConsentChanged(checked: boolean): void {
-    this.taxConsentChecked = checked;
+  handleConsentChange(event: Event): void {
+    const customEvent = event as CustomEvent;
+    this.consentChecked = customEvent.detail?.checked ?? (event.target as HTMLInputElement).checked;
+    this.validateForm();
+  }
+  
+  handleTaxConsentChange(event: Event): void {
+    const customEvent = event as CustomEvent;
+    this.taxConsentChecked = customEvent.detail?.checked ?? (event.target as HTMLInputElement).checked;
     this.validateForm();
   }
   

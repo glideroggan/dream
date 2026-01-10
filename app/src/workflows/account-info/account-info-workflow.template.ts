@@ -1,5 +1,6 @@
 import { html, ref, when } from "@microsoft/fast-element";
 import { AccountInfoWorkflow } from "./account-info-workflow";
+import "@primitives/input";
 
 export const template = html<AccountInfoWorkflow>/*html*/ `
   ${when(
@@ -28,13 +29,13 @@ export const template = html<AccountInfoWorkflow>/*html*/ `
                   (x) => x.isRenaming,
                   html<AccountInfoWorkflow>/*html*/ `
                     <div class="rename-container">
-                      <input 
+                      <dream-input 
                         type="text" 
                         ${ref('nameInput')}
                         :value="${(x) => x.account?.name || ''}" 
                         class="rename-input"
                         @keyup="${(x, c) => x.accountNameChanged(c.event)}"
-                      />
+                      ></dream-input>
                       <div class="rename-actions">
                         <dream-button variant="primary" size="sm" @click="${(x) => x.saveRename()}">Save</dream-button>
                         <dream-button variant="ghost" size="sm" @click="${(x) => x.cancelRename()}">Cancel</dream-button>

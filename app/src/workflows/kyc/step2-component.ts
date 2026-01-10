@@ -1,36 +1,46 @@
 import { FASTElement, customElement, html, css, attr, observable } from "@microsoft/fast-element";
 import { PersonalInformation } from "./kyc-workflow";
+import '@primitives/input';
+import '@primitives/select';
+import '@primitives/button';
 
 const template = html<KycStep2Component>/*html*/`
   <div class="form-section">
     <h4>Identity Verification</h4>
-    <div class="form-group ${x => x.errors.idType ? 'invalid' : ''}">
-      <label for="idType">ID Type</label>
-      <select id="idType" 
-              :value="${x => x.personalInfo.idType}"
-              @change="${(x, c) => x.handleTextInput('idType', c.event)}">
-        <option value="" disabled selected>Select ID type</option>
-        <option value="passport">Passport</option>
-        <option value="drivers_license">Driver's License</option>
-        <option value="national_id">National ID Card</option>
-      </select>
-      ${x => x.errors.idType ? html`<div class="error-message">${x => x.errors.idType}</div>` : ''}
-    </div>
+    
+    <dream-select
+      id="idType"
+      label="ID Type"
+      :value="${x => x.personalInfo.idType}"
+      ?error="${x => !!x.errors.idType}"
+      error-message="${x => x.errors.idType || ''}"
+      full-width
+      @change="${(x, c) => x.handleSelectChange('idType', c.event)}"
+    >
+      <option value="" disabled selected>Select ID type</option>
+      <option value="passport">Passport</option>
+      <option value="drivers_license">Driver's License</option>
+      <option value="national_id">National ID Card</option>
+    </dream-select>
 
-    <div class="form-group ${x => x.errors.idNumber ? 'invalid' : ''}">
-      <label for="idNumber">ID Number</label>
-      <input type="text" id="idNumber" placeholder="Enter your ID number"
-             :value="${x => x.personalInfo.idNumber}"
-             @input="${(x, c) => x.handleTextInput('idNumber', c.event)}" />
-      ${x => x.errors.idNumber ? html`<div class="error-message">${x => x.errors.idNumber}</div>` : ''}
-    </div>
+    <dream-input
+      id="idNumber"
+      type="text"
+      label="ID Number"
+      placeholder="Enter your ID number"
+      :value="${x => x.personalInfo.idNumber}"
+      ?error="${x => !!x.errors.idNumber}"
+      error-message="${x => x.errors.idNumber || ''}"
+      full-width
+      @input="${(x, c) => x.handleInputChange('idNumber', c.event)}"
+    ></dream-input>
 
     <div class="form-group ${x => x.errors.document ? 'invalid' : ''}">
       <label>ID Document Upload</label>
       <div class="document-upload">
-        <button class="upload-button" @click="${x => x.fakeDocumentUpload()}">
+        <dream-button variant="secondary" @click="${x => x.fakeDocumentUpload()}">
           Upload ID Document
-        </button>
+        </dream-button>
         <span class="file-name">${x => x.uploadedFileName || 'No file selected'}</span>
       </div>
       ${x => x.errors.document ? html`<div class="error-message">${x => x.errors.document}</div>` : ''}
@@ -39,55 +49,36 @@ const template = html<KycStep2Component>/*html*/`
 `;
 
 const styles = css`
+  .form-section {
+    background-color: var(--background-card, #f8f9fa);
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid var(--border-color, #e0e0e0);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .form-section h4 {
+    margin-top: 0;
+    margin-bottom: 0;
+    color: var(--primary-text-color, #333);
+    font-weight: 600;
+    font-size: 18px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color, #e0e0e0);
+  }
+  
   .form-group {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    margin-bottom: 16px;
-  }
-  
-  .form-group:last-child {
-    margin-bottom: 0;
   }
   
   label {
     font-weight: 500;
     font-size: 14px;
     color: var(--secondary-text-color, #666);
-  }
-  
-  input[type="text"],
-  select {
-    padding: 10px 12px;
-    border: 1px solid var(--border-color, #e0e0e0);
-    border-radius: 4px;
-    font-size: 16px;
-    transition: border-color 0.2s;
-    background-color: var(--background-color, white);
-  }
-  
-  input[type="text"]:focus,
-  select:focus {
-    border-color: var(--primary-color, #3498db);
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
-  }
-  
-  .form-section {
-    background-color: var(--background-card, #f8f9fa);
-    border-radius: 8px;
-    padding: 16px;
-    border: 1px solid var(--border-color, #e0e0e0);
-  }
-  
-  .form-section h4 {
-    margin-top: 0;
-    margin-bottom: 16px;
-    color: var(--primary-text-color, #333);
-    font-weight: 600;
-    font-size: 18px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--border-color, #e0e0e0);
   }
   
   .document-upload {
@@ -97,31 +88,14 @@ const styles = css`
     flex-wrap: wrap;
   }
   
-  .upload-button {
-    background-color: var(--background-card, #f0f0f0);
-    color: var(--primary-text-color, #333);
-    padding: 10px 16px;
-    border: 1px solid var(--border-color, #e0e0e0);
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    font-weight: 500;
-  }
-  
-  .upload-button:hover {
-    background-color: var(--hover-bg, #e0e0e0);
-  }
-  
   .file-name {
     font-size: 14px;
     color: var(--secondary-text-color, #666);
     font-style: italic;
   }
   
-  .form-group.invalid input,
-  .form-group.invalid select {
-    border-color: var(--error-color, #e74c3c);
-    background-color: var(--error-bg-color, rgba(231, 76, 60, 0.05));
+  .form-group.invalid dream-button {
+    --accent-color: var(--error-color, #e74c3c);
   }
   
   .error-message {
@@ -133,11 +107,6 @@ const styles = css`
   
   .form-group.invalid label {
     color: var(--error-color, #e74c3c);
-  }
-  
-  .form-group.invalid .upload-button {
-    border-color: var(--error-color, #e74c3c);
-    background-color: var(--error-bg-color, rgba(231, 76, 60, 0.05));
   }
 `;
 
@@ -180,13 +149,14 @@ export class KycStep2Component extends FASTElement {
     }, 0);
   }
   
-  handleTextInput(field: string, event: Event) {
-    const input = event.target as HTMLInputElement | HTMLSelectElement;
+handleInputChange(field: string, event: Event): void {
+    const customEvent = event as CustomEvent;
+    const value = customEvent.detail?.value ?? (event.target as HTMLInputElement).value;
     
     // Update the field
     this.personalInfo = {
       ...this.personalInfo,
-      [field]: input.value
+      [field]: value
     };
     
     // Validate the form
@@ -196,7 +166,34 @@ export class KycStep2Component extends FASTElement {
     this.dispatchEvent(new CustomEvent('field-changed', {
       detail: {
         field,
-        value: input.value,
+        value,
+        personalInfo: this.personalInfo,
+        isValid: this.isValid,
+        errors: this.errors
+      },
+      bubbles: true,
+      composed: true
+    }));
+  }
+  
+  handleSelectChange(field: string, event: Event): void {
+    const customEvent = event as CustomEvent;
+    const value = customEvent.detail?.value ?? (event.target as HTMLSelectElement).value;
+    
+    // Update the field
+    this.personalInfo = {
+      ...this.personalInfo,
+      [field]: value
+    };
+    
+    // Validate the form
+    this.validateForm();
+    
+    // Dispatch event to parent
+    this.dispatchEvent(new CustomEvent('field-changed', {
+      detail: {
+        field,
+        value,
         personalInfo: this.personalInfo,
         isValid: this.isValid,
         errors: this.errors

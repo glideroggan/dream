@@ -1,5 +1,6 @@
 import { html, repeat, when } from "@microsoft/fast-element";
 import { CardWorkflow } from "./card-workflow";
+import "@primitives/select";
 
 export const template = html<CardWorkflow>/*html*/`
   <div class="card-workflow">
@@ -96,18 +97,19 @@ export const template = html<CardWorkflow>/*html*/`
             <!-- For Debit Card - Account Selection -->
             ${when(x => x.selectedProduct?.type === 'debit' && x.availableAccounts.length > 0, html`
               <div class="account-selection">
-                <h4>Select Account to Link</h4>
-                <div class="select-wrapper">
-                  <select @change="${(x, c) => x.handleAccountSelection(c.event)}" ?disabled="${x => x.hasSelectedCardBefore}">
-                    <option value="" disabled selected>Choose an account</option>
-                    ${repeat(x => x.availableAccounts, html`
-                      <option value="${x => x.id}">${x => x.name}</option>
-                    `)}
-                  </select>
-                </div>
-                ${when(x => x.accountSelectError, html`
-                  <div class="error-message">${x => x.accountSelectError}</div>
-                `)}
+                <dream-select
+                  label="Select Account to Link"
+                  placeholder="Choose an account"
+                  ?disabled="${x => x.hasSelectedCardBefore}"
+                  ?error="${x => !!x.accountSelectError}"
+                  error-message="${x => x.accountSelectError || ''}"
+                  full-width
+                  @change="${(x, c) => x.handleAccountSelection(c.event)}"
+                >
+                  ${repeat(x => x.availableAccounts, html`
+                    <option value="${x => x.id}">${x => x.name}</option>
+                  `)}
+                </dream-select>
               </div>
             `)}
             

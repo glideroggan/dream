@@ -1,6 +1,7 @@
 import { customElement, html, css, observable, attr, when } from "@microsoft/fast-element";
 import { WorkflowBase } from "../workflow-base";
 import { signingService, SigningMethod, SigningStatus, SigningRequest } from "../../services/signing-service";
+import "@primitives/button";
 
 const template = html<SigningWorkflow>/*html*/`
   <div class="signing-workflow">
@@ -20,12 +21,12 @@ const template = html<SigningWorkflow>/*html*/`
         
         <div class="example-buttons">
           <h4>Examples</h4>
-          <button class="example-button" @click="${x => x.startExampleTransaction()}">
+          <dream-button variant="secondary" full-width @click="${x => x.startExampleTransaction()}">
             Sign Transaction
-          </button>
-          <button class="example-button" @click="${x => x.startExampleDocument()}">
+          </dream-button>
+          <dream-button variant="secondary" full-width @click="${x => x.startExampleDocument()}">
             Sign Document
-          </button>
+          </dream-button>
         </div>
       </div>
     `)}
@@ -45,8 +46,8 @@ const template = html<SigningWorkflow>/*html*/`
         `)}
         
         <div class="action-buttons">
-          <button class="action-button decline-button" @click="${x => x.handleDecline()}">Cancel</button>
-          <button class="action-button confirm-button" @click="${x => x.handleInitiateSigning()}">Sign</button>
+          <dream-button variant="ghost" @click="${x => x.handleDecline()}">Cancel</dream-button>
+          <dream-button variant="primary" @click="${x => x.handleInitiateSigning()}">Sign</dream-button>
         </div>
       </div>
     `)}
@@ -73,12 +74,12 @@ const template = html<SigningWorkflow>/*html*/`
         `)}
         
         <div class="action-buttons">
-          <button class="action-button cancel-button" @click="${x => x.handleCancel()}">Cancel</button>
+          <dream-button variant="ghost" @click="${x => x.handleCancel()}">Cancel</dream-button>
           
           <!-- Demo controls - only for testing -->
           <div class="demo-controls">
-            <button class="demo-button" @click="${x => x.simulateApproval()}">Simulate Approval</button>
-            <button class="demo-button" @click="${x => x.simulateRejection()}">Simulate Rejection</button>
+            <dream-button variant="secondary" size="sm" @click="${x => x.simulateApproval()}">Simulate Approval</dream-button>
+            <dream-button variant="secondary" size="sm" @click="${x => x.simulateRejection()}">Simulate Rejection</dream-button>
           </div>
         </div>
       </div>
@@ -94,7 +95,7 @@ const template = html<SigningWorkflow>/*html*/`
         <p class="result-message">${x => x.signingResult?.message}</p>
         
         <div class="action-buttons">
-          <button class="action-button close-button" @click="${x => x.handleClose()}">Close</button>
+          <dream-button variant="primary" @click="${x => x.handleClose()}">Close</dream-button>
         </div>
       </div>
     `)}
@@ -170,30 +171,15 @@ const styles = css`
   .example-buttons {
     width: 100%;
     max-width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
   }
   
   .example-buttons h4 {
     font-size: 14px;
     margin: 0 0 12px 0;
     color: var(--text-secondary, #666);
-  }
-  
-  .example-button {
-    width: 100%;
-    padding: 12px 16px;
-    margin-bottom: 10px;
-    background-color: var(--background-card, #f5f5f5);
-    border: 1px solid var(--border-color, #e0e0e0);
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 500;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  
-  .example-button:hover {
-    background-color: var(--hover-bg, #e9e9e9);
   }
   
   .message {
@@ -232,36 +218,8 @@ const styles = css`
   .action-buttons {
     display: flex;
     justify-content: space-between;
+    gap: 12px;
     margin-top: 20px;
-  }
-  
-  .action-button {
-    padding: 10px 24px;
-    border-radius: 4px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  
-  .confirm-button, .close-button {
-    background-color: var(--primary-color, #3498db);
-    color: var(--text-light, white);
-    border: none;
-  }
-  
-  .confirm-button:hover, .close-button:hover {
-    background-color: var(--secondary-color, #2980b9);
-    filter: brightness(1.1);
-  }
-  
-  .decline-button, .cancel-button {
-    background-color: var(--background-card, #f5f5f5);
-    border: 1px solid var(--border-color, #e0e0e0);
-    color: var(--primary-text-color, #333);
-  }
-  
-  .decline-button:hover, .cancel-button:hover {
-    background-color: var(--hover-bg, #f5f5f5);
   }
   
   /* BankID animation styles */
@@ -398,20 +356,6 @@ const styles = css`
   .demo-controls {
     display: flex;
     gap: 8px;
-  }
-  
-  .demo-button {
-    padding: 6px 12px;
-    font-size: 12px;
-    border: 1px dashed var(--border-color, #999);
-    background-color: var(--background-card, #f8f8f8);
-    color: var(--secondary-text-color, #666);
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  
-  .demo-button:hover {
-    background-color: var(--hover-bg, #eee);
   }
 `;
 

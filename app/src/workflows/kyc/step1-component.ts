@@ -1,112 +1,74 @@
 import { FASTElement, customElement, html, css, attr, observable } from "@microsoft/fast-element";
 import { PersonalInformation } from "./kyc-workflow";
+import '@primitives/input';
+import '@primitives/select';
 
 const template = html<KycStep1Component>/*html*/`
   <div class="form-section">
     <h4>Personal Information</h4>
-    <div class="form-group ${x => x.errors.fullName ? 'invalid' : ''}">
-      <label for="fullName">Full Name</label>
-      <input type="text" id="fullName" placeholder="Enter your full legal name"
-            :value="${x => x.personalInfo.fullName}"
-            @input="${(x, c) => x.handleTextInput('fullName', c.event)}" />
-      ${x => x.errors.fullName ? html`<div class="error-message">${x => x.errors.fullName}</div>` : ''}
-    </div>
+    
+    <dream-input
+      id="fullName"
+      type="text"
+      label="Full Name"
+      placeholder="Enter your full legal name"
+      :value="${x => x.personalInfo.fullName}"
+      ?error="${x => !!x.errors.fullName}"
+      error-message="${x => x.errors.fullName || ''}"
+      full-width
+      @input="${(x, c) => x.handleInputChange('fullName', c.event)}"
+    ></dream-input>
 
-    <div class="form-group ${x => x.errors.dateOfBirth ? 'invalid' : ''}">
-      <label for="dateOfBirth">Date of Birth</label>
-      <input type="date" id="dateOfBirth" 
-            :value="${x => x.personalInfo.dateOfBirth}"
-            @change="${(x, c) => x.handleTextInput('dateOfBirth', c.event)}" />
-      ${x => x.errors.dateOfBirth ? html`<div class="error-message">${x => x.errors.dateOfBirth}</div>` : ''}
-    </div>
+    <dream-input
+      id="dateOfBirth"
+      type="date"
+      label="Date of Birth"
+      :value="${x => x.personalInfo.dateOfBirth}"
+      ?error="${x => !!x.errors.dateOfBirth}"
+      error-message="${x => x.errors.dateOfBirth || ''}"
+      full-width
+      @input="${(x, c) => x.handleInputChange('dateOfBirth', c.event)}"
+    ></dream-input>
 
-    <div class="form-group ${x => x.errors.nationality ? 'invalid' : ''}">
-      <label for="nationality">Nationality</label>
-      <select id="nationality" 
-              :value="${x => x.personalInfo.nationality}"
-              @change="${(x, c) => x.handleTextInput('nationality', c.event)}">
-        <option value="" disabled selected>Select your nationality</option>
-        <option value="US">United States</option>
-        <option value="CA">Canada</option>
-        <option value="UK">United Kingdom</option>
-        <option value="AU">Australia</option>
-        <option value="DE">Germany</option>
-        <option value="FR">France</option>
-      </select>
-      ${x => x.errors.nationality ? html`<div class="error-message">${x => x.errors.nationality}</div>` : ''}
-    </div>
+    <dream-select
+      id="nationality"
+      label="Nationality"
+      :value="${x => x.personalInfo.nationality}"
+      ?error="${x => !!x.errors.nationality}"
+      error-message="${x => x.errors.nationality || ''}"
+      full-width
+      @change="${(x, c) => x.handleSelectChange('nationality', c.event)}"
+    >
+      <option value="" disabled selected>Select your nationality</option>
+      <option value="US">United States</option>
+      <option value="CA">Canada</option>
+      <option value="UK">United Kingdom</option>
+      <option value="AU">Australia</option>
+      <option value="DE">Germany</option>
+      <option value="FR">France</option>
+    </dream-select>
   </div>
 `;
 
 const styles = css`
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-bottom: 16px;
-  }
-  
-  .form-group:last-child {
-    margin-bottom: 0;
-  }
-  
-  label {
-    font-weight: 500;
-    font-size: 14px;
-    color: var(--secondary-text-color, #666);
-  }
-  
-  input[type="text"],
-  input[type="date"],
-  select {
-    padding: 10px 12px;
-    border: 1px solid var(--border-color, #e0e0e0);
-    border-radius: 4px;
-    font-size: 16px;
-    transition: border-color 0.2s;
-    background-color: var(--background-color, white);
-  }
-  
-  input[type="text"]:focus,
-  input[type="date"]:focus,
-  select:focus {
-    border-color: var(--primary-color, #3498db);
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
-  }
-  
   .form-section {
     background-color: var(--background-card, #f8f9fa);
     border-radius: 8px;
     padding: 16px;
     border: 1px solid var(--border-color, #e0e0e0);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   }
   
   .form-section h4 {
     margin-top: 0;
-    margin-bottom: 16px;
+    margin-bottom: 0;
     color: var(--primary-text-color, #333);
     font-weight: 600;
     font-size: 18px;
     padding-bottom: 8px;
     border-bottom: 1px solid var(--border-color, #e0e0e0);
-  }
-  
-  .form-group.invalid input,
-  .form-group.invalid select {
-    border-color: var(--error-color, #e74c3c);
-    background-color: var(--error-bg-color, rgba(231, 76, 60, 0.05));
-  }
-  
-  .error-message {
-    color: var(--error-color, #e74c3c);
-    font-size: 12px;
-    margin-top: 4px;
-    font-weight: 500;
-  }
-  
-  .form-group.invalid label {
-    color: var(--error-color, #e74c3c);
   }
 `;
 
@@ -150,13 +112,14 @@ export class KycStep1Component extends FASTElement {
     }, 0);
   }
   
-  handleTextInput(field: string, event: Event) {
-    const input = event.target as HTMLInputElement | HTMLSelectElement;
+handleInputChange(field: string, event: Event): void {
+    const customEvent = event as CustomEvent;
+    const value = customEvent.detail?.value ?? (event.target as HTMLInputElement).value;
     
     // Update the field
     this.personalInfo = {
       ...this.personalInfo,
-      [field]: input.value
+      [field]: value
     };
 
     // Validate the form after field update
@@ -166,7 +129,34 @@ export class KycStep1Component extends FASTElement {
     this.dispatchEvent(new CustomEvent('field-changed', {
       detail: {
         field,
-        value: input.value,
+        value,
+        personalInfo: this.personalInfo,
+        isValid: this.isValid,
+        errors: this.errors
+      },
+      bubbles: true,
+      composed: true
+    }));
+  }
+  
+  handleSelectChange(field: string, event: Event): void {
+    const customEvent = event as CustomEvent;
+    const value = customEvent.detail?.value ?? (event.target as HTMLSelectElement).value;
+    
+    // Update the field
+    this.personalInfo = {
+      ...this.personalInfo,
+      [field]: value
+    };
+
+    // Validate the form after field update
+    this.validateForm();
+    
+    // Dispatch event to parent
+    this.dispatchEvent(new CustomEvent('field-changed', {
+      detail: {
+        field,
+        value,
         personalInfo: this.personalInfo,
         isValid: this.isValid,
         errors: this.errors

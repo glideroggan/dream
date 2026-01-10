@@ -15,6 +15,8 @@ import { Product } from '../../repositories/models/product-models'
 import { ProductRepository } from '../../repositories/product-repository'
 import { userProductService } from '../../services/user-product-service'
 import { WorkflowIds } from '../workflow-registry'
+import '@primitives/input'
+import '@primitives/select'
 
 // Define account types
 export interface CreateAccountType
@@ -88,29 +90,28 @@ const template = html<CreateAccountWorkflow>/*html*/ `
           class="account-form ${(x) =>
             x.selectedTypeId == '' ? 'hidden' : ''}"
         >
-          <div class="form-group">
-            <label for="accountName">Account Name</label>
-            <input
-              type="text"
-              id="accountName"
-              placeholder="Enter a name for your account"
-              value="${(x) => x.accountName}"
-              @input="${(x, c) => x.handleNameChange(c.event)}"
-            />
-          </div>
+          <dream-input
+            id="accountName"
+            type="text"
+            label="Account Name"
+            placeholder="Enter a name for your account"
+            :value="${(x) => x.accountName}"
+            full-width
+            @input="${(x, c) => x.handleNameChange(c.event)}"
+          ></dream-input>
 
-          <div class="form-group">
-            <label for="currency">Currency</label>
-            <select
-              id="currency"
-              @change="${(x, c) => x.handleCurrencyChange(c.event)}"
-            >
-              <option value="SEK" selected>Swedish Krona (SEK)</option>
-              <option value="USD">US Dollar (USD)</option>
-              <option value="EUR">Euro (EUR)</option>
-              <option value="GBP">British Pound (GBP)</option>
-            </select>
-          </div>
+          <dream-select
+            id="currency"
+            label="Currency"
+            :value="${(x) => x.currency}"
+            full-width
+            @change="${(x, c) => x.handleCurrencyChange(c.event)}"
+          >
+            <option value="SEK">Swedish Krona (SEK)</option>
+            <option value="USD">US Dollar (USD)</option>
+            <option value="EUR">Euro (EUR)</option>
+            <option value="GBP">British Pound (GBP)</option>
+          </dream-select>
 
           ${when(
             (x) => x.requireIdentificationProcess,
@@ -273,33 +274,6 @@ const styles = css`
     display: flex;
     flex-direction: column;
     gap: 6px;
-  }
-
-  label {
-    font-weight: 500;
-    font-size: 14px;
-    color: var(--text-secondary, #666);
-  }
-
-  select,
-  input {
-    padding: 10px 12px;
-    border: 1px solid var(--border-color, #e0e0e0);
-    border-radius: 4px;
-    font-size: 16px;
-    transition: border-color 0.2s;
-  }
-
-  select:focus,
-  input:focus {
-    border-color: var(--primary-color, #3498db);
-    outline: none;
-  }
-
-  select:user-invalid,
-  input:user-invalid {
-    border-color: var(--error-color, #e74c3c);
-    background-color: var(--error-bg, rgba(231, 76, 60, 0.05));
   }
 
   .error-message {
@@ -718,19 +692,6 @@ export class CreateAccountWorkflow extends WorkflowBase {
 
   connectedCallback() {
     super.connectedCallback()
-
-    // Add HTML validation attributes
-    setTimeout(() => {
-      const nameInput = this.shadowRoot?.getElementById(
-        'accountName'
-      ) as HTMLInputElement
-
-      if (nameInput) {
-        nameInput.required = true
-        nameInput.minLength = 3
-        nameInput.maxLength = 30
-      }
-    }, 0)
   }
 
   async selectAccountType(id: string) {
@@ -753,8 +714,8 @@ export class CreateAccountWorkflow extends WorkflowBase {
   }
 
   handleCurrencyChange(event: Event) {
-    const select = event.target as HTMLSelectElement
-    this.currency = select.value
+    const customEvent = event as CustomEvent
+    this.currency = customEvent.detail?.value ?? (event.target as HTMLSelectElement).value
   }
 
   validateForm(): boolean {
@@ -806,23 +767,33 @@ export class CreateAccountWorkflow extends WorkflowBase {
     return true
   }
 
-  private markInvalid(elementId: string): void {
-    const element = this.shadowRoot?.getElementById(elementId) as
-      | HTMLInputElement
-      | HTMLSelectElement
+private markInvalid(elementId: string): void {
+    const element = this.shadowRoot?.getElementById(elementId)
     if (element) {
-      element.setCustomValidity(this.errorMessage)
-      element.reportValidity()
+      if ('error' in element) {
+        // Custom element (dream-input, dream-select)
+        (element as any).error = true;
+        (element as any).errorMessage = this.errorMessage;
+      } else if ('setCustomValidity' in element) {
+        // Native element
+        (element as HTMLInputElement).setCustomValidity(this.errorMessage || '');
+        (element as HTMLInputElement).reportValidity();
+      }
     }
   }
 
   private resetInvalidStates(): void {
     ;['accountName', 'currency'].forEach((id) => {
-      const element = this.shadowRoot?.getElementById(id) as
-        | HTMLInputElement
-        | HTMLSelectElement
+      const element = this.shadowRoot?.getElementById(id)
       if (element) {
-        element.setCustomValidity('')
+        if ('error' in element) {
+          // Custom element (dream-input, dream-select)
+          (element as any).error = false;
+          (element as any).errorMessage = '';
+        } else if ('setCustomValidity' in element) {
+          // Native element
+          (element as HTMLInputElement).setCustomValidity('');
+        }
       }
     })
   }

@@ -21,8 +21,8 @@ const template = html<SelectPrimitive>`
         ${ref("selectElement")}
       >
         ${when(x => x.placeholder, html`<option value="" disabled selected hidden>${x => x.placeholder}</option>`)}
-        <slot></slot>
       </select>
+      <slot></slot>
       <span class="chevron" part="chevron">
         ${chevronIcon}
       </span>
@@ -139,6 +139,11 @@ const styles = css`
   :host([error]) .helper {
     color: var(--border-color-error);
   }
+
+  /* Hide the slot - options are cloned into the select element */
+  slot {
+    display: none;
+  }
 `;
 
 @customElement({
@@ -159,6 +164,72 @@ export class SelectPrimitive extends FASTElement {
   @attr({ attribute: "full-width", mode: "boolean" }) fullWidth: boolean = false;
 
   selectElement: HTMLSelectElement;
+  private _slotObserver: MutationObserver | null = null;
+
+  connectedCallback() {
+    super.connectedCallback();
+    
+    // Clone slotted options into the shadow DOM select element
+    requestAnimationFrame(() => {
+      this.syncOptions();
+      
+      // Listen for slot changes to keep options synchronized
+      const slotElement = this.shadowRoot?.querySelector('slot');
+      if (slotElement) {
+        slotElement.addEventListener('slotchange', () => this.syncOptions());
+      }
+    });
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this._slotObserver?.disconnect();
+  }
+
+  private syncOptions() {
+    if (!this.selectElement) return;
+
+    const slotElement = this.shadowRoot?.querySelector('slot');
+    if (!slotElement) return;
+
+    // Get slotted option elements from the light DOM
+    const slottedNodes = slotElement.assignedNodes({ flatten: true });
+    const optionElements = slottedNodes.filter(node => 
+      node instanceof HTMLOptionElement
+    ) as HTMLOptionElement[];
+
+    // Clear all existing options
+    this.selectElement.innerHTML = '';
+    
+    // Add placeholder option if configured
+    if (this.placeholder) {
+      const placeholderOption = document.createElement('option');
+      placeholderOption.value = '';
+      placeholderOption.disabled = true;
+      placeholderOption.hidden = true;
+      placeholderOption.textContent = this.placeholder;
+      if (!this.value) {
+        placeholderOption.selected = true;
+      }
+      this.selectElement.appendChild(placeholderOption);
+    }
+
+    // Clone and append slotted options as direct children of the select
+    optionElements.forEach(option => {
+      const clonedOption = option.cloneNode(true) as HTMLOptionElement;
+      this.selectElement.appendChild(clonedOption);
+    });
+
+    // Sync the value after options are updated
+    this.syncSelectValue();
+  }
+
+  private syncSelectValue() {
+    if (this.selectElement && this.value) {
+      // Ensure the native select reflects the current value
+      this.selectElement.value = this.value;
+    }
+  }
 
   handleChange(e: Event) {
     e.stopPropagation(); // Stop propagation of the native event

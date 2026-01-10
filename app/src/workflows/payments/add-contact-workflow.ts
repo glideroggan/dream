@@ -1,11 +1,13 @@
 import { customElement, observable, attr, Observable, FASTElement } from "@microsoft/fast-element";
 import { WorkflowBase } from "../workflow-base";
 import "@primitives/button";
+import "@primitives/input";
 import { PaymentContact } from "../../repositories/models/payment-contact";
 import { generateUniqueId } from "../../utilities/id-generator";
 import { paymentContactsService } from "../../services/payment-contacts-service";
 import { template } from "./add-contact-workflow.template";
 import { styles } from "./add-contact-workflow.css";
+import type { InputPrimitive } from "../../primitives/input/input";
 
 @customElement({
   name: "add-contact-workflow",
@@ -22,10 +24,10 @@ export class AddContactWorkflow extends WorkflowBase {
   @observable errors: Record<string, string> = {};
 
   // Form input references
-  inputNameElement!: HTMLInputElement;
-  inputAccountElement!: HTMLInputElement;
-  inputBankElement!: HTMLInputElement;
-  inputAliasElement!: HTMLInputElement;
+  inputNameElement!: InputPrimitive;
+  inputAccountElement!: InputPrimitive;
+  inputBankElement!: InputPrimitive;
+  inputAliasElement!: InputPrimitive;
   textareaNotesElement!: HTMLTextAreaElement;
   
   // If editing an existing contact, store its ID
@@ -238,21 +240,25 @@ export class AddContactWorkflow extends WorkflowBase {
   }
   
   handleNameInput(event: Event): void {
-    this.contactName = (event.target as HTMLInputElement).value;
+    const customEvent = event as CustomEvent;
+    this.contactName = customEvent.detail?.value ?? (event.target as HTMLInputElement).value;
     this.validateForm();
   }
   
   handleAccountNumberInput(event: Event): void {
-    this.accountNumber = (event.target as HTMLInputElement).value;
+    const customEvent = event as CustomEvent;
+    this.accountNumber = customEvent.detail?.value ?? (event.target as HTMLInputElement).value;
     this.validateForm();
   }
   
   handleBankNameInput(event: Event): void {
-    this.bankName = (event.target as HTMLInputElement).value;
+    const customEvent = event as CustomEvent;
+    this.bankName = customEvent.detail?.value ?? (event.target as HTMLInputElement).value;
   }
   
   handleAliasInput(event: Event): void {
-    this.alias = (event.target as HTMLInputElement).value;
+    const customEvent = event as CustomEvent;
+    this.alias = customEvent.detail?.value ?? (event.target as HTMLInputElement).value;
   }
   
   handleNotesInput(event: Event): void {
@@ -363,12 +369,12 @@ export class AddContactWorkflow extends WorkflowBase {
   }
   
   resetForm(): void {
-    // Clear all form inputs directly using refs
-    this.inputNameElement.value = '';
-    this.inputAccountElement.value = '';
-    this.inputBankElement.value = '';
-    this.inputAliasElement.value = '';
-    this.textareaNotesElement.value = '';
+    // Clear dream-input elements using their value attribute
+    if (this.inputNameElement) this.inputNameElement.value = '';
+    if (this.inputAccountElement) this.inputAccountElement.value = '';
+    if (this.inputBankElement) this.inputBankElement.value = '';
+    if (this.inputAliasElement) this.inputAliasElement.value = '';
+    if (this.textareaNotesElement) this.textareaNotesElement.value = '';
     
     // Reset observable values to ensure data binding is updated
     this.contactName = '';
