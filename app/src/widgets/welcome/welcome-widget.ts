@@ -1,5 +1,6 @@
 import { customElement, html, css, attr, observable } from '@microsoft/fast-element';
 import { BaseWidget, baseWidgetStyles } from '../../components/base-widget';
+import "@primitives/button/button.js";
 
 const template = html<WelcomeWidget>/*html*/`
   <div class="welcome-widget">
@@ -29,14 +30,14 @@ const template = html<WelcomeWidget>/*html*/`
       <h3>Theme Pages</h3>
       <div class="feature-illustration navigation-illustration"></div>
       <p>Browse through different theme pages using the menu on the left. Each theme organizes related widgets and functionality to help you accomplish specific tasks.</p>
-      <button class="action-button" @click="${x => x.showThemeDemo()}">Show me how</button>
+      <dream-button variant="primary" @click="${x => x.showThemeDemo()}">Show me how</dream-button>
     </div>
     
     <div class="tab-content" ?hidden="${x => x.activeTab !== 'search'}">
       <h3>Search Bar</h3>
       <div class="feature-illustration search-illustration"></div>
       <p>Use the search bar in the header to quickly find widgets and workflows. Type keywords related to what you're looking for to see available options.</p>
-      <button class="action-button" @click="${x => x.showSearchDemo()}">Try searching</button>
+      <dream-button variant="primary" @click="${x => x.showSearchDemo()}">Try searching</dream-button>
     </div>
     
     <div class="tab-content" ?hidden="${x => x.activeTab !== 'widgets'}">
@@ -48,7 +49,7 @@ const template = html<WelcomeWidget>/*html*/`
         <li>Close widgets you don't need (top right corner)</li>
         <li>Rearrange widgets on your theme pages (TBD)</li>
       </ul>
-      <button class="action-button" @click="${x => x.showWidgetsDemo()}">Explore widgets</button>
+      <dream-button variant="primary" @click="${x => x.showWidgetsDemo()}">Explore widgets</dream-button>
     </div>
     
     <div class="tab-content" ?hidden="${x => x.activeTab !== 'workflows'}">
@@ -60,7 +61,7 @@ const template = html<WelcomeWidget>/*html*/`
         <li>The search bar by typing related commands</li>
         <li>Context menus within the application</li>
       </ul>
-      <button class="action-button" @click="${x => x.showWorkflowsDemo()}">Discover workflows</button>
+      <dream-button variant="primary" @click="${x => x.showWorkflowsDemo()}">Discover workflows</dream-button>
     </div>
   </div>
 `;
@@ -176,24 +177,7 @@ const styles = css`
   .workflows-illustration {
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%233498db"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14h-2V9h-2V7h4v10z"/></svg>');
   }
-  
-  .action-button {
-    background-color: var(--accent-color, #3498db);
-    color: var(--text-light, white);
-    border: none;
-    border-radius: 4px;
-    padding: 8px 16px;
-    margin-top: 10px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.2s ease;
-  }
-  
-  .action-button:hover {
-    background-color: var(--primary-color, #2980b9);
-    filter: brightness(1.1);
-  }
-  
+
   .controls {
     margin-top: 20px;
     display: flex;
@@ -201,22 +185,7 @@ const styles = css`
     align-items: center;
     gap: 15px;
   }
-  
-  .dismiss-button {
-    background-color: var(--secondary-color, #95a5a6);
-    color: var(--text-light, white);
-    border: none;
-    border-radius: 4px;
-    padding: 8px 16px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.2s ease;
-  }
-  
-  .dismiss-button:hover {
-    background-color: var(--hover-bg, #7f8c8d);
-  }
-  
+
   .show-again {
     display: flex;
     align-items: center;

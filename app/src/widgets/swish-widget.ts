@@ -1,4 +1,5 @@
 import { customElement, FASTElement, html, css, observable, when } from "@microsoft/fast-element";
+import "@primitives/button/button.js";
 import { SwishProduct } from "../workflows/swish-workflow";
 import { BaseWidget } from "../components/base-widget";
 import { userProductService, UserProductService } from "../services/user-product-service";
@@ -18,14 +19,14 @@ const template = html<SwishWidget>/*html*/`
           </div>
           
           <div class="swish-actions">
-            <button class="transfer-button" @click="${x => x.startSwishTransfer()}">
+            <dream-button variant="primary" @click="${x => x.startSwishTransfer()}">
               <span class="button-icon">↗</span>
               Send Money
-            </button>
-            <button class="history-button" @click="${x => x.viewTransactionHistory()}">
+            </dream-button>
+            <dream-button variant="ghost" @click="${x => x.viewTransactionHistory()}">
               <span class="button-icon">⏱</span>
               History
-            </button>
+            </dream-button>
           </div>
           
           <div class="quick-stats">
@@ -38,9 +39,9 @@ const template = html<SwishWidget>/*html*/`
         </div>
         
         <div class="widget-footer">
-          <button class="manage-button" @click="${x => x.manageSubscription()}">
+          <dream-button variant="secondary" full-width @click="${x => x.manageSubscription()}">
             Manage Subscription
-          </button>
+          </dream-button>
         </div>
       `)}
     </div>
@@ -119,38 +120,6 @@ const styles = css`
     margin-bottom: 16px;
   }
 
-  button {
-    padding: 8px 12px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    transition: background-color 0.2s;
-  }
-
-  .transfer-button {
-    background-color: var(--widget-accent-color, #4a90e2);
-    color: white;
-    flex: 1;
-  }
-
-  .transfer-button:hover {
-    background-color: var(--widget-accent-hover, #3a80d2);
-  }
-
-  .history-button {
-    background-color: var(--widget-secondary-color, #f0f0f0);
-    color: var(--widget-secondary-text, #333);
-    flex: 1;
-  }
-
-  .history-button:hover {
-    background-color: var(--widget-secondary-hover, #e0e0e0);
-  }
-
   .button-icon {
     font-size: 16px;
   }
@@ -188,18 +157,6 @@ const styles = css`
     padding-top: 12px;
     border-top: 1px solid var(--widget-divider-color, #eee);
     text-align: center;
-  }
-
-  .manage-button {
-    background: transparent;
-    color: var(--widget-accent-color, #4a90e2);
-    border: 1px solid var(--widget-accent-color, #4a90e2);
-    width: 100%;
-    justify-content: center;
-  }
-
-  .manage-button:hover {
-    background-color: rgba(74, 144, 226, 0.05);
   }
 `;
 

@@ -1,4 +1,5 @@
 import { customElement, html, css, observable, when } from "@microsoft/fast-element";
+import "@primitives/button/button.js";
 import { repositoryService } from "../../services/repository-service";
 import { WorkflowIds } from "../../workflows/workflow-registry";
 import "./account-lister/account-list-component";
@@ -11,12 +12,12 @@ const template = html<AccountWidget>/*html*/ `
   <div class="account-widget">
     <div class="widget-action-bar">
       ${when(x => x.accountsLoaded && x.accounts.length > 0, html<AccountWidget>/*html*/`
-      <button class="transfer-button" 
+      <dream-button variant="primary" size="sm" 
         @click="${x => x.openTransferWorkflow()}" 
         title="Transfer Money"
         ?disabled="${x => x.accountsLoaded && x.accounts.length === 0}">
         Transfer
-      </button>
+      </dream-button>
       `)}
     </div>
     
@@ -38,7 +39,7 @@ const template = html<AccountWidget>/*html*/ `
           </div>
           <h3>No Accounts Yet</h3>
           <p>You don't have any accounts set up. Create your first account to get started.</p>
-          <button class="cta-button" @click="${x => x.addAccount()}">Create Your First Account</button>
+          <dream-button variant="primary" @click="${x => x.addAccount()}">Create Your First Account</dream-button>
           
           <div class="quick-steps">
             <div class="step">
@@ -66,9 +67,9 @@ const template = html<AccountWidget>/*html*/ `
     </div>
     
     <div class="widget-footer">
-      <button class="primary-button" @click="${x => x.addAccount()}">
+      <dream-button variant="primary" @click="${x => x.addAccount()}">
         ${x => x.accounts.length === 0 ? 'Create First Account' : 'Add Account'}
-      </button>
+      </dream-button>
     </div>
   </div>
 `;
@@ -99,22 +100,6 @@ const styles = css`
     flex-direction: column;
   }
   
-  .transfer-button {
-    background-color: var(--widget-primary-color, #3498db);
-    color: var(--widget-primary-text, white);
-    border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    transition: background-color 0.2s;
-  }
-  
-  .transfer-button:hover {
-    background-color: var(--widget-primary-hover, #2980b9);
-  }
-  
   .action-button {
     background: transparent;
     border: none;
@@ -139,21 +124,6 @@ const styles = css`
     margin-top: auto;
     flex-shrink: 0;
     background-color: var(--widget-background, #ffffff);
-  }
-  
-  .primary-button {
-    background-color: var(--widget-primary-color, #3498db);
-    color: var(--widget-primary-text, white);
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-  
-  .primary-button:hover {
-    background-color: var(--widget-primary-hover, #2980b9);
   }
   
   .loading-state {
@@ -192,21 +162,6 @@ const styles = css`
     color: var(--widget-error-color, #e74c3c);
     text-align: center;
     margin-bottom: 16px;
-  }
-  
-  .retry-button {
-    background-color: var(--widget-error-color, #e74c3c);
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: background-color 0.2s;
-  }
-  
-  .retry-button:hover {
-    background-color: #c0392b;
   }
   
   /* Account action button styles */
@@ -264,11 +219,6 @@ const styles = css`
     .widget-footer {
       padding: 8px 12px;
     }
-    
-    .transfer-button, .primary-button {
-      padding: 6px 10px;
-      font-size: 13px;
-    }
   }
   
   /* Empty state styling */
@@ -306,22 +256,6 @@ const styles = css`
     margin: 0 0 24px;
     line-height: 1.5;
     font-size: 14px;
-  }
-  
-  .cta-button {
-    background-color: var(--widget-primary-color, #3498db);
-    color: var(--widget-primary-text, white);
-    border: none;
-    padding: 10px 20px;
-    border-radius: 4px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    font-size: 15px;
-  }
-  
-  .cta-button:hover {
-    background-color: var(--widget-primary-hover, #2980b9);
   }
   
   /* Step styling */

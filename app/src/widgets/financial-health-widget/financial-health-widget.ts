@@ -2,6 +2,7 @@ import { FASTElement, customElement, html, css, observable, when } from "@micros
 import { repositoryService } from "../../services/repository-service";
 import { workflowManager } from "../../services/workflow-manager-service";
 import { WorkflowIds } from "../../workflows/workflow-registry";
+import "@primitives/button/button.js";
 
 // Import components
 import "./components/health-score-component";
@@ -37,7 +38,7 @@ const template = html<FinancialHealthWidget>/*html*/ `
     ${when(x => x.error, html<FinancialHealthWidget>/*html*/`
       <div class="error-state">
         <p class="error-message">${x => x.errorMessage}</p>
-        <button class="retry-button" @click="${x => x.fetchFinancialData()}">Retry</button>
+        <dream-button variant="primary" @click="${x => x.fetchFinancialData()}">Retry</dream-button>
       </div>
     `)}
     
@@ -109,7 +110,7 @@ const template = html<FinancialHealthWidget>/*html*/ `
       </div>
       
       <div class="widget-footer">
-        <button class="primary-button" @click="${x => x.openFinancialDetailWorkflow()}">View Financial Details</button>
+        <dream-button variant="primary" @click="${x => x.openFinancialDetailWorkflow()}">View Financial Details</dream-button>
       </div>
     `)}
   </div>
@@ -292,32 +293,12 @@ const styles = css`
     margin-bottom: 16px;
   }
   
-  .retry-button {
-    background-color: var(--primary-color, #3498db);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 8px 16px;
-    cursor: pointer;
-  }
-  
   /* Widget Footer */
   .widget-footer {
     padding: 12px;
     display: flex;
     justify-content: flex-end;
     border-top: 1px solid var(--divider-color, #eaeaea);
-  }
-  
-  .primary-button {
-    background-color: var(--button-bg, #3498db);
-    color: var(--text-light, white);
-    border: none;
-    border-radius: 4px;
-    padding: 8px 16px;
-    cursor: pointer;
-    font-weight: 500;
-    font-size: 14px;
   }
   
   /* Responsive adjustments */

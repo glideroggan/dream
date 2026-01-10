@@ -1,4 +1,5 @@
 import { css, customElement, html, Observable, observable, repeat, when } from "@microsoft/fast-element";
+import "@primitives/button/button.js";
 import { BaseWidget } from "../../components/base-widget";
 import { Loan, LoanStatus, LoanType } from "../../repositories/models/loan-models";
 import { mockLoans } from "../../repositories/mock/loan-mock";
@@ -81,9 +82,9 @@ const template = html<LoansWidget>/*html*/`
                                 </div>
                                 <div class="loan-actions">
                                     ${when(x => ['current', 'late', 'active', LoanStatus.ACTIVE].includes(x.status), html`
-                                        <button class="action-button payment-button" @click="${(x, c) => c.parent.makePayment(x.id)}">Make Payment</button>
+                                        <dream-button variant="primary" style="flex: 1" @click="${(x, c) => c.parent.makePayment(x.id)}">Make Payment</dream-button>
                                     `)}
-                                    <button class="action-button details-button" @click="${(x, c) => c.parent.viewLoanDetails(x.id)}">Full Details</button>
+                                    <dream-button variant="ghost" style="flex: 1" @click="${(x, c) => c.parent.viewLoanDetails(x.id)}">Full Details</dream-button>
                                 </div>
                             </div>
                         </div>
@@ -93,7 +94,7 @@ const template = html<LoansWidget>/*html*/`
                 ${when(x => x.loans.length === 0, html`
                     <div class="no-loans">
                         <p>You don't have any active loans.</p>
-                        <button class="new-loan-button" @click="${x => x.exploreLoans()}">Explore Loan Options</button>
+                        <dream-button variant="primary" style="margin-top: 16px" @click="${x => x.exploreLoans()}">Explore Loan Options</dream-button>
                     </div>
                 `)}
             `)}
@@ -297,32 +298,7 @@ const styles = css/*css*/`
         margin-top: 10px;
     }
 
-    .action-button {
-        padding: 8px 12px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-weight: 500;
-        flex: 1;
-    }
 
-    .payment-button {
-        background-color: var(--widget-primary-color, var(--accent-color, #3498db));
-        color: var(--widget-primary-text, white);
-    }
-
-    .payment-button:hover {
-        background-color: var(--widget-primary-hover, var(--widget-accent-hover, #2980b9));
-    }
-
-    .details-button {
-        background-color: var(--widget-secondary-color, #f0f0f0);
-        color: var(--widget-text-color, #333);
-    }
-
-    .details-button:hover {
-        background-color: var(--widget-secondary-hover, #e0e0e0);
-    }
 
     .no-loans {
         display: flex;
@@ -334,21 +310,7 @@ const styles = css/*css*/`
         color: var(--widget-text-secondary, #777);
     }
 
-    .new-loan-button {
-        margin-top: 16px;
-        padding: 8px 16px;
-        background-color: var(--widget-primary-color, var(--accent-color, #3498db));
-        color: var(--widget-primary-text, white);
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-weight: 500;
-        transition: background-color 0.2s;
-    }
 
-    .new-loan-button:hover {
-        background-color: var(--widget-primary-hover, var(--widget-accent-hover, #2980b9));
-    }
 
     .loading {
         display: flex;
