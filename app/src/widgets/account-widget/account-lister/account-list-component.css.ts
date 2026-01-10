@@ -121,14 +121,24 @@ export const styles = css`
   
   .account-item {
     border: 1px solid var(--divider-color);
-    border-radius: 6px;
+    border-radius: 8px;
     overflow: hidden;
-    transition: all 0.3s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    
+    /* Elevation 1 for cards */
+    box-shadow: var(--elevation-1, 0 1px 3px rgba(0, 0, 0, 0.05));
+    
+    /* Smooth transitions */
+    transition: all var(--duration-normal, 180ms) var(--easing-default, ease);
+  }
+  
+  .account-item:hover {
+    box-shadow: var(--elevation-1-hover, 0 2px 6px rgba(0, 0, 0, 0.1));
+    transform: translateY(-1px);
   }
   
   .account-item.expanded {
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    /* Stronger shadow when expanded */
+    box-shadow: var(--elevation-2, 0 4px 8px rgba(0, 0, 0, 0.12));
   }
   
   .account-header {
@@ -136,13 +146,25 @@ export const styles = css`
     justify-content: space-between;
     padding: 12px 16px;
     cursor: pointer;
-    background-color: var(--background-light);
-    transition: background-color 0.2s;
+    
+    /* Subtle gradient background */
+    background: linear-gradient(
+      135deg,
+      var(--background-light, rgba(247, 249, 247, 0.5)) 0%,
+      rgba(242, 246, 244, 0.3) 100%
+    );
+    
+    transition: all var(--duration-fast, 120ms) var(--easing-default, ease);
     align-items: center;
   }
   
   .account-header:hover {
-    background-color: var(--hover-bg);
+    /* Teal-tinted hover gradient */
+    background: linear-gradient(
+      135deg,
+      var(--hover-bg, rgba(45, 156, 143, 0.08)) 0%,
+      rgba(45, 156, 143, 0.04) 100%
+    );
   }
   
   .account-info {

@@ -35,11 +35,88 @@
     --radius-lg: 12px;
     --radius-full: 9999px;
     
-    /* ============ SHADOWS ============ */
+    /* ============ SHADOWS (legacy) ============ */
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
     --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
     --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1), 0 10px 10px rgba(0, 0, 0, 0.04);
+    
+    /* ============ ELEVATION SYSTEM (4-Level Scale) ============ */
+    /* Multi-layered shadows for depth - softer for kid-friendliness */
+    
+    /* Level 0: Flush with surface */
+    --elevation-0: none;
+    
+    /* Level 1: Subtle lift - internal cards, list items */
+    --elevation-1: 
+      0 1px 2px 0 rgba(30, 58, 76, 0.08),
+      0 2px 4px 0 rgba(30, 58, 76, 0.06);
+    
+    /* Level 2: Moderate lift - widget containers */
+    --elevation-2: 
+      0 2px 4px -1px rgba(30, 58, 76, 0.10),
+      0 6px 12px -2px rgba(30, 58, 76, 0.08),
+      0 2px 20px -4px rgba(30, 58, 76, 0.06);
+    
+    /* Level 3: Prominent lift - modals, popovers */
+    --elevation-3: 
+      0 4px 8px -2px rgba(30, 58, 76, 0.12),
+      0 12px 24px -4px rgba(30, 58, 76, 0.10),
+      0 4px 32px -8px rgba(30, 58, 76, 0.08);
+    
+    /* Level 4: Maximum lift - overlays, tooltips */
+    --elevation-4: 
+      0 8px 16px -4px rgba(30, 58, 76, 0.14),
+      0 20px 40px -8px rgba(30, 58, 76, 0.12),
+      0 6px 56px -16px rgba(30, 58, 76, 0.10);
+    
+    /* Hover elevation enhancements */
+    --elevation-1-hover: 
+      0 2px 4px -1px rgba(30, 58, 76, 0.10),
+      0 4px 8px -2px rgba(30, 58, 76, 0.08);
+    
+    --elevation-2-hover: 
+      0 4px 8px -2px rgba(30, 58, 76, 0.12),
+      0 10px 20px -4px rgba(30, 58, 76, 0.10),
+      0 4px 28px -8px rgba(30, 58, 76, 0.08);
+    
+    /* Inset elevation (pressed states, inputs) */
+    --elevation-inset: 
+      inset 0 2px 4px 0 rgba(30, 58, 76, 0.08),
+      inset 0 1px 2px 0 rgba(30, 58, 76, 0.06);
+    
+    /* ============ BACKGROUND DEPTH TREATMENTS ============ */
+    /* Subtle gradients for visual interest */
+    
+    /* Page background gradient */
+    --bg-gradient-subtle: linear-gradient(
+      135deg,
+      rgba(247, 249, 247, 1) 0%,
+      rgba(242, 246, 244, 1) 100%
+    );
+    
+    /* Widget container backgrounds */
+    --bg-gradient-widget: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 1) 0%,
+      rgba(250, 252, 250, 1) 100%
+    );
+    
+    /* Internal panel backgrounds */
+    --bg-gradient-panel: linear-gradient(
+      135deg,
+      rgba(249, 251, 249, 1) 0%,
+      rgba(245, 248, 246, 1) 100%
+    );
+    
+    /* Glassmorphism (for special elements) */
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-blur: blur(16px);
+    --glass-border: rgba(255, 255, 255, 0.3);
+    
+    /* 3D border highlights */
+    --border-3d-highlight: 0 -1px 0 0 rgba(255, 255, 255, 0.8);
+    --border-3d-shadow: 0 1px 0 0 rgba(30, 58, 76, 0.04);
     
     /* ============ MOTION ============ */
     --duration-fast: 120ms;
@@ -141,11 +218,72 @@
     --accent-color: #3DB9A9;                /* Brighter sage teal for dark mode */
     --background-color: #0D1A1F;            /* Deep teal-black */
     
-    /* Dark shadows */
+    /* Dark shadows (legacy) */
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
     --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.2);
     --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3), 0 4px 6px rgba(0, 0, 0, 0.2);
     --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.35), 0 10px 10px rgba(0, 0, 0, 0.25);
+    
+    /* Dark elevation system - stronger shadows for contrast */
+    --elevation-1: 
+      0 1px 3px 0 rgba(0, 0, 0, 0.25),
+      0 3px 6px 0 rgba(0, 0, 0, 0.20);
+    
+    --elevation-2: 
+      0 2px 6px -1px rgba(0, 0, 0, 0.30),
+      0 8px 16px -2px rgba(0, 0, 0, 0.25),
+      0 3px 24px -4px rgba(0, 0, 0, 0.20);
+    
+    --elevation-3: 
+      0 4px 10px -2px rgba(0, 0, 0, 0.35),
+      0 16px 32px -4px rgba(0, 0, 0, 0.30),
+      0 6px 40px -8px rgba(0, 0, 0, 0.25);
+    
+    --elevation-4: 
+      0 8px 20px -4px rgba(0, 0, 0, 0.40),
+      0 24px 48px -8px rgba(0, 0, 0, 0.35),
+      0 8px 64px -16px rgba(0, 0, 0, 0.30);
+    
+    --elevation-1-hover: 
+      0 2px 6px -1px rgba(0, 0, 0, 0.28),
+      0 6px 12px -2px rgba(0, 0, 0, 0.24);
+    
+    --elevation-2-hover: 
+      0 4px 10px -2px rgba(0, 0, 0, 0.32),
+      0 12px 24px -4px rgba(0, 0, 0, 0.28),
+      0 6px 32px -8px rgba(0, 0, 0, 0.24);
+    
+    --elevation-inset: 
+      inset 0 2px 4px 0 rgba(0, 0, 0, 0.25),
+      inset 0 1px 2px 0 rgba(0, 0, 0, 0.20);
+    
+    /* Dark background gradients */
+    --bg-gradient-subtle: linear-gradient(
+      135deg,
+      rgba(13, 26, 31, 1) 0%,
+      rgba(10, 22, 27, 1) 100%
+    );
+    
+    --bg-gradient-widget: linear-gradient(
+      180deg,
+      rgba(22, 40, 50, 1) 0%,
+      rgba(18, 34, 42, 1) 100%
+    );
+    
+    --bg-gradient-panel: linear-gradient(
+      135deg,
+      rgba(24, 42, 52, 1) 0%,
+      rgba(20, 37, 46, 1) 100%
+    );
+    
+    /* Dark glassmorphism */
+    --glass-bg: rgba(22, 40, 50, 0.85);
+    --glass-blur: blur(20px);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    
+    /* Dark 3D borders */
+    --border-3d-highlight: 0 -1px 0 0 rgba(255, 255, 255, 0.03);
+    --border-3d-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.3);
     
     /* Dark surface colors */
     --surface-color: #162832;               /* Slightly lighter than background */
@@ -267,6 +405,25 @@
       --workflow-bg: #2e251a;
       --theme-color: #3DB9A9;
       --theme-bg: #0F2A28;
+
+      /* Elevation system for auto dark theme */
+      --elevation-1: 0 1px 3px 0 rgba(0, 0, 0, 0.25), 0 3px 6px 0 rgba(0, 0, 0, 0.20);
+      --elevation-2: 0 2px 6px -1px rgba(0, 0, 0, 0.30), 0 8px 16px -2px rgba(0, 0, 0, 0.25), 0 3px 24px -4px rgba(0, 0, 0, 0.20);
+      --elevation-3: 0 4px 10px -2px rgba(0, 0, 0, 0.35), 0 16px 32px -4px rgba(0, 0, 0, 0.30), 0 6px 40px -8px rgba(0, 0, 0, 0.25);
+      --elevation-4: 0 8px 20px -4px rgba(0, 0, 0, 0.40), 0 24px 48px -8px rgba(0, 0, 0, 0.35), 0 8px 64px -16px rgba(0, 0, 0, 0.30);
+      --elevation-1-hover: 0 2px 6px -1px rgba(0, 0, 0, 0.28), 0 6px 12px -2px rgba(0, 0, 0, 0.24);
+      --elevation-2-hover: 0 4px 10px -2px rgba(0, 0, 0, 0.32), 0 12px 24px -4px rgba(0, 0, 0, 0.28), 0 6px 32px -8px rgba(0, 0, 0, 0.24);
+      --elevation-inset: inset 0 2px 4px 0 rgba(0, 0, 0, 0.25), inset 0 1px 2px 0 rgba(0, 0, 0, 0.20);
+      
+      /* Background gradients for auto dark theme */
+      --bg-gradient-subtle: linear-gradient(135deg, rgba(13, 26, 31, 1) 0%, rgba(10, 22, 27, 1) 100%);
+      --bg-gradient-widget: linear-gradient(180deg, rgba(22, 40, 50, 1) 0%, rgba(18, 34, 42, 1) 100%);
+      --bg-gradient-panel: linear-gradient(135deg, rgba(24, 42, 52, 1) 0%, rgba(20, 37, 46, 1) 100%);
+      --glass-bg: rgba(22, 40, 50, 0.85);
+      --glass-blur: blur(20px);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --border-3d-highlight: 0 -1px 0 0 rgba(255, 255, 255, 0.03);
+      --border-3d-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.3);
 
       /* Widget colors for auto dark theme */
       --surface-color: #162832;

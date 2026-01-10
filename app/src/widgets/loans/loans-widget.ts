@@ -115,8 +115,22 @@ const styles = css/*css*/`
         height: 100%;
         display: flex;
         flex-direction: column;
-        background: var(--widget-background, #ffffff);
+        background: var(--bg-gradient-widget, var(--widget-background, #ffffff));
         color: var(--widget-text-color, #333333);
+        
+        /* Elevation 2: widget containers */
+        box-shadow: var(--elevation-2, 0 2px 8px rgba(0, 0, 0, 0.1));
+        border: 1px solid rgba(30, 58, 76, 0.08);
+        border-radius: 8px;
+        
+        /* Smooth hover lift */
+        transition: box-shadow var(--duration-normal, 180ms) var(--easing-default, ease),
+                    transform var(--duration-normal, 180ms) var(--easing-default, ease);
+    }
+    
+    .loans-widget:hover {
+        box-shadow: var(--elevation-2-hover, 0 4px 12px rgba(0, 0, 0, 0.15));
+        transform: translateY(-2px);
     }
 
     .widget-content {
@@ -131,6 +145,11 @@ const styles = css/*css*/`
         justify-content: space-between;
         align-items: center;
         margin-bottom: 12px;
+        padding-bottom: 8px;
+        
+        /* 3D border effect */
+        border-bottom: 1px solid var(--divider-color, #e0e0e0);
+        box-shadow: var(--border-3d-shadow, 0 1px 0 rgba(255, 255, 255, 0.5));
     }
 
     .loans-header h3 {
@@ -153,22 +172,46 @@ const styles = css/*css*/`
     }
 
     .loan-item {
-        border: 1px solid var(--widget-divider-color, #e0e0e0);
-        border-radius: 6px;
+        border: 1px solid rgba(30, 58, 76, 0.08);
+        border-radius: 8px;
         overflow: hidden;
+        
+        /* Elevation 1 for internal cards */
+        box-shadow: var(--elevation-1, 0 1px 3px rgba(0, 0, 0, 0.05));
+        
+        /* Smooth transitions */
+        transition: all var(--duration-normal, 180ms) var(--easing-default, ease);
+    }
+    
+    .loan-item:hover {
+        box-shadow: var(--elevation-1-hover, 0 2px 6px rgba(0, 0, 0, 0.1));
+        transform: translateY(-1px);
     }
 
     .loan-header {
         padding: 12px;
         cursor: pointer;
-        background-color: var(--background-card, #fafafa);
+        
+        /* Subtle gradient background */
+        background: linear-gradient(
+            135deg,
+            var(--background-card, rgba(247, 249, 247, 0.5)) 0%,
+            rgba(242, 246, 244, 0.3) 100%
+        );
+        
         display: flex;
         justify-content: space-between;
         align-items: center;
+        transition: all var(--duration-fast, 120ms) var(--easing-default, ease);
     }
 
     .loan-header:hover {
-        background-color: var(--hover-bg, #f5f5f5);
+        /* Teal-tinted hover gradient */
+        background: linear-gradient(
+            135deg,
+            var(--hover-bg, rgba(45, 156, 143, 0.08)) 0%,
+            rgba(45, 156, 143, 0.04) 100%
+        );
     }
 
     .loan-info-main {
@@ -269,6 +312,14 @@ const styles = css/*css*/`
         max-height: 500px; /* Increased to accommodate more content */
         padding: 16px;
         border-top: 1px solid var(--widget-divider-color, #e0e0e0);
+        
+        /* Subtle elevation for expanded content */
+        box-shadow: var(--elevation-inset, inset 0 2px 4px rgba(0, 0, 0, 0.04));
+        background: linear-gradient(
+            180deg,
+            rgba(247, 249, 247, 0.3) 0%,
+            transparent 100%
+        );
     }
 
     .loan-detail-grid {

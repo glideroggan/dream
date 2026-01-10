@@ -82,12 +82,25 @@ const styles = css`
     // background: var(--background-color, #fff);
     border-radius: 8px;
     padding: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    
+    /* Elevation 2: widget containers */
+    box-shadow: var(--elevation-2, 0 2px 8px rgba(0, 0, 0, 0.1));
+    border: 1px solid rgba(30, 58, 76, 0.08);
+    
     flex: 1;
     display: flex;
     flex-direction: column;
     position: relative;
     z-index: 1; /* Lower z-index than header controls */
+    
+    /* Smooth hover lift */
+    transition: box-shadow var(--duration-normal, 180ms) var(--easing-default, ease),
+                transform var(--duration-normal, 180ms) var(--easing-default, ease);
+  }
+  
+  .welcome-widget:hover {
+    box-shadow: var(--elevation-2-hover, 0 4px 12px rgba(0, 0, 0, 0.15));
+    transform: translateY(-2px);
   }
   
   h2 {
@@ -124,16 +137,23 @@ const styles = css`
     font-size: 1em;
     color: var(--primary-text-color, #333);
     border-bottom: 2px solid transparent;
-    transition: all 0.2s ease;
+    border-radius: 6px 6px 0 0;
+    transition: all var(--duration-normal, 180ms) var(--easing-default, ease);
   }
   
   .tab-button.active {
     border-bottom: 2px solid var(--accent-color, #3498db);
     color: var(--accent-color, #3498db);
+    background: linear-gradient(
+      to bottom,
+      rgba(45, 156, 143, 0.08) 0%,
+      transparent 100%
+    );
   }
   
   .tab-button:hover {
     background-color: var(--hover-bg, rgba(0, 0, 0, 0.05));
+    transform: translateY(-1px);
   }
   
   .tab-content {
@@ -141,6 +161,11 @@ const styles = css`
     text-align: left;
     flex: 1;
     min-height: 250px; /* Ensure minimum height for content */
+    
+    /* Subtle panel gradient */
+    background: var(--bg-gradient-panel, linear-gradient(180deg, rgba(247, 249, 247, 0.3) 0%, rgba(242, 246, 244, 0.1) 100%));
+    border-radius: 8px;
+    margin-top: 8px;
   }
   
   ul {
@@ -156,10 +181,21 @@ const styles = css`
     height: 120px;
     margin: 15px auto;
     background-color: var(--background-card, #f0f0f0);
-    border-radius: 6px;
+    border-radius: 8px;
     background-position: center;
     background-repeat: no-repeat;
     background-size: contain;
+    
+    /* Subtle depth for illustrations */
+    box-shadow: var(--elevation-1, 0 1px 3px rgba(0, 0, 0, 0.05));
+    border: 1px solid rgba(30, 58, 76, 0.05);
+    transition: box-shadow var(--duration-normal, 180ms) var(--easing-default, ease),
+                transform var(--duration-normal, 180ms) var(--easing-default, ease);
+  }
+  
+  .feature-illustration:hover {
+    box-shadow: var(--elevation-1-hover, 0 2px 6px rgba(0, 0, 0, 0.1));
+    transform: translateY(-1px);
   }
   
   .navigation-illustration {

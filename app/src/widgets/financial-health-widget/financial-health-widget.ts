@@ -118,13 +118,27 @@ const template = html<FinancialHealthWidget>/*html*/ `
 
 const styles = css`
   .financial-health-widget {
-    background: var(--background-color, #ffffff);
+    /* Premium gradient background */
+    background: var(--bg-gradient-widget, var(--background-color, #ffffff));
     color: var(--primary-text-color, #333333);
     border-radius: 8px;
     padding: 0;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    
+    /* Elevation 2: widget containers */
+    box-shadow: var(--elevation-2, 0 2px 4px rgba(0, 0, 0, 0.1));
+    border: 1px solid rgba(30, 58, 76, 0.08);
+    
     display: flex;
     flex-direction: column;
+    
+    /* Smooth hover lift */
+    transition: box-shadow var(--duration-normal, 180ms) var(--easing-default, ease),
+                transform var(--duration-normal, 180ms) var(--easing-default, ease);
+  }
+  
+  .financial-health-widget:hover {
+    box-shadow: var(--elevation-2-hover, 0 4px 12px rgba(0, 0, 0, 0.15));
+    transform: translateY(-2px);
   }
   
   .widget-header {
@@ -132,7 +146,17 @@ const styles = css`
     display: flex;
     justify-content: space-between;
     align-items: center;
+    
+    /* Enhanced 3D divider */
     border-bottom: 1px solid var(--divider-color, #eaeaea);
+    box-shadow: var(--border-3d-shadow, 0 1px 0 0 rgba(30, 58, 76, 0.04));
+    
+    /* Subtle gradient for header separation */
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.3) 0%,
+      rgba(255, 255, 255, 0) 100%
+    );
   }
   
   h3 {
@@ -156,12 +180,22 @@ const styles = css`
     flex: 1;
   }
   
-  /* Recommendations banner */
+  /* Recommendations banner with glassmorphism */
   .recommendations-banner {
-    background-color: var(--background-card, #f0f8ff);
-    border-radius: 6px;
-    padding: 10px 12px;
-    border-left: 4px solid var(--primary-color, #3498db);
+    /* Frosted glass effect */
+    background: var(--glass-bg, rgba(255, 255, 255, 0.85));
+    backdrop-filter: var(--glass-blur, blur(16px));
+    -webkit-backdrop-filter: var(--glass-blur, blur(16px));
+    
+    border-radius: 8px;
+    padding: 12px 16px;
+    
+    /* Accent border + subtle shadow */
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.3));
+    border-left: 3px solid var(--accent-color, #2D9C8F);
+    box-shadow: 
+      var(--elevation-1, 0 2px 4px rgba(0, 0, 0, 0.08)),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
   }
   
   .banner-header {
@@ -181,6 +215,7 @@ const styles = css`
     background-color: var(--background-color, #fff);
     padding: 2px 8px;
     border-radius: 10px;
+    box-shadow: var(--elevation-1, 0 1px 2px rgba(0, 0, 0, 0.05));
   }
   
   /* Panel row for net worth and savings */
@@ -194,14 +229,28 @@ const styles = css`
   }
   
   .panel {
-    background-color: var(--background-card, #f9f9f9);
-    border-radius: 6px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    /* Elevated panel with gradient */
+    background: var(--bg-gradient-panel, var(--background-card, #f9f9f9));
+    border-radius: 8px;
     padding: 12px;
+    
+    /* Elevation 1: internal panels */
+    box-shadow: var(--elevation-1, 0 1px 3px rgba(0, 0, 0, 0.05));
+    border: 1px solid rgba(30, 58, 76, 0.05);
+    
     display: flex;
     flex-direction: column;
-    min-width: 0; /* For flex shrinking */
+    min-width: 0;
     overflow: hidden;
+    
+    /* Smooth hover lift */
+    transition: box-shadow var(--duration-normal, 180ms) var(--easing-default, ease),
+                transform var(--duration-normal, 180ms) var(--easing-default, ease);
+  }
+  
+  .panel:hover {
+    box-shadow: var(--elevation-1-hover, 0 2px 8px rgba(0, 0, 0, 0.1));
+    transform: translateY(-1px);
   }
   
   /* Net worth panel (left, row 1) */
@@ -298,7 +347,17 @@ const styles = css`
     padding: 12px;
     display: flex;
     justify-content: flex-end;
+    
+    /* Enhanced 3D divider */
     border-top: 1px solid var(--divider-color, #eaeaea);
+    box-shadow: var(--border-3d-highlight, 0 -1px 0 0 rgba(255, 255, 255, 0.8));
+    
+    /* Subtle gradient */
+    background: linear-gradient(
+      to top,
+      rgba(255, 255, 255, 0.3) 0%,
+      rgba(255, 255, 255, 0) 100%
+    );
   }
   
   /* Responsive adjustments */
@@ -322,6 +381,10 @@ const styles = css`
     .spending-panel, .expenses-panel {
       height: 220px;
     }
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 `;
 

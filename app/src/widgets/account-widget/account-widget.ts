@@ -76,13 +76,28 @@ const template = html<AccountWidget>/*html*/ `
 
 const styles = css`
   .account-widget {
-    background: var(--widget-background, #ffffff);
+    /* Premium gradient background */
+    background: var(--bg-gradient-widget, var(--widget-background, #ffffff));
     color: var(--widget-text-color, #333333);
     border-radius: inherit;
     padding: 0;
+    
+    /* Elevation 2: widget containers */
+    box-shadow: var(--elevation-2, 0 2px 4px rgba(0, 0, 0, 0.1));
+    border: 1px solid rgba(30, 58, 76, 0.08);
+    
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    
+    /* Smooth hover lift */
+    transition: box-shadow var(--duration-normal, 180ms) var(--easing-default, ease),
+                transform var(--duration-normal, 180ms) var(--easing-default, ease);
+  }
+  
+  .account-widget:hover {
+    box-shadow: var(--elevation-2-hover, 0 4px 12px rgba(0, 0, 0, 0.15));
+    transform: translateY(-2px);
   }
   
   .widget-action-bar {
@@ -90,7 +105,17 @@ const styles = css`
     display: flex;
     justify-content: flex-end;
     align-items: center;
+    
+    /* Enhanced 3D divider */
     border-bottom: 1px solid var(--widget-divider-color, #eaeaea);
+    box-shadow: var(--border-3d-shadow, 0 1px 0 0 rgba(30, 58, 76, 0.04));
+    
+    /* Subtle gradient for separation */
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.2) 0%,
+      rgba(255, 255, 255, 0) 100%
+    );
   }
   
   .content-area {
@@ -110,20 +135,35 @@ const styles = css`
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background-color 0.2s;
+    transition: background-color var(--duration-fast, 120ms) var(--easing-default, ease),
+                transform var(--duration-fast, 120ms) var(--easing-default, ease);
   }
   
   .action-button:hover {
     background-color: var(--widget-secondary-hover, rgba(0, 0, 0, 0.05));
+    transform: scale(1.05);
+  }
+  
+  .action-button:active {
+    transform: scale(0.95);
   }
   
   .widget-footer {
     padding: 12px 16px;
-    border-top: 1px solid var(--widget-divider-color, #eaeaea);
     text-align: right;
     margin-top: auto;
     flex-shrink: 0;
-    background-color: var(--widget-background, #ffffff);
+    
+    /* Enhanced 3D divider */
+    border-top: 1px solid var(--widget-divider-color, #eaeaea);
+    box-shadow: var(--border-3d-highlight, 0 -1px 0 0 rgba(255, 255, 255, 0.8));
+    
+    /* Subtle gradient */
+    background: linear-gradient(
+      to top,
+      rgba(255, 255, 255, 0.2) 0%,
+      rgba(255, 255, 255, 0) 100%
+    );
   }
   
   .loading-state {
@@ -175,7 +215,7 @@ const styles = css`
   .account-action-buttons .action-button {
     width: 100%;
     height: auto;
-    border-radius: 4px;
+    border-radius: 6px;
     padding: 10px;
     font-weight: 500;
     font-size: 14px;
@@ -183,6 +223,13 @@ const styles = css`
     background-color: var(--widget-secondary-color, #f0f0f0);
     color: var(--widget-text-color, #333);
     display: block;
+    box-shadow: var(--elevation-1, 0 1px 2px rgba(0, 0, 0, 0.05));
+    transition: all var(--duration-fast, 120ms) var(--easing-default, ease);
+  }
+  
+  .account-action-buttons .action-button:hover {
+    box-shadow: var(--elevation-1-hover, 0 2px 4px rgba(0, 0, 0, 0.1));
+    transform: translateY(-1px);
   }
   
   .action-button.edit {
@@ -191,7 +238,7 @@ const styles = css`
   }
   
   .action-button.deposit {
-    background-color: var (--widget-success-light, #d5f5e3);
+    background-color: var(--widget-success-light, #d5f5e3);
     color: var(--widget-success-color, #27ae60);
   }
   
@@ -287,6 +334,7 @@ const styles = css`
     font-size: 12px;
     font-weight: bold;
     flex-shrink: 0;
+    box-shadow: var(--elevation-1, 0 1px 2px rgba(0, 0, 0, 0.1));
   }
   
   .step-content {
