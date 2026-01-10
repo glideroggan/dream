@@ -172,15 +172,24 @@ export class HeaderComponent extends FASTElement {
   
   connectedCallback() {
     super.connectedCallback();
-    // Initialize theme state
-    const isDarkTheme = document.body.classList.contains('dark-theme') ||
-      (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches &&
-       !document.body.classList.contains('light-theme-forced'));
+    
+    // Check for saved preference first
+    const savedTheme = localStorage.getItem('theme');
+    
+    let isDarkTheme: boolean;
+    if (savedTheme) {
+      // Use saved preference
+      isDarkTheme = savedTheme === 'dark';
+    } else {
+      // Fall back to system preference
+      isDarkTheme = document.body.classList.contains('dark-theme') ||
+        (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches &&
+         !document.body.classList.contains('light-theme-forced'));
+    }
        
     this.darkTheme = isDarkTheme;
-    if (isDarkTheme) {
-      this.setAttribute('dark-theme', '');
-    }
+    this.updateThemeAttribute();
+    this.applyThemeToBody();
     
     // Listen for system theme changes
     window.matchMedia('(prefers-color-scheme: dark)')

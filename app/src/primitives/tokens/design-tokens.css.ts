@@ -129,7 +129,7 @@ export const designTokens = css`
     --toast-max-width: 400px;
   }
   
-  /* Dark theme adjustments for shadows */
+  /* Dark theme adjustments for shadows - explicit .dark-theme class */
   :host-context(body.dark-theme) {
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
     --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -137,8 +137,9 @@ export const designTokens = css`
     --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.35), 0 10px 10px rgba(0, 0, 0, 0.25);
   }
   
+  /* Dark theme adjustments for shadows - system preference auto-detection */
   @media (prefers-color-scheme: dark) {
-    :host-context(body:not(.light-theme-forced):not(.dark-theme)) {
+    :host-context(body:not(.light-theme-forced)) {
       --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
       --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.2);
       --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3), 0 4px 6px rgba(0, 0, 0, 0.2);
